@@ -1,12 +1,13 @@
 import createMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import { routing } from "./i18n/routing";
+import { DEVICE_COOKIE } from "./lib/device";
 
 const intl = createMiddleware(routing);
 
-// Pre-launch gate: when SITE_PASSWORD is set, every page asks for it (any username).
-// API routes are outside the matcher, so payment webhooks still get through.
 export default function middleware(req: NextRequest) {
+  // Pre-launch gate: when SITE_PASSWORD is set, every page asks for it (any username).
+  // API routes are outside the matcher, so payment webhooks still get through.
   const password = process.env.SITE_PASSWORD;
   if (password) {
     const [scheme, encoded] = req.headers.get("authorization")?.split(" ") ?? [];
@@ -18,7 +19,20 @@ export default function middleware(req: NextRequest) {
       });
     }
   }
-  return intl(req);
+
+  // Per-browser id for the one-device rule on the secure player. Every sign-in passes through
+  // a page first, so the cookie is in place before any protected video is requested.
+  const res = intl(req);
+  if (!req.cookies.has(DEVICE_COOKIE)) {
+    res.cookies.set(DEVICE_COOKIE, crypto.randomUUID(), {
+      httpOnly: true,
+      secure: req.nextUrl.protocol === "https:",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365 * 2,
+    });
+  }
+  return res;
 }
 
 export const config = {

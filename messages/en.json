@@ -103,5 +103,13 @@
       "PDF": "PDF"
     },
     "videoSoon": "This lesson's video is coming soon."
+  },
+  "player": {
+    "signIn": "Sign in to watch this lesson.",
+    "signInCta": "Sign in",
+    "reload": "Refresh the page to play the video.",
+    "otherDevice": "Your account is open on another device. Only one device is allowed per account, and the other device won't be able to play lessons after this.",
+    "watchHere": "Watch on this device",
+    "unavailable": "The video can't play right now. Refresh the page in a minute."
   }
 }

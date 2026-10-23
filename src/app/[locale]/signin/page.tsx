@@ -16,7 +16,7 @@ export default async function SignInPage({
   setRequestLocale(locale);
   const t = await getTranslations("signin");
   // Only same-site paths, so the form can't be used as an open redirect.
-  const target = next?.startsWith("/") && !next.startsWith("//") ? next : `/${locale}`;
+  const target = next?.startsWith("/") && !next.startsWith("//") ? next : `/${locale}/dashboard`;
 
   async function action(form: FormData) {
     "use server";

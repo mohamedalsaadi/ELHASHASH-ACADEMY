@@ -5,7 +5,11 @@
   },
   "nav": {
     "switchLocale": "العربية",
-    "courses": "Courses"
+    "courses": "Courses",
+    "dashboard": "My dashboard",
+    "admin": "Admin",
+    "signOut": "Sign out",
+    "signIn": "Sign in"
   },
   "home": {
     "headline": "Know your real score in every lesson, before the exam",
@@ -179,5 +183,14 @@
       "invalid_grade": "Choose your grade.",
       "phone_taken": "This number already has an account. Sign in instead."
     }
+  },
+  "dashboard": {
+    "hello": "Hi, {name}",
+    "myCourses": "My courses",
+    "empty": "You haven't subscribed to a course yet. Start with the free unit in any subject.",
+    "browse": "Browse courses",
+    "until": "Open until {date}",
+    "forever": "Open with no end date",
+    "expired": "Subscription ended, renew it"
   }
 }

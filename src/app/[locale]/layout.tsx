@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { SiteHeader } from "@/components/SiteHeader";
 import "../globals.css";
 
 const readex = Readex_Pro({
@@ -44,7 +45,10 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${readex.variable} ${plex.variable}`}>
       <body className="antialiased">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <SiteHeader />
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

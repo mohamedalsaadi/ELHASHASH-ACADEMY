@@ -4,7 +4,8 @@
     "description": "Grade 10–12 lessons for Egypt and the UAE, with your real scores in front of you."
   },
   "nav": {
-    "switchLocale": "العربية"
+    "switchLocale": "العربية",
+    "courses": "Courses"
   },
   "home": {
     "headline": "Know your real score in every lesson, before the exam",
@@ -77,5 +78,30 @@
       },
       "kioskRef": "Reference number:"
     }
+  },
+  "catalog": {
+    "title": "Courses",
+    "empty": "No courses are published yet.",
+    "freeUnit": "Unit 1 is free",
+    "from": "From",
+    "owned": "You're subscribed to this course",
+    "startFree": "Start the free unit",
+    "units": "Units",
+    "free": "Free",
+    "packages": "Subscription packages",
+    "subscribe": "Subscribe",
+    "until": "Access until {date}",
+    "access": {
+      "SEMESTER": "Semester",
+      "YEARLY": "Full year",
+      "REVISION": "Final revision"
+    },
+    "kind": {
+      "VIDEO": "Video",
+      "EXAM_STRUCTURE": "Exam structure",
+      "PAST_QUESTIONS": "Past ministry questions",
+      "PDF": "PDF"
+    },
+    "videoSoon": "This lesson's video is coming soon."
   }
 }

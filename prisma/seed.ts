@@ -86,6 +86,22 @@ async function main() {
         accessEndsAt: yearEnd,
       },
     ] as const;
+    // Three placeholder lessons per unit; videos are attached later from the admin.
+    const lessons = [
+      { order: 1, kind: "VIDEO", titleAr: "شرح الوحدة", titleEn: "Unit walkthrough" },
+      { order: 2, kind: "EXAM_STRUCTURE", titleAr: "شرح الهيكل", titleEn: "Exam structure" },
+      { order: 3, kind: "PAST_QUESTIONS", titleAr: "أسئلة الوزارة السابقة", titleEn: "Past ministry questions" },
+    ] as const;
+    for (const unit of await db.unit.findMany({ where: { courseId: course.id } })) {
+      for (const l of lessons) {
+        await db.lesson.upsert({
+          where: { unitId_order: { unitId: unit.id, order: l.order } },
+          update: {},
+          create: { ...l, unitId: unit.id },
+        });
+      }
+    }
+
     // Update in place: SKUs already on orders can't be deleted.
     for (const s of skus) {
       const existing = await db.sku.findFirst({ where: { courseId: course.id, accessType: s.accessType } });

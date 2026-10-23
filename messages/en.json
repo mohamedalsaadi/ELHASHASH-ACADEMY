@@ -17,7 +17,9 @@
     "phone": "Mobile number or email",
     "password": "Password",
     "submit": "Sign in",
-    "error": "Wrong mobile number, email or password."
+    "error": "Wrong mobile number, email or password.",
+    "noAccount": "No account yet?",
+    "signUp": "Create one"
   },
   "checkout": {
     "title": "Complete your subscription",
@@ -155,6 +157,27 @@
       "ok": "Password changed.",
       "wrong": "The current password is wrong.",
       "short": "The new password is too short. Use at least 10 characters."
+    }
+  },
+  "signup": {
+    "title": "Create a student account",
+    "name": "Full name",
+    "phone": "Mobile number",
+    "phoneHint": "Egypt: 01xxxxxxxxx · UAE: 05xxxxxxxx",
+    "grade": "Grade",
+    "gradePick": "Choose your grade",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "submit": "Create account",
+    "submitting": "Creating account…",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "errors": {
+      "invalid_name": "Enter your full name (at least 2 letters).",
+      "invalid_phone": "That mobile number isn't valid. Egypt: 11 digits starting 01. UAE: 10 digits starting 05.",
+      "password_too_short": "The password is too short. Use at least 8 characters.",
+      "invalid_grade": "Choose your grade.",
+      "phone_taken": "This number already has an account. Sign in instead."
     }
   }
 }

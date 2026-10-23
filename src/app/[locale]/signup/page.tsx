@@ -1,0 +1,34 @@
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
+import { db } from "@/lib/db";
+import { SignUpForm } from "./SignUpForm";
+
+export const dynamic = "force-dynamic";
+
+export default async function SignUpPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { locale } = await params;
+  const { next } = await searchParams;
+  setRequestLocale(locale);
+  const t = await getTranslations("signup");
+  const ar = locale === "ar";
+  const grades = await db.grade.findMany({ orderBy: [{ country: { code: "asc" } }, { level: "asc" }] });
+
+  return (
+    <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
+      <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
+      <SignUpForm grades={grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn }))} locale={locale} next={next ?? ""} />
+      <p className="text-small text-ink-muted">
+        {t("haveAccount")}{" "}
+        <Link href={{ pathname: "/signin", query: next ? { next } : {} }} className="text-ink underline underline-offset-4">
+          {t("signIn")}
+        </Link>
+      </p>
+    </main>
+  );
+}

@@ -2,6 +2,7 @@ import { AuthError } from "next-auth";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
+import { Link } from "@/i18n/navigation";
 
 export default async function SignInPage({
   params,
@@ -61,6 +62,12 @@ export default async function SignInPage({
           {t("submit")}
         </button>
       </form>
+      <p className="text-small text-ink-muted">
+        {t("noAccount")}{" "}
+        <Link href={{ pathname: "/signup", query: next ? { next } : {} }} className="text-ink underline underline-offset-4">
+          {t("signUp")}
+        </Link>
+      </p>
     </main>
   );
 }

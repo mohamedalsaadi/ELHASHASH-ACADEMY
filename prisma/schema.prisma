@@ -1,0 +1,349 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum CountryCode {
+  EG
+  AE
+}
+
+enum Curriculum {
+  NATIONAL_EG
+  MOE
+  BRITISH
+  AMERICAN
+  IB
+}
+
+enum Currency {
+  EGP
+  AED
+}
+
+enum AccessType {
+  SEMESTER
+  YEARLY
+  REVISION
+}
+
+enum LessonKind {
+  VIDEO
+  EXAM_STRUCTURE
+  PAST_QUESTIONS
+  PDF
+}
+
+enum VideoProvider {
+  VDOCIPHER
+  YOUTUBE
+}
+
+enum Gateway {
+  PAYMOB
+  STRIPE
+  MANUAL
+}
+
+enum PaymentMethod {
+  CARD
+  WALLET
+  KIOSK
+  VALU
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  email        String?  @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  locale       String   @default("ar")
+  gradeId      String?
+  createdAt    DateTime @default(now())
+
+  grade        Grade?           @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  courses      Course[]         @relation("Instructor")
+  orders       Order[]
+  entitlements Entitlement[]
+  device       DeviceSession?
+  progress     StudentProgress?
+  attempts     QuizAttempt[]
+  views        LessonView[]
+}
+
+model Country {
+  id       String      @id @default(cuid())
+  code     CountryCode @unique
+  nameAr   String
+  nameEn   String
+  currency Currency
+  grades   Grade[]
+}
+
+/// Level is the school year (10–12). isTerminal marks Thanawya Amma / the national diploma year.
+model Grade {
+  id         String     @id @default(cuid())
+  countryId  String
+  curriculum Curriculum
+  level      Int
+  nameAr     String
+  nameEn     String
+  isTerminal Boolean    @default(false)
+
+  country Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  courses Course[]
+  users   User[]
+
+  @@unique([countryId, curriculum, level])
+}
+
+model Subject {
+  id       String       @id @default(cuid())
+  slug     String       @unique
+  nameAr   String
+  nameEn   String
+  courses  Course[]
+  concepts Concept[]
+  bundles  BundleRule[]
+}
+
+model Course {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  gradeId      String
+  subjectId    String
+  instructorId String
+  titleAr      String
+  titleEn      String
+  descAr       String?
+  descEn       String?
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  grade        Grade         @relation(fields: [gradeId], references: [id], onDelete: Restrict)
+  subject      Subject       @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  instructor   User          @relation("Instructor", fields: [instructorId], references: [id], onDelete: Restrict)
+  units        Unit[]
+  skus         Sku[]
+  entitlements Entitlement[]
+
+  @@index([gradeId, subjectId])
+}
+
+model Unit {
+  id       String   @id @default(cuid())
+  courseId String
+  order    Int
+  titleAr  String
+  titleEn  String
+  isFree   Boolean  @default(false)
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@unique([courseId, order])
+}
+
+model Lesson {
+  id      String     @id @default(cuid())
+  unitId  String
+  order   Int
+  kind    LessonKind
+  titleAr String
+  titleEn String
+  videoId String?
+  /// Storage key of the PDF; served only through short-lived signed URLs.
+  pdfKey  String?
+
+  unit     Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  video    VideoAsset?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  attempts QuizAttempt[]
+  views    LessonView[]
+
+  @@unique([unitId, order])
+}
+
+/// externalId is the VdoCipher video id or the YouTube video id (YouTube only for free/marketing lessons).
+model VideoAsset {
+  id          String        @id @default(cuid())
+  provider    VideoProvider
+  externalId  String
+  watermark   Boolean       @default(true)
+  durationSec Int?
+  lessons     Lesson[]
+
+  @@unique([provider, externalId])
+}
+
+/// Prices are integers in minor units (piastres / fils).
+/// saleFrom/saleTo bound when a SKU can be bought (REVISION packs open weeks before exams).
+/// accessEndsAt is when bought access stops; null means perpetual.
+model Sku {
+  id           String     @id @default(cuid())
+  courseId     String
+  accessType   AccessType
+  price        Int
+  currency     Currency
+  saleFrom     DateTime?
+  saleTo       DateTime?
+  accessEndsAt DateTime?
+  active       Boolean    @default(true)
+
+  course Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  items  OrderItem[]
+
+  @@index([courseId, accessType])
+}
+
+/// Applies percentOff to the cart lines whose subjects cover every subject in the rule.
+model BundleRule {
+  id         String    @id @default(cuid())
+  name       String
+  percentOff Int
+  active     Boolean   @default(true)
+  subjects   Subject[]
+}
+
+model Order {
+  id             String         @id @default(cuid())
+  userId         String
+  status         OrderStatus    @default(PENDING)
+  gateway        Gateway
+  method         PaymentMethod?
+  currency       Currency
+  subtotal       Int
+  discount       Int
+  total          Int
+  /// Kiosk reference the student pays in cash; the order stays PENDING until the gateway webhook arrives.
+  kioskRef       String?
+  /// Paymob intention id or Stripe Checkout Session id
+  gatewayOrderId String?        @unique
+  expiresAt      DateTime?
+  paidAt         DateTime?
+  createdAt      DateTime       @default(now())
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items        OrderItem[]
+  events       PaymentEvent[]
+  entitlements Entitlement[]
+
+  @@index([userId, status])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  skuId   String
+  price   Int
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku   Sku   @relation(fields: [skuId], references: [id], onDelete: Restrict)
+}
+
+/// One row per gateway callback. The unique gatewayEventId makes webhook handling idempotent.
+model PaymentEvent {
+  id             String   @id @default(cuid())
+  orderId        String
+  gatewayEventId String   @unique
+  payload        Json
+  createdAt      DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Entitlement {
+  id       String    @id @default(cuid())
+  userId   String
+  courseId String
+  orderId  String?
+  startsAt DateTime  @default(now())
+  /// null means perpetual access
+  endsAt   DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId, courseId])
+}
+
+/// One row per user: signing in on a new device replaces it, which revokes playback on the old one.
+model DeviceSession {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  fingerprint String
+  userAgent   String?
+  ip          String?
+  lastSeenAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudentProgress {
+  userId         String    @id
+  xp             Int       @default(0)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime? @db.Date
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Concept {
+  id        String @id @default(cuid())
+  subjectId String
+  nameAr    String
+  nameEn    String
+
+  subject  Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  attempts QuizAttempt[]
+}
+
+/// score is 0–100, mapped to the Egyptian tiers in DESIGN.md.
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  conceptId String?
+  score     Int
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson  Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  concept Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
+  @@index([userId, conceptId])
+}
+
+/// Attendance: watched seconds per lesson.
+model LessonView {
+  userId      String
+  lessonId    String
+  watchedSec  Int       @default(0)
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@id([userId, lessonId])
+}

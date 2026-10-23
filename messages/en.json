@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "title": "Elhashash Academy",
+    "description": "Grade 10–12 lessons for Egypt and the UAE, with your real scores in front of you."
+  },
+  "nav": {
+    "switchLocale": "العربية"
+  },
+  "home": {
+    "headline": "Know your real score in every lesson, before the exam",
+    "lede": "Curriculum lessons, exam structure and past ministry questions for Grades 10 to 12. Unit 1 of every subject is free.",
+    "ctaFree": "Start the free unit"
+  },
+  "signin": {
+    "title": "Sign in",
+    "phone": "Mobile number",
+    "password": "Password",
+    "submit": "Sign in",
+    "error": "Wrong mobile number or password."
+  },
+  "checkout": {
+    "title": "Complete your subscription",
+    "unavailable": "This package can't be bought right now. Go back to the subject page and pick another package.",
+    "subtotal": "Subtotal",
+    "bundle": "Bundle discount",
+    "total": "Total to pay",
+    "method": "Payment method",
+    "pay": "Pay now",
+    "redirecting": "Opening the payment page…",
+    "access": {
+      "SEMESTER": "Semester",
+      "YEARLY": "Full year",
+      "REVISION": "Final revision"
+    },
+    "methods": {
+      "CARD": {
+        "name": "Bank card",
+        "hint": "Meeza, Visa, Mastercard",
+        "hintStripe": "Visa, Mastercard, Apple Pay, Google Pay"
+      },
+      "WALLET": {
+        "name": "Mobile wallet",
+        "hint": "Vodafone Cash, Etisalat Cash, Orange Cash, WE Pay"
+      },
+      "KIOSK": {
+        "name": "Cash at a kiosk",
+        "hint": "You get a reference number and pay within 72 hours. Access starts once you pay."
+      },
+      "VALU": {
+        "name": "Pay in instalments with valU",
+        "hint": "Split the package price over several months."
+      }
+    },
+    "errors": {
+      "unauthenticated": "Sign in first.",
+      "sku_unavailable": "One of the packages is no longer available. Refresh the page.",
+      "sku_not_on_sale": "The revision package isn't on sale right now.",
+      "currency_not_supported": "Paying in AED isn't available yet.",
+      "gateway_unavailable": "We couldn't reach the payment gateway. Try again in a minute.",
+      "generic": "Something went wrong. Try again.",
+      "method_unavailable": "That payment method isn’t available right now. Pick another one."
+    },
+    "result": {
+      "status": {
+        "PAID": "Paid. Your access is active",
+        "PENDING": "Waiting for payment",
+        "FAILED": "Payment didn't go through",
+        "EXPIRED": "Payment window expired",
+        "REFUNDED": "Refunded"
+      },
+      "detail": {
+        "PAID": "You can start studying now from your dashboard.",
+        "PENDING": "If you chose a kiosk, pay with the reference number within 72 hours. Your access turns on automatically after payment.",
+        "FAILED": "Nothing was charged. Try another payment method.",
+        "EXPIRED": "The reference number expired. Start a new order.",
+        "REFUNDED": "The amount went back to your original payment method."
+      },
+      "kioskRef": "Reference number:"
+    }
+  }
+}

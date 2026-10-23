@@ -21,7 +21,7 @@
     "phone": "Mobile number or email",
     "password": "Password",
     "submit": "Sign in",
-    "error": "Wrong mobile number, email or password.",
+    "error": "Wrong mobile number, email or password. After 10 wrong tries, sign-in pauses for 15 minutes.",
     "noAccount": "No account yet?",
     "signUp": "Create one"
   },
@@ -181,7 +181,8 @@
       "invalid_phone": "That mobile number isn't valid. Egypt: 11 digits starting 01. UAE: 10 digits starting 05.",
       "password_too_short": "The password is too short. Use at least 8 characters.",
       "invalid_grade": "Choose your grade.",
-      "phone_taken": "This number already has an account. Sign in instead."
+      "phone_taken": "This number already has an account. Sign in instead.",
+      "too_many": "Too many new accounts from this network. Try again in an hour."
     }
   },
   "dashboard": {

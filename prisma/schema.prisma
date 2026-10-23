@@ -347,3 +347,12 @@ model LessonView {
 
   @@id([userId, lessonId])
 }
+
+/// One row per failed sign-in or per sign-up, keyed like "login:<phone or email>" or "signup:<ip>"; used for rate limits.
+model AuthAttempt {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}

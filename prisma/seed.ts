@@ -1,6 +1,7 @@
 // Development seed: a small Egyptian Grade 12 catalog, one bundle rule and a test student.
 // Prices are placeholders in fils, AED only for now (30000 = 300 AED); set real ones from the admin later.
 // Test login (dev only): phone 01000000001, password from SEED_STUDENT_PASSWORD or "elhashash-dev-1234".
+// On the live database these two accounts are locked (random password); use a separate dev database to test.
 import { config } from "dotenv";
 import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";

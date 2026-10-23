@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { Link } from "@/i18n/navigation";
+import { safeNext } from "@/lib/safe-redirect";
 
 export default async function SignInPage({
   params,
@@ -15,8 +16,7 @@ export default async function SignInPage({
   const { error, next } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("signin");
-  // Only same-site paths, so the form can't be used as an open redirect.
-  const target = next?.startsWith("/") && !next.startsWith("//") ? next : `/${locale}/dashboard`;
+  const target = safeNext(next, `/${locale}/dashboard`);
 
   async function action(form: FormData) {
     "use server";

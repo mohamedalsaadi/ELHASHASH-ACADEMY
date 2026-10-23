@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         currency: "EGP",
         method,
         specialReference: order.id,
-        customer: { name: user.name, phone: user.phone, email: user.email },
+        customer: { name: user.name, phone: user.phone ?? "", email: user.email },
         items,
         notificationUrl: `${origin}/api/webhooks/paymob`,
         redirectionUrl: resultUrl,

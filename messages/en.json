@@ -14,10 +14,10 @@
   },
   "signin": {
     "title": "Sign in",
-    "phone": "Mobile number",
+    "phone": "Mobile number or email",
     "password": "Password",
     "submit": "Sign in",
-    "error": "Wrong mobile number or password."
+    "error": "Wrong mobile number, email or password."
   },
   "checkout": {
     "title": "Complete your subscription",

@@ -20,7 +20,7 @@ export default async function SignInPage({
   async function action(form: FormData) {
     "use server";
     try {
-      await signIn("credentials", { phone: form.get("phone"), password: form.get("password"), redirectTo: target });
+      await signIn("credentials", { login: form.get("login"), password: form.get("password"), redirectTo: target });
     } catch (e) {
       if (e instanceof AuthError) redirect(`/${locale}/signin?error=1&next=${encodeURIComponent(target)}`);
       throw e;
@@ -34,10 +34,9 @@ export default async function SignInPage({
         <label className="grid gap-2 text-label text-ink-muted">
           {t("phone")}
           <input
-            name="phone"
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel"
+            name="login"
+            type="text"
+            autoComplete="username"
             dir="ltr"
             required
             className="min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink"

@@ -20,11 +20,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/signin" },
   providers: [
     Credentials({
-      credentials: { phone: {}, password: {} },
+      credentials: { login: {}, password: {} },
       async authorize(raw) {
         const parsed = signInSchema.safeParse(raw);
         if (!parsed.success) return null;
-        const user = await db.user.findUnique({ where: { phone: parsed.data.phone } });
+        const { login } = parsed.data;
+        const user = await db.user.findUnique({ where: login.includes("@") ? { email: login } : { phone: login } });
         if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) return null;
         return { id: user.id, name: user.name, role: user.role };
       },

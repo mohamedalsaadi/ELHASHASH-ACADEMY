@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
+import type { Currency } from "@/lib/pricing-engine";
 import { requireStaff } from "@/lib/staff";
 import { TeacherNav } from "./TeacherNav";
 
@@ -42,7 +43,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
   ]);
 
   // ponytail: a bundle discount is shared across its lines by price; per-teacher payout rules go here if they ever differ.
-  const earnings = new Map<"AED" | "EGP", number>();
+  const earnings = new Map<Currency, number>();
   for (const { price, order } of sold) {
     const share = order.subtotal ? Math.round((price * order.total) / order.subtotal) : 0;
     earnings.set(order.currency, (earnings.get(order.currency) ?? 0) + share);

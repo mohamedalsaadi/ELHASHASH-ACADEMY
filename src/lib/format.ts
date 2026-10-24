@@ -1,6 +1,8 @@
+import type { Currency } from "./pricing-engine";
+
 // Prices are stored in minor units; show them with Western digits (see DESIGN.md, Digits).
-export function formatMoney(minor: number, currency: "EGP" | "AED", locale: string): string {
-  const region = currency === "AED" ? "AE" : "EG";
+export function formatMoney(minor: number, currency: Currency, locale: string): string {
+  const region = currency.slice(0, 2);
   return new Intl.NumberFormat(locale === "ar" ? `ar-${region}-u-nu-latn` : `en-${region}`, {
     style: "currency",
     currency,

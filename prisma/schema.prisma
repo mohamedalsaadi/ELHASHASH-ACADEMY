@@ -15,7 +15,12 @@ enum Role {
 
 enum CountryCode {
   EG
+  SA
   AE
+  KW
+  QA
+  BH
+  OM
 }
 
 enum Curriculum {
@@ -26,9 +31,15 @@ enum Curriculum {
   IB
 }
 
+/// KWD, BHD and OMR have 1000 minor units (fils); the rest have 100.
 enum Currency {
   EGP
+  SAR
   AED
+  KWD
+  QAR
+  BHD
+  OMR
 }
 
 /// FIXED_DAYS grants Sku.accessDays days from payment (skill courses such as IELTS).
@@ -105,6 +116,7 @@ model User {
   progress     StudentProgress?
   attempts     QuizAttempt[]
   views        LessonView[]
+  recorded     Lesson[]         @relation("LessonInstructor")
 }
 
 model Country {
@@ -113,10 +125,12 @@ model Country {
   nameAr   String
   nameEn   String
   currency Currency
+  /// Display order on /courses.
+  order    Int         @default(0)
   grades   Grade[]
 }
 
-/// Level is the school year (10–12). isTerminal marks Thanawya Amma / the national diploma year.
+/// Level is the school year (1–12); stages per country live in src/lib/stages.ts. isTerminal marks Thanawya Amma / the national diploma year.
 model Grade {
   id         String     @id @default(cuid())
   countryId  String
@@ -126,21 +140,37 @@ model Grade {
   nameEn     String
   isTerminal Boolean    @default(false)
 
-  country Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  courses Course[]
-  users   User[]
+  country  Country        @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  courses  Course[]
+  users    User[]
+  subjects GradeSubject[]
 
   @@unique([countryId, curriculum, level])
 }
 
 model Subject {
-  id       String       @id @default(cuid())
-  slug     String       @unique
+  id       String         @id @default(cuid())
+  slug     String         @unique
   nameAr   String
   nameEn   String
+  /// Key into the subject icon set (src/components/brand/SubjectIcon.tsx).
+  icon     String         @default("book")
+  grades   GradeSubject[]
   courses  Course[]
   concepts Concept[]
   bundles  BundleRule[]
+}
+
+/// Which subjects a grade teaches, shown as tiles even before a course exists. Edited by the owner.
+model GradeSubject {
+  gradeId   String
+  subjectId String
+  order     Int
+
+  grade   Grade   @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([gradeId, subjectId])
 }
 
 model Course {
@@ -183,18 +213,21 @@ model Unit {
 }
 
 model Lesson {
-  id      String     @id @default(cuid())
-  unitId  String
-  order   Int
-  kind    LessonKind
-  titleAr String
-  titleEn String
-  videoId String?
+  id           String     @id @default(cuid())
+  unitId       String
+  order        Int
+  kind         LessonKind
+  titleAr      String
+  titleEn      String
+  videoId      String?
   /// Storage key of the PDF; served only through short-lived signed URLs.
-  pdfKey  String?
+  pdfKey       String?
+  /// Who recorded the video; null means the course's instructor.
+  instructorId String?
 
   unit         Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
   video        VideoAsset?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  instructor   User?         @relation("LessonInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
   attempts     QuizAttempt[]
   views        LessonView[]
   skus         Sku[]

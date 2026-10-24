@@ -1,5 +1,5 @@
 export type AccessType = "SEMESTER" | "YEARLY" | "REVISION" | "FIXED_DAYS" | "RENTAL" | "LIVE";
-export type Currency = "EGP" | "AED";
+export type Currency = "EGP" | "SAR" | "AED" | "KWD" | "QAR" | "BHD" | "OMR";
 
 export type CartLine = {
   skuId: string;

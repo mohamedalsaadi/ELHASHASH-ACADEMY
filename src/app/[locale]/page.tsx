@@ -40,7 +40,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   const ways = [
     { key: "subscribe", Icon: BookOpenCheck, soon: false },
-    { key: "rent", Icon: CalendarClock, soon: true },
+    { key: "rent", Icon: CalendarClock, soon: false },
     { key: "live", Icon: Radio, soon: true },
   ] as const;
   const trust = [

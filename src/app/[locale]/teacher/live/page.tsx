@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { toTimeInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
-import { courseZone, formatWhen } from "@/lib/format";
+import { courseZone, formatWhen, minorPerUnit } from "@/lib/format";
 import { requireStaff } from "@/lib/staff";
 import { field, label } from "../../admin/styles";
 import { DeleteButton, SaveButton } from "../../admin/ui";
@@ -146,7 +146,7 @@ export default async function TeacherLivePage({
                     <input type="hidden" name="id" value={s.sku.id} />
                     <label className={label}>
                       {t("seatPrice", { currency: s.sku.currency })}
-                      <input name="price" type="number" min="0" step="0.01" defaultValue={s.sku.price / 100} required dir="ltr" className={`${field} num w-28`} />
+                      <input name="price" type="number" min="0" step="0.01" defaultValue={s.sku.price / minorPerUnit(s.sku.currency)} required dir="ltr" className={`${field} num w-28`} />
                     </label>
                     <label className="flex min-h-11 items-center gap-2 text-label text-ink-muted">
                       <input type="checkbox" name="active" defaultChecked={s.sku.active} className="size-4" />

@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { schoolYearEnd } from "@/lib/access";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { db } from "@/lib/db";
+import { toMinor } from "@/lib/format";
 import { phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
 
@@ -107,6 +108,12 @@ export async function updateLesson(form: FormData) {
   done();
 }
 
+/** New packages are priced in the course country's currency; skill courses have no country and stay in AED. */
+async function courseCurrency(courseId: string) {
+  const c = await db.course.findUniqueOrThrow({ where: { id: courseId }, select: { grade: { select: { country: { select: { currency: true } } } } } });
+  return c.grade?.country.currency ?? "AED";
+}
+
 export async function updateSku(form: FormData) {
   await requireAdmin();
   const d = z
@@ -120,10 +127,11 @@ export async function updateSku(form: FormData) {
       saleTo: z.string(),
     })
     .parse(Object.fromEntries(form));
+  const { currency } = await db.sku.findUniqueOrThrow({ where: { id: d.id }, select: { currency: true } });
   await db.sku.update({
     where: { id: d.id },
     data: {
-      price: Math.round(d.price * 100),
+      price: toMinor(d.price, currency),
       active: d.active,
       accessEndsAt: cairoDay(d.accessEndsAt, "end"),
       accessDays: d.accessDays,
@@ -161,7 +169,7 @@ export async function addRental(form: FormData) {
   const lesson = await db.lesson.findUniqueOrThrow({ where: { id: lessonId }, select: { unit: { select: { courseId: true } } } });
   if (!(await db.sku.count({ where: { lessonId } }))) {
     await db.sku.create({
-      data: { courseId: lesson.unit.courseId, lessonId, accessType: "RENTAL", price: 0, currency: "AED", active: false, accessDays: 7 },
+      data: { courseId: lesson.unit.courseId, lessonId, accessType: "RENTAL", price: 0, currency: await courseCurrency(lesson.unit.courseId), active: false, accessDays: 7 },
     });
   }
   done();

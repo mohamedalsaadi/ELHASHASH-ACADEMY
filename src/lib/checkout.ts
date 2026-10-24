@@ -1,14 +1,6 @@
 import { db } from "@/lib/db";
 import { price } from "@/lib/pricing-engine";
 
-export type Method = "CARD" | "WALLET" | "KIOSK" | "VALU";
-
-// Paymob (Egyptian wallets, kiosk cash, valU) when its keys are set, otherwise Stripe for cards.
-export function activeGateway(): { gateway: "PAYMOB" | "STRIPE"; methods: Method[] } {
-  if (process.env.PAYMOB_SECRET_KEY) return { gateway: "PAYMOB", methods: ["CARD", "WALLET", "KIOSK", "VALU"] };
-  return { gateway: "STRIPE", methods: ["CARD"] };
-}
-
 /** Loads purchasable SKUs and active bundle rules, then prices them. Throws PricingError on an invalid cart. */
 export async function priceSkus(skuIds: string[], now = new Date()) {
   const [skus, rules] = await Promise.all([

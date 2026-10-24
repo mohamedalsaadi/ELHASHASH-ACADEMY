@@ -6,7 +6,7 @@ import { z } from "zod";
 import { wallTime } from "@/lib/admin-input";
 import { deleteRoom } from "@/lib/daily";
 import { db } from "@/lib/db";
-import { courseZone } from "@/lib/format";
+import { courseZone, toMinor } from "@/lib/format";
 import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
 
 // Teachers schedule sessions in their own courses; the seat price is the owner's, like every other price.
@@ -106,6 +106,10 @@ export async function setSeatPrice(form: FormData) {
   const d = z
     .object({ id: z.string(), price: z.coerce.number().min(0).max(1_000_000), active: z.literal("on").optional().transform(Boolean) })
     .parse(Object.fromEntries(form));
-  await db.sku.updateMany({ where: { id: d.id, accessType: "LIVE", liveSession: { cancelledAt: null } }, data: { price: Math.round(d.price * 100), active: d.active } });
+  const sku = await db.sku.findFirstOrThrow({ where: { id: d.id, accessType: "LIVE" }, select: { currency: true } });
+  await db.sku.updateMany({
+    where: { id: d.id, accessType: "LIVE", liveSession: { cancelledAt: null } },
+    data: { price: toMinor(d.price, sku.currency), active: d.active },
+  });
   done();
 }

@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
+import { minorPerUnit } from "@/lib/format";
 import { assertCourse, requireStaff } from "@/lib/staff";
 import { addLesson, addRental, addSku, addUnit, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
 import { field, label } from "../../styles";
@@ -188,7 +189,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
               <div className="grid gap-3 sm:grid-cols-4">
                 <label className={label}>
                   {t("price", { currency: s.currency })}
-                  <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / 100} required dir="ltr" className={`${field} num`} />
+                  <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / minorPerUnit(s.currency)} required dir="ltr" className={`${field} num`} />
                 </label>
                 {s.accessType === "FIXED_DAYS" ? (
                   <label className={label}>
@@ -256,7 +257,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                       {title}
                       <label className={label}>
                         {t("price", { currency: s.currency })}
-                        <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / 100} required dir="ltr" className={`${field} num w-28`} />
+                        <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / minorPerUnit(s.currency)} required dir="ltr" className={`${field} num w-28`} />
                       </label>
                       <label className={label}>
                         {t("accessDays")}

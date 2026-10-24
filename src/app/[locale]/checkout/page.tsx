@@ -2,7 +2,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
-import { activeGateway, priceSkus } from "@/lib/checkout";
+import { priceSkus } from "@/lib/checkout";
+import { activeGateway } from "@/lib/gateway";
 import { formatMoney } from "@/lib/format";
 import { PricingError } from "@/lib/pricing-engine";
 import { PayForm } from "./PayForm";
@@ -74,7 +75,7 @@ export default async function CheckoutPage({
           <dd className="num font-semibold">{money(priced.total)}</dd>
         </dl>
       </section>
-      <PayForm skuIds={skuIds} locale={locale} {...activeGateway()} />
+      <PayForm skuIds={skuIds} locale={locale} {...activeGateway(priced.currency)} />
       <p className="text-small text-ink-muted">
         {t.rich("agree", {
           terms: (c) => <Link href="/terms" className="text-pen underline">{c}</Link>,

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { activeGateway, priceSkus } from "@/lib/checkout";
+import { priceSkus } from "@/lib/checkout";
 import { db } from "@/lib/db";
+import { activeGateway, stripeUnitAmount } from "@/lib/gateway";
 import { createIntention } from "@/lib/paymob";
 import { PricingError } from "@/lib/pricing-engine";
 import { checkoutSchema } from "@/lib/schemas/checkout";
@@ -19,8 +20,6 @@ export async function POST(req: Request) {
   const parsed = checkoutSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   const { skuIds, method, locale } = parsed.data;
-  const { gateway, methods } = activeGateway();
-  if (!methods.includes(method)) return NextResponse.json({ error: "method_unavailable" }, { status: 400 });
 
   let result;
   try {
@@ -31,8 +30,8 @@ export async function POST(req: Request) {
   }
   const { priced, skus, missing } = result;
   if (missing) return NextResponse.json({ error: "sku_unavailable" }, { status: 400 });
-  // Paymob Egypt only settles EGP.
-  if (gateway === "PAYMOB" && priced.currency !== "EGP") return NextResponse.json({ error: "currency_not_supported" }, { status: 400 });
+  const { gateway, methods } = activeGateway(priced.currency);
+  if (!methods.includes(method)) return NextResponse.json({ error: "method_unavailable" }, { status: 400 });
 
   const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id } });
   const order = await db.order.create({
@@ -69,7 +68,7 @@ export async function POST(req: Request) {
         expires_at: Math.floor(Date.now() / 1000) + STRIPE_TTL_S,
         line_items: items.map((i) => ({
           quantity: 1,
-          price_data: { currency: priced.currency.toLowerCase(), unit_amount: i.amountCents, product_data: { name: i.name } },
+          price_data: { currency: priced.currency.toLowerCase(), unit_amount: stripeUnitAmount(i.amountCents, priced.currency), product_data: { name: i.name } },
         })),
         success_url: resultUrl,
         cancel_url: resultUrl,

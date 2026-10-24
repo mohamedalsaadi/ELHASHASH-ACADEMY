@@ -1,3 +1,5 @@
+import { minorPerUnit } from "./format";
+
 export type AccessType = "SEMESTER" | "YEARLY" | "REVISION" | "FIXED_DAYS" | "RENTAL" | "LIVE";
 export type Currency = "EGP" | "SAR" | "AED" | "KWD" | "QAR" | "BHD" | "OMR";
 
@@ -32,7 +34,11 @@ type Plan = { amount: number; applications: Application[] };
 /** One lecture or one live seat: bundles are for whole-course subscriptions only. */
 const SINGLES = new Set<AccessType>(["RENTAL", "LIVE"]);
 
-const lineDiscount = (amount: number, percentOff: number) => Math.round((amount * percentOff) / 100);
+// Discounts round to 0.01 of the unit, so 3-decimal currencies stay on a multiple of 10 fils (Stripe requires it).
+const lineDiscount = (amount: number, percentOff: number, currency: Currency) => {
+  const step = minorPerUnit(currency) / 100;
+  return Math.round((amount * percentOff) / 100 / step) * step;
+};
 
 /**
  * Prices a cart in integer minor units (piastres / fils).
@@ -58,7 +64,7 @@ export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedC
       if (i === undefined) return null;
       picked.push(i);
     }
-    const amount = picked.reduce((sum, i) => sum + lineDiscount(cart[i].price, rule.percentOff), 0);
+    const amount = picked.reduce((sum, i) => sum + lineDiscount(cart[i].price, rule.percentOff, currency), 0);
     return { ruleId: rule.id, lines: picked, amount };
   };
 
@@ -84,7 +90,7 @@ export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedC
   const discounts = new Map<number, number>();
   for (const app of plan.applications) {
     const pct = rulesById.get(app.ruleId)!.percentOff;
-    for (const i of app.lines) discounts.set(i, lineDiscount(cart[i].price, pct));
+    for (const i of app.lines) discounts.set(i, lineDiscount(cart[i].price, pct, currency));
   }
 
   const subtotal = cart.reduce((sum, l) => sum + l.price, 0);

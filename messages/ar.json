@@ -81,7 +81,8 @@
       "REVISION": "مراجعة نهائية",
       "FIXED_DAYS": "وصول لمدة {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
       "RENTAL": "استئجار حصة لمدة {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
-      "LIVE": "مقعد في حصة مباشرة"
+      "LIVE": "مقعد في حصة مباشرة",
+      "MONTHLY": "شهر واحد"
     },
     "methods": {
       "CARD": {
@@ -148,7 +149,8 @@
       "REVISION": "مراجعة نهائية",
       "FIXED_DAYS": "وصول لمدة {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
       "RENTAL": "استئجار حصة لمدة {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
-      "LIVE": "مقعد في حصة مباشرة"
+      "LIVE": "مقعد في حصة مباشرة",
+      "MONTHLY": "شهر واحد"
     },
     "kind": {
       "VIDEO": "فيديو",
@@ -180,7 +182,27 @@
     "pickSubject": "مواد <m>{grade}</m>",
     "subjectCount": "{count, plural, one {مادة واحدة} two {مادتان} few {# مواد} many {# مادة} other {# مادة}} · {live, plural, =0 {لا توجد مادة متاحة بعد} one {مادة واحدة متاحة الآن} two {مادتان متاحتان الآن} few {# متاحة الآن} many {# متاحة الآن} other {# متاحة الآن}}",
     "soon": "قريبًا",
-    "recordedBy": "تسجيل {name}"
+    "recordedBy": "تسجيل {name}",
+    "plans": {
+      "title": "اختر خطتك",
+      "SINGLE": "حصة واحدة",
+      "MONTHLY": "شهر",
+      "SEMESTER": "فصل دراسي كامل",
+      "bestValue": "الأفضل قيمة",
+      "monthN": "الشهر {n}",
+      "termN": "الفصل الدراسي {n}",
+      "singleIncl": "حصة مسجلة واحدة، متاحة لمدة {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+      "monthIncl": "حصص الشهر المسجلة ({count, plural, zero {# حصة} one {حصة واحدة} two {حصتان} few {# حصص} many {# حصة} other {# حصة}})، متاحة لمدة {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+      "semesterIncl": "كل الحصص المسجلة في الفصل ({count})",
+      "liveYes": "الحصص المباشرة في الفصل",
+      "liveNo": "بدون حصص مباشرة",
+      "askYes": "اسأل معلمك تحت كل حصة",
+      "askNo": "بدون أسئلة",
+      "perLecture": "{price} للحصة",
+      "save": "وفّر {pct}٪ مقارنة بالحصص المنفردة",
+      "pickLecture": "اختر حصة من القائمة بالأسفل",
+      "other": "باقات أخرى"
+    }
   },
   "player": {
     "signIn": "سجّل الدخول لمشاهدة هذا الدرس.",
@@ -266,7 +288,13 @@
     "subjectsHint": "اختر المواد التي يدرسها هذا الصف. تظهر للطلاب في صفحة الصف، وتبقى المادة التي لها دورة ظاهرة حتى لو لم تُخترها.",
     "subjectsGrade": "الصف",
     "subjectsOpen": "عرض المواد",
-    "subjectsLink": "مواد كل صف"
+    "subjectsLink": "مواد كل صف",
+    "term": "الفصل الدراسي",
+    "lessonMonth": "الشهر",
+    "noMonth": "بدون شهر",
+    "perLecture": "{count, plural, zero {# حصة} one {حصة واحدة} two {حصتان} few {# حصص} many {# حصة} other {# حصة}} · {price} للحصة",
+    "saveVsSingles": "أرخص من الحصص المنفردة بنسبة {pct}٪",
+    "dearerThanSingles": "أغلى من شراء الحصص منفردة، خفّض السعر"
   },
   "signup": {
     "title": "إنشاء حساب طالب",
@@ -325,7 +353,8 @@
     "noStudents": "لا يوجد طلاب مشتركون الآن.",
     "until": "حتى {date}",
     "forever": "وصول دائم",
-    "navLive": "الحصص المباشرة"
+    "navLive": "الحصص المباشرة",
+    "navQuestions": "الأسئلة"
   },
   "live": {
     "title": "الحصص المباشرة",
@@ -367,5 +396,25 @@
     "opensIn": "تفتح الغرفة بعد",
     "opensHint": "يمكنك الدخول قبل البدء بـ {minutes, plural, few {# دقائق} other {# دقيقة}}. ستفتح هذه الصفحة الغرفة تلقائيًا.",
     "pastError": "هذا الوقت مضى بالفعل. اختر وقتًا قادمًا."
+  },
+  "questions": {
+    "title": "الأسئلة",
+    "ask": "اسأل معلمك عن هذه الحصة",
+    "askHint": "حتى 5 أسئلة في اليوم. يجيبك المعلم هنا وفي لوحتك.",
+    "send": "إرسال",
+    "update": "تعديل الإجابة",
+    "answer": "إجابتك",
+    "answeredBy": "أجاب {name}",
+    "waiting": "في انتظار إجابة المعلم",
+    "plansOnly": "الأسئلة متاحة مع الاشتراك الشهري واشتراك الفصل الدراسي.",
+    "newAnswers": "إجابات جديدة",
+    "unanswered": "في انتظار الإجابة ({count})",
+    "allAnswered": "كل الأسئلة لها إجابة.",
+    "recent": "أُجيبت مؤخرًا",
+    "result": {
+      "ok": "تم الإرسال. سيجيبك المعلم هنا.",
+      "limited": "سألت 5 أسئلة اليوم. حاول مرة أخرى غدًا.",
+      "invalid": "اكتب سؤالك (من 3 إلى 1500 حرف)."
+    }
   }
 }

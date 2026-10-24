@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { CIRCLE_PATH } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
-import { activeRentals, hasAccess, onSale } from "@/lib/catalog";
+import { grantsFor, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatMoney, formatWhen } from "@/lib/format";
+import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,67 @@ function LockIcon() {
       <rect x="3" y="7" width="10" height="7" rx="1.5" />
       <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
     </svg>
+  );
+}
+
+function Tick({ on }: { on: boolean }) {
+  return (
+    <svg aria-hidden viewBox="0 0 16 16" className={`mt-0.5 size-4 shrink-0 fill-none ${on ? "stroke-pen" : "stroke-field"}`} strokeWidth="2" strokeLinecap="round">
+      <path d={on ? "M3 8.5l3 3 7-7" : "M4 8h8"} />
+    </svg>
+  );
+}
+
+type Line = { on: boolean; text: string };
+type Offer = { id: string | null; label?: string; price: string; notes: { text: string; good?: boolean }[] };
+
+/** One plan as a card: what it includes, then each way to buy it with its price per lecture and saving. */
+function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }: { name: string; lines: Line[]; offers: Offer[]; best?: boolean; bestLabel: string; cta: string; className?: string }) {
+  return (
+    <li className={`grid content-start gap-4 rounded-lg bg-surface p-5 ${best ? "border-[1.5px] border-ink shadow-paper" : "border border-hairline"} ${className}`}>
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="font-display text-h3 font-bold">{name}</h3>
+        {best && (
+          <span className="relative shrink-0 px-3.5 py-2 font-display text-label font-semibold">
+            <svg viewBox="0 0 48 48" preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 size-full overflow-visible">
+              <path d={CIRCLE_PATH} fill="none" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke" className="stroke-pen" />
+            </svg>
+            <span className="marker">{bestLabel}</span>
+          </span>
+        )}
+      </div>
+      <ul className="grid gap-2 text-small">
+        {lines.map((l) => (
+          <li key={l.text} className={`flex gap-2 ${l.on ? "" : "text-ink-muted"}`}>
+            <Tick on={l.on} />
+            {l.text}
+          </li>
+        ))}
+      </ul>
+      {offers.map((o) => (
+        <div key={o.id ?? "pick"} className="grid gap-1.5 border-t border-dashed border-rule pt-3">
+          {o.id && o.label && <span className="text-small font-semibold">{o.label}</span>}
+          <span className="num font-display text-h2 font-extrabold">{o.price}</span>
+          {o.notes.map((n) => (
+            <span key={n.text} className={`text-small ${n.good ? "font-semibold text-up" : "text-ink-muted"}`}>
+              {n.text}
+            </span>
+          ))}
+          {o.id ? (
+            <Link
+              href={{ pathname: "/checkout", query: { sku: o.id } }}
+              className={`mt-1 rounded-sm px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]" : "border-[1.5px] border-ink hover:bg-marker"}`}
+            >
+              {cta}
+            </Link>
+          ) : (
+            <a href="#units" className="mt-1 text-small font-semibold text-pen underline underline-offset-4">
+              {o.label}
+            </a>
+          )}
+        </div>
+      ))}
+    </li>
   );
 }
 
@@ -41,7 +104,24 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   if (!course) notFound();
 
   const session = await auth();
-  const [owned, rentals] = await Promise.all([hasAccess(session?.user?.id, course.id, now), activeRentals(session?.user?.id, course.id, now)]);
+  const grants = await grantsFor(session?.user?.id, course.id, now);
+  const opens = (l: { id: string; month: number | null }, term: number) => grants.some((g) => opensLesson(g, { id: l.id, month: l.month, term }, now));
+  const paid = course.units.filter((u) => !u.isFree).flatMap((u) => u.lessons.map((l) => ({ l, term: u.term })));
+  const owned = paid.length > 0 && paid.every(({ l, term }) => opens(l, term));
+  const rentalOf = (id: string) => grants.find((g) => g.lessonId === id && g.startsAt <= now);
+
+  // The three plans. The cheapest lecture rental is the single-lecture price every plan is compared with.
+  const tp = await getTranslations("catalog.plans");
+  const single = course.units.flatMap((u) => u.lessons.flatMap((l) => l.skus)).sort((a, b) => a.price - b.price)[0];
+  const months = course.skus.filter((s) => s.accessType === "MONTHLY").sort((a, b) => (a.month ?? 0) - (b.month ?? 0));
+  const terms = course.skus.filter((s) => s.accessType === "SEMESTER").sort((a, b) => (a.term ?? 0) - (b.term ?? 0));
+  const others = course.skus.filter((s) => s.accessType !== "MONTHLY" && s.accessType !== "SEMESTER");
+  const offer = (s: (typeof course.skus)[number], label?: string): Offer => {
+    const v = planValue(s.price, lecturesIn(course.units, s), single?.price ?? null);
+    const notes: Offer["notes"] = v ? [{ text: tp("perLecture", { price: formatMoney(v.perLecture, s.currency, locale) }) }] : [];
+    if (v?.savePct && v.savePct > 0) notes.push({ text: tp("save", { pct: v.savePct }), good: true });
+    return { id: s.id, label, price: formatMoney(s.price, s.currency, locale), notes };
+  };
   const firstFree = course.units.find((u) => u.isFree)?.lessons[0];
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
   const lessonHref = (id: string) => `/courses/${course.slug}/lessons/${id}`;
@@ -67,10 +147,9 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
         )}
       </section>
 
-      <section className="grid gap-4">
+      <section id="units" className="grid scroll-mt-24 gap-4">
         <h2 className="font-display text-h2 font-semibold">{t("units")}</h2>
         {course.units.map((u) => {
-          const open = owned || u.isFree;
           return (
             <div key={u.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
               <div className="flex items-center justify-between gap-3">
@@ -79,8 +158,10 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
               </div>
               <ul className="grid">
                 {u.lessons.map((l) => {
-                  const rented = rentals.has(l.id);
-                  const until = rentals.get(l.id);
+                  const open = u.isFree || opens(l, u.term);
+                  const rental = rentalOf(l.id);
+                  const rented = !!rental;
+                  const until = rental?.endsAt;
                   const rent = l.skus[0];
                   const label = (
                     <>
@@ -95,7 +176,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                   );
                   return (
                     <li key={l.id} className="border-t border-hairline first:border-t-0">
-                      {open || rented ? (
+                      {open ? (
                         <Link
                           href={lessonHref(l.id)}
                           className="flex items-center justify-between gap-3 rounded-sm px-2 py-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
@@ -149,7 +230,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                       <span className="text-small text-ink-muted">{formatWhen(l.startsAt, courseZone(course), locale)}</span>
                     </span>
                     <span className="text-small font-semibold">
-                      {owned ? (
+                      {grants.some((g) => opensLive(g, l.id, now)) ? (
                         <span className="text-up">{t("liveIncluded")}</span>
                       ) : seat ? (
                         <>
@@ -167,11 +248,61 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
         </section>
       )}
 
-      {!owned && course.skus.length > 0 && (
-        <section id="packages" className="grid gap-4">
-          <h2 className="font-display text-h2 font-semibold">{t("packages")}</h2>
+      {!owned && (single || months.length > 0 || terms.length > 0) && (
+        <section id="packages" className="grid scroll-mt-24 gap-4">
+          <h2 className="font-display text-h2 font-semibold">{tp("title")}</h2>
+          {/* Side by side from tablet width; on phones the semester comes first. */}
+          <ul className="grid gap-4 sm:grid-cols-3">
+            {single && (
+              <PlanCard
+                name={tp("SINGLE")}
+                lines={[
+                  { on: true, text: tp("singleIncl", { days: single.accessDays ?? 0 }) },
+                  { on: false, text: tp("liveNo") },
+                  { on: false, text: tp("askNo") },
+                ]}
+                offers={[{ id: null, label: tp("pickLecture"), price: formatMoney(single.price, single.currency, locale), notes: [] }]}
+                bestLabel={tp("bestValue")}
+                cta={t("subscribe")}
+              />
+            )}
+            {months.length > 0 && (
+              <PlanCard
+                name={tp("MONTHLY")}
+                lines={[
+                  { on: true, text: tp("monthIncl", { count: lecturesIn(course.units, months[0]), days: months[0].accessDays ?? 30 }) },
+                  { on: false, text: tp("liveNo") },
+                  { on: true, text: tp("askYes") },
+                ]}
+                offers={months.map((s) => offer(s, s.month ? tp("monthN", { n: s.month }) : undefined))}
+                bestLabel={tp("bestValue")}
+                cta={t("subscribe")}
+              />
+            )}
+            {terms.length > 0 && (
+              <PlanCard
+                name={tp("SEMESTER")}
+                lines={[
+                  { on: true, text: tp("semesterIncl", { count: lecturesIn(course.units, terms[0]) }) },
+                  { on: true, text: tp("liveYes") },
+                  { on: true, text: tp("askYes") },
+                ]}
+                offers={terms.map((s) => offer(s, s.term ? tp("termN", { n: s.term }) : undefined))}
+                best
+                bestLabel={tp("bestValue")}
+                cta={t("subscribe")}
+                className="order-first sm:order-none"
+              />
+            )}
+          </ul>
+        </section>
+      )}
+
+      {!owned && others.length > 0 && (
+        <section className="grid gap-4">
+          <h2 className="font-display text-h2 font-semibold">{tp("other")}</h2>
           <ul className="grid gap-3">
-            {course.skus.map((s) => (
+            {others.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-hairline bg-surface p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</span>

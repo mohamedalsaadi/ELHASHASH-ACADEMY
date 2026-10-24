@@ -81,7 +81,8 @@
       "REVISION": "Final revision",
       "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
       "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}",
-      "LIVE": "Seat in a live lecture"
+      "LIVE": "Seat in a live lecture",
+      "MONTHLY": "One month"
     },
     "methods": {
       "CARD": {
@@ -148,7 +149,8 @@
       "REVISION": "Final revision",
       "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
       "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}",
-      "LIVE": "Seat in a live lecture"
+      "LIVE": "Seat in a live lecture",
+      "MONTHLY": "One month"
     },
     "kind": {
       "VIDEO": "Video",
@@ -180,7 +182,27 @@
     "pickSubject": "<m>{grade}</m> subjects",
     "subjectCount": "{count, plural, one {# subject} other {# subjects}} · {live, plural, =0 {none available yet} other {# available now}}",
     "soon": "Coming soon",
-    "recordedBy": "Recorded by {name}"
+    "recordedBy": "Recorded by {name}",
+    "plans": {
+      "title": "Choose a plan",
+      "SINGLE": "Single lecture",
+      "MONTHLY": "1 month",
+      "SEMESTER": "Full semester",
+      "bestValue": "Best value",
+      "monthN": "Month {n}",
+      "termN": "Term {n}",
+      "singleIncl": "One recorded lecture, open for {days, plural, one {# day} other {# days}}",
+      "monthIncl": "The month's {count, plural, one {# recorded lecture} other {# recorded lectures}}, open for {days, plural, one {# day} other {# days}}",
+      "semesterIncl": "Every recorded lecture of the term ({count})",
+      "liveYes": "The term's live sessions",
+      "liveNo": "No live sessions",
+      "askYes": "Ask your teacher under each lecture",
+      "askNo": "No questions",
+      "perLecture": "{price} a lecture",
+      "save": "Save {pct}% vs single lectures",
+      "pickLecture": "Pick a lecture below",
+      "other": "Other packages"
+    }
   },
   "player": {
     "signIn": "Sign in to watch this lesson.",
@@ -266,7 +288,13 @@
     "subjectsHint": "Tick the subjects this grade teaches. Students see them on the grade page; unticked subjects that already have a course still show.",
     "subjectsGrade": "Grade",
     "subjectsOpen": "Show subjects",
-    "subjectsLink": "Subjects per grade"
+    "subjectsLink": "Subjects per grade",
+    "term": "Term",
+    "lessonMonth": "Month",
+    "noMonth": "No month",
+    "perLecture": "{count, plural, one {# lecture} other {# lectures}} · {price} a lecture",
+    "saveVsSingles": "{pct}% cheaper than single lectures",
+    "dearerThanSingles": "dearer than buying single lectures; lower the price"
   },
   "signup": {
     "title": "Create a student account",
@@ -325,7 +353,8 @@
     "noStudents": "No students are subscribed right now.",
     "until": "Until {date}",
     "forever": "Lifetime access",
-    "navLive": "Live lectures"
+    "navLive": "Live lectures",
+    "navQuestions": "Questions"
   },
   "live": {
     "title": "Live lectures",
@@ -367,5 +396,25 @@
     "opensIn": "The room opens in",
     "opensHint": "You can enter {minutes} minutes before the start. This page opens the room by itself.",
     "pastError": "That time has already passed. Pick a time in the future."
+  },
+  "questions": {
+    "title": "Questions",
+    "ask": "Ask your teacher about this lecture",
+    "askHint": "Up to 5 questions a day. Your teacher answers here and on your dashboard.",
+    "send": "Send",
+    "update": "Update answer",
+    "answer": "Your answer",
+    "answeredBy": "Answered by {name}",
+    "waiting": "Waiting for your teacher's answer",
+    "plansOnly": "Questions come with the monthly and semester plans.",
+    "newAnswers": "New answers",
+    "unanswered": "Waiting for an answer ({count})",
+    "allAnswered": "Every question has an answer.",
+    "recent": "Recently answered",
+    "result": {
+      "ok": "Sent. Your teacher will answer here.",
+      "limited": "You've asked 5 questions today. Try again tomorrow.",
+      "invalid": "Write your question (3 to 1500 characters)."
+    }
   }
 }

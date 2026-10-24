@@ -35,8 +35,16 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     .filter((e) => e.lesson && isActive(e, now))
     .sort((a, b) => (a.endsAt?.getTime() ?? Infinity) - (b.endsAt?.getTime() ?? Infinity));
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
-  // Live lectures the student can join: every session of a subscribed course, plus sessions with a bought seat.
-  const subscribed = rows.filter((e) => isActive(e, now)).map((e) => e.courseId);
+  // Live lectures the student can join: every session of a course subscribed for a term or longer, plus bought seats.
+  const subscribed = entitlements.filter((e) => !e.lessonId && !e.liveSessionId && e.accessType !== "MONTHLY" && isActive(e, now)).map((e) => e.courseId);
+  // Answers from the last two weeks go to the top of the page.
+  const answers = await db.question.findMany({
+    where: { userId: session.user.id, answeredAt: { gt: new Date(now.getTime() - 14 * 86_400_000) } },
+    orderBy: { answeredAt: "desc" },
+    take: 5,
+    include: { answeredBy: { select: { name: true } }, lesson: { include: { unit: { include: { course: { select: { slug: true } } } } } } },
+  });
+  const tq = await getTranslations("questions");
   const seats = entitlements.filter((e) => e.liveSessionId && isActive(e, now)).map((e) => e.liveSessionId!);
   const live = (
     await db.liveSession.findMany({
@@ -49,6 +57,25 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
       <h1 className="font-display text-h1 font-semibold">{t("hello", { name: session.user.name ?? "" })}</h1>
+      {answers.length > 0 && (
+        <section className="grid gap-3">
+          <h2 className="font-display text-h2 font-semibold">{tq("newAnswers")}</h2>
+          <ul className="grid gap-2">
+            {answers.map((q) => (
+              <li key={q.id}>
+                <Link
+                  href={`/courses/${q.lesson.unit.course.slug}/lessons/${q.lessonId}`}
+                  className="grid gap-1 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                >
+                  <span className="text-small text-ink-muted">{ar ? q.lesson.titleAr : q.lesson.titleEn}</span>
+                  <span dir="auto" className="line-clamp-2">{q.answer}</span>
+                  <span className="text-label font-semibold text-pen">{tq("answeredBy", { name: q.answeredBy?.name ?? "" })}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section className="grid gap-4">
         <h2 className="font-display text-h2 font-semibold">{t("myCourses")}</h2>
         {rows.length === 0 ? (

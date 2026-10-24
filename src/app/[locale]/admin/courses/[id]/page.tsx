@@ -4,10 +4,11 @@ import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { minorPerUnit } from "@/lib/format";
+import { lecturesIn } from "@/lib/plans";
 import { assertCourse, requireStaff } from "@/lib/staff";
 import { addLesson, addRental, addSku, addUnit, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
 import { field, label } from "../../styles";
-import { DeleteButton, SaveButton } from "../../ui";
+import { DeleteButton, PlanPrice, SaveButton } from "../../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,10 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   const packages = course.skus.filter((s) => !s.lessonId && !s.liveSessionId);
   const rentalOf = new Map(course.skus.filter((s) => s.lessonId).map((s) => [s.lessonId!, s]));
   // Skill courses sell for a number of days; school subjects by term or year.
-  const packageTypes = course.kind === "SKILL" ? (["FIXED_DAYS"] as const) : (["SEMESTER", "YEARLY", "REVISION"] as const);
+  const packageTypes = course.kind === "SKILL" ? (["FIXED_DAYS"] as const) : (["SEMESTER", "MONTHLY", "YEARLY", "REVISION"] as const);
+  // Plans are compared with the cheapest lecture rental, as on the course page.
+  const single = course.skus.filter((s) => s.lessonId && s.active).sort((a, b) => a.price - b.price)[0]?.price ?? null;
+  const numbers = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
   // React resets a form after its action runs, and a reset <select> falls back to its first option.
   // A key that changes on every render remounts lesson forms with the saved values instead.
   const renderedAt = Date.now();
@@ -115,6 +119,16 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                 {t("titleEn")}
                 <input name="titleEn" defaultValue={u.titleEn} required dir="ltr" className={field} />
               </label>
+              <label className={label}>
+                {t("term")}
+                <select name="term" defaultValue={u.term} className={field}>
+                  {numbers(1, 2).map((n) => (
+                    <option key={n} value={n}>
+                      {tc("plans.termN", { n })}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className={`${check} min-h-11`}>
                 <input type="checkbox" name="isFree" defaultChecked={u.isFree} className="size-4" />
                 {t("freeUnit")}
@@ -159,6 +173,17 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     <input name="externalId" defaultValue={l.video?.externalId ?? ""} dir="ltr" className={field} />
                   </label>
                 </div>
+                <label className={label}>
+                  {t("lessonMonth")}
+                  <select name="month" defaultValue={l.month ?? ""} className={field}>
+                    <option value="">{t("noMonth")}</option>
+                    {numbers(1, 12).map((n) => (
+                      <option key={n} value={n}>
+                        {tc("plans.monthN", { n })}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 {isAdmin && (
                   <label className={label}>
                     {t("lessonTeacher")}
@@ -202,14 +227,42 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
               <input type="hidden" name="id" value={s.id} />
               <h3 className="font-display text-h3 font-semibold">{tc(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</h3>
               <div className="grid gap-3 sm:grid-cols-4">
-                <label className={label}>
-                  {t("price", { currency: s.currency })}
-                  <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / minorPerUnit(s.currency)} required dir="ltr" className={`${field} num`} />
-                </label>
-                {s.accessType === "FIXED_DAYS" ? (
+                <PlanPrice
+                  label={t("price", { currency: s.currency })}
+                  defaultValue={s.price / minorPerUnit(s.currency)}
+                  currency={s.currency}
+                  locale={locale}
+                  lectures={lecturesIn(course.units, s)}
+                  single={single}
+                />
+                {s.accessType === "SEMESTER" && (
+                  <label className={label}>
+                    {t("term")}
+                    <select name="term" defaultValue={s.term ?? 1} className={field}>
+                      {numbers(1, 2).map((n) => (
+                        <option key={n} value={n}>
+                          {tc("plans.termN", { n })}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {s.accessType === "MONTHLY" && (
+                  <label className={label}>
+                    {t("lessonMonth")}
+                    <select name="month" defaultValue={s.month ?? 1} className={field}>
+                      {numbers(1, 12).map((n) => (
+                        <option key={n} value={n}>
+                          {tc("plans.monthN", { n })}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {s.accessType === "FIXED_DAYS" || s.accessType === "MONTHLY" ? (
                   <label className={label}>
                     {t("accessDays")}
-                    <input name="accessDays" type="number" min="1" max="3650" step="1" defaultValue={s.accessDays ?? 90} required dir="ltr" className={`${field} num`} />
+                    <input name="accessDays" type="number" min="1" max="3650" step="1" defaultValue={s.accessDays ?? 30} required dir="ltr" className={`${field} num`} />
                   </label>
                 ) : (
                   <label className={label}>

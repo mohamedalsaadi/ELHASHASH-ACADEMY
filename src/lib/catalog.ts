@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { mayAsk, opensLesson, opensLive, type Grant, type LessonScope } from "@/lib/plans";
 
 /** Prisma filter for SKUs that can be bought right now (same window rule as the pricing engine: [saleFrom, saleTo)). */
 export function onSale(now: Date) {
@@ -11,42 +12,35 @@ export function onSale(now: Date) {
   };
 }
 
-const active = (now: Date) => ({ startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] });
-
-/** Entitlements that open the whole course: not a rented lesson, not a live seat. */
+/** SKUs that sell the whole course or a plan of it: not a rented lesson, not a live seat. */
 const wholeCourse = { lessonId: null, liveSessionId: null };
 
-/** True when the user holds a whole-course subscription that is active at `now`. Rentals and live seats don't count. */
-export async function hasAccess(userId: string | undefined, courseId: string, now = new Date()) {
-  if (!userId) return false;
-  const count = await db.entitlement.count({ where: { userId, courseId, ...wholeCourse, ...active(now) } });
-  return count > 0;
-}
-
-/** The user's lessons rented and still active at `now`, mapped to when each rental ends. */
-export async function activeRentals(userId: string | undefined, courseId: string, now = new Date()) {
-  if (!userId) return new Map<string, Date | null>();
-  const rows = await db.entitlement.findMany({
-    where: { userId, courseId, lessonId: { not: null }, ...active(now) },
+/** The user's entitlements in a course that haven't ended; the rules in plans.ts decide what each one opens. */
+export async function grantsFor(userId: string | undefined, courseId: string, now = new Date()): Promise<Grant[]> {
+  if (!userId) return [];
+  return db.entitlement.findMany({
+    where: { userId, courseId, OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
     orderBy: { endsAt: "asc" },
-    select: { lessonId: true, endsAt: true },
+    select: { accessType: true, lessonId: true, liveSessionId: true, term: true, month: true, startsAt: true, endsAt: true },
   });
-  // ponytail: two overlapping rentals of one lesson show the later end; both stay valid either way.
-  return new Map(rows.map((r) => [r.lessonId!, r.endsAt]));
 }
 
-/** True when a subscription or an active rental opens this lesson. */
-export async function hasLessonAccess(userId: string | undefined, courseId: string, lessonId: string, now = new Date()) {
-  if (!userId) return false;
-  const count = await db.entitlement.count({
-    where: { userId, courseId, AND: [{ OR: [wholeCourse, { lessonId }] }, active(now)] },
-  });
-  return count > 0;
+/** A lesson as the plan rules see it. */
+export const lessonScope = (l: { id: string; month: number | null; unit: { term: number } }): LessonScope => ({ id: l.id, month: l.month, term: l.unit.term });
+
+/** True when a plan or a rental the user holds opens this lesson. */
+export async function hasLessonAccess(userId: string | undefined, courseId: string, lesson: LessonScope, now = new Date()) {
+  return (await grantsFor(userId, courseId, now)).some((g) => opensLesson(g, lesson, now));
+}
+
+/** True when the user may ask the teacher about this lesson. */
+export async function canAsk(userId: string | undefined, courseId: string, lesson: LessonScope, now = new Date()) {
+  return (await grantsFor(userId, courseId, now)).some((g) => mayAsk(g, lesson, now));
 }
 
 /**
- * Who may join a live session: its course's teacher and admins as hosts; as students, anyone subscribed to the
- * course or holding a seat in this session. Returns null for everyone else.
+ * Who may join a live session: its course's teacher and admins as hosts; as students, a seat holder or a
+ * term-or-longer subscriber (plans.ts opensLive). Returns null for everyone else.
  */
 export async function liveRole(
   user: { id: string; role: string } | undefined,
@@ -55,10 +49,7 @@ export async function liveRole(
 ): Promise<"host" | "student" | null> {
   if (!user) return null;
   if (user.role === "ADMIN" || session.course.instructorId === user.id) return "host";
-  const count = await db.entitlement.count({
-    where: { userId: user.id, courseId: session.courseId, AND: [{ OR: [wholeCourse, { liveSessionId: session.id }] }, active(now)] },
-  });
-  return count > 0 ? "student" : null;
+  return (await grantsFor(user.id, session.courseId, now)).some((g) => opensLive(g, session.id, now)) ? "student" : null;
 }
 
 /** What a course card needs: the cheapest package on sale, whether a free unit exists, and the grade. */

@@ -3,6 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import type { Currency } from "@/lib/pricing-engine";
+import { formatMoney, toMinor } from "@/lib/format";
+import { planValue } from "@/lib/plans";
 import { addTeacher, changePassword, createCourse } from "./actions";
 import { field, label } from "./styles";
 
@@ -87,6 +90,26 @@ export function TeacherForm() {
         <SaveButton>{t("addTeacher")}</SaveButton>
       </div>
     </form>
+  );
+}
+
+/** A plan's price input that shows, as the owner types, the price per lecture and how it compares with single lectures. */
+export function PlanPrice({ label: text, defaultValue, currency, locale, lectures, single }: { label: string; defaultValue: number; currency: Currency; locale: string; lectures: number; single: number | null }) {
+  const t = useTranslations("admin");
+  // Kept as typed: a half-typed "9." is not a number yet.
+  const [price, setPrice] = useState(String(defaultValue));
+  const v = planValue(toMinor(Number(price) || 0, currency), lectures, single);
+  return (
+    <label className={label}>
+      {text}
+      <input name="price" type="number" min="0" step="0.001" value={price} onChange={(e) => setPrice(e.target.value)} required dir="ltr" className={`${field} num`} />
+      {v && (
+        <span className={`text-label ${v.savePct !== null && v.savePct < 0 ? "font-semibold text-down" : ""}`}>
+          {t("perLecture", { count: lectures, price: formatMoney(v.perLecture, currency, locale) })}
+          {v.savePct !== null && (v.savePct < 0 ? ` · ${t("dearerThanSingles")}` : ` · ${t("saveVsSingles", { pct: v.savePct })}`)}
+        </span>
+      )}
+    </label>
   );
 }
 

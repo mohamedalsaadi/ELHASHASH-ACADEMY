@@ -52,6 +52,8 @@ enum AccessType {
   FIXED_DAYS
   RENTAL
   LIVE
+  /// One school month's lectures (Lesson.month), usually for 30 days.
+  MONTHLY
 }
 
 /// SCHOOL is one subject in one grade; SKILL is a course outside the school system (IELTS) with no grade or subject.
@@ -117,6 +119,8 @@ model User {
   attempts     QuizAttempt[]
   views        LessonView[]
   recorded     Lesson[]         @relation("LessonInstructor")
+  questions    Question[]       @relation("Asker")
+  answers      Question[]       @relation("Answerer")
 }
 
 model Country {
@@ -205,6 +209,8 @@ model Unit {
   titleAr  String
   titleEn  String
   isFree   Boolean @default(false)
+  /// School term, 1 or 2; a SEMESTER plan opens the units of its term.
+  term     Int     @default(1)
 
   course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons Lesson[]
@@ -224,6 +230,8 @@ model Lesson {
   pdfKey       String?
   /// Who recorded the video; null means the course's instructor.
   instructorId String?
+  /// Month of the school year (1 = first month) the lecture belongs to; a MONTHLY plan opens its month's lectures.
+  month        Int?
 
   unit         Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
   video        VideoAsset?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
@@ -232,6 +240,7 @@ model Lesson {
   views        LessonView[]
   skus         Sku[]
   entitlements Entitlement[]
+  questions    Question[]
 
   @@unique([unitId, order])
 }
@@ -265,6 +274,10 @@ model Sku {
   lessonId      String?
   /// Set only on LIVE SKUs: the session this SKU sells a seat in.
   liveSessionId String?    @unique
+  /// SEMESTER plans: the term they open (null opens every term).
+  term          Int?
+  /// MONTHLY plans: the month they open.
+  month         Int?
   active        Boolean    @default(true)
 
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -341,6 +354,10 @@ model Entitlement {
   lessonId      String?
   /// Set for a seat in one live session.
   liveSessionId String?
+  /// The plan's scope, copied from the SKU at payment; null on rows granted before plans existed (whole course).
+  accessType    AccessType?
+  term          Int?
+  month         Int?
   startsAt      DateTime  @default(now())
   /// null means perpetual access
   endsAt        DateTime?
@@ -442,4 +459,23 @@ model AuthAttempt {
   createdAt DateTime @default(now())
 
   @@index([key, createdAt])
+}
+
+/// A student's written question under a lecture, answered by a teacher. Text only for now.
+model Question {
+  id           String    @id @default(cuid())
+  userId       String
+  lessonId     String
+  body         String    @db.VarChar(1500)
+  answer       String?   @db.VarChar(4000)
+  answeredById String?
+  answeredAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  user       User   @relation("Asker", fields: [userId], references: [id], onDelete: Cascade)
+  answeredBy User?  @relation("Answerer", fields: [answeredById], references: [id], onDelete: SetNull)
+  lesson     Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@index([userId])
 }

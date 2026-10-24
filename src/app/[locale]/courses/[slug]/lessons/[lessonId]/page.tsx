@@ -4,9 +4,10 @@ import { auth } from "@/auth";
 import { Mark } from "@/components/brand/Mark";
 import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { Link } from "@/i18n/navigation";
-import { hasLessonAccess } from "@/lib/catalog";
+import { canAsk, hasLessonAccess, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
+import { AskForm } from "./AskForm";
 
 export const dynamic = "force-dynamic";
 
@@ -58,11 +59,17 @@ export default async function LessonPage({
   const { unit } = lesson;
   const course = unit.course;
 
-  // Unit 1 is open to everyone; every other lesson needs an active subscription or a rental of this lesson.
-  if (!unit.isFree) {
-    const session = await auth();
-    if (!(await hasLessonAccess(session?.user?.id, course.id, lesson.id))) redirect(`/${locale}/courses/${slug}#packages`);
-  }
+  // Unit 1 is open to everyone; every other lesson needs a plan that opens it or a rental of this lesson.
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!unit.isFree && !(await hasLessonAccess(userId, course.id, lessonScope(lesson)))) redirect(`/${locale}/courses/${slug}#packages`);
+  const [mayAsk, mine, tq] = await Promise.all([
+    canAsk(userId, course.id, lessonScope(lesson)),
+    userId
+      ? db.question.findMany({ where: { lessonId: lesson.id, userId }, orderBy: { createdAt: "desc" }, include: { answeredBy: { select: { name: true } } } })
+      : [],
+    getTranslations("questions"),
+  ]);
 
   const video = lesson.video;
   const title = ar ? lesson.titleAr : lesson.titleEn;
@@ -92,6 +99,28 @@ export default async function LessonPage({
           <Notice>{t("videoSoon")}</Notice>
         )}
       </div>
+
+      {userId && (mayAsk || mine.length > 0) && (
+        <section className="grid gap-4 border-t border-hairline pt-6">
+          <h2 className="font-display text-h2 font-semibold">{tq("title")}</h2>
+          {mayAsk ? <AskForm lessonId={lesson.id} /> : <p className="text-small text-ink-muted">{tq("plansOnly")}</p>}
+          <ul className="grid gap-3">
+            {mine.map((q) => (
+              <li key={q.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+                <p dir="auto" className="whitespace-pre-line">{q.body}</p>
+                {q.answer ? (
+                  <div className="grid gap-1 border-s-2 border-pen ps-3">
+                    <p className="text-label font-semibold text-pen">{tq("answeredBy", { name: q.answeredBy?.name ?? "" })}</p>
+                    <p dir="auto" className="whitespace-pre-line">{q.answer}</p>
+                  </div>
+                ) : (
+                  <p className="text-label text-ink-muted">{tq("waiting")}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

@@ -17,6 +17,9 @@ import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
 const text = z.string().trim().min(1).max(200);
 const optionalText = z.string().trim().max(2000).transform((s) => s || null);
 const checkbox = z.literal("on").optional().transform(Boolean);
+const term = z.coerce.number().int().min(1).max(2);
+/** Month of the school year; "" clears it. */
+const month = z.string().transform((s) => (s ? Number(s) : null)).pipe(z.number().int().min(1).max(12).nullable());
 
 const unitCourse = async (id: string) =>
   (await db.unit.findUniqueOrThrow({ where: { id }, select: { courseId: true } })).courseId;
@@ -43,7 +46,7 @@ export async function updateCourse(form: FormData) {
 export async function updateUnit(form: FormData) {
   const me = await requireStaff();
   const { id, ...data } = z
-    .object({ id: z.string(), titleAr: text, titleEn: text, isFree: checkbox })
+    .object({ id: z.string(), titleAr: text, titleEn: text, isFree: checkbox, term })
     .parse(Object.fromEntries(form));
   await assertCourse(me, await unitCourse(id));
   await db.unit.update({ where: { id }, data });
@@ -91,6 +94,7 @@ export async function updateLesson(form: FormData) {
       provider: z.enum(["", "VDOCIPHER", "YOUTUBE"]),
       externalId: z.string().trim().max(200),
       instructorId: z.string().optional(),
+      month,
     })
     .parse(Object.fromEntries(form));
   await assertCourse(me, await lessonCourse(d.id));
@@ -108,7 +112,7 @@ export async function updateLesson(form: FormData) {
     });
     videoId = video.id;
   }
-  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId } });
+  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId, month: d.month } });
   done();
 }
 
@@ -129,6 +133,8 @@ export async function updateSku(form: FormData) {
       accessDays: z.coerce.number().int().min(1).max(3650).optional(),
       saleFrom: z.string(),
       saleTo: z.string(),
+      term: term.optional(),
+      month: z.coerce.number().int().min(1).max(12).optional(),
     })
     .parse(Object.fromEntries(form));
   const { currency } = await db.sku.findUniqueOrThrow({ where: { id: d.id }, select: { currency: true } });
@@ -141,6 +147,8 @@ export async function updateSku(form: FormData) {
       accessDays: d.accessDays,
       saleFrom: cairoDay(d.saleFrom, "start"),
       saleTo: cairoDay(d.saleTo, "end"),
+      term: d.term,
+      month: d.month,
     },
   });
   done();
@@ -149,18 +157,20 @@ export async function updateSku(form: FormData) {
 export async function addSku(form: FormData) {
   await requireAdmin();
   const d = z
-    .object({ courseId: z.string(), accessType: z.enum(["SEMESTER", "YEARLY", "REVISION", "FIXED_DAYS"]) })
+    .object({ courseId: z.string(), accessType: z.enum(["SEMESTER", "MONTHLY", "YEARLY", "REVISION", "FIXED_DAYS"]) })
     .parse(Object.fromEntries(form));
   // New packages start hidden so a half-filled price never goes on sale.
-  // A full year ends with the school year; a fixed-days package starts at 90 days. The owner can change either.
+  // A full year ends with the school year; a month runs 30 days; a fixed-days package starts at 90. The owner can change each.
   await db.sku.create({
     data: {
       ...d,
       price: 0,
-      currency: "AED",
+      currency: await courseCurrency(d.courseId),
       active: false,
       accessEndsAt: d.accessType === "YEARLY" ? cairoDay(schoolYearEnd(new Date()), "end") : null,
-      accessDays: d.accessType === "FIXED_DAYS" ? 90 : null,
+      accessDays: d.accessType === "FIXED_DAYS" ? 90 : d.accessType === "MONTHLY" ? 30 : null,
+      term: d.accessType === "SEMESTER" ? 1 : null,
+      month: d.accessType === "MONTHLY" ? 1 : null,
     },
   });
   done();

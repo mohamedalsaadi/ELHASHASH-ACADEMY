@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { activeRentals, hasAccess, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
-import { formatMoney } from "@/lib/format";
+import { courseZone, formatMoney, formatWhen } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +27,15 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const course = await db.course.findUnique({
     where: { slug, published: true },
     include: {
-      grade: true,
+      grade: { include: { country: true } },
+      // Upcoming sessions; ones that started up to 5 hours ago are checked against their end below.
+      liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
       instructor: { select: { id: true, name: true } },
       units: {
         orderBy: { order: "asc" },
         include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now), take: 1 } } } },
       },
-      skus: { where: { ...onSale(now), lessonId: null }, orderBy: { price: "asc" } },
+      skus: { where: { ...onSale(now), lessonId: null, liveSessionId: null }, orderBy: { price: "asc" } },
     },
   });
   if (!course) notFound();
@@ -43,6 +45,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const firstFree = course.units.find((u) => u.isFree)?.lessons[0];
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
   const lessonHref = (id: string) => `/courses/${course.slug}/lessons/${id}`;
+  const live = course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime());
 
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
@@ -125,6 +128,41 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
           );
         })}
       </section>
+
+      {live.length > 0 && (
+        <section id="live" className="grid gap-4">
+          <h2 className="font-display text-h2 font-semibold">{t("live")}</h2>
+          <ul className="grid gap-3">
+            {live.map((l) => {
+              const seat = l.sku?.active && (!l.sku.saleTo || l.sku.saleTo > now) ? l.sku : null;
+              return (
+                <li key={l.id}>
+                  <Link
+                    href={`/live/${l.id}`}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  >
+                    <span className="grid gap-1">
+                      <span className="font-display font-semibold">{ar ? l.titleAr : l.titleEn}</span>
+                      <span className="text-small text-ink-muted">{formatWhen(l.startsAt, courseZone(course), locale)}</span>
+                    </span>
+                    <span className="text-small font-semibold">
+                      {owned ? (
+                        <span className="text-up">{t("liveIncluded")}</span>
+                      ) : seat ? (
+                        <>
+                          {t("liveSeat")} · <span className="num">{formatMoney(seat.price, seat.currency, locale)}</span>
+                        </>
+                      ) : (
+                        <span className="text-ink-muted">{t("liveSubscribers")}</span>
+                      )}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {!owned && course.skus.length > 0 && (
         <section id="packages" className="grid gap-4">

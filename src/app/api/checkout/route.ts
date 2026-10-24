@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   const resultUrl = `${origin}/${locale}/checkout/result?order=${order.id}`;
   const items = priced.lines.map((l) => {
     const sku = skus.get(l.skuId)!;
-    const name = sku.lesson ?? sku.course;
+    const name = sku.liveSession ?? sku.lesson ?? sku.course;
     return { name: `${locale === "ar" ? name.titleAr : name.titleEn} (${sku.accessType})`, amountCents: l.price - l.discount };
   });
 

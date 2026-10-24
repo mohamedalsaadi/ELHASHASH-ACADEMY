@@ -20,17 +20,17 @@ export function SaveButton({ children, danger }: { children?: React.ReactNode; d
 }
 
 /** Submits the surrounding form to `action` only after the browser's confirm dialog. */
-export function DeleteButton({ action }: { action: (form: FormData) => Promise<void> }) {
+export function DeleteButton({ action, label, confirmText }: { action: (form: FormData) => Promise<void>; label?: string; confirmText?: string }) {
   const t = useTranslations("admin");
   return (
     <button
       formAction={action}
       onClick={(e) => {
-        if (!confirm(t("confirmDelete"))) e.preventDefault();
+        if (!confirm(confirmText ?? t("confirmDelete"))) e.preventDefault();
       }}
       className={`${button} border-down text-down`}
     >
-      {t("delete")}
+      {label ?? t("delete")}
     </button>
   );
 }

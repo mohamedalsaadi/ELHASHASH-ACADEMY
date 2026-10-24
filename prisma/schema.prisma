@@ -33,12 +33,14 @@ enum Currency {
 
 /// FIXED_DAYS grants Sku.accessDays days from payment (skill courses such as IELTS).
 /// RENTAL is one recorded lesson (Sku.lessonId) for Sku.accessDays days.
+/// LIVE is a seat in one live session (Sku.liveSessionId), valid until the session ends.
 enum AccessType {
   SEMESTER
   YEARLY
   REVISION
   FIXED_DAYS
   RENTAL
+  LIVE
 }
 
 /// SCHOOL is one subject in one grade; SKILL is a course outside the school system (IELTS) with no grade or subject.
@@ -161,6 +163,7 @@ model Course {
   units        Unit[]
   skus         Sku[]
   entitlements Entitlement[]
+  liveSessions LiveSession[]
 
   @@index([gradeId, subjectId])
 }
@@ -216,22 +219,25 @@ model VideoAsset {
 /// saleFrom/saleTo bound when a SKU can be bought (REVISION packs open weeks before exams).
 /// accessEndsAt is when bought access stops; accessDays counts days from payment instead. Both null means perpetual.
 model Sku {
-  id           String     @id @default(cuid())
-  courseId     String
-  accessType   AccessType
-  price        Int
-  currency     Currency
-  saleFrom     DateTime?
-  saleTo       DateTime?
-  accessEndsAt DateTime?
-  accessDays   Int?
+  id            String     @id @default(cuid())
+  courseId      String
+  accessType    AccessType
+  price         Int
+  currency      Currency
+  saleFrom      DateTime?
+  saleTo        DateTime?
+  accessEndsAt  DateTime?
+  accessDays    Int?
   /// Set only on RENTAL SKUs: the one lesson this SKU rents.
-  lessonId     String?
-  active       Boolean    @default(true)
+  lessonId      String?
+  /// Set only on LIVE SKUs: the session this SKU sells a seat in.
+  liveSessionId String?    @unique
+  active        Boolean    @default(true)
 
-  course Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lesson Lesson?     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  items  OrderItem[]
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  liveSession LiveSession? @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  items       OrderItem[]
 
   @@index([courseId, accessType])
   @@index([lessonId])
@@ -294,22 +300,45 @@ model PaymentEvent {
 }
 
 model Entitlement {
-  id       String    @id @default(cuid())
-  userId   String
-  courseId String
-  orderId  String?
+  id            String    @id @default(cuid())
+  userId        String
+  courseId      String
+  orderId       String?
   /// null for a whole-course subscription; set for a rented lesson.
-  lessonId String?
-  startsAt DateTime  @default(now())
+  lessonId      String?
+  /// Set for a seat in one live session.
+  liveSessionId String?
+  startsAt      DateTime  @default(now())
   /// null means perpetual access
-  endsAt   DateTime?
+  endsAt        DateTime?
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  order  Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order       Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  lesson      Lesson?      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  liveSession LiveSession? @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
 
   @@index([userId, courseId])
+}
+
+/// A scheduled live lecture on Daily. The Daily room is created on the first join (roomUrl) and expires after the end.
+/// Cancelling keeps the row, so seats already sold stay on record for refunds.
+model LiveSession {
+  id          String    @id @default(cuid())
+  courseId    String
+  titleAr     String
+  titleEn     String
+  startsAt    DateTime
+  durationMin Int
+  roomUrl     String?
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sku          Sku?
+  entitlements Entitlement[]
+
+  @@index([courseId, startsAt])
 }
 
 /// One row per user: signing in on a new device replaces it, which revokes playback on the old one.

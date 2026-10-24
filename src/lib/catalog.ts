@@ -13,10 +13,13 @@ export function onSale(now: Date) {
 
 const active = (now: Date) => ({ startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] });
 
-/** True when the user holds a whole-course subscription that is active at `now`. Lesson rentals don't count. */
+/** Entitlements that open the whole course: not a rented lesson, not a live seat. */
+const wholeCourse = { lessonId: null, liveSessionId: null };
+
+/** True when the user holds a whole-course subscription that is active at `now`. Rentals and live seats don't count. */
 export async function hasAccess(userId: string | undefined, courseId: string, now = new Date()) {
   if (!userId) return false;
-  const count = await db.entitlement.count({ where: { userId, courseId, lessonId: null, ...active(now) } });
+  const count = await db.entitlement.count({ where: { userId, courseId, ...wholeCourse, ...active(now) } });
   return count > 0;
 }
 
@@ -36,15 +39,32 @@ export async function activeRentals(userId: string | undefined, courseId: string
 export async function hasLessonAccess(userId: string | undefined, courseId: string, lessonId: string, now = new Date()) {
   if (!userId) return false;
   const count = await db.entitlement.count({
-    where: { userId, courseId, AND: [{ OR: [{ lessonId: null }, { lessonId }] }, active(now)] },
+    where: { userId, courseId, AND: [{ OR: [wholeCourse, { lessonId }] }, active(now)] },
   });
   return count > 0;
+}
+
+/**
+ * Who may join a live session: its course's teacher and admins as hosts; as students, anyone subscribed to the
+ * course or holding a seat in this session. Returns null for everyone else.
+ */
+export async function liveRole(
+  user: { id: string; role: string } | undefined,
+  session: { id: string; courseId: string; course: { instructorId: string } },
+  now = new Date(),
+): Promise<"host" | "student" | null> {
+  if (!user) return null;
+  if (user.role === "ADMIN" || session.course.instructorId === user.id) return "host";
+  const count = await db.entitlement.count({
+    where: { userId: user.id, courseId: session.courseId, AND: [{ OR: [wholeCourse, { liveSessionId: session.id }] }, active(now)] },
+  });
+  return count > 0 ? "student" : null;
 }
 
 /** What a course card needs: the cheapest package on sale, whether a free unit exists, the grade and the teacher. */
 export function cardInclude(now: Date) {
   return {
-    skus: { where: { ...onSale(now), lessonId: null }, orderBy: { price: "asc" as const }, take: 1 },
+    skus: { where: { ...onSale(now), ...wholeCourse }, orderBy: { price: "asc" as const }, take: 1 },
     units: { where: { isFree: true }, select: { id: true }, take: 1 },
     grade: true,
     instructor: { select: { name: true, photoUrl: true } },

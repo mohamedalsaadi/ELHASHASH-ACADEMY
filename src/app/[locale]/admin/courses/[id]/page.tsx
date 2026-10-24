@@ -34,7 +34,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   const teachers = isAdmin
     ? await db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } })
     : [];
-  const packages = course.skus.filter((s) => !s.lessonId);
+  const packages = course.skus.filter((s) => !s.lessonId && !s.liveSessionId);
   const rentalOf = new Map(course.skus.filter((s) => s.lessonId).map((s) => [s.lessonId!, s]));
   // Skill courses sell for a number of days; school subjects by term or year.
   const packageTypes = course.kind === "SKILL" ? (["FIXED_DAYS"] as const) : (["SEMESTER", "YEARLY", "REVISION"] as const);

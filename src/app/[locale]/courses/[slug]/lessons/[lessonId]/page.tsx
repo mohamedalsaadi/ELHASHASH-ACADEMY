@@ -1,22 +1,14 @@
-import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Mark } from "@/components/brand/Mark";
+import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { Link } from "@/i18n/navigation";
 import { hasLessonAccess } from "@/lib/catalog";
 import { db } from "@/lib/db";
-import { DEVICE_COOKIE } from "@/lib/device";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
 
 export const dynamic = "force-dynamic";
-
-function Notice({ children }: { children: React.ReactNode }) {
-  return <div className="grid size-full place-items-center content-center gap-4 p-6 text-center text-ink-muted">{children}</div>;
-}
-
-const secondaryButton =
-  "rounded-sm border border-ink-muted px-4 py-2 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 /** DRM player: signed-in only, one device per account, watermark with name · phone · IP. */
 async function SecurePlayer({ videoId, title, path }: { videoId: string; title: string; path: string }) {
@@ -33,36 +25,9 @@ async function SecurePlayer({ videoId, title, path }: { videoId: string; title: 
     );
   }
   const userId = session.user.id;
-  const deviceId = (await cookies()).get(DEVICE_COOKIE)?.value;
-  if (!deviceId) return <Notice>{t("reload")}</Notice>;
-
-  const current = await db.deviceSession.findUnique({ where: { userId } });
-  if (current && current.fingerprint !== deviceId) {
-    async function watchHere() {
-      "use server";
-      const s = await auth();
-      const device = (await cookies()).get(DEVICE_COOKIE)?.value;
-      if (s?.user && device) await db.deviceSession.update({ where: { userId: s.user.id }, data: { fingerprint: device, lastSeenAt: new Date() } });
-      redirect(path);
-    }
-    return (
-      <Notice>
-        <p className="max-w-[45ch]">{t("otherDevice")}</p>
-        <form action={watchHere}>
-          <button className={secondaryButton}>{t("watchHere")}</button>
-        </form>
-      </Notice>
-    );
-  }
-
-  const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || "";
-  const userAgent = h.get("user-agent")?.slice(0, 300);
-  await db.deviceSession.upsert({
-    where: { userId },
-    create: { userId, fingerprint: deviceId, ip, userAgent },
-    update: { lastSeenAt: new Date(), ip, userAgent },
-  });
+  const device = await oneDevice(userId, path);
+  if ("block" in device) return device.block;
+  const { ip } = device;
 
   const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, phone: true } });
   let src: string;

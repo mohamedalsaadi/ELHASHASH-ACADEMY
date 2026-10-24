@@ -86,7 +86,8 @@
       "YEARLY": "Full year",
       "REVISION": "Final revision",
       "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
-      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}"
+      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}",
+      "LIVE": "Seat in a live lecture"
     },
     "methods": {
       "CARD": {
@@ -152,7 +153,8 @@
       "YEARLY": "Full year",
       "REVISION": "Final revision",
       "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
-      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}"
+      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}",
+      "LIVE": "Seat in a live lecture"
     },
     "kind": {
       "VIDEO": "Video",
@@ -168,7 +170,11 @@
     "skillEmpty": "No courses are published yet.",
     "rent": "Rent",
     "rentFor": "for {days, plural, one {# day} other {# days}}",
-    "rented": "Rented until {date}"
+    "rented": "Rented until {date}",
+    "live": "Live lectures",
+    "liveIncluded": "Included in your subscription",
+    "liveSeat": "Seat",
+    "liveSubscribers": "For subscribers"
   },
   "player": {
     "signIn": "Sign in to watch this lesson.",
@@ -280,7 +286,8 @@
     "until": "Open until {date}",
     "forever": "Open with no end date",
     "expired": "Subscription ended, renew it",
-    "myRentals": "Rented lectures"
+    "myRentals": "Rented lectures",
+    "myLive": "My live lectures"
   },
   "footer": {
     "terms": "Terms of use",
@@ -312,6 +319,43 @@
     "bioAr": "About you, in Arabic",
     "bioEn": "About you, in English",
     "publicCourses": "Courses ({count})",
-    "title": "{name}"
+    "title": "{name}",
+    "navLive": "Live lectures"
+  },
+  "live": {
+    "title": "Live lectures",
+    "schedule": "Schedule a live lecture",
+    "scheduleCta": "Schedule",
+    "course": "Course",
+    "titleAr": "Title (Arabic)",
+    "titleEn": "Title (English)",
+    "startsAt": "Starts at",
+    "startsAtIn": "Starts at ({zone} time)",
+    "zone": {
+      "cairo": "Cairo",
+      "dubai": "UAE"
+    },
+    "durationMin": "Length (minutes)",
+    "zoneHint": "Times are in the course country: Cairo time for Egyptian courses, UAE time for the rest. Subscribers join for free; the owner sets a seat price for everyone else.",
+    "upcoming": "Coming up",
+    "noUpcoming": "No live lectures scheduled yet.",
+    "past": "Past and cancelled",
+    "seats": "{count, plural, =0 {No seats sold} one {# seat sold} other {# seats sold}}",
+    "openRoom": "Open the room",
+    "cancel": "Cancel lecture",
+    "confirmCancel": "Cancel this live lecture? Seats already sold stay on record for refunds.",
+    "cancelled": "Cancelled",
+    "seatPrice": "Seat price ({currency})",
+    "seatOn": "Seats on sale",
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "isCancelled": "This live lecture was cancelled.",
+    "ended": "This live lecture has ended.",
+    "signIn": "Sign in to join this live lecture.",
+    "noSeat": "This live lecture is for course subscribers and seat holders.",
+    "buySeat": "Buy a seat · {price}",
+    "subscribe": "See subscriptions",
+    "opensIn": "The room opens in",
+    "opensHint": "You can enter {minutes} minutes before the start. This page opens the room by itself.",
+    "pastError": "That time has already passed. Pick a time in the future."
   }
 }

@@ -32,7 +32,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
         user: { select: { id: true, name: true, phone: true, email: true } },
         course: { select: { titleAr: true, titleEn: true } },
         lesson: { select: { titleAr: true, titleEn: true } },
-        order: { select: { items: { select: { sku: { select: { courseId: true, lessonId: true, accessType: true, accessDays: true } } } } } },
+        order: { select: { items: { select: { sku: { select: { courseId: true, lessonId: true, liveSessionId: true, accessType: true, accessDays: true } } } } } },
       },
     }),
     db.orderItem.findMany({
@@ -112,7 +112,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
         ) : (
           <ul className="grid gap-2">
             {subs.map((s) => {
-              const sku = s.order?.items.find((i) => i.sku.courseId === s.courseId && i.sku.lessonId === s.lessonId)?.sku;
+              const sku = s.order?.items.find((i) => i.sku.courseId === s.courseId && i.sku.lessonId === s.lessonId && i.sku.liveSessionId === s.liveSessionId)?.sku;
               return (
                 <li key={s.id} className={`${card} flex flex-wrap items-center justify-between gap-x-6 gap-y-2`}>
                   <span className="grid gap-1">

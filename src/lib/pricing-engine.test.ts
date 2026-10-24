@@ -79,9 +79,9 @@ describe("price", () => {
     expect(() => price([revision], [], new Date("2026-06-15T00:00:00Z"))).toThrow(new PricingError("sku_not_on_sale"));
   });
 
-  it("never bundles a lecture rental", () => {
-    const rental = line("physics", 5000, { accessType: "RENTAL" });
-    const r = price([line("math", 50000), rental], [rule("mp", ["math", "physics"], 15)], now);
+  it.each(["RENTAL", "LIVE"] as const)("never bundles a %s line", (accessType) => {
+    const single = line("physics", 5000, { accessType });
+    const r = price([line("math", 50000), single], [rule("mp", ["math", "physics"], 15)], now);
     expect(r.discount).toBe(0);
     expect(r.total).toBe(55000);
   });

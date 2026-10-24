@@ -41,7 +41,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const ways = [
     { key: "subscribe", Icon: BookOpenCheck, soon: false },
     { key: "rent", Icon: CalendarClock, soon: false },
-    { key: "live", Icon: Radio, soon: true },
+    { key: "live", Icon: Radio, soon: false },
   ] as const;
   const trust = [
     { key: "free", Icon: Unlock },

@@ -36,6 +36,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
                 userId: order.userId,
                 courseId: i.sku.courseId,
                 lessonId: i.sku.lessonId,
+                liveSessionId: i.sku.liveSessionId,
                 orderId: order.id,
                 endsAt: accessEnd(i.sku, paidAt),
               })),

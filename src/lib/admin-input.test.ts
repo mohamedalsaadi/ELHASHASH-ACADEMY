@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cairoDay, toDayInput, youtubeId } from "./admin-input";
+import { cairoDay, toDayInput, toTimeInput, wallTime, youtubeId } from "./admin-input";
 
 describe("youtubeId", () => {
   it("reads every common link form and the bare id", () => {
@@ -26,5 +26,17 @@ describe("cairo days", () => {
     const july = cairoDay("2027-07-15", "end")!;
     expect(july.toISOString()).toBe("2027-07-15T20:59:59.000Z");
     expect(toDayInput(july)).toBe("2027-07-15");
+  });
+});
+
+describe("wall times", () => {
+  it("reads a datetime-local value in the given zone and writes it back", () => {
+    const dubai = wallTime("2026-11-02T18:30", "Asia/Dubai")!;
+    expect(dubai.toISOString()).toBe("2026-11-02T14:30:00.000Z");
+    expect(toTimeInput(dubai, "Asia/Dubai")).toBe("2026-11-02T18:30");
+    // Cairo in summer time is UTC+3, in winter UTC+2.
+    expect(wallTime("2027-07-01T20:00", "Africa/Cairo")!.toISOString()).toBe("2027-07-01T17:00:00.000Z");
+    expect(wallTime("2027-01-10T20:00", "Africa/Cairo")!.toISOString()).toBe("2027-01-10T18:00:00.000Z");
+    expect(wallTime("", "Asia/Dubai")).toBeNull();
   });
 });

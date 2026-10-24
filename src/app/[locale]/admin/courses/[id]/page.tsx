@@ -50,7 +50,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   return (
     <main className="mx-auto grid max-w-4xl gap-10 px-4 py-12">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={isAdmin ? "/admin" : "/teacher"} className="text-small text-ink-muted hover:text-ink">
+        <Link href={isAdmin ? "/admin/courses" : "/teacher"} className="text-small text-ink-muted hover:text-ink">
           {t("back")}
         </Link>
         <Link href={`/courses/${course.slug}`} className="text-small text-ink-muted hover:text-ink">

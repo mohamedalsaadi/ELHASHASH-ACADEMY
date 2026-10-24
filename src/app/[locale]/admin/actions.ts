@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { schoolYearEnd } from "@/lib/access";
+import { randomUUID } from "node:crypto";
+import { accessEnd, schoolYearEnd } from "@/lib/access";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { toMinor } from "@/lib/format";
@@ -279,4 +280,72 @@ export async function setGradeSubjects(form: FormData) {
     db.gradeSubject.createMany({ data: ids.filter((id) => known.has(id)).map((subjectId, order) => ({ gradeId, subjectId, order })) }),
   ]);
   done();
+}
+
+/**
+ * Manual access, logged as a MANUAL order paid at zero with a payment event naming the admin.
+ * The plan's scope is copied from the SKU, as a real payment would; the end date defaults to the SKU's own.
+ */
+export async function grantAccess(form: FormData) {
+  const me = await requireAdmin();
+  const d = z.object({ userId: z.string(), skuId: z.string(), endsAt: z.string() }).parse(Object.fromEntries(form));
+  const sku = await db.sku.findUniqueOrThrow({ where: { id: d.skuId } });
+  if (sku.accessType === "LIVE") throw new Error("Live seats are granted from the live lecture");
+  const now = new Date();
+  await db.$transaction(async (trx) => {
+    const order = await trx.order.create({
+      data: {
+        userId: d.userId, status: "PAID", gateway: "MANUAL", currency: sku.currency, subtotal: 0, discount: 0, total: 0, paidAt: now,
+        items: { create: { skuId: sku.id, price: 0 } },
+        events: { create: { gatewayEventId: `manual:${randomUUID()}`, payload: { action: "grant", by: me.id, byName: me.name ?? null } } },
+      },
+    });
+    await trx.entitlement.create({
+      data: {
+        userId: d.userId, courseId: sku.courseId, orderId: order.id, lessonId: sku.lessonId,
+        accessType: sku.accessType, term: sku.term, month: sku.month,
+        endsAt: d.endsAt ? cairoDay(d.endsAt, "end") : accessEnd(sku, now),
+      },
+    });
+  });
+  done();
+}
+
+/** Moves one entitlement's end date, logged like a grant. An empty date means no end. */
+export async function extendAccess(form: FormData) {
+  const me = await requireAdmin();
+  const d = z.object({ id: z.string(), endsAt: z.string() }).parse(Object.fromEntries(form));
+  const e = await db.entitlement.findUniqueOrThrow({ where: { id: d.id } });
+  const endsAt = cairoDay(d.endsAt, "end");
+  await db.$transaction([
+    db.entitlement.update({ where: { id: e.id }, data: { endsAt } }),
+    db.order.create({
+      data: {
+        userId: e.userId, status: "PAID", gateway: "MANUAL", currency: await courseCurrency(e.courseId), subtotal: 0, discount: 0, total: 0, paidAt: new Date(),
+        events: { create: { gatewayEventId: `manual:${randomUUID()}`, payload: { action: "extend", entitlementId: e.id, from: e.endsAt, to: endsAt, by: me.id, byName: me.name ?? null } } },
+      },
+    }),
+  ]);
+  done();
+}
+
+/** Sets a temporary password for a student or teacher. Admin accounts (the owner's) are never reset from here. */
+export async function resetPassword(_: unknown, form: FormData): Promise<"ok" | "invalid"> {
+  await requireAdmin();
+  const d = z.object({ userId: z.string(), password: z.string().min(10).max(128) }).safeParse(Object.fromEntries(form));
+  if (!d.success) return "invalid";
+  const { count } = await db.user.updateMany({
+    where: { id: d.data.userId, role: { not: "ADMIN" } },
+    data: { passwordHash: await bcrypt.hash(d.data.password, 10) },
+  });
+  return count ? "ok" : "invalid";
+}
+
+/** Turns a teacher back into a student. Only INSTRUCTOR rows match, so the owner's ADMIN account can't be demoted. */
+export async function disableTeacher(form: FormData) {
+  await requireAdmin();
+  const id = z.string().parse(form.get("id"));
+  await db.user.updateMany({ where: { id, role: "INSTRUCTOR" }, data: { role: "STUDENT" } });
+  done();
+  redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/teachers`);
 }

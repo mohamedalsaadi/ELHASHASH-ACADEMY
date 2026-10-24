@@ -6,7 +6,7 @@ import { useFormStatus } from "react-dom";
 import type { Currency } from "@/lib/pricing-engine";
 import { formatMoney, toMinor } from "@/lib/format";
 import { planValue } from "@/lib/plans";
-import { addTeacher, changePassword, createCourse } from "./actions";
+import { addTeacher, changePassword, createCourse, resetPassword } from "./actions";
 import { field, label } from "./styles";
 
 const button =
@@ -110,6 +110,28 @@ export function PlanPrice({ label: text, defaultValue, currency, locale, lecture
         </span>
       )}
     </label>
+  );
+}
+
+/** Sets a temporary password for a student or teacher. */
+export function ResetPasswordForm({ userId }: { userId: string }) {
+  const t = useTranslations("admin");
+  const to = useTranslations("office");
+  const [state, action] = useActionState(resetPassword, null);
+  return (
+    <form key={state === "ok" ? Date.now() : "form"} action={action} className="flex flex-wrap items-end gap-3">
+      <input type="hidden" name="userId" value={userId} />
+      <label className={label}>
+        {t("tempPassword")}
+        <input name="password" required minLength={10} dir="ltr" autoComplete="new-password" className={field} />
+      </label>
+      <SaveButton>{to("resetPassword")}</SaveButton>
+      {state && (
+        <p role="status" className={`basis-full text-small ${state === "ok" ? "text-up" : "text-down"}`}>
+          {to(`reset.${state}`)}
+        </p>
+      )}
+    </form>
   );
 }
 

@@ -3,6 +3,7 @@ import { SubjectIcon } from "@/components/brand/SubjectIcon";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/staff";
 import { setGradeSubjects } from "../actions";
+import { AdminNav } from "../AdminNav";
 import { GradeSelect, SaveButton } from "../ui";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export default async function GradeSubjectsPage({ params, searchParams }: { para
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
       <div className="grid gap-2">
-        <h1 className="font-display text-h1 font-semibold">{t("subjectsTitle")}</h1>
+        <AdminNav current="catalog" title={t("subjectsTitle")} />
         <p className="max-w-[60ch] text-small text-ink-muted">{t("subjectsHint")}</p>
       </div>
 

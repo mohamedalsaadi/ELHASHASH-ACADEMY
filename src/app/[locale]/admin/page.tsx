@@ -1,66 +1,136 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
+import { courseZone, formatMoney, formatWhen } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
-import { CreateCourseForm, PasswordForm, TeacherForm } from "./ui";
+import { AdminNav, panel, stat, table } from "./AdminNav";
+import { PasswordForm } from "./ui";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage({ params }: { params: Promise<{ locale: string }> }) {
+const DAY = 86_400_000;
+
+export default async function AdminOverviewPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   await requireAdmin();
-  const t = await getTranslations("admin");
+  const t = await getTranslations("office");
+  const ta = await getTranslations("admin");
   const ar = locale === "ar";
-  const tc = await getTranslations("catalog");
-  const [courses, countries, subjects, teachers] = await Promise.all([
-    db.course.findMany({ orderBy: { slug: "asc" }, include: { grade: true } }),
-    db.country.findMany({ orderBy: { order: "asc" }, include: { grades: { orderBy: { level: "asc" } } } }),
-    db.subject.findMany({ orderBy: { slug: "asc" } }),
-    db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const current = { startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] };
+
+  const [revenue, subscribers, newStudents, rentals, live, kiosk] = await Promise.all([
+    db.order.groupBy({ by: ["currency"], where: { status: "PAID", gateway: { not: "MANUAL" }, paidAt: { gte: monthStart } }, _sum: { total: true }, _count: true }),
+    db.entitlement.findMany({ where: { lessonId: null, liveSessionId: null, ...current }, distinct: ["userId"], select: { userId: true } }),
+    db.user.count({ where: { role: "STUDENT", createdAt: { gt: new Date(now.getTime() - 7 * DAY) } } }),
+    db.entitlement.count({ where: { lessonId: { not: null }, ...current } }),
+    db.liveSession.findMany({
+      where: { cancelledAt: null, startsAt: { gt: now } },
+      orderBy: { startsAt: "asc" },
+      take: 8,
+      include: { course: { include: { grade: { include: { country: true } } } }, _count: { select: { entitlements: true } } },
+    }),
+    db.order.findMany({ where: { status: "PENDING", method: "KIOSK" }, orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, name: true } } } }),
   ]);
-  const named = (rows: { id: string; nameAr: string; nameEn: string }[]) => rows.map((r) => ({ id: r.id, name: ar ? r.nameAr : r.nameEn }));
-  const gradeGroups = countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, options: named(c.grades) }));
+
+  const stats = [
+    { n: subscribers.length, l: t("activeSubscribers") },
+    { n: newStudents, l: t("newStudents") },
+    { n: rentals, l: t("activeRentals") },
+    { n: kiosk.length, l: t("pendingKiosk"), alert: kiosk.length > 0 },
+  ];
 
   return (
-    <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-        <Link href="/admin/subjects" className="text-pen underline-offset-4 hover:underline">
-          {t("subjectsLink")}
-        </Link>
+    <main className="mx-auto grid max-w-5xl gap-8 px-4 py-12">
+      <AdminNav current="overview" />
+
+      <section className={panel}>
+        <h2 className="font-display text-h3 font-semibold">{t("revenue")}</h2>
+        {revenue.length ? (
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {revenue.map((r) => (
+              <li key={r.currency} className="grid gap-0.5 rounded-md bg-raised px-3 py-2">
+                <span className="num font-display text-h3 font-semibold">{formatMoney(r._sum.total ?? 0, r.currency, locale)}</span>
+                <span className="text-label text-ink-muted">{t("orders", { count: r._count })}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-small text-ink-muted">{t("noRevenue")}</p>
+        )}
+      </section>
+
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((s) => (
+          <li key={s.l} className={`${stat} ${s.alert ? "border-[1.5px] border-pen" : ""}`}>
+            <span className={`num font-display text-h2 font-semibold ${s.alert ? "text-pen" : ""}`}>{s.n}</span>
+            <span className="text-label text-ink-muted">{s.l}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("upcomingLive")}</h2>
+          {live.length ? (
+            <div className="overflow-x-auto">
+              <table className={table}>
+                <thead>
+                  <tr>
+                    <th>{t("lecture")}</th>
+                    <th>{t("when")}</th>
+                    <th>{t("seats")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {live.map((l) => (
+                    <tr key={l.id}>
+                      <td>
+                        <span className="grid">
+                          <span className="font-medium">{ar ? l.titleAr : l.titleEn}</span>
+                          <span className="text-label text-ink-muted">{ar ? l.course.titleAr : l.course.titleEn}</span>
+                        </span>
+                      </td>
+                      <td className="text-label">{formatWhen(l.startsAt, courseZone(l.course), locale)}</td>
+                      <td className="num">{l._count.entitlements}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-small text-ink-muted">{t("noLive")}</p>
+          )}
+        </section>
+
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("pendingKiosk")}</h2>
+          {kiosk.length ? (
+            <ul className="grid gap-2 text-small">
+              {kiosk.map((o) => (
+                <li key={o.id} className="flex items-baseline justify-between gap-3 border-b border-dashed border-rule pb-2">
+                  <Link href={`/admin/subscribers/${o.user.id}`} className="text-pen underline-offset-4 hover:underline">
+                    {o.user.name}
+                  </Link>
+                  <Link href={`/admin/orders/${o.id}`} className="num">
+                    {formatMoney(o.total, o.currency, locale)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState>
+              <p className="text-small text-ink-muted">{t("noKiosk")}</p>
+            </EmptyState>
+          )}
+        </section>
       </div>
+
       <section className="grid gap-3">
-        <h2 className="font-display text-h2 font-semibold">{t("courses")}</h2>
-        <ul className="grid gap-2">
-          {courses.map((c) => (
-            <li key={c.id}>
-              <Link
-                href={`/admin/courses/${c.id}`}
-                className="flex items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-              >
-                <span className="grid gap-1">
-                  <span className="font-display font-semibold">{ar ? c.titleAr : c.titleEn}</span>
-                  <span className="text-small text-ink-muted">{c.grade ? (ar ? c.grade.nameAr : c.grade.nameEn) : tc("skill")}</span>
-                </span>
-                <span className={`text-label ${c.published ? "text-up" : "text-ink-muted"}`}>
-                  {c.published ? t("published") : t("hidden")}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="grid gap-3">
-        <h2 className="font-display text-h2 font-semibold">{t("createCourse")}</h2>
-        <CreateCourseForm locale={locale} gradeGroups={gradeGroups} subjects={named(subjects)} teachers={teachers} />
-      </section>
-      <section className="grid gap-3">
-        <h2 className="font-display text-h2 font-semibold">{t("addTeacher")}</h2>
-        <TeacherForm />
-      </section>
-      <section className="grid gap-3">
-        <h2 className="font-display text-h2 font-semibold">{t("changePassword")}</h2>
+        <h2 className="font-display text-h3 font-semibold">{ta("changePassword")}</h2>
         <PasswordForm />
       </section>
     </main>

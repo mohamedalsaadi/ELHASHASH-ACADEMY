@@ -21,7 +21,7 @@ function Submit() {
   );
 }
 
-export function SignUpForm({ grades, locale, next }: { grades: { id: string; name: string }[]; locale: string; next: string }) {
+export function SignUpForm({ groups, locale, next }: { groups: { label: string; grades: { id: string; name: string }[] }[]; locale: string; next: string }) {
   const t = useTranslations("signup");
   const [state, action] = useActionState(signUp, null);
   const v = state?.values;
@@ -45,10 +45,14 @@ export function SignUpForm({ grades, locale, next }: { grades: { id: string; nam
           <option value="" disabled>
             {t("gradePick")}
           </option>
-          {grades.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.name}
-            </option>
+          {groups.map((c) => (
+            <optgroup key={c.label} label={c.label}>
+              {c.grades.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </label>

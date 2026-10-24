@@ -17,12 +17,13 @@ export default async function SignUpPage({
   setRequestLocale(locale);
   const t = await getTranslations("signup");
   const ar = locale === "ar";
-  const grades = await db.grade.findMany({ orderBy: [{ country: { code: "asc" } }, { level: "asc" }] });
+  const countries = await db.country.findMany({ orderBy: { order: "asc" }, include: { grades: { orderBy: { level: "asc" } } } });
+  const groups = countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, grades: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })) }));
 
   return (
     <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-      <SignUpForm grades={grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn }))} locale={locale} next={next ?? ""} />
+      <SignUpForm groups={groups} locale={locale} next={next ?? ""} />
       <p className="text-small text-ink-muted">
         {t("haveAccount")}{" "}
         <Link href={{ pathname: "/signin", query: next ? { next } : {} }} className="text-ink underline underline-offset-4">

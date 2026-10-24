@@ -1,8 +1,8 @@
 import { BookOpenCheck, CalendarClock, Languages, LockKeyhole, Radio, Smartphone, Unlock } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Intro } from "@/components/brand/Intro";
+import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
-import { TeacherPhoto } from "@/components/TeacherPhoto";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -16,17 +16,7 @@ const button =
 function getHome() {
   const published = { published: true };
   return Promise.all([
-    db.grade.findMany({
-      where: { courses: { some: published } },
-      orderBy: [{ country: { code: "asc" } }, { level: "asc" }],
-      include: { country: true, _count: { select: { courses: { where: published } } } },
-    }),
-    db.user.findMany({
-      where: { role: "INSTRUCTOR", courses: { some: published } },
-      orderBy: { createdAt: "desc" }, // newest first: the seeded sample instructor is the oldest
-      take: 6,
-      select: { id: true, name: true, photoUrl: true, courses: { where: published, select: { subject: true } } },
-    }),
+    db.country.findMany({ orderBy: { order: "asc" } }),
     db.course.findMany({ where: { kind: "SKILL", ...published }, orderBy: { createdAt: "desc" }, take: 3, include: cardInclude(new Date()) }),
   ]);
 }
@@ -34,9 +24,8 @@ function getHome() {
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [t, [grades, teachers, skills]] = await Promise.all([getTranslations("home"), getHome()]);
+  const [t, [countries, skills]] = await Promise.all([getTranslations("home"), getHome()]);
   const ar = locale === "ar";
-  const lead = teachers[0]?.name;
 
   const ways = [
     { key: "subscribe", Icon: BookOpenCheck, soon: false },
@@ -78,7 +67,6 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <span className="font-display text-h3 font-semibold">{t("paper.q")}</span>
               <span className="text-ink-muted">{t("paper.a")}</span>
               <span className="h-20" />
-              {lead && <span className="pe-28 text-small">{t("paper.markedBy", { name: lead })}</span>}
               <svg viewBox="0 0 120 120" className="absolute end-6 bottom-6 size-24" role="img" aria-label={t("paper.score")}>
                 <path className="eh-score" pathLength={1} d="M60 8c30 0 52 22 52 50s-24 54-54 54S8 88 8 60 30 10 56 8" fill="none" strokeWidth="4" strokeLinecap="round" stroke="var(--color-pen)" />
                 <text x="60" y="58" textAnchor="middle" className="fill-pen font-display" fontWeight="800" fontSize="34">{ar ? "٤٨" : "48"}</text>
@@ -107,51 +95,16 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </ul>
         </section>
 
-        {grades.length > 0 && (
-          <section id="grades" className="grid scroll-mt-24 gap-6">
-            <h2 className="font-display text-h1 font-extrabold">{t("grades.title")}</h2>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {grades.map((g) => (
-                <li key={g.id}>
-                  <Link
-                    href={`/courses#g-${g.id}`}
-                    className="flex h-full items-center justify-between gap-3 rounded-md border-[1.5px] border-ink bg-surface px-5 py-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
-                  >
-                    <span className="grid">
-                      <span className="font-display font-bold">{ar ? g.nameAr : g.nameEn}</span>
-                      <span className="text-small text-ink-muted">{ar ? g.country.nameAr : g.country.nameEn}</span>
-                    </span>
-                    <span className="text-small text-ink-muted">{t("grades.count", { count: g._count.courses })}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {teachers.length > 0 && (
-          <section className="grid gap-6">
-            <h2 className="font-display text-h1 font-extrabold">{t("teachers.title")}</h2>
-            <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {teachers.map((p) => {
-                const subjects = [...new Set(p.courses.flatMap((c) => (c.subject ? [ar ? c.subject.nameAr : c.subject.nameEn] : [])))];
-                return (
-                  <li key={p.id}>
-                    <Link
-                      href={`/teachers/${p.id}`}
-                      className="grid h-full justify-items-center gap-3 rounded-lg border border-hairline bg-surface p-6 text-center shadow-paper transition-transform duration-(--dur-fast) ease-(--ease-out) hover:-translate-y-0.5"
-                    >
-                      <TeacherPhoto name={p.name} url={p.photoUrl} size={112} />
-                      <span className="font-display text-h3 font-extrabold">{p.name}</span>
-                      {subjects.length > 0 && <span className="marker text-small">{subjects.join(" · ")}</span>}
-                      <span className="mt-1 text-small font-semibold underline decoration-pen decoration-2 underline-offset-4">{t("teachers.page")}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
+        <section id="grades" className="grid scroll-mt-24 gap-6">
+          <h2 className="font-display text-h1 font-extrabold">{t("grades.title")}</h2>
+          <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {countries.map((c) => (
+              <li key={c.id}>
+                <CountryTile country={c} locale={locale} />
+              </li>
+            ))}
+          </ul>
+        </section>
 
         {skills.length > 0 && (
           <section className="grid gap-6">

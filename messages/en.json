@@ -15,17 +15,16 @@
     "teachers": "Teachers"
   },
   "home": {
-    "eyebrow": "Grades 10 to 12 · UAE and Egypt",
+    "eyebrow": "Grades 1 to 12 · Egypt and the Gulf",
     "headline": "Know your <m>real</m> score in every lesson, before the exam",
     "lede": "Curriculum lessons, exam structure and past ministry questions, with your teacher. Unit 1 of every subject is free.",
     "ctaFree": "Start the free unit",
-    "ctaGrade": "Choose your grade",
+    "ctaGrade": "Choose your country",
     "paper": {
       "label": "Practice exam · Mathematics",
       "q": "Q1: Find the limit as x → 2",
       "a": "Solution: substitute directly…",
-      "score": "Score 48 out of 50",
-      "markedBy": "Marked by {name}"
+      "score": "Score 48 out of 50"
     },
     "ways": {
       "title": "Three ways to learn",
@@ -44,12 +43,7 @@
       }
     },
     "grades": {
-      "title": "Choose your grade",
-      "count": "{count, plural, =0 {No subjects} one {# subject} other {# subjects}}"
-    },
-    "teachers": {
-      "title": "Teachers",
-      "page": "Teacher page"
+      "title": "Choose your country"
     },
     "skills": {
       "title": "Courses",
@@ -174,7 +168,19 @@
     "live": "Live lectures",
     "liveIncluded": "Included in your subscription",
     "liveSeat": "Seat",
-    "liveSubscribers": "For subscribers"
+    "liveSubscribers": "For subscribers",
+    "eyebrow": "Courses · National curriculum",
+    "pickCountry": "Choose your <m>country</m>",
+    "pickCountryLede": "Grades 1 to 12, in your country’s curriculum and currency.",
+    "gradeCount": "{count, plural, one {# grade} other {# grades}}",
+    "pickGrade": "{country} · Choose your <m>grade</m>",
+    "gradeRange": "Grades {from}–{to}",
+    "yourGrade": "Your grade",
+    "terminal": "Thanawya Amma",
+    "available": "{count, plural, one {# course} other {# courses}} available",
+    "pickSubject": "<m>{grade}</m> subjects",
+    "subjectCount": "{count, plural, one {# subject} other {# subjects}} · {live, plural, =0 {none available yet} other {# available now}}",
+    "soon": "Coming soon"
   },
   "player": {
     "signIn": "Sign in to watch this lesson.",

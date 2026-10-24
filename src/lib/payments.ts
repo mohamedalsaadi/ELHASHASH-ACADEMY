@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { accessEnd } from "@/lib/access";
 import { db } from "@/lib/db";
 
 export type PaymentOutcome =
@@ -24,13 +25,14 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
           if (outcome.amount !== order.total || outcome.currency.toUpperCase() !== order.currency) {
             throw new Error(`Amount mismatch on order ${order.id}: got ${outcome.amount} ${outcome.currency}`);
           }
+          const paidAt = new Date();
           const { count } = await trx.order.updateMany({
             where: { id: order.id, status: { not: "PAID" } },
-            data: { status: "PAID", paidAt: new Date() },
+            data: { status: "PAID", paidAt },
           });
           if (count === 1) {
             await trx.entitlement.createMany({
-              data: order.items.map((i) => ({ userId: order.userId, courseId: i.sku.courseId, orderId: order.id, endsAt: i.sku.accessEndsAt })),
+              data: order.items.map((i) => ({ userId: order.userId, courseId: i.sku.courseId, orderId: order.id, endsAt: accessEnd(i.sku, paidAt) })),
             });
           }
           break;

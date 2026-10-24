@@ -44,7 +44,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
       <section className="grid gap-3">
-        <p className="text-small text-ink-muted">{ar ? course.grade.nameAr : course.grade.nameEn}</p>
+        <p className="text-small text-ink-muted">{course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}</p>
         <h1 className="font-display text-h1 font-semibold text-balance">{ar ? course.titleAr : course.titleEn}</h1>
         <Link href={`/teachers/${course.instructor.id}`} className="w-fit text-ink-muted hover:text-ink">
           {t("teacher", { name: course.instructor.name })}
@@ -116,7 +116,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
             {course.skus.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-hairline bg-surface p-4">
                 <div className="grid gap-1">
-                  <span className="font-display font-semibold">{t(`access.${s.accessType}`)}</span>
+                  <span className="font-display font-semibold">{t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</span>
                   {s.accessEndsAt && (
                     <span className="text-small text-ink-muted">{t("until", { date: date.format(s.accessEndsAt) })}</span>
                   )}

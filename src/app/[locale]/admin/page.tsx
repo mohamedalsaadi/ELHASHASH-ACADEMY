@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/staff";
-import { PasswordForm } from "./ui";
+import { CreateCourseForm, PasswordForm, TeacherForm } from "./ui";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,14 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
   await requireAdmin();
   const t = await getTranslations("admin");
   const ar = locale === "ar";
-  const courses = await db.course.findMany({ orderBy: { slug: "asc" }, include: { grade: true } });
+  const tc = await getTranslations("catalog");
+  const [courses, grades, subjects, teachers] = await Promise.all([
+    db.course.findMany({ orderBy: { slug: "asc" }, include: { grade: true } }),
+    db.grade.findMany({ orderBy: [{ country: { code: "asc" } }, { level: "asc" }] }),
+    db.subject.findMany({ orderBy: { slug: "asc" } }),
+    db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+  const named = (rows: { id: string; nameAr: string; nameEn: string }[]) => rows.map((r) => ({ id: r.id, name: ar ? r.nameAr : r.nameEn }));
 
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
@@ -28,7 +35,7 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
               >
                 <span className="grid gap-1">
                   <span className="font-display font-semibold">{ar ? c.titleAr : c.titleEn}</span>
-                  <span className="text-small text-ink-muted">{ar ? c.grade.nameAr : c.grade.nameEn}</span>
+                  <span className="text-small text-ink-muted">{c.grade ? (ar ? c.grade.nameAr : c.grade.nameEn) : tc("skill")}</span>
                 </span>
                 <span className={`text-label ${c.published ? "text-up" : "text-ink-muted"}`}>
                   {c.published ? t("published") : t("hidden")}
@@ -37,6 +44,14 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
             </li>
           ))}
         </ul>
+      </section>
+      <section className="grid gap-3">
+        <h2 className="font-display text-h2 font-semibold">{t("createCourse")}</h2>
+        <CreateCourseForm locale={locale} grades={named(grades)} subjects={named(subjects)} teachers={teachers} />
+      </section>
+      <section className="grid gap-3">
+        <h2 className="font-display text-h2 font-semibold">{t("addTeacher")}</h2>
+        <TeacherForm />
       </section>
       <section className="grid gap-3">
         <h2 className="font-display text-h2 font-semibold">{t("changePassword")}</h2>

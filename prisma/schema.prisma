@@ -31,10 +31,18 @@ enum Currency {
   AED
 }
 
+/// FIXED_DAYS grants Sku.accessDays days from payment (skill courses such as IELTS).
 enum AccessType {
   SEMESTER
   YEARLY
   REVISION
+  FIXED_DAYS
+}
+
+/// SCHOOL is one subject in one grade; SKILL is a course outside the school system (IELTS) with no grade or subject.
+enum CourseKind {
+  SCHOOL
+  SKILL
 }
 
 enum LessonKind {
@@ -132,20 +140,21 @@ model Subject {
 }
 
 model Course {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  gradeId      String
-  subjectId    String
+  id           String     @id @default(cuid())
+  slug         String     @unique
+  kind         CourseKind @default(SCHOOL)
+  gradeId      String?
+  subjectId    String?
   instructorId String
   titleAr      String
   titleEn      String
   descAr       String?
   descEn       String?
-  published    Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  published    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
 
-  grade        Grade         @relation(fields: [gradeId], references: [id], onDelete: Restrict)
-  subject      Subject       @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  grade        Grade?        @relation(fields: [gradeId], references: [id], onDelete: Restrict)
+  subject      Subject?      @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   instructor   User          @relation("Instructor", fields: [instructorId], references: [id], onDelete: Restrict)
   units        Unit[]
   skus         Sku[]
@@ -155,12 +164,12 @@ model Course {
 }
 
 model Unit {
-  id       String   @id @default(cuid())
+  id       String  @id @default(cuid())
   courseId String
   order    Int
   titleAr  String
   titleEn  String
-  isFree   Boolean  @default(false)
+  isFree   Boolean @default(false)
 
   course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons Lesson[]
@@ -201,7 +210,7 @@ model VideoAsset {
 
 /// Prices are integers in minor units (piastres / fils).
 /// saleFrom/saleTo bound when a SKU can be bought (REVISION packs open weeks before exams).
-/// accessEndsAt is when bought access stops; null means perpetual.
+/// accessEndsAt is when bought access stops; accessDays counts days from payment instead. Both null means perpetual.
 model Sku {
   id           String     @id @default(cuid())
   courseId     String
@@ -211,6 +220,7 @@ model Sku {
   saleFrom     DateTime?
   saleTo       DateTime?
   accessEndsAt DateTime?
+  accessDays   Int?
   active       Boolean    @default(true)
 
   course Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)

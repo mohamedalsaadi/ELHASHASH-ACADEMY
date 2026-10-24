@@ -1,10 +1,11 @@
-export type AccessType = "SEMESTER" | "YEARLY" | "REVISION";
+export type AccessType = "SEMESTER" | "YEARLY" | "REVISION" | "FIXED_DAYS";
 export type Currency = "EGP" | "AED";
 
 export type CartLine = {
   skuId: string;
   courseId: string;
-  subjectId: string;
+  /** null for skill courses, which join no bundle. */
+  subjectId: string | null;
   accessType: AccessType;
   price: number;
   currency: Currency;

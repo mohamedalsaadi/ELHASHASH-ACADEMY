@@ -14,6 +14,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/dashboard`)}`);
   if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
   const t = await getTranslations("dashboard");
+  const tc = await getTranslations("catalog");
   const ar = locale === "ar";
   const now = new Date();
 
@@ -57,7 +58,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   >
                     <span className="grid gap-1">
                       <span className="font-display font-semibold">{ar ? e.course.titleAr : e.course.titleEn}</span>
-                      <span className="text-small text-ink-muted">{ar ? e.course.grade.nameAr : e.course.grade.nameEn}</span>
+                      <span className="text-small text-ink-muted">{e.course.grade ? (ar ? e.course.grade.nameAr : e.course.grade.nameEn) : tc("skill")}</span>
                     </span>
                     <span className={`text-small ${active ? "text-up" : "text-down"}`}>
                       {!active ? t("expired") : e.endsAt ? t("until", { date: date.format(e.endsAt) }) : t("forever")}

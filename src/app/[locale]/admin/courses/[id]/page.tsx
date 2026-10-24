@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { assertCourse, requireStaff } from "@/lib/staff";
-import { addLesson, addSku, addUnit, deleteLesson, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
+import { addLesson, addSku, addUnit, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
 import { field, label } from "../../styles";
 import { DeleteButton, SaveButton } from "../../ui";
 
@@ -31,6 +31,11 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
     },
   });
   if (!course) notFound();
+  const teachers = isAdmin
+    ? await db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } })
+    : [];
+  // Skill courses sell for a number of days; school subjects by term or year.
+  const packageTypes = course.kind === "SKILL" ? (["FIXED_DAYS"] as const) : (["SEMESTER", "YEARLY", "REVISION"] as const);
   // React resets a form after its action runs, and a reset <select> falls back to its first option.
   // A key that changes on every render remounts lesson forms with the saved values instead.
   const renderedAt = Date.now();
@@ -75,6 +80,23 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <SaveButton />
         </div>
       </form>
+
+      {isAdmin && (
+        <form key={`teacher:${renderedAt}`} action={setTeacher} className={`${card} sm:grid-cols-[1fr_auto] sm:items-end`}>
+          <input type="hidden" name="id" value={course.id} />
+          <label className={label}>
+            {t("teacher")}
+            <select name="instructorId" defaultValue={course.instructorId} className={field}>
+              {teachers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <SaveButton>{t("saveTeacher")}</SaveButton>
+        </form>
+      )}
 
       <section className="grid gap-4">
         <h2 className="font-display text-h2 font-semibold">{t("units")}</h2>
@@ -160,16 +182,23 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           {course.skus.map((s) => (
             <form key={s.id} action={updateSku} className={card}>
               <input type="hidden" name="id" value={s.id} />
-              <h3 className="font-display text-h3 font-semibold">{tc(`access.${s.accessType}`)}</h3>
+              <h3 className="font-display text-h3 font-semibold">{tc(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</h3>
               <div className="grid gap-3 sm:grid-cols-4">
                 <label className={label}>
                   {t("price", { currency: s.currency })}
                   <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / 100} required dir="ltr" className={`${field} num`} />
                 </label>
-                <label className={label}>
-                  {t("accessEndsAt")}
-                  <input name="accessEndsAt" type="date" defaultValue={toDayInput(s.accessEndsAt)} className={field} />
-                </label>
+                {s.accessType === "FIXED_DAYS" ? (
+                  <label className={label}>
+                    {t("accessDays")}
+                    <input name="accessDays" type="number" min="1" max="3650" step="1" defaultValue={s.accessDays ?? 90} required dir="ltr" className={`${field} num`} />
+                  </label>
+                ) : (
+                  <label className={label}>
+                    {t("accessEndsAt")}
+                    <input name="accessEndsAt" type="date" defaultValue={toDayInput(s.accessEndsAt)} className={field} />
+                  </label>
+                )}
                 <label className={label}>
                   {t("saleFrom")}
                   <input name="saleFrom" type="date" defaultValue={toDayInput(s.saleFrom)} className={field} />
@@ -193,9 +222,9 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
             <label className={label}>
               {t("packageType")}
               <select name="accessType" className={field}>
-                {(["SEMESTER", "YEARLY", "REVISION"] as const).map((a) => (
+                {packageTypes.map((a) => (
                   <option key={a} value={a}>
-                    {tc(`access.${a}`)}
+                    {a === "FIXED_DAYS" ? t("accessDays") : tc(`access.${a}`)}
                   </option>
                 ))}
               </select>

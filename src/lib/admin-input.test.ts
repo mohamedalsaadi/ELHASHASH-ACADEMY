@@ -22,5 +22,9 @@ describe("cairo days", () => {
     expect(d.toISOString()).toBe("2027-01-31T21:59:59.000Z");
     expect(toDayInput(d)).toBe("2027-01-31");
     expect(cairoDay("", "start")).toBeNull();
+    // Summer time: Cairo is UTC+3 in July.
+    const july = cairoDay("2027-07-15", "end")!;
+    expect(july.toISOString()).toBe("2027-07-15T20:59:59.000Z");
+    expect(toDayInput(july)).toBe("2027-07-15");
   });
 });

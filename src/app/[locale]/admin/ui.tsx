@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { changePassword } from "./actions";
+import { addTeacher, changePassword, createCourse } from "./actions";
 import { field, label } from "./styles";
 
 const button =
@@ -55,6 +55,89 @@ export function PasswordForm() {
       )}
       <div>
         <SaveButton>{t("changePassword")}</SaveButton>
+      </div>
+    </form>
+  );
+}
+
+export function TeacherForm() {
+  const t = useTranslations("admin");
+  const [state, action] = useActionState(addTeacher, null);
+  return (
+    <form key={state === "ok" ? Date.now() : "form"} action={action} className="grid max-w-sm gap-3">
+      <label className={label}>
+        {t("teacherName")}
+        <input name="name" required minLength={2} maxLength={80} className={field} />
+      </label>
+      <label className={label}>
+        {t("teacherLogin")}
+        <input name="login" required dir="ltr" autoComplete="off" className={field} />
+      </label>
+      <label className={label}>
+        {t("tempPassword")}
+        <input name="password" required minLength={10} dir="ltr" autoComplete="new-password" className={field} />
+      </label>
+      <p className="text-small text-ink-muted">{t("teacherHint")}</p>
+      {state && (
+        <p role="status" className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
+          {t(`teacherResult.${state}`)}
+        </p>
+      )}
+      <div>
+        <SaveButton>{t("addTeacher")}</SaveButton>
+      </div>
+    </form>
+  );
+}
+
+type Option = { id: string; name: string };
+
+export function CreateCourseForm({ locale, grades, subjects, teachers }: { locale: string; grades: Option[]; subjects: Option[]; teachers: Option[] }) {
+  const t = useTranslations("admin");
+  const [kind, setKind] = useState<"SCHOOL" | "SKILL">("SCHOOL");
+  const select = (name: string, options: Option[]) => (
+    <label className={label}>
+      {t(name === "instructorId" ? "teacher" : name === "gradeId" ? "grade" : "subject")}
+      <select name={name} required className={field}>
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  return (
+    <form action={createCourse} className="grid gap-3">
+      <input type="hidden" name="locale" value={locale} />
+      <label className={label}>
+        {t("courseKind")}
+        <select name="kind" value={kind} onChange={(e) => setKind(e.target.value as "SCHOOL" | "SKILL")} className={field}>
+          <option value="SCHOOL">{t("courseKinds.SCHOOL")}</option>
+          <option value="SKILL">{t("courseKinds.SKILL")}</option>
+        </select>
+      </label>
+      {kind === "SCHOOL" ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {select("gradeId", grades)}
+          {select("subjectId", subjects)}
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className={label}>
+            {t("titleAr")}
+            <input name="titleAr" required maxLength={200} dir="rtl" className={field} />
+          </label>
+          <label className={label}>
+            {t("titleEn")}
+            <input name="titleEn" required maxLength={200} dir="ltr" className={field} />
+          </label>
+        </div>
+      )}
+      {select("instructorId", teachers)}
+      {kind === "SCHOOL" && <p className="text-small text-ink-muted">{t("skillTitlesHint")}</p>}
+      <div>
+        <SaveButton>{t("createCourse")}</SaveButton>
       </div>
     </form>
   );

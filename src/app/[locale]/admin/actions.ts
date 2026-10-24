@@ -2,9 +2,13 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
+import { Prisma } from "@/generated/prisma/client";
+import { schoolYearEnd } from "@/lib/access";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { db } from "@/lib/db";
+import { phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
 
 // Every action re-checks the role: server actions are public endpoints, whatever page renders them.
@@ -110,7 +114,8 @@ export async function updateSku(form: FormData) {
       id: z.string(),
       price: z.coerce.number().min(0).max(1_000_000),
       active: checkbox,
-      accessEndsAt: z.string(),
+      accessEndsAt: z.string().default(""),
+      accessDays: z.coerce.number().int().min(1).max(3650).optional(),
       saleFrom: z.string(),
       saleTo: z.string(),
     })
@@ -121,6 +126,7 @@ export async function updateSku(form: FormData) {
       price: Math.round(d.price * 100),
       active: d.active,
       accessEndsAt: cairoDay(d.accessEndsAt, "end"),
+      accessDays: d.accessDays,
       saleFrom: cairoDay(d.saleFrom, "start"),
       saleTo: cairoDay(d.saleTo, "end"),
     },
@@ -131,10 +137,20 @@ export async function updateSku(form: FormData) {
 export async function addSku(form: FormData) {
   await requireAdmin();
   const d = z
-    .object({ courseId: z.string(), accessType: z.enum(["SEMESTER", "YEARLY", "REVISION"]) })
+    .object({ courseId: z.string(), accessType: z.enum(["SEMESTER", "YEARLY", "REVISION", "FIXED_DAYS"]) })
     .parse(Object.fromEntries(form));
   // New packages start hidden so a half-filled price never goes on sale.
-  await db.sku.create({ data: { ...d, price: 0, currency: "AED", active: false } });
+  // A full year ends with the school year; a fixed-days package starts at 90 days. The owner can change either.
+  await db.sku.create({
+    data: {
+      ...d,
+      price: 0,
+      currency: "AED",
+      active: false,
+      accessEndsAt: d.accessType === "YEARLY" ? cairoDay(schoolYearEnd(new Date()), "end") : null,
+      accessDays: d.accessType === "FIXED_DAYS" ? 90 : null,
+    },
+  });
   done();
 }
 
@@ -162,5 +178,73 @@ export async function updateProfile(form: FormData) {
     .object({ photoUrl: httpsUrl, bioAr: optionalText, bioEn: optionalText })
     .parse(Object.fromEntries(form));
   await db.user.update({ where: { id: me.id }, data });
+  done();
+}
+
+export async function addTeacher(_: unknown, form: FormData): Promise<"ok" | "taken" | "invalid"> {
+  await requireAdmin();
+  const d = z
+    .object({
+      name: z.string().trim().min(2).max(80),
+      login: z.union([phoneSchema, z.email().trim().toLowerCase()]),
+      password: z.string().min(10).max(128),
+    })
+    .safeParse(Object.fromEntries(form));
+  if (!d.success) return "invalid";
+  const { name, login, password } = d.data;
+  try {
+    await db.user.create({
+      data: { name, role: "INSTRUCTOR", passwordHash: await bcrypt.hash(password, 10), ...(login.includes("@") ? { email: login } : { phone: login }) },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return "taken";
+    throw e;
+  }
+  done();
+  return "ok";
+}
+
+const teacherId = z.string().refine(async (id) => !!(await db.user.count({ where: { id, role: { in: ["INSTRUCTOR", "ADMIN"] } } })));
+
+/** "Physics, Grade 12" -> "physics-grade-12", plus a suffix when taken. */
+async function freeSlug(base: string) {
+  const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "course";
+  return (await db.course.count({ where: { slug } })) ? `${slug}-${Date.now().toString(36)}` : slug;
+}
+
+export async function createCourse(form: FormData) {
+  await requireAdmin();
+  const d = await z
+    .discriminatedUnion("kind", [
+      z.object({ kind: z.literal("SCHOOL"), gradeId: z.string(), subjectId: z.string(), instructorId: teacherId }),
+      z.object({ kind: z.literal("SKILL"), titleAr: text, titleEn: text, instructorId: teacherId }),
+    ])
+    .parseAsync(Object.fromEntries(form));
+
+  let data: Prisma.CourseUncheckedCreateInput;
+  if (d.kind === "SCHOOL") {
+    const [grade, subject] = await Promise.all([
+      db.grade.findUniqueOrThrow({ where: { id: d.gradeId }, include: { country: true } }),
+      db.subject.findUniqueOrThrow({ where: { id: d.subjectId } }),
+    ]);
+    data = {
+      ...d,
+      slug: await freeSlug(`${grade.country.code}-${grade.level}-${subject.slug}`),
+      titleAr: `${subject.nameAr}، ${grade.nameAr}`,
+      titleEn: `${subject.nameEn}, ${grade.nameEn}`,
+    };
+  } else {
+    data = { ...d, slug: await freeSlug(d.titleEn) };
+  }
+  // Starts hidden, like a new package, until the owner fills it in and publishes it.
+  const course = await db.course.create({ data });
+  done();
+  redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/courses/${course.id}`);
+}
+
+export async function setTeacher(form: FormData) {
+  await requireAdmin();
+  const d = await z.object({ id: z.string(), instructorId: teacherId }).parseAsync(Object.fromEntries(form));
+  await db.course.update({ where: { id: d.id }, data: { instructorId: d.instructorId } });
   done();
 }

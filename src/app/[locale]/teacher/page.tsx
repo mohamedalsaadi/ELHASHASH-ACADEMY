@@ -31,7 +31,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
       include: {
         user: { select: { id: true, name: true, phone: true, email: true } },
         course: { select: { titleAr: true, titleEn: true } },
-        order: { select: { items: { select: { sku: { select: { courseId: true, accessType: true } } } } } },
+        order: { select: { items: { select: { sku: { select: { courseId: true, accessType: true, accessDays: true } } } } } },
       },
     }),
     db.orderItem.findMany({
@@ -88,7 +88,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
                 >
                   <span className="grid gap-1">
                     <span className="font-display font-semibold">{ar ? c.titleAr : c.titleEn}</span>
-                    <span className="text-small text-ink-muted">{ar ? c.grade.nameAr : c.grade.nameEn}</span>
+                    <span className="text-small text-ink-muted">{c.grade ? (ar ? c.grade.nameAr : c.grade.nameEn) : tc("skill")}</span>
                   </span>
                   <span className="flex items-center gap-4 text-label">
                     <span className="num text-ink-muted">{t("courseStudents", { count: perCourse(c.id) })}</span>
@@ -123,7 +123,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
                   <span className="grid gap-1 text-small sm:text-end">
                     <span>
                       {ar ? s.course.titleAr : s.course.titleEn}
-                      {sku && ` · ${tc(`access.${sku.accessType}`)}`}
+                      {sku && ` · ${tc(`access.${sku.accessType}`, { days: sku.accessDays ?? 0 })}`}
                     </span>
                     <span className="text-ink-muted">
                       {s.endsAt ? t("until", { date: date.format(s.endsAt) }) : t("forever")}

@@ -30,8 +30,9 @@ export default async function TeacherPublicPage({ params }: { params: Promise<{ 
   const teacher = await getTeacher(id);
   if (!teacher) notFound();
   const t = await getTranslations("teacher");
+  const tc = await getTranslations("catalog");
   const ar = locale === "ar";
-  const subjects = [...new Set(teacher.courses.map((c) => (ar ? c.subject.nameAr : c.subject.nameEn)))];
+  const subjects = [...new Set(teacher.courses.flatMap((c) => (c.subject ? [ar ? c.subject.nameAr : c.subject.nameEn] : [])))];
   const bio = ar ? teacher.bioAr || teacher.bioEn : teacher.bioEn || teacher.bioAr;
 
   return (
@@ -61,7 +62,7 @@ export default async function TeacherPublicPage({ params }: { params: Promise<{ 
                 className="grid gap-1 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
               >
                 <span className="font-display font-semibold">{ar ? c.titleAr : c.titleEn}</span>
-                <span className="text-small text-ink-muted">{ar ? c.grade.nameAr : c.grade.nameEn}</span>
+                <span className="text-small text-ink-muted">{c.grade ? (ar ? c.grade.nameAr : c.grade.nameEn) : tc("skill")}</span>
               </Link>
             </li>
           ))}

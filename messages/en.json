@@ -50,7 +50,8 @@
     "access": {
       "SEMESTER": "Semester",
       "YEARLY": "Full year",
-      "REVISION": "Final revision"
+      "REVISION": "Final revision",
+      "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access"
     },
     "methods": {
       "CARD": {
@@ -114,7 +115,8 @@
     "access": {
       "SEMESTER": "Semester",
       "YEARLY": "Full year",
-      "REVISION": "Final revision"
+      "REVISION": "Final revision",
+      "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access"
     },
     "kind": {
       "VIDEO": "Video",
@@ -123,7 +125,11 @@
       "PDF": "PDF"
     },
     "videoSoon": "This lesson's video is coming soon.",
-    "teacher": "With {name}"
+    "teacher": "With {name}",
+    "skill": "Courses",
+    "schoolTab": "School subjects",
+    "skillTab": "Courses",
+    "skillEmpty": "No courses are published yet."
   },
   "player": {
     "signIn": "Sign in to watch this lesson.",
@@ -176,7 +182,30 @@
       "ok": "Password changed.",
       "wrong": "The current password is wrong.",
       "short": "The new password is too short. Use at least 10 characters."
-    }
+    },
+    "teachers": "Teachers",
+    "addTeacher": "Add teacher",
+    "teacherName": "Teacher's name",
+    "teacherLogin": "Email or mobile number",
+    "tempPassword": "Temporary password (at least 10 characters)",
+    "teacherHint": "Hand this password to the teacher. They change it from their dashboard.",
+    "teacherResult": {
+      "ok": "Teacher account created.",
+      "taken": "That email or mobile number already has an account.",
+      "invalid": "Check the name, the email or mobile number, and the password (at least 10 characters)."
+    },
+    "createCourse": "Create course",
+    "courseKind": "Course type",
+    "courseKinds": {
+      "SCHOOL": "School subject (grade and subject)",
+      "SKILL": "Course outside school (IELTS and similar)"
+    },
+    "grade": "Grade",
+    "subject": "Subject",
+    "teacher": "Teacher",
+    "saveTeacher": "Change teacher",
+    "skillTitlesHint": "For a school subject the title is made from the subject and grade; you can edit it after.",
+    "accessDays": "Access days from purchase"
   },
   "signup": {
     "title": "Create a student account",

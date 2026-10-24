@@ -1,56 +1,44 @@
-/* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay and the route loader.
-   Every duration is a token; every ease is --ease-out. */
+/* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay and the route loader. */
 
-/* Intro: F1 0–700 pen circle draws · F2 160–860 letter fades in + drops 6px · F3 860–1020 tick draws
-   · F4 860–1100 wordmark · F5 hold · F6 1360–1600 overlay fades. */
-.eh-intro { display: none; }
-html[data-intro] .eh-intro {
+/* Intro, 2.0 s, once per tab session. The 3D books (IntroScene) fall and land as A A 0–0.9 s, the gold ribbon
+   threads through 0.95–1.33 s, the scene fades 1.40–1.85 s while the wordmark rises 1.45–1.95 s, and the overlay
+   fades 1.76–2.00 s. The overlay is pure CSS, so the wordmark still plays if WebGL or the scene chunk never arrives. */
+.as-intro { display: none; }
+html[data-intro] .as-intro {
   position: fixed; inset: 0; z-index: 50;
   display: grid; place-items: center;
-  background: var(--color-ground);
+  background: radial-gradient(120% 90% at 50% 0%, #1A2290 0%, var(--color-night) 55%, #060828 100%);
+  color: var(--color-ground);
   cursor: pointer;
-  animation: eh-intro-out var(--dur-base) var(--ease-out) 1360ms forwards;
+  animation: as-intro-out var(--dur-base) var(--ease-out) 1760ms forwards;
 }
-html[data-intro="skip"] .eh-intro { animation-delay: 0ms; }
-html[data-intro] .eh-line,
-html[data-intro] .eh-dot {
-  stroke-dasharray: 1; stroke-dashoffset: 1;
-  animation: eh-draw var(--dur-count) var(--ease-out) forwards;
-}
-html[data-intro] .eh-dot { animation-duration: var(--dur-fast); animation-delay: 860ms; }
-html[data-intro] .eh-ring { animation: eh-drop var(--dur-count) var(--ease-out) 160ms both; }
-html[data-intro] .eh-word { opacity: 0; animation: eh-rise var(--dur-base) var(--ease-out) 860ms forwards; }
+html[data-intro="skip"] .as-intro { animation-delay: 0ms; }
+.as-intro-scene { position: absolute; inset: 0; }
+html[data-intro] .as-intro-scene { animation: as-fade-out 450ms var(--ease-out) 1400ms forwards; }
+html[data-intro] .as-intro-word { opacity: 0; animation: as-rise 500ms var(--ease-out) 1450ms forwards; }
 /* The page stays hidden under the overlay until it fades, so the web-font swap behind it is not a layout shift. */
 html[data-intro] body > :not(main),
-html[data-intro] main > :not(.eh-intro) { animation: eh-reveal 0s 1360ms both; }
+html[data-intro] main > :not(.as-intro) { animation: as-reveal 0s 1760ms both; }
 html[data-intro="skip"] body > :not(main),
-html[data-intro="skip"] main > :not(.eh-intro) { animation-delay: 0ms; }
+html[data-intro="skip"] main > :not(.as-intro) { animation-delay: 0ms; }
 
-@keyframes eh-draw { to { stroke-dashoffset: 0; } }
-@keyframes eh-drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-@keyframes eh-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes eh-intro-out { to { opacity: 0; visibility: hidden; } }
-@keyframes eh-reveal { from { visibility: hidden; } }
+@keyframes as-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes as-fade-out { to { opacity: 0; } }
+@keyframes as-intro-out { to { opacity: 0; visibility: hidden; } }
+@keyframes as-reveal { from { visibility: hidden; } }
 
-/* Route loader: a red pen line draws only while a page is really loading. */
-.eh-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 2px; overflow: hidden; }
-.eh-loader::after {
+/* Route loader: the gold ribbon threads across the top only while a page is really loading. */
+.as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 3px; overflow: hidden; }
+.as-loader::after {
   content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 100%;
-  background: var(--color-pen);
-  transform-origin: var(--eh-origin, right);
-  animation: eh-load 1400ms var(--ease-out) infinite;
+  background: var(--color-marker);
+  transform-origin: var(--as-origin, right);
+  animation: as-load 1400ms var(--ease-out) infinite;
 }
-[dir="ltr"] .eh-loader { --eh-origin: left; }
-@keyframes eh-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+[dir="ltr"] .as-loader { --as-origin: left; }
+@keyframes as-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-intro] .eh-intro { display: none; }
-  .eh-loader::after { animation: none; transform: scaleX(.4); }
-}
-
-/* Home hero: the pen circles the score once, after the intro when it plays. */
-.eh-score { stroke-dasharray: 1; }
-@media (prefers-reduced-motion: no-preference) {
-  .eh-score { stroke-dashoffset: 1; animation: eh-draw var(--dur-count) var(--ease-out) 300ms forwards; }
-  html[data-intro] .eh-score { animation-delay: 1600ms; }
+  html[data-intro] .as-intro { display: none; }
+  .as-loader::after { animation: none; transform: scaleX(.4); }
 }

@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Elhashash Academy",
-    "description": "Grade 10–12 lessons for Egypt and the UAE, with your real scores in front of you."
+    "title": "Alsaadi Academy",
+    "description": "Grade 10–12 lessons for students across the GCC and Egypt, with your real scores in front of you."
   },
   "nav": {
     "switchLocale": "العربية",
@@ -333,8 +333,8 @@
     "terms": "Terms of use",
     "refund": "Refund policy",
     "contact": "Contact us",
-    "rights": "Elhashash Academy, United Arab Emirates",
-    "tagline": "Know your real score before the exam."
+    "rights": "Alsaadi Academy, United Arab Emirates",
+    "tagline": "Every page counts."
   },
   "teacher": {
     "hello": "Hello, {name}",

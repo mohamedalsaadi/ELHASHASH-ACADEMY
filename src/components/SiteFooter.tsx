@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { Mark, Wordmark } from "@/components/brand/Mark";
+import { Wordmark } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 
 export async function SiteFooter() {
@@ -8,9 +8,8 @@ export async function SiteFooter() {
     <footer className="mt-8 border-t border-hairline bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-5 px-4 py-8 text-small text-ink-muted">
         <div className="grid gap-2">
-          <span className="flex items-center gap-3 text-ink">
-            <Mark size={36} />
-            <Wordmark locale={locale} className="text-h3" />
+          <span className="justify-self-start text-ink">
+            <Wordmark locale={locale} className="text-[1.5rem]" />
           </span>
           <span>{t("tagline")}</span>
         </div>

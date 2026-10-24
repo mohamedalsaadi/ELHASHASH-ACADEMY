@@ -19,7 +19,7 @@ export default async function CoursesPage({ params }: { params: Promise<{ locale
 
   return (
     <main>
-      <section className="paper-lines border-b border-hairline">
+      <section className="border-b border-hairline">
         <div className="mx-auto grid max-w-5xl gap-3 px-4 py-10">
           <p className="font-display text-small font-semibold text-pen">{t("eyebrow")}</p>
           <h1 className="font-display text-h1 font-extrabold">{t.rich("pickCountry", { m: (c) => <span className="marker">{c}</span> })}</h1>

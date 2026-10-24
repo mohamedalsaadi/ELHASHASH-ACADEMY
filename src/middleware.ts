@@ -15,7 +15,7 @@ export default function middleware(req: NextRequest) {
     if (given !== password) {
       return new NextResponse("Password required", {
         status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="Elhashash Academy", charset="UTF-8"' },
+        headers: { "WWW-Authenticate": 'Basic realm="Alsaadi Academy", charset="UTF-8"' },
       });
     }
   }
@@ -36,5 +36,6 @@ export default function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: "/((?!api|_next|_vercel|.*\\..*).*)",
+  // Generated brand images have no file extension, so they are excluded by name.
+  matcher: "/((?!api|_next|_vercel|apple-icon|opengraph-image|.*\\..*).*)",
 };

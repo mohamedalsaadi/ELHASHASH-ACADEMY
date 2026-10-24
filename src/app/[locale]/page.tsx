@@ -41,39 +41,40 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   return (
     <main>
-      <Intro locale={locale} />
+      <Intro />
 
-      <section className="paper-lines border-b border-hairline">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 md:grid-cols-[1.4fr_1fr] md:py-20">
+      <section className="border-b border-hairline">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 md:grid-cols-[1.35fr_1fr] md:py-24">
           <div className="grid gap-6">
-            <p className="text-ink-muted">{t("eyebrow")}</p>
-            <h1 className="font-display text-hero leading-[1.15] font-extrabold text-balance">
+            <p className="font-medium text-pen">{t("eyebrow")}</p>
+            <h1 className="font-display text-hero leading-[1.15] font-bold text-balance">
               {t.rich("headline", { m: (c) => <span className="marker">{c}</span> })}
             </h1>
             <p className="max-w-[52ch] text-[1.125rem] text-ink-muted">{t("lede")}</p>
             <div className="flex flex-wrap gap-3">
-              <Link href="/courses" className={`${button} bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]`}>
+              <Link href="/courses" className={`${button} bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--color-primary)_84%,#000)]`}>
                 {t("ctaFree")}
               </Link>
-              <a href="#grades" className={`${button} border-[1.5px] border-ink hover:bg-marker`}>
+              <a href="#grades" className={`${button} border-[1.5px] border-ink hover:bg-raised`}>
                 {t("ctaGrade")}
               </a>
             </div>
           </div>
 
-          <div aria-hidden="true" className="relative mx-auto w-full max-w-[400px]">
-            <div className="paper-lines grid -rotate-3 gap-3 rounded-sm bg-surface p-7 shadow-paper [background-size:100%_34px] [--color-rule:#E6ECF7]">
-              <span className="text-small text-ink-muted">{t("paper.label")}</span>
-              <span className="font-display text-h3 font-semibold">{t("paper.q")}</span>
-              <span className="text-ink-muted">{t("paper.a")}</span>
-              <span className="h-20" />
-              <svg viewBox="0 0 120 120" className="absolute end-6 bottom-6 size-24" role="img" aria-label={t("paper.score")}>
-                <path className="eh-score" pathLength={1} d="M60 8c30 0 52 22 52 50s-24 54-54 54S8 88 8 60 30 10 56 8" fill="none" strokeWidth="4" strokeLinecap="round" stroke="var(--color-pen)" />
-                <text x="60" y="58" textAnchor="middle" className="fill-pen font-display" fontWeight="800" fontSize="34">{ar ? "٤٨" : "48"}</text>
-                <line x1="34" y1="68" x2="86" y2="68" stroke="var(--color-pen)" strokeWidth="3" />
-                <text x="60" y="96" textAnchor="middle" className="fill-pen font-display" fontWeight="600" fontSize="22">{ar ? "٥٠" : "50"}</text>
-              </svg>
-            </div>
+          {/* A sample result card on night: the brand's promise that every page counts, as a number. */}
+          <div aria-hidden="true" className="fold mx-auto grid w-full max-w-[420px] gap-5 bg-night p-7 text-on-primary shadow-paper [--cut:34px]">
+            <span className="text-small text-[#B9BEE6]">{t("paper.label")}</span>
+            <span className="font-display text-h3 font-semibold">{t("paper.q")}</span>
+            <span className="flex items-end justify-between gap-3">
+              <span className="num text-[3.4rem] leading-none font-semibold">{ar ? "٤٨" : "48"}<span className="text-h3 font-normal text-[#9EA5E0]"> / {ar ? "٥٠" : "50"}</span></span>
+              <span className="rounded-sm bg-marker px-2.5 py-1 text-label font-semibold text-ink">{t("paper.score")}</span>
+            </span>
+            <span className="h-1.5 bg-white/15"><span className="block h-full w-[96%] bg-marker" /></span>
+            <span className="flex gap-1">
+              {Array.from({ length: 10 }, (_, i) => (
+                <i key={i} className={`h-5 w-4 [clip-path:polygon(50%_0,100%_100%,0_100%)] ${i < 6 ? "bg-primary" : i === 6 ? "bg-marker" : "bg-white/20"}`} />
+              ))}
+            </span>
           </div>
         </div>
       </section>
@@ -127,7 +128,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </section>
         )}
 
-        <ul className="grid gap-4 rounded-lg bg-primary p-6 text-on-primary sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-4 rounded-lg bg-night p-6 text-on-primary sm:grid-cols-2 lg:grid-cols-4">
           {trust.map(({ key, Icon }) => (
             <li key={key} className="flex items-center gap-3">
               <Icon aria-hidden="true" className="size-6 shrink-0 text-marker" strokeWidth={1.75} />

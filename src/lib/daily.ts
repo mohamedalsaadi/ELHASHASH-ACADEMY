@@ -16,7 +16,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
   return res.json();
 }
 
-export const roomName = (sessionId: string) => `eh-${sessionId}`;
+export const roomName = (sessionId: string) => `as-${sessionId}`;
 
 /** Creates the private room for a session, closing 30 minutes after its end. Returns the room URL. */
 export async function createRoom(sessionId: string, endsAt: Date): Promise<string> {

@@ -2,7 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { auth, signOut } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitch } from "@/components/LocaleSwitch";
-import { Mark, Wordmark } from "@/components/brand/Mark";
+import { Wordmark } from "@/components/brand/Mark";
 
 const navItem =
   "rounded-sm px-3 py-2 font-display text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
@@ -23,9 +23,8 @@ export async function SiteHeader() {
   return (
     <header className="border-b border-hairline bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2.5 rounded-sm">
-          <Mark size={40} />
-          <Wordmark locale={locale} className="text-h3" />
+        <Link href="/" className="flex items-center rounded-sm py-1 text-ink">
+          <Wordmark locale={locale} className="text-[1.65rem]" />
         </Link>
         <nav className="flex flex-wrap items-center gap-1">
           <Link href="/courses" className={navItem}>

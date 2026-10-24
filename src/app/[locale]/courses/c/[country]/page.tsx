@@ -67,7 +67,7 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
                     <Link
                       href={`/courses/c/${slug.toLowerCase()}/${g.level}`}
                       aria-label={isMine ? `${ar ? g.nameAr : g.nameEn}، ${t("yourGrade")}` : undefined}
-                      className="paper-lines flex h-36 flex-col justify-between rounded-md border-[1.5px] border-ink bg-surface p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
+                      className="flex h-36 flex-col justify-between rounded-md border-[1.5px] border-ink bg-surface p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
                     >
                       <span className="flex items-start justify-between gap-1">
                         <span className="relative grid place-items-center">

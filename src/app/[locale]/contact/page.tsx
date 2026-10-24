@@ -31,7 +31,7 @@ const ar: Section[] = [
     h: "الجهة المقدمة للخدمة",
     body: (
       <p>
-        أكاديمية الحشاش، الإمارات العربية المتحدة. اقرأ أيضًا <Link href="/terms">الشروط والأحكام</Link> و
+        أكاديمية السعدي، الإمارات العربية المتحدة. اقرأ أيضًا <Link href="/terms">الشروط والأحكام</Link> و
         <Link href="/refund">سياسة الاسترداد</Link>.
       </p>
     ),
@@ -63,7 +63,7 @@ const en: Section[] = [
     h: "Service provider",
     body: (
       <p>
-        Elhashash Academy, United Arab Emirates. See also the <Link href="/terms">terms of use</Link> and the{" "}
+        Alsaadi Academy, United Arab Emirates. See also the <Link href="/terms">terms of use</Link> and the{" "}
         <Link href="/refund">refund policy</Link>.
       </p>
     ),

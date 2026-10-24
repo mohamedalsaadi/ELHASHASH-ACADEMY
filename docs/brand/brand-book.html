@@ -1,0 +1,571 @@
+<title>Alsaadi Academy Brand</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Reem+Kufi:wght@500;600;700&display=swap">
+<style>
+/* Layout: a brand book. Full-bleed night hero with the live 3D intro, then alternating vellum and lapis chapters on a 12-col grid.
+   Single visual world on purpose (a printed brand book), so every colour is set explicitly and the page reads the same on any host theme. */
+:root {
+  color-scheme: light;
+  --lapis: #2430D8;      /* ultramarine: the pigment of illuminated manuscripts */
+  --night: #0B0F4A;      /* deep lapis for heroes and dark grounds */
+  --gold: #F2B544;       /* gold leaf: achievements and the ribbon, never text on light */
+  --vellum: #F6F7FB;     /* page white with a lapis bias */
+  --ink: #0D1030;
+  --slate: #545A7A;
+  --mist: #E3E6F3;
+  --up: #0F8A5F;
+  --ui: "Readex Pro", "Segoe UI", Tahoma, system-ui, sans-serif;
+  --kufi: "Reem Kufi", "Readex Pro", Tahoma, sans-serif;
+  --fold: 2.904;         /* tan(71deg): the slope of the A's legs, used by every diagonal */
+}
+* { box-sizing: border-box }
+html { background: var(--vellum) }
+body { margin: 0; background: var(--vellum); color: var(--ink); font: 400 16px/1.65 var(--ui) }
+.in { max-width: 1180px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)) }
+section { padding-block: clamp(64px, 9vw, 120px) }
+.eyebrow { font: 500 .78rem/1 var(--ui); letter-spacing: .22em; text-transform: uppercase; color: var(--lapis); display: flex; align-items: center; gap: 10px }
+.eyebrow::before { content: ""; width: 14px; height: 14px; background: currentColor; clip-path: polygon(50% 0, 100% 100%, 82% 100%, 50% 18%, 18% 100%, 0 100%) }
+h2 { font: 600 clamp(2rem, 1.3rem + 2.6vw, 3.4rem)/1.08 var(--ui); letter-spacing: -.025em; margin: 18px 0 0; text-wrap: balance; max-width: 18ch }
+.lead { font-size: clamp(1.05rem, 1rem + .3vw, 1.2rem); color: var(--slate); max-width: 60ch; margin: 20px 0 0 }
+.dark { background: var(--night); color: var(--vellum) }
+.dark .eyebrow { color: var(--gold) }
+.dark .lead { color: #B9BEE6 }
+.ar { direction: rtl; font-family: var(--ui) }
+button { font: inherit }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px }
+
+/* ---------- Hero ---------- */
+.hero { background: radial-gradient(120% 90% at 50% 0%, #1A2290 0%, var(--night) 55%, #060828 100%); color: var(--vellum); padding: 0; position: relative; overflow: hidden }
+.hero-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 22px; font-size: .8rem; letter-spacing: .18em; text-transform: uppercase; color: #9EA5E0 }
+.stage { position: relative; height: clamp(360px, 56vw, 600px) }
+#gl { position: absolute; inset: 0 }
+#gl canvas { display: block; width: 100%; height: 100% }
+.hero-word { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 18px; pointer-events: none; transition: none }
+.hero-word .wm { width: min(78%, 620px); height: auto }
+.hero-word .acad { font: 400 clamp(.7rem, .55rem + .6vw, 1.05rem)/1 var(--ui); letter-spacing: .85em; margin-inline-start: .85em; color: #C9CDF2 }
+.hero-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 20px; padding-block: 0 34px }
+.hero-foot p { margin: 0; max-width: 46ch; color: #C9CDF2 }
+.hero-foot p b { color: var(--vellum); font-weight: 500 }
+.replay { border: 1px solid rgba(246,247,251,.4); background: rgba(246,247,251,.06); color: var(--vellum); padding: 10px 18px; border-radius: 999px; cursor: pointer; font-size: .85rem; display: inline-flex; gap: 8px; align-items: center }
+.replay:hover { background: rgba(246,247,251,.14) }
+.beats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-block: 0 40px; margin: 0; list-style: none }
+.beats li { border-top: 2px solid rgba(246,247,251,.18); padding-top: 10px; font-size: .82rem; color: #9EA5E0; transition: border-color .2s, color .2s; min-width: 0 }
+.beats li.on { border-color: var(--gold); color: var(--vellum) }
+.beats li span { display: block; font-variant-numeric: tabular-nums; font-size: .72rem; letter-spacing: .08em; opacity: .75 }
+@media (max-width: 640px) { .beats { grid-template-columns: repeat(2, minmax(0, 1fr)) } .hero-foot { grid-template-columns: minmax(0, 1fr) } }
+
+/* ---------- The idea ---------- */
+.idea { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 56px }
+.idea figure { margin: 0; background: #fff; border: 1px solid var(--mist); padding: 28px 24px 22px; display: grid; gap: 18px; align-content: space-between; min-width: 0 }
+.idea svg { width: 100%; height: 150px }
+.idea figcaption { font-size: .95rem; color: var(--slate) }
+.idea figcaption b { display: block; color: var(--ink); font-weight: 600; font-size: 1.05rem; margin-bottom: 4px }
+.idea .eq { font: 300 2rem/1 var(--ui); color: var(--lapis); align-self: center; text-align: center }
+@media (max-width: 860px) { .idea { grid-template-columns: minmax(0, 1fr) } }
+
+/* ---------- Logo system ---------- */
+.logos { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-top: 56px }
+.tile { border-radius: 4px; display: grid; place-items: center; padding: 40px 28px; min-height: 240px; position: relative; min-width: 0 }
+.tile .cap { position: absolute; inset-inline-start: 18px; bottom: 14px; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; opacity: .7 }
+.tile .lock { display: grid; justify-items: center; gap: 14px; width: 100% }
+.tile .lock .wm { width: min(100%, 420px) }
+.tile .lock small { letter-spacing: .8em; margin-inline-start: .8em; font-size: .78rem }
+.t-wide { grid-column: span 8 } .t-sq { grid-column: span 4 } .t-third { grid-column: span 4 }
+@media (max-width: 860px) { .t-wide, .t-sq, .t-third { grid-column: span 12 } }
+.icons { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; justify-content: center }
+.icons figure { margin: 0; display: grid; justify-items: center; gap: 8px; font-size: .72rem; color: var(--slate) }
+.clear { position: relative; padding: 34px; border: 1px dashed #AAB0D8; display: grid; place-items: center }
+.clear::before, .clear::after { content: "x"; position: absolute; font-size: .75rem; color: var(--lapis); font-style: italic }
+.clear::before { top: 8px; left: 12px } .clear::after { bottom: 8px; right: 12px }
+
+/* ---------- Colour ---------- */
+.colors { display: grid; grid-template-columns: 2.2fr 1.4fr 1fr 1fr 1fr; gap: 0; margin-top: 56px; min-height: 340px }
+.chip { padding: 22px; display: grid; align-content: space-between; gap: 30px; min-width: 0 }
+.chip h4 { margin: 0; font-weight: 600; font-size: 1.15rem }
+.chip p { margin: 4px 0 0; font-size: .85rem; opacity: .85; max-width: 32ch }
+.chip code { font: 500 .8rem/1.5 var(--ui); display: block; font-variant-numeric: tabular-nums }
+@media (max-width: 860px) { .colors { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) } .chip:first-child { grid-column: span 2 } .chip { min-height: 150px } }
+.ratios { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px }
+.ratios span { font-size: .8rem; padding: 6px 12px; border: 1px solid var(--mist); border-radius: 999px; background: #fff; font-variant-numeric: tabular-nums }
+
+/* ---------- Type ---------- */
+.type { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; margin-top: 56px }
+.spec { background: #fff; border: 1px solid var(--mist); padding: 28px; display: grid; gap: 14px; align-content: start; min-width: 0 }
+.spec .face { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--slate) }
+.spec .huge { font: 700 clamp(3rem, 2rem + 4vw, 5.4rem)/1.05 var(--kufi); color: var(--lapis); direction: rtl }
+.spec .mid { font: 600 clamp(1.6rem, 1.2rem + 1.4vw, 2.3rem)/1.3 var(--ui); direction: rtl }
+.spec .body { direction: rtl; color: var(--slate); font-size: 1.05rem; line-height: 1.9 }
+.spec .latin { font: 600 clamp(2.4rem, 1.6rem + 3vw, 4rem)/1.02 var(--ui); letter-spacing: -.03em }
+.spec .nums { font: 500 2rem/1 var(--ui); font-variant-numeric: tabular-nums; display: flex; gap: 22px; flex-wrap: wrap }
+.spec .nums span:last-child { direction: rtl }
+@media (max-width: 860px) { .type { grid-template-columns: minmax(0, 1fr) } }
+
+/* ---------- The fold ---------- */
+.fold-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 40px; margin-top: 56px; align-items: center }
+@media (max-width: 860px) { .fold-grid { grid-template-columns: minmax(0, 1fr) } }
+.fold-uses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px }
+.cut { --c: 30px; clip-path: polygon(0 0, calc(100% - var(--c)) 0, 100% calc(var(--c) * var(--fold)), 100% 100%, 0 100%); }
+.ucard { background: var(--lapis); color: var(--vellum); padding: 24px; min-height: 170px; display: grid; align-content: space-between; min-width: 0 }
+.ucard small { opacity: .75; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase }
+.ucard b { font-size: 1.4rem; font-weight: 600 }
+.pages { display: flex; gap: 4px; direction: rtl; flex-wrap: wrap }
+.pages i { width: 18px; height: 22px; background: #C9CDF2; clip-path: polygon(50% 0, 100% 100%, 0 100%) }
+.pages i.d { background: var(--lapis) } .pages i.n { background: var(--gold) }
+.ucard.light { background: #fff; color: var(--ink); border: 1px solid var(--mist) }
+.band { height: 110px; background: var(--night); position: relative; overflow: hidden; grid-column: span 2 }
+.band::after { content: ""; position: absolute; inset: 0; background: var(--gold); clip-path: polygon(62% 0, calc(62% + 38px) 0, calc(62% + 38px - 110px / var(--fold)) 100%, calc(62% - 110px / var(--fold)) 100%) }
+.band span { position: absolute; inset-inline-start: 22px; top: 50%; transform: translateY(-50%); color: var(--vellum); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase }
+
+/* ---------- Applications ---------- */
+.apps { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; margin-top: 56px }
+.a-web { grid-column: span 12 } .a-phone { grid-column: span 4 } .a-post { grid-column: span 4 } .a-cert { grid-column: span 4 }
+@media (max-width: 980px) { .a-phone, .a-post, .a-cert { grid-column: span 6 } }
+@media (max-width: 640px) { .a-phone, .a-post, .a-cert { grid-column: span 12 } }
+.browser { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 30px 80px -40px rgba(11,15,74,.55); border: 1px solid rgba(255,255,255,.08) }
+.bar { display: flex; gap: 6px; padding: 12px 14px; background: #E9EBF5 }
+.bar i { width: 10px; height: 10px; border-radius: 50%; background: #C3C7DE }
+.bar span { margin-inline-start: 12px; font-size: .72rem; color: var(--slate); background: #fff; border-radius: 6px; padding: 2px 12px; direction: ltr }
+.site { direction: rtl; background: var(--vellum); color: var(--ink) }
+.site nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; gap: 16px }
+.site nav .wm { width: 128px; height: auto; direction: ltr }
+.site nav ul { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; font-size: .9rem; color: var(--slate) }
+.site nav .go { background: var(--ink); color: var(--vellum); padding: 8px 18px; font-size: .85rem; border-radius: 4px }
+@media (max-width: 760px) { .site nav ul { display: none } }
+.site .h { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 36px; padding: 40px 28px 48px; align-items: center }
+@media (max-width: 860px) { .site .h { grid-template-columns: minmax(0, 1fr) } }
+.site h3 { font: 700 clamp(2.2rem, 1.4rem + 3vw, 4rem)/1.12 var(--kufi); margin: 0; color: var(--ink) }
+.site h3 em { font-style: normal; color: var(--lapis); position: relative; white-space: nowrap }
+.site h3 em::after { content: ""; position: absolute; inset-inline: 0; bottom: .02em; height: .12em; background: var(--gold) }
+.site .h p { color: var(--slate); font-size: 1.05rem; margin: 16px 0 24px; max-width: 46ch }
+.site .ctas { display: flex; gap: 10px; flex-wrap: wrap }
+.site .b1 { background: var(--lapis); color: #fff; padding: 13px 24px; font-weight: 500; border-radius: 4px }
+.site .b2 { border: 1.5px solid var(--ink); padding: 12px 22px; font-weight: 500; border-radius: 4px }
+.site .flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px }
+.site .flags span { font-size: .78rem; padding: 4px 11px; border: 1px solid var(--mist); background: #fff; border-radius: 999px }
+.report { background: var(--night); color: var(--vellum); padding: 22px; display: grid; gap: 16px; --c: 34px }
+.report .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .85rem; color: #B9BEE6 }
+.report .score { font: 600 3.4rem/1 var(--ui); color: var(--vellum); font-variant-numeric: tabular-nums }
+.report .score small { font-size: 1.1rem; color: #9EA5E0; font-weight: 400 }
+.report .chipg { background: var(--gold); color: var(--ink); font-size: .78rem; font-weight: 600; padding: 3px 10px; border-radius: 3px }
+.meter { height: 6px; background: rgba(246,247,251,.15); position: relative }
+.meter b { position: absolute; inset-block: 0; inset-inline-start: 0; width: 81%; background: var(--gold) }
+.report .next { border-top: 1px solid rgba(246,247,251,.15); padding-top: 14px; display: flex; justify-content: space-between; gap: 10px; font-size: .88rem }
+.report .ex { font-size: .7rem; color: #8B92D6 }
+
+.phone { background: #05071F; border-radius: 34px; padding: 10px; max-width: 300px; margin: 0 auto; box-shadow: 0 30px 70px -40px rgba(11,15,74,.6) }
+.screen { background: var(--vellum); border-radius: 26px; overflow: hidden; direction: rtl; min-height: 520px; display: grid; grid-template-rows: auto auto 1fr auto }
+.screen .top { background: var(--lapis); color: #fff; padding: 26px 18px 18px; display: grid; gap: 6px; --c: 26px }
+.screen .top small { opacity: .8; font-size: .75rem }
+.screen .top b { font-size: 1.15rem; font-weight: 600 }
+.video { margin: 14px; aspect-ratio: 16 / 9; max-width: 100%; background: linear-gradient(135deg, #1A2290, var(--night)); display: grid; place-items: center; position: relative }
+.video::after { content: ""; width: 0; height: 0; border-block: 12px solid transparent; border-inline-end: 20px solid var(--vellum) }
+.live { position: absolute; top: 10px; inset-inline-start: 10px; background: var(--gold); color: var(--ink); font-size: .7rem; font-weight: 600; padding: 2px 8px; display: flex; align-items: center; gap: 5px }
+.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #C8323C }
+.lessons { padding: 0 14px; display: grid; gap: 8px; align-content: start }
+.lessons div { background: #fff; border: 1px solid var(--mist); padding: 10px 12px; display: flex; justify-content: space-between; gap: 8px; font-size: .82rem }
+.lessons div span:last-child { color: var(--slate); font-variant-numeric: tabular-nums }
+.lessons .done span:first-child::before { content: "✓ "; color: var(--up) }
+.tabbar { display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid var(--mist); font-size: .7rem; color: var(--slate) }
+.tabbar span:first-child { color: var(--lapis); font-weight: 600 }
+
+.post { aspect-ratio: 1; max-width: 100%; background: var(--night); color: var(--vellum); position: relative; overflow: hidden; display: grid; align-content: space-between; padding: 26px; direction: rtl }
+.post::before { content: ""; position: absolute; inset: 0; background: var(--lapis); clip-path: polygon(100% 0, 100% 100%, calc(42% - 100% / var(--fold) * 1) 100%, 42% 0) }
+.post > * { position: relative }
+.post .k { font: 700 clamp(2rem, 1.4rem + 2.2vw, 2.9rem)/1.15 var(--kufi) }
+.post .k span { color: var(--gold) }
+.post .meta { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; direction: ltr }
+.post .meta .wm { width: 110px }
+.post .meta small { font-size: .75rem; color: #B9BEE6; direction: rtl }
+
+.cert { aspect-ratio: 1 / 1.1; max-width: 100%; background: #fff; border: 1px solid var(--mist); padding: 14px; display: grid }
+.cert .inner { border: 2px solid var(--lapis); outline: 1px solid var(--lapis); outline-offset: -8px; padding: 26px 22px; display: grid; align-content: space-between; justify-items: center; text-align: center; direction: rtl; gap: 10px }
+.cert .wm { width: 120px }
+.cert h5 { margin: 0; font: 700 1.6rem/1.2 var(--kufi); color: var(--lapis) }
+.cert p { margin: 0; color: var(--slate); font-size: .85rem }
+.cert .name { font: 600 1.3rem/1.2 var(--ui); color: var(--ink); border-bottom: 1px solid var(--mist); padding: 0 24px 6px }
+.seal { width: 64px; height: 64px; border-radius: 50%; background: var(--gold); display: grid; place-items: center }
+.seal svg { width: 40px }
+
+/* ---------- Principles ---------- */
+.princ { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: rgba(246,247,251,.14); margin-top: 56px; border: 1px solid rgba(246,247,251,.14) }
+.princ div { background: var(--night); padding: 28px; display: grid; gap: 10px; align-content: start; min-width: 0 }
+.princ b { font-size: 1.15rem; font-weight: 600; color: var(--vellum) }
+.princ p { margin: 0; color: #B9BEE6; font-size: .95rem }
+.princ .n { font-size: .75rem; letter-spacing: .14em; color: var(--gold) }
+@media (max-width: 860px) { .princ { grid-template-columns: minmax(0, 1fr) } }
+
+.next-step { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; padding-block: 48px }
+.next-step p { margin: 0; color: var(--slate); max-width: 64ch }
+.next-step b { color: var(--ink) }
+@media (max-width: 760px) { .next-step { grid-template-columns: minmax(0, 1fr) } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<!-- ============ HERO: live three.js intro ============ -->
+<header class="hero">
+  <div class="in hero-top"><span>Brand identity · v2</span><span>2026</span></div>
+  <div class="stage">
+    <div id="gl" aria-hidden="true"></div>
+    <div class="hero-word" id="heroWord"><span data-wm="vellum"></span><span class="acad">ACADEMY</span></div>
+  </div>
+  <div class="in hero-foot">
+    <p><b>Two open books, laid face down, are two A’s.</b> That is the whole idea: ALSAADI already has a double A at its centre, and every student has a book open at the page they’re on. This is the 2-second intro the site plays on first visit, rendered live.</p>
+    <button class="replay" id="replay" type="button" aria-label="Replay the intro">↻ Replay intro</button>
+  </div>
+  <ol class="in beats" id="beats">
+    <li data-at="0"><span>0.0 s</span>Two lapis books fall, pages fluttering</li>
+    <li data-at="0.7"><span>0.7 s</span>They land face down as A A</li>
+    <li data-at="1.0"><span>1.0 s</span>The gold ribbon threads through both</li>
+    <li data-at="1.45"><span>1.45 s</span>The full name resolves · 2.0 s end</li>
+  </ol>
+</header>
+
+<!-- ============ THE IDEA ============ -->
+<section>
+  <div class="in">
+    <span class="eyebrow">01 · The idea</span>
+    <h2>A book laid open to keep your place is an A.</h2>
+    <p class="lead">Every student knows the gesture: you stop reading and put the book down open, spine up, so you don’t lose the page. Seen from the side, it is a perfect A. Alsaadi’s name holds two of them side by side, so the mark is a pair of books joined by one gold ribbon. It says <em>you’ll pick up exactly where you left off</em>, which is what an online academy promises.</p>
+    <div class="idea">
+      <figure>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><g fill="none" stroke-linejoin="round"><path d="M40 130 100 22 160 130" stroke="#2430D8" stroke-width="10"/><g stroke="#AAB0D8" stroke-width="2"><path d="M52 130 100 40 148 130"/><path d="M62 130 100 56 138 130"/><path d="M71 130 100 72 129 130"/></g><path d="M20 132H180" stroke="#E3E6F3" stroke-width="2"/></g></svg>
+        <figcaption><b>The gesture</b>A book left open, spine up, pages fanned inside.</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 200 150" aria-hidden="true"><g fill="none" stroke-linejoin="round" stroke-width="14"><path d="M66 90H134" stroke="#F2B544" stroke-width="12"/><path d="M42 150 100 20 158 150" stroke="#2430D8"/></g><path d="M20 140H180" stroke="#E3E6F3" stroke-width="2"/><path d="M83 40A34 34 0 0 0 117 40" fill="none" stroke="#F2B544" stroke-width="1.5" transform="translate(0,6)"/><text x="100" y="64" text-anchor="middle" font-size="11" fill="#545A7A" font-family="Readex Pro, sans-serif">38°</text></svg>
+        <figcaption><b>The letter</b>Drawn at 38°, the angle of a paperback resting open. The ribbon is the crossbar.</figcaption>
+      </figure>
+      <figure>
+        <div data-wm="ink" style="display:grid;place-items:center;height:150px"></div>
+        <figcaption><b>The name</b>Two books meet at the heart of ALSAADI, tied by one gold ribbon.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LOGO SYSTEM ============ -->
+<section style="padding-top:0">
+  <div class="in">
+    <span class="eyebrow">02 · Logo system</span>
+    <h2>One wordmark, one monogram, nothing else.</h2>
+    <p class="lead">Every letter is drawn on the same 14-unit stroke. The spines of the A’s are rounded like a real book; every other corner is square. Only the double A carries gold, so even the full name points to the monogram.</p>
+    <div class="logos">
+      <div class="tile t-wide" style="background:#fff;border:1px solid var(--mist)"><div class="lock"><span data-wm="ink"></span><small style="color:var(--slate)">ACADEMY</small></div><span class="cap" style="color:var(--slate)">Primary · on vellum</span></div>
+      <div class="tile t-sq" style="background:var(--lapis)"><span data-mono="vellum" style="width:58%"></span><span class="cap" style="color:#fff">Monogram · on lapis</span></div>
+      <div class="tile t-third" style="background:var(--night)"><div class="lock"><span data-wm="vellum"></span><small style="color:#B9BEE6">ACADEMY</small></div><span class="cap" style="color:#B9BEE6">Reversed</span></div>
+      <div class="tile t-third" style="background:var(--gold)"><span data-mono="ink" style="width:46%"></span><span class="cap" style="color:var(--ink)">Achievement · on gold</span></div>
+      <div class="tile t-third" style="background:#fff;border:1px solid var(--mist)">
+        <div class="icons">
+          <figure><span data-icon style="width:84px"></span>App icon</figure>
+          <figure><span data-icon style="width:32px"></span>32 px</figure>
+          <figure><span data-icon style="width:16px"></span>16 px</figure>
+        </div>
+        <span class="cap" style="color:var(--slate)">Icons hold at favicon size</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COLOUR ============ -->
+<section class="dark">
+  <div class="in">
+    <span class="eyebrow">03 · Colour</span>
+    <h2>Lapis and gold, the colours of the illuminated page.</h2>
+    <p class="lead">For a thousand years the most precious books in this region were painted in ground lapis lazuli and gold leaf. The palette borrows that, not a flag and not a startup gradient. Lapis is the brand; gold is earned and appears only for progress, achievements and the ribbon.</p>
+    <div class="colors" id="colors"></div>
+    <div class="ratios" id="ratios"></div>
+  </div>
+</section>
+
+<!-- ============ TYPE ============ -->
+<section>
+  <div class="in">
+    <span class="eyebrow">04 · Type</span>
+    <h2>Arabic leads. Latin follows in the same voice.</h2>
+    <p class="lead">Reem Kufi sets Arabic headlines: geometric Kufi whose straight strokes and angled joins echo the 38° A. Readex Pro sets everything else in both scripts; it was drawn as one bilingual family, so a page mixing Arabic and English never changes tone. Digits are tabular, because grades must line up.</p>
+    <div class="type">
+      <div class="spec">
+        <span class="face">Reem Kufi · Arabic display</span>
+        <div class="huge">كل صفحة تفرق</div>
+        <div class="mid">الكيمياء · الصف الحادي عشر</div>
+        <div class="body">دروس مسجّلة، وبث مباشر، واختبارات بأسئلة الوزارة. تعرف مستواك الحقيقي في كل درس، وتكمل من حيث توقفت.</div>
+      </div>
+      <div class="spec">
+        <span class="face">Readex Pro · bilingual text</span>
+        <div class="latin">Every page counts.</div>
+        <div class="body" style="direction:ltr">Recorded lessons, live classes and ministry-style exams. Know your real level in every lesson, and pick up where you left off.</div>
+        <span class="face">Figures</span>
+        <div class="nums"><span>81 / 100</span><span>٨١ / ١٠٠</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE FOLD ============ -->
+<section style="padding-top:0">
+  <div class="in">
+    <span class="eyebrow">05 · The fold</span>
+    <h2>One angle runs through everything.</h2>
+    <p class="lead">The 71° slope of the A’s legs is the only diagonal the brand uses: the cut corner of a card, the edge of a banner, the gold slash on a social post. Progress is shown as a row of small A’s, one per lesson, like pages turned.</p>
+    <div class="fold-grid">
+      <svg viewBox="0 0 320 260" aria-hidden="true" style="width:100%;max-width:420px">
+        <path d="M60 240 160 30 260 240" fill="none" stroke="#2430D8" stroke-width="22" stroke-linejoin="round"/>
+        <path d="M104 172H216" stroke="#F2B544" stroke-width="18"/>
+        <path d="M30 240H290" stroke="#E3E6F3" stroke-width="2"/>
+        <path d="M200 240A40 40 0 0 0 214 210" fill="none" stroke="#0D1030" stroke-width="1.5"/>
+        <text x="222" y="228" font-size="13" fill="#0D1030" font-family="Readex Pro, sans-serif">71°</text>
+        <path d="M144 62A20 20 0 0 0 176 62" fill="none" stroke="#0D1030" stroke-width="1.5"/>
+        <text x="160" y="92" text-anchor="middle" font-size="13" fill="#0D1030" font-family="Readex Pro, sans-serif">38°</text>
+      </svg>
+      <div class="fold-uses">
+        <div class="ucard cut"><small>Course card</small><b>Physics · Grade 12</b><span style="font-size:.85rem;opacity:.85">24 lessons · 6 live classes</span></div>
+        <div class="ucard light cut" style="--c:26px"><small style="color:var(--slate)">Lesson progress</small><div class="pages"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i><i></i><i></i><i></i><i></i></div><span style="font-size:.85rem;color:var(--slate)">5 of 10 lessons done</span></div>
+        <div class="band"><span>Section banner</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APPLICATIONS ============ -->
+<section class="dark">
+  <div class="in">
+    <span class="eyebrow">06 · In use</span>
+    <h2>What students and parents actually see.</h2>
+    <p class="lead">Arabic first, right to left, with the six GCC countries and Egypt one tap from the home page. Numbers in the mock-ups are examples; on the real site every figure comes from the student’s own results.</p>
+    <div class="apps">
+      <div class="a-web browser">
+        <div class="bar"><i></i><i></i><i></i><span>alsaadi.academy</span></div>
+        <div class="site">
+          <nav><span data-wm="ink"></span><ul><li>الكورسات</li><li>البث المباشر</li><li>المعلمون</li><li>الأسعار</li></ul><span class="go">ابدأ مجانًا</span></nav>
+          <div class="h">
+            <div>
+              <h3>كل صفحة <em>تفرق</em>.</h3>
+              <p>دروس مسجّلة وبث مباشر واختبارات بأسئلة الوزارة لطلاب الثانوية. اعرف مستواك الحقيقي، وكمّل من حيث توقفت.</p>
+              <div class="ctas"><span class="b1">ابدأ مجانًا</span><span class="b2">اختر بلدك وصفّك</span></div>
+              <div class="flags"><span>السعودية</span><span>الإمارات</span><span>الكويت</span><span>قطر</span><span>البحرين</span><span>عُمان</span><span>مصر</span></div>
+            </div>
+            <div class="report cut">
+              <div class="row"><span>الفيزياء · الصف الثاني عشر</span><span class="ex">مثال</span></div>
+              <div class="row" style="align-items:flex-end"><span class="score">81 <small>/ 100</small></span><span class="chipg">جيد جدًا</span></div>
+              <div class="meter"><b></b></div>
+              <div class="row"><span>أضعف درس: الحركة الدائرية</span><span>▲ 6 هذا الشهر</span></div>
+              <div class="next"><span>الدرس التالي: قوانين نيوتن ٣</span><span style="color:var(--gold)">كمّل ←</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="a-phone">
+        <div class="phone"><div class="screen">
+          <div class="top cut"><small>الرياضيات المتقدمة · ١٢</small><b>التكامل بالتجزئة</b></div>
+          <div class="video"><span class="live">مباشر</span></div>
+          <div class="lessons">
+            <div class="done"><span>النهايات</span><span>18:40</span></div>
+            <div class="done"><span>الاشتقاق</span><span>24:05</span></div>
+            <div><span>التكامل بالتجزئة</span><span>31:12</span></div>
+            <div><span>اختبار الوحدة</span><span>20 سؤال</span></div>
+          </div>
+          <div class="tabbar"><span>دروسي</span><span>المباشر</span><span>نتائجي</span><span>حسابي</span></div>
+        </div></div>
+      </div>
+
+      <div class="a-post post">
+        <div class="k">نتائج الفصل<br>الأول <span>طلعت.</span></div>
+        <div class="meta"><span data-wm="vellum"></span><small>شاهد درجتك من ١٠٠</small></div>
+      </div>
+
+      <div class="a-cert cert"><div class="inner">
+        <span data-wm="ink"></span>
+        <h5>شهادة إتمام</h5>
+        <p>تشهد أكاديمية السعدي بأن</p>
+        <span class="name">اسم الطالب</span>
+        <p>أتمّ كورس الفيزياء · الصف الثاني عشر<br>بمعدل ٨١ من ١٠٠</p>
+        <span class="seal"><span data-mono="ink"></span></span>
+      </div></div>
+    </div>
+
+    <div class="princ">
+      <div><span class="n">PRINCIPLE 1</span><b>Gold is earned.</b><p>Gold appears only for progress, completed work and achievements. A page full of gold means a student did well, never that we decorated it.</p></div>
+      <div><span class="n">PRINCIPLE 2</span><b>Show the real number.</b><p>Grades, ranks and progress come from stored results. No invented student counts, no star ratings in place of scores.</p></div>
+      <div><span class="n">PRINCIPLE 3</span><b>Calm pages, one big moment.</b><p>The 2-second intro and the ribbon are the only showpieces. Lesson and dashboard pages stay quiet so students can study.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="in next-step">
+  <p><b>What happens if you approve this:</b> the wordmark, monogram and icons are produced as final SVGs; the palette and type go into the site’s tokens; the intro above ships as the home-page intro, playing once per visit and skipped for anyone who turns motion off; and every page, email and share image is renamed to Alsaadi Academy.</p>
+  <span data-mono="ink" style="width:72px"></span>
+</div>
+
+<script>
+// ---------- Logo geometry (shared by every lockup on the page) ----------
+let uid = 0;
+const C = { ink: '#0D1030', vellum: '#F6F7FB', lapis: '#2430D8', gold: '#F2B544', night: '#0B0F4A' };
+function legs(ink, which) {
+  const A1 = 'M3.5 110 39 7 74.5 110', A2 = 'M260.5 110 296 7 331.5 110', A3 = 'M332.5 110 368 7 403.5 110';
+  return `<path d="${which === 'mono' ? A2 + A3 : A1 + A2 + A3}" stroke="${ink}" stroke-linejoin="round"/>`;
+}
+function wordmark(ink) {
+  const id = 'c' + (uid++);
+  return `<svg class="wm" viewBox="-2 0 544 100" role="img" aria-label="Alsaadi"><defs><clipPath id="${id}"><rect x="-10" y="0" width="560" height="100"/></clipPath></defs>
+  <g clip-path="url(#${id})" fill="none" stroke-width="14">
+    <path d="M271 66H393" stroke="${C.gold}" stroke-width="12"/>
+    <path d="M15 66H63" stroke="${ink}" stroke-width="12"/>
+    ${legs(ink)}
+    <path d="M102 -10V93H150M436 -10V110M436 7H453A43 43 0 0 1 453 93H436M532 -10V110" stroke="${ink}" stroke-linejoin="miter"/>
+    <path d="M225 19C216 9 205 7 199 7 186 7 174 14 174 28 174 42 188 46 200 50 213 54 227 58 227 72 227 86 214 93 200 93 190 93 180 89 173 80" stroke="${ink}"/>
+  </g></svg>`;
+}
+function monogram(ink) {
+  const id = 'c' + (uid++);
+  return `<svg viewBox="249 -8 164 116" style="width:100%;height:auto;display:block" aria-hidden="true"><defs><clipPath id="${id}"><rect x="240" y="0" width="190" height="100"/></clipPath></defs>
+  <g clip-path="url(#${id})" fill="none" stroke-width="14"><path d="M271 66H393" stroke="${C.gold}" stroke-width="12"/>${legs(ink, 'mono')}</g></svg>`;
+}
+function icon() {
+  return `<svg viewBox="0 0 100 100" style="width:100%;height:auto;display:block" aria-hidden="true"><rect width="100" height="100" rx="23" fill="${C.lapis}"/><svg x="17" y="21" width="66" height="58" viewBox="252 -2 158 104">${monogram(C.vellum).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')}</svg></svg>`;
+}
+document.querySelectorAll('[data-wm]').forEach(el => { el.innerHTML = wordmark(C[el.dataset.wm]); el.querySelector('svg').style.width = el.closest('.hero-word') ? '' : '100%'; });
+document.querySelectorAll('[data-mono]').forEach(el => { el.style.display = 'block'; el.innerHTML = monogram(C[el.dataset.mono]); });
+document.querySelectorAll('[data-icon]').forEach(el => { el.style.display = 'block'; el.innerHTML = icon(); });
+
+// ---------- Colour chapter, with contrast computed from the hex values ----------
+const COLORS = [
+  { n: 'Lapis', h: C.lapis, fg: '#fff', d: 'The brand. Buttons, links, the primary mark.' },
+  { n: 'Night', h: C.night, fg: C.vellum, d: 'Heroes, dark mode, reports.', border: true },
+  { n: 'Gold leaf', h: C.gold, fg: C.ink, d: 'Earned only.' },
+  { n: 'Vellum', h: C.vellum, fg: C.ink, d: 'The page.' },
+  { n: 'Ink', h: C.ink, fg: C.vellum, d: 'Text.', border: true },
+];
+const lum = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, n >> 8 & 255, n & 255].map(v => (v /= 255) <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((s, v, i) => s + v * [.2126, .7152, .0722][i], 0); };
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return ((x + .05) / (y + .05)).toFixed(1); };
+document.getElementById('colors').innerHTML = COLORS.map(c => `<div class="chip" style="background:${c.h};color:${c.fg};${c.border ? 'box-shadow:inset 0 0 0 1px rgba(246,247,251,.16)' : ''}"><div><h4>${c.n}</h4><p>${c.d}</p></div><code>${c.h}</code></div>`).join('');
+document.getElementById('ratios').innerHTML = [['Ink on vellum', C.ink, C.vellum], ['Lapis on vellum', C.lapis, C.vellum], ['White on lapis', '#FFFFFF', C.lapis], ['Gold on night', C.gold, C.night], ['Ink on gold', C.ink, C.gold], ['Slate on vellum', '#545A7A', C.vellum]]
+  .map(([n, a, b]) => `<span style="color:var(--vellum);background:transparent;border-color:rgba(246,247,251,.25)">${n} · ${ratio(a, b)}:1 ${ratio(a, b) >= 4.5 ? 'AA ✓' : ''}</span>`).join('');
+</script>
+
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const host = document.getElementById('gl'), word = document.getElementById('heroWord'), beats = [...document.querySelectorAll('#beats li')];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const END = 2.0;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const outCubic = t => 1 - (1 - t) ** 3;
+const inOut = t => t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+const smooth = (a, b, t) => { const x = clamp((t - a) / (b - a)); return x * x * (3 - 2 * x); };
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+} catch (e) { renderer = null; }
+
+if (renderer) {
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  host.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  const camera = new THREE.PerspectiveCamera(24, 1, 0.1, 100);
+
+  const key = new THREE.DirectionalLight(0xffffff, 2.4);
+  key.position.set(-3, 7, 6); key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  Object.assign(key.shadow.camera, { left: -4, right: 4, top: 4, bottom: -2, near: 1, far: 20 });
+  key.shadow.radius = 6;
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xF2B544, 2.2); rim.position.set(3, 3, -5); scene.add(rim);
+  scene.add(new THREE.AmbientLight(0x8890ff, 0.35));
+
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.38 }));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+  const lapis = new THREE.MeshStandardMaterial({ color: 0x2430D8, roughness: 0.42, metalness: 0.05 });
+  const paper = new THREE.MeshStandardMaterial({ color: 0xF6F7FB, roughness: 0.85 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xF2B544, metalness: 0.55, roughness: 0.3, emissive: 0xC98A1A, emissiveIntensity: 0.55 });
+
+  // A book: spine at the group origin, covers hinged on it. Open angle TH is measured below horizontal.
+  const W = 1.8, D = 1.25, T = 0.055, N = 8;
+  const TH = THREE.MathUtils.degToRad(71), TH0 = THREE.MathUtils.degToRad(12);
+  const H = W * Math.sin(TH);
+  const coverGeo = new THREE.BoxGeometry(W, T, D).translate(W / 2, 0, 0);
+  const pageGeo = new THREE.BoxGeometry(W * 0.965, 0.008, D * 0.93).translate(W * 0.965 / 2, 0, 0);
+  const spineGeo = new THREE.CylinderGeometry(T * 0.95, T * 0.95, D, 20).rotateX(Math.PI / 2);
+
+  function makeBook(x, delay, side) {
+    const g = new THREE.Group();
+    const right = new THREE.Mesh(coverGeo, [lapis, lapis, lapis, paper, lapis, lapis]);
+    const left = new THREE.Mesh(coverGeo, [lapis, lapis, paper, lapis, lapis, lapis]);
+    const spine = new THREE.Mesh(spineGeo, lapis);
+    const pages = Array.from({ length: N }, () => new THREE.Mesh(pageGeo, paper));
+    [right, left, spine, ...pages].forEach(m => { m.castShadow = true; g.add(m); });
+    scene.add(g);
+    return { g, right, left, pages, x, delay, side };
+  }
+  const books = [makeBook(-0.62, 0, -1), makeBook(0.62, 0.14, 1)];
+
+  // The ribbon: one gold bar through both books at the crossbar height of the wordmark.
+  const ribbon = new THREE.Mesh(new THREE.BoxGeometry(1, 0.09, 0.09).translate(0.5, 0, 0), gold);
+  ribbon.position.set(-1.07, H * 0.365, D / 2 + 0.06); ribbon.castShadow = true; scene.add(ribbon);
+
+  function poseBook(b, t) {
+    const p = clamp((t - b.delay) / 0.85), e = outCubic(p);
+    b.g.position.set(lerp(b.x + b.side * 2.4, b.x, e), lerp(H + 4.4, H, e), lerp(-1.2, 0, e));
+    b.g.rotation.set(lerp(-0.8, 0, e), lerp(b.side * 2.2, 0, e), lerp(b.side * 0.5, 0, e));
+    const close = inOut(clamp((p - 0.2) / 0.8));
+    const ang = lerp(TH0, TH, close);
+    b.right.rotation.z = -ang;
+    b.left.rotation.z = Math.PI + ang;
+    b.pages.forEach((pg, i) => {
+      const start = -(TH0 + (Math.PI - 2 * TH0) * (i + 0.5) / N);
+      const end = i < N / 2 ? -(TH + 0.024 * (i + 1)) : -(Math.PI - TH - 0.024 * (N - i));
+      pg.rotation.z = lerp(start, end, close) + Math.sin(t * 17 + i * 1.9) * 0.22 * (1 - close);
+    });
+  }
+
+  function frame(t) {
+    books.forEach(b => poseBook(b, t));
+    ribbon.scale.x = Math.max(0.001, 2.14 * outCubic(clamp((t - 0.95) / 0.38)));
+    camera.position.set(0, 1.35, lerp(11.5, 9.4, outCubic(clamp(t / 1.7))));
+    camera.lookAt(0, 0.95, 0);
+    renderer.domElement.style.opacity = String(1 - smooth(1.4, 1.85, t));
+    word.style.opacity = String(smooth(1.45, 1.95, t));
+    word.style.transform = `translateY(${(1 - smooth(1.45, 1.95, t)) * 12}px)`;
+    beats.forEach(li => li.classList.toggle('on', t >= +li.dataset.at));
+    renderer.render(scene, camera);
+  }
+
+  function size() {
+    const w = host.clientWidth, h = host.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.fov = w / h < 1 ? 38 : 24;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(() => { size(); if (!raf) frame(last); }).observe(host);
+  size();
+
+  let raf = 0, t0 = 0, last = END;
+  function tick(now) {
+    last = Math.min(END, (now - t0) / 1000);
+    frame(last);
+    raf = last < END ? requestAnimationFrame(tick) : 0;
+  }
+  function play() {
+    cancelAnimationFrame(raf);
+    if (reduce) { last = END; frame(END); return; }
+    t0 = performance.now(); raf = requestAnimationFrame(tick);
+  }
+  document.getElementById('replay').addEventListener('click', play);
+  play();
+}
+</script>

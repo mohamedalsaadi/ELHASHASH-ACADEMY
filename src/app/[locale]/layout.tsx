@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Alexandria, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Readex_Pro, Reem_Kufi } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -8,17 +8,17 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import "../globals.css";
 
-const alexandria = Alexandria({
+const readex = Readex_Pro({
   subsets: ["arabic", "latin"],
-  weight: ["400", "600", "700", "800"],
-  variable: "--font-alexandria",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-readex",
   display: "swap",
 });
 
-const plex = IBM_Plex_Sans_Arabic({
+const kufi = Reem_Kufi({
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-plex",
+  weight: ["500", "600", "700"],
+  variable: "--font-kufi",
   display: "swap",
 });
 
@@ -29,7 +29,14 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "meta" });
-  return { title: t("title"), description: t("description") };
+  const title = t("title"), description = t("description");
+  return {
+    metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+    title: { default: title, template: `%s · ${title}` },
+    description,
+    openGraph: { title, description, siteName: "Alsaadi Academy", locale: locale === "ar" ? "ar_AE" : "en_US", type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
 }
 
 export default async function LocaleLayout({
@@ -44,7 +51,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${alexandria.variable} ${plex.variable}`}>
+    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${readex.variable} ${kufi.variable}`}>
       <body className="antialiased">
         <NextIntlClientProvider>
           <SiteHeader />

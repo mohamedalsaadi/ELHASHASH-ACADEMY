@@ -73,7 +73,7 @@
     "signUp": "Create one"
   },
   "checkout": {
-    "title": "Complete your subscription",
+    "title": "Complete your purchase",
     "unavailable": "This package can't be bought right now. Go back to the subject page and pick another package.",
     "subtotal": "Subtotal",
     "bundle": "Bundle discount",
@@ -85,7 +85,8 @@
       "SEMESTER": "Semester",
       "YEARLY": "Full year",
       "REVISION": "Final revision",
-      "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access"
+      "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
+      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}"
     },
     "methods": {
       "CARD": {
@@ -150,7 +151,8 @@
       "SEMESTER": "Semester",
       "YEARLY": "Full year",
       "REVISION": "Final revision",
-      "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access"
+      "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
+      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}"
     },
     "kind": {
       "VIDEO": "Video",
@@ -163,7 +165,10 @@
     "skill": "Courses",
     "schoolTab": "School subjects",
     "skillTab": "Courses",
-    "skillEmpty": "No courses are published yet."
+    "skillEmpty": "No courses are published yet.",
+    "rent": "Rent",
+    "rentFor": "for {days, plural, one {# day} other {# days}}",
+    "rented": "Rented until {date}"
   },
   "player": {
     "signIn": "Sign in to watch this lesson.",
@@ -239,7 +244,11 @@
     "teacher": "Teacher",
     "saveTeacher": "Change teacher",
     "skillTitlesHint": "For a school subject the title is made from the subject and grade; you can edit it after.",
-    "accessDays": "Access days from purchase"
+    "accessDays": "Access days from purchase",
+    "rentals": "Lecture rentals",
+    "rentalsHint": "A price and number of days for each lesson in paid units. A lesson is offered for rent only once it has a price and is switched on.",
+    "addRental": "Add a rental price",
+    "rentalOn": "Available to rent"
   },
   "signup": {
     "title": "Create a student account",
@@ -270,7 +279,8 @@
     "browse": "Browse courses",
     "until": "Open until {date}",
     "forever": "Open with no end date",
-    "expired": "Subscription ended, renew it"
+    "expired": "Subscription ended, renew it",
+    "myRentals": "Rented lectures"
   },
   "footer": {
     "terms": "Terms of use",

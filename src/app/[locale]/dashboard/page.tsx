@@ -20,15 +20,19 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
 
   const entitlements = await db.entitlement.findMany({
     where: { userId: session.user.id, startsAt: { lte: now } },
-    include: { course: { include: { grade: true } } },
+    include: { course: { include: { grade: true } }, lesson: true },
   });
   // One row per course, keeping the access that lasts longest (null = no end).
   const byCourse = new Map<string, (typeof entitlements)[number]>();
   for (const e of entitlements) {
+    if (e.lessonId) continue;
     const best = byCourse.get(e.courseId);
     if (!best || (best.endsAt && (!e.endsAt || e.endsAt > best.endsAt))) byCourse.set(e.courseId, e);
   }
   const rows = [...byCourse.values()].sort((a, b) => Number(isActive(b, now)) - Number(isActive(a, now)));
+  const rentals = entitlements
+    .filter((e) => e.lesson && isActive(e, now))
+    .sort((a, b) => (a.endsAt?.getTime() ?? Infinity) - (b.endsAt?.getTime() ?? Infinity));
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
 
   return (
@@ -70,6 +74,27 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           </ul>
         )}
       </section>
+      {rentals.length > 0 && (
+        <section className="grid gap-4">
+          <h2 className="font-display text-h2 font-semibold">{t("myRentals")}</h2>
+          <ul className="grid gap-3">
+            {rentals.map((e) => (
+              <li key={e.id}>
+                <Link
+                  href={`/courses/${e.course.slug}/lessons/${e.lesson!.id}`}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                >
+                  <span className="grid gap-1">
+                    <span className="font-display font-semibold">{ar ? e.lesson!.titleAr : e.lesson!.titleEn}</span>
+                    <span className="text-small text-ink-muted">{ar ? e.course.titleAr : e.course.titleEn}</span>
+                  </span>
+                  <span className="text-small text-up">{e.endsAt ? t("until", { date: date.format(e.endsAt) }) : t("forever")}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

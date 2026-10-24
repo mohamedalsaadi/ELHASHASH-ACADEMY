@@ -45,7 +45,8 @@ export default async function CheckoutPage({
   const money = (n: number) => formatMoney(n, priced.currency, locale);
   const title = (id: string) => {
     const s = skus.get(id)!;
-    return `${locale === "ar" ? s.course.titleAr : s.course.titleEn} · ${t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}`;
+    const name = s.lesson ?? s.course;
+    return `${locale === "ar" ? name.titleAr : name.titleEn} · ${t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}`;
   };
 
   return (

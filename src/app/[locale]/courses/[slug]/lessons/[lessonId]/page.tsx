@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Mark } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
-import { hasAccess } from "@/lib/catalog";
+import { hasLessonAccess } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { DEVICE_COOKIE } from "@/lib/device";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
@@ -93,10 +93,10 @@ export default async function LessonPage({
   const { unit } = lesson;
   const course = unit.course;
 
-  // Unit 1 is open to everyone; every other unit needs an active subscription.
+  // Unit 1 is open to everyone; every other lesson needs an active subscription or a rental of this lesson.
   if (!unit.isFree) {
     const session = await auth();
-    if (!(await hasAccess(session?.user?.id, course.id))) redirect(`/${locale}/courses/${slug}#packages`);
+    if (!(await hasLessonAccess(session?.user?.id, course.id, lesson.id))) redirect(`/${locale}/courses/${slug}#packages`);
   }
 
   const video = lesson.video;

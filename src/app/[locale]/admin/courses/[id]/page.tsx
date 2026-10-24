@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { assertCourse, requireStaff } from "@/lib/staff";
-import { addLesson, addSku, addUnit, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
+import { addLesson, addRental, addSku, addUnit, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
 import { field, label } from "../../styles";
 import { DeleteButton, SaveButton } from "../../ui";
 
@@ -34,6 +34,8 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   const teachers = isAdmin
     ? await db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } })
     : [];
+  const packages = course.skus.filter((s) => !s.lessonId);
+  const rentalOf = new Map(course.skus.filter((s) => s.lessonId).map((s) => [s.lessonId!, s]));
   // Skill courses sell for a number of days; school subjects by term or year.
   const packageTypes = course.kind === "SKILL" ? (["FIXED_DAYS"] as const) : (["SEMESTER", "YEARLY", "REVISION"] as const);
   // React resets a form after its action runs, and a reset <select> falls back to its first option.
@@ -179,7 +181,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
         <section className="grid gap-4">
           <h2 className="font-display text-h2 font-semibold">{t("packages")}</h2>
           <p className="max-w-[65ch] text-small text-ink-muted">{t("packagesHint")}</p>
-          {course.skus.map((s) => (
+          {packages.map((s) => (
             <form key={s.id} action={updateSku} className={card}>
               <input type="hidden" name="id" value={s.id} />
               <h3 className="font-display text-h3 font-semibold">{tc(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</h3>
@@ -231,6 +233,51 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
             </label>
             <SaveButton>{t("addPackage")}</SaveButton>
           </form>
+        </section>
+      )}
+
+      {isAdmin && (
+        <section className="grid gap-4">
+          <h2 className="font-display text-h2 font-semibold">{t("rentals")}</h2>
+          <p className="max-w-[65ch] text-small text-ink-muted">{t("rentalsHint")}</p>
+          {course.units
+            .filter((u) => !u.isFree)
+            .map((u) => (
+              <div key={u.id} className={card}>
+                <h3 className="font-display text-h3 font-semibold">{locale === "ar" ? u.titleAr : u.titleEn}</h3>
+                {u.lessons.map((l) => {
+                  const s = rentalOf.get(l.id);
+                  const title = <span className="font-semibold">{locale === "ar" ? l.titleAr : l.titleEn}</span>;
+                  return s ? (
+                    <form key={`${s.id}:${renderedAt}`} action={updateSku} className={`${tile} sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end`}>
+                      <input type="hidden" name="id" value={s.id} />
+                      <input type="hidden" name="saleFrom" value="" />
+                      <input type="hidden" name="saleTo" value="" />
+                      {title}
+                      <label className={label}>
+                        {t("price", { currency: s.currency })}
+                        <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / 100} required dir="ltr" className={`${field} num w-28`} />
+                      </label>
+                      <label className={label}>
+                        {t("accessDays")}
+                        <input name="accessDays" type="number" min="1" max="365" step="1" defaultValue={s.accessDays ?? 7} required dir="ltr" className={`${field} num w-20`} />
+                      </label>
+                      <label className={`${check} min-h-11`}>
+                        <input type="checkbox" name="active" defaultChecked={s.active} className="size-4" />
+                        {t("rentalOn")}
+                      </label>
+                      <SaveButton />
+                    </form>
+                  ) : (
+                    <form key={l.id} action={addRental} className={`${tile} sm:grid-cols-[1fr_auto] sm:items-center`}>
+                      <input type="hidden" name="lessonId" value={l.id} />
+                      {title}
+                      <SaveButton>{t("addRental")}</SaveButton>
+                    </form>
+                  );
+                })}
+              </div>
+            ))}
         </section>
       )}
     </main>

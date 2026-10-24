@@ -32,11 +32,13 @@ enum Currency {
 }
 
 /// FIXED_DAYS grants Sku.accessDays days from payment (skill courses such as IELTS).
+/// RENTAL is one recorded lesson (Sku.lessonId) for Sku.accessDays days.
 enum AccessType {
   SEMESTER
   YEARLY
   REVISION
   FIXED_DAYS
+  RENTAL
 }
 
 /// SCHOOL is one subject in one grade; SKILL is a course outside the school system (IELTS) with no grade or subject.
@@ -188,10 +190,12 @@ model Lesson {
   /// Storage key of the PDF; served only through short-lived signed URLs.
   pdfKey  String?
 
-  unit     Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  video    VideoAsset?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
-  attempts QuizAttempt[]
-  views    LessonView[]
+  unit         Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  video        VideoAsset?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  attempts     QuizAttempt[]
+  views        LessonView[]
+  skus         Sku[]
+  entitlements Entitlement[]
 
   @@unique([unitId, order])
 }
@@ -221,12 +225,16 @@ model Sku {
   saleTo       DateTime?
   accessEndsAt DateTime?
   accessDays   Int?
+  /// Set only on RENTAL SKUs: the one lesson this SKU rents.
+  lessonId     String?
   active       Boolean    @default(true)
 
   course Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson Lesson?     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   items  OrderItem[]
 
   @@index([courseId, accessType])
+  @@index([lessonId])
 }
 
 /// Applies percentOff to the cart lines whose subjects cover every subject in the rule.
@@ -290,13 +298,16 @@ model Entitlement {
   userId   String
   courseId String
   orderId  String?
+  /// null for a whole-course subscription; set for a rented lesson.
+  lessonId String?
   startsAt DateTime  @default(now())
   /// null means perpetual access
   endsAt   DateTime?
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order  Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([userId, courseId])
 }

@@ -31,7 +31,8 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
       include: {
         user: { select: { id: true, name: true, phone: true, email: true } },
         course: { select: { titleAr: true, titleEn: true } },
-        order: { select: { items: { select: { sku: { select: { courseId: true, accessType: true, accessDays: true } } } } } },
+        lesson: { select: { titleAr: true, titleEn: true } },
+        order: { select: { items: { select: { sku: { select: { courseId: true, lessonId: true, accessType: true, accessDays: true } } } } } },
       },
     }),
     db.orderItem.findMany({
@@ -111,7 +112,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
         ) : (
           <ul className="grid gap-2">
             {subs.map((s) => {
-              const sku = s.order?.items.find((i) => i.sku.courseId === s.courseId)?.sku;
+              const sku = s.order?.items.find((i) => i.sku.courseId === s.courseId && i.sku.lessonId === s.lessonId)?.sku;
               return (
                 <li key={s.id} className={`${card} flex flex-wrap items-center justify-between gap-x-6 gap-y-2`}>
                   <span className="grid gap-1">
@@ -123,6 +124,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
                   <span className="grid gap-1 text-small sm:text-end">
                     <span>
                       {ar ? s.course.titleAr : s.course.titleEn}
+                      {s.lesson && ` · ${ar ? s.lesson.titleAr : s.lesson.titleEn}`}
                       {sku && ` · ${tc(`access.${sku.accessType}`, { days: sku.accessDays ?? 0 })}`}
                     </span>
                     <span className="text-ink-muted">

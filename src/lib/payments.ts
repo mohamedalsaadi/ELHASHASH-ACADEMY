@@ -32,7 +32,13 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
           });
           if (count === 1) {
             await trx.entitlement.createMany({
-              data: order.items.map((i) => ({ userId: order.userId, courseId: i.sku.courseId, orderId: order.id, endsAt: accessEnd(i.sku, paidAt) })),
+              data: order.items.map((i) => ({
+                userId: order.userId,
+                courseId: i.sku.courseId,
+                lessonId: i.sku.lessonId,
+                orderId: order.id,
+                endsAt: accessEnd(i.sku, paidAt),
+              })),
             });
           }
           break;

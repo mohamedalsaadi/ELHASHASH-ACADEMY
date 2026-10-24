@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
-import { hasAccess, onSale } from "@/lib/catalog";
+import { activeRentals, hasAccess, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 
@@ -29,14 +29,17 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     include: {
       grade: true,
       instructor: { select: { id: true, name: true } },
-      units: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } },
-      skus: { where: onSale(now), orderBy: { price: "asc" } },
+      units: {
+        orderBy: { order: "asc" },
+        include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now), take: 1 } } } },
+      },
+      skus: { where: { ...onSale(now), lessonId: null }, orderBy: { price: "asc" } },
     },
   });
   if (!course) notFound();
 
   const session = await auth();
-  const owned = await hasAccess(session?.user?.id, course.id, now);
+  const [owned, rentals] = await Promise.all([hasAccess(session?.user?.id, course.id, now), activeRentals(session?.user?.id, course.id, now)]);
   const firstFree = course.units.find((u) => u.isFree)?.lessons[0];
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
   const lessonHref = (id: string) => `/courses/${course.slug}/lessons/${id}`;
@@ -76,15 +79,20 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
               </div>
               <ul className="grid">
                 {u.lessons.map((l) => {
+                  const rented = rentals.has(l.id);
+                  const until = rentals.get(l.id);
+                  const rent = l.skus[0];
                   const label = (
                     <>
                       <span>{ar ? l.titleAr : l.titleEn}</span>
-                      <span className="text-label text-ink-muted">{t(`kind.${l.kind}`)}</span>
+                      <span className={`text-label ${rented ? "text-up" : "text-ink-muted"}`}>
+                        {rented && until ? t("rented", { date: date.format(until) }) : t(`kind.${l.kind}`)}
+                      </span>
                     </>
                   );
                   return (
                     <li key={l.id} className="border-t border-hairline first:border-t-0">
-                      {open ? (
+                      {open || rented ? (
                         <Link
                           href={lessonHref(l.id)}
                           className="flex items-center justify-between gap-3 rounded-sm px-2 py-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
@@ -97,7 +105,16 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                             <LockIcon />
                             <span>{ar ? l.titleAr : l.titleEn}</span>
                           </span>
-                          <span className="text-label">{t(`kind.${l.kind}`)}</span>
+                          {rent ? (
+                            <Link
+                              href={{ pathname: "/checkout", query: { sku: rent.id } }}
+                              className="shrink-0 rounded-sm border-[1.5px] border-ink px-3 py-1.5 text-small font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
+                            >
+                              {t("rent")} · <span className="num">{formatMoney(rent.price, rent.currency, locale)}</span> · {t("rentFor", { days: rent.accessDays ?? 0 })}
+                            </Link>
+                          ) : (
+                            <span className="text-label">{t(`kind.${l.kind}`)}</span>
+                          )}
                         </div>
                       )}
                     </li>

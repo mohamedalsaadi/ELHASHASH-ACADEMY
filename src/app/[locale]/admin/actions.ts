@@ -154,6 +154,19 @@ export async function addSku(form: FormData) {
   done();
 }
 
+/** Adds a rental package for one lesson: hidden, 7 days, until the owner sets a price. One per lesson. */
+export async function addRental(form: FormData) {
+  await requireAdmin();
+  const { lessonId } = z.object({ lessonId: z.string() }).parse(Object.fromEntries(form));
+  const lesson = await db.lesson.findUniqueOrThrow({ where: { id: lessonId }, select: { unit: { select: { courseId: true } } } });
+  if (!(await db.sku.count({ where: { lessonId } }))) {
+    await db.sku.create({
+      data: { courseId: lesson.unit.courseId, lessonId, accessType: "RENTAL", price: 0, currency: "AED", active: false, accessDays: 7 },
+    });
+  }
+  done();
+}
+
 export async function changePassword(_: unknown, form: FormData): Promise<"ok" | "wrong" | "short"> {
   const me = await requireStaff();
   const current = String(form.get("current") ?? "");

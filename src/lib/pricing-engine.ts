@@ -1,4 +1,4 @@
-export type AccessType = "SEMESTER" | "YEARLY" | "REVISION" | "FIXED_DAYS";
+export type AccessType = "SEMESTER" | "YEARLY" | "REVISION" | "FIXED_DAYS" | "RENTAL";
 export type Currency = "EGP" | "AED";
 
 export type CartLine = {
@@ -33,7 +33,7 @@ const lineDiscount = (amount: number, percentOff: number) => Math.round((amount 
 
 /**
  * Prices a cart in integer minor units (piastres / fils).
- * Bundles: each rule discounts one line per subject in the rule; a line joins at most one bundle,
+ * Bundles: each rule discounts one line per subject in the rule; a line joins at most one bundle, rentals join none,
  * a rule may apply more than once, and the combination with the largest total saving wins.
  */
 export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedCart {
@@ -51,7 +51,7 @@ export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedC
   const tryApply = (rule: BundleRule, used: Set<number>): Application | null => {
     const picked: number[] = [];
     for (const subjectId of rule.subjectIds) {
-      const i = order.find((j) => !used.has(j) && !picked.includes(j) && cart[j].subjectId === subjectId);
+      const i = order.find((j) => !used.has(j) && !picked.includes(j) && cart[j].accessType !== "RENTAL" && cart[j].subjectId === subjectId);
       if (i === undefined) return null;
       picked.push(i);
     }

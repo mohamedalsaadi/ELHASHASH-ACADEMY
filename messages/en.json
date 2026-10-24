@@ -95,7 +95,8 @@
         "REFUNDED": "The amount went back to your original payment method."
       },
       "kioskRef": "Reference number:"
-    }
+    },
+    "agree": "By paying you agree to the <terms>terms of use</terms> and the <refund>refund policy</refund>. All sales are final."
   },
   "catalog": {
     "title": "Courses",
@@ -205,5 +206,11 @@
     "until": "Open until {date}",
     "forever": "Open with no end date",
     "expired": "Subscription ended, renew it"
+  },
+  "footer": {
+    "terms": "Terms of use",
+    "refund": "Refund policy",
+    "contact": "Contact us",
+    "rights": "Elhashash Academy, United Arab Emirates"
   }
 }

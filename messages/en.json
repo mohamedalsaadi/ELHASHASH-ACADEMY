@@ -237,6 +237,7 @@
     "photoUrl": "Link to your photo (starts with https)",
     "bioAr": "About you, in Arabic",
     "bioEn": "About you, in English",
-    "publicCourses": "Courses ({count})"
+    "publicCourses": "Courses ({count})",
+    "title": "{name}"
   }
 }

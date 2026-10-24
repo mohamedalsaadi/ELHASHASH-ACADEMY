@@ -237,6 +237,7 @@
     "photoUrl": "رابط صورتك (يبدأ بـ https)",
     "bioAr": "نبذة عنك بالعربي",
     "bioEn": "نبذة عنك بالإنجليزي",
-    "publicCourses": "الكورسات ({count})"
+    "publicCourses": "الكورسات ({count})",
+    "title": "أ. {name}"
   }
 }

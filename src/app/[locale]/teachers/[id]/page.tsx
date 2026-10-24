@@ -38,7 +38,7 @@ export default async function TeacherPublicPage({ params }: { params: Promise<{ 
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
       <section className="grid justify-items-center gap-4 text-center">
         <TeacherPhoto name={teacher.name} url={teacher.photoUrl} size={128} />
-        <h1 className="font-display text-h1 font-semibold">{teacher.name}</h1>
+        <h1 className="font-display text-h1 font-semibold">{t("title", { name: teacher.name })}</h1>
         {subjects.length > 0 && (
           <ul className="flex flex-wrap justify-center gap-2">
             {subjects.map((s) => (

@@ -332,8 +332,13 @@
     "startsAt": "Starts at",
     "startsAtIn": "Starts at ({zone} time)",
     "zone": {
-      "cairo": "Cairo",
-      "dubai": "UAE"
+      "Cairo": "Egypt",
+      "Riyadh": "Saudi Arabia",
+      "Dubai": "UAE",
+      "Kuwait": "Kuwait",
+      "Qatar": "Qatar",
+      "Bahrain": "Bahrain",
+      "Muscat": "Oman"
     },
     "durationMin": "Length (minutes)",
     "zoneHint": "Times are in the course country: Cairo time for Egyptian courses, UAE time for the rest. Subscribers join for free; the owner sets a seat price for everyone else.",

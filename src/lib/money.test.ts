@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatMoney as format, minorPerUnit, toMinor } from "./format";
+import { courseZone, formatMoney as format, minorPerUnit, toMinor } from "./format";
 import { activeGateway, stripeUnitAmount } from "./gateway";
 import { price } from "./pricing-engine";
 
@@ -55,5 +55,16 @@ describe("gateway", () => {
   it("sends EGP to Stripe when Paymob is not configured", () => {
     vi.stubEnv("PAYMOB_SECRET_KEY", "");
     expect(activeGateway("EGP").gateway).toBe("STRIPE");
+  });
+});
+
+describe("courseZone", () => {
+  it("schedules live lectures in the course country's time, skill courses in UAE time", () => {
+    const zone = (code: string) => courseZone({ grade: { country: { code } } });
+    expect(zone("AE")).toBe("Asia/Dubai");
+    expect(zone("EG")).toBe("Africa/Cairo");
+    expect(zone("KW")).toBe("Asia/Kuwait");
+    expect(zone("OM")).toBe("Asia/Muscat");
+    expect(courseZone({ grade: null })).toBe("Asia/Dubai");
   });
 });

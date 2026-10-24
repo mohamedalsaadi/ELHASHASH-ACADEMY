@@ -55,7 +55,7 @@ export default async function TeacherLivePage({
   const timing = (zone: string | null, start = "", duration = 60) => (
     <>
       <label className={label}>
-        {zone ? t("startsAtIn", { zone: t(`zone.${zone === "Africa/Cairo" ? "cairo" : "dubai"}`) }) : t("startsAt")}
+        {zone ? t("startsAtIn", { zone: t(`zone.${zone.split("/")[1]}`) }) : t("startsAt")}
         <input name="startsAt" type="datetime-local" defaultValue={start} required dir="ltr" className={`${field} num`} />
       </label>
       <label className={label}>

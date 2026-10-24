@@ -21,9 +21,19 @@ export function formatMoney(minor: number, currency: Currency, locale: string): 
   }).format(minor / per);
 }
 
-/** Live sessions are scheduled and shown in the course's country time; skill courses use UAE time. */
+const ZONES: Record<string, string> = {
+  EG: "Africa/Cairo",
+  SA: "Asia/Riyadh",
+  AE: "Asia/Dubai",
+  KW: "Asia/Kuwait",
+  QA: "Asia/Qatar",
+  BH: "Asia/Bahrain",
+  OM: "Asia/Muscat",
+};
+
+/** Live sessions are scheduled and shown in the course country's time (UAE grade 12 math: UAE time); skill courses use UAE time. */
 export function courseZone(course: { grade: { country: { code: string } } | null }): string {
-  return course.grade?.country.code === "EG" ? "Africa/Cairo" : "Asia/Dubai";
+  return ZONES[course.grade?.country.code ?? "AE"] ?? "Asia/Dubai";
 }
 
 export function formatWhen(d: Date, zone: string, locale: string): string {

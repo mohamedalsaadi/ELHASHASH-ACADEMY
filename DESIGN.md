@@ -4,13 +4,25 @@ The single source of truth for every screen. Every colour, size, radius and dura
 
 Audience: students in Grade 10 to 12 (Egypt Secondary 1–3 / Thanawya Amma, UAE Cycle 3) and the parents who pay. Classes are taken after school, so the default light is **dusk**. Arabic first (RTL), English second.
 
+## 0. Brand
+
+**Mark.** A ring in `--color-ink` resting on a horizon line in `--color-amber`, touching it at one amber point. It reads as the dusk sun on the horizon and as a tangent at its point of contact: the moment a student knows exactly where they stand. Geometry on a 48 grid: ring r 11, 3px stroke; horizon 38 wide, 3px round cap, tangent to the ring's base; contact dot r 2.6. Code: `src/components/brand/Mark.tsx`.
+
+**Wordmark.** Readex Pro 700. Arabic: أكاديمية **الحشاش** with the name in amber. English: ELHASHASH **ACADEMY**, ACADEMY in amber, `.08em` tracking. The mark always sits at the inline start.
+
+**Sizes.** 20px minimum for the full mark. Favicon (`src/app/icon.svg`): a Dusk tile, thicker ring, no contact dot, drawn on its own 32 grid.
+
+**Where it appears.** Header (28px mark + wordmark) · home intro (marketing) · home scroll scene (marketing) · route loader (the horizon draws while a segment streams) · lesson breadcrumb (16px mark) · course card (a hairline horizon under the title) · empty states (ring above the horizon, not touching, no amber).
+
 ## 1. Theses (validated)
 
 **Visual.** A dusk-first interface: a deep indigo-slate ground (never black) with warm, slightly dimmed off-white text, one sunset-amber accent kept for streaks, ranks and the main action, and a mint/coral pair only for up/down. A soft lavender-grey afternoon mode, never pure white. Readex Pro for headings and large single figures, IBM Plex Sans Arabic for reading text and every number that sits in a column. Data tiles are dense; reading text gets room. Components are flat and tonal, with hairline borders and 6–10px radii, no drop shadows.
 
-**Interaction.** Quick and dry: 160ms for hover, 240ms for state changes, one 700ms count-up when a score first appears, streak days filling with a 30ms stagger, all on one ease-out `cubic-bezier(.2,.7,.2,1)`. Hover shifts the surface tone and never scales. No scroll effects inside the app. Forbidden: bounce, elastic, looping glows or pulses, confetti, parallax, autoplay carousels.
+**Interaction.** Quick and dry: 160ms for hover, 240ms for state changes, one 700ms count-up when a score first appears, streak days filling with a 30ms stagger, all on one ease-out `cubic-bezier(.2,.7,.2,1)`. Hover shifts the surface tone and never scales. Forbidden: bounce, elastic, looping glows or pulses, confetti, autoplay carousels, smooth-scroll libraries.
 
-**Allowed patterns:** tabular numbers, hairline rules, the amber accent, the one-time count-up, rank chips, a live dot (live classes only).
+**Marketing vs app (gate 2 amendment).** Marketing pages (the home page today) may move: a 1.6s logo intro once per tab session, and scroll scenes on the home page only, scrubbed by GSAP ScrollTrigger, one pinned scene at a time, with one lazy-loaded three.js brand scene. App pages (courses, lessons, checkout, dashboard, admin) stay calm: no scroll effects, no parallax, no intro.
+
+**Allowed patterns:** tabular numbers, hairline rules, the amber accent, the ring-and-horizon mark, the one-time count-up, rank chips, a live dot (live classes only), the session-once intro and pinned scroll scenes (home only), one WebGL brand scene (home only), a horizon loader only while a route is loading, example figures only when labelled "مثال".
 
 Amendment at the design-system gate: Readex Pro's digits are proportional and it has no `tnum` feature (checked in the font file). IBM Plex Sans Arabic's Western digits are all 600 units wide. So every number in a column, table, timer or price uses `--font-data` (Plex), and Readex carries headings and single hero figures only.
 
@@ -123,9 +135,12 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 
 - Animate only `transform`, `opacity`, `background-color`, `border-color`, `color`.
 - Every unmount has an exit (opacity + 4px translate, `--dur-base`).
-- Landing page may fade the hero in once (`--dur-base`). Nothing else reacts to scroll.
+- **Intro** (home, `src/components/brand/Intro.tsx` + `src/app/brand.css`), CSS only, fixed overlay over the rendered page: F1 0–700 horizon draws · F2 160–860 ring draws and drops 6px · F3 860–1020 contact dot · F4 860–1100 wordmark rises 4px · F5 hold · F6 1360–1600 overlay fades. Click, tap or any key skips to F6. Once per tab session (`sessionStorage`), never under reduced motion.
+- **Home scroll scene** (`src/components/home/HomeScene.tsx`): pinned for 150% of the viewport, `scrub: 0.6`, tweens on `--ease-out` via CustomEase. Server HTML is the finished frame, so no-JS and reduced motion get a complete still scene.
+- **Brand scene** (`src/components/home/BrandScene.tsx`): three + React Three Fiber, `frameloop="demand"` (renders only on scroll, never loops), unlit materials in ink and amber. Fetched on idle once the scene is near the viewport, and only with WebGL2, 4+ cores, 4+ GB memory, no Save-Data and no reduced motion; otherwise the SVG mark is the fallback.
+- Nothing else reacts to scroll.
 - `prefers-reduced-motion` or the in-app toggle: durations become 0, count-ups show the final value, colour still changes.
-- The 3D streak gem (React Three Fiber) rotates only while the pointer is over it or once on a new streak day; never in a continuous loop. Falls back to a static 2D SVG gem when WebGL is missing, on low-end devices, or with reduced motion.
+- The 3D streak gem (React Three Fiber, same renderer as the brand scene) rotates only while the pointer is over it or once on a new streak day; never in a continuous loop. Falls back to a static 2D SVG gem when WebGL is missing, on low-end devices, or with reduced motion.
 
 ## 7. Components (5 states each: default · hover · focus-visible · active · disabled)
 

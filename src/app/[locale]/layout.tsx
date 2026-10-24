@@ -43,7 +43,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${readex.variable} ${plex.variable}`}>
+    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${readex.variable} ${plex.variable}`}>
       <body className="antialiased">
         <NextIntlClientProvider>
           <SiteHeader />

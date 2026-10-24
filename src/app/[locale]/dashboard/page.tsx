@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 
@@ -34,7 +35,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       <section className="grid gap-4">
         <h2 className="font-display text-h2 font-semibold">{t("myCourses")}</h2>
         {rows.length === 0 ? (
-          <div className="grid gap-3 rounded-md border border-hairline bg-surface p-4">
+          <EmptyState>
             <p className="text-ink-muted">{t("empty")}</p>
             <Link
               href="/courses"
@@ -42,7 +43,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             >
               {t("browse")}
             </Link>
-          </div>
+          </EmptyState>
         ) : (
           <ul className="grid gap-3">
             {rows.map((e) => {

@@ -14,7 +14,19 @@
   "home": {
     "headline": "Know your real score in every lesson, before the exam",
     "lede": "Curriculum lessons, exam structure and past ministry questions for Grades 10 to 12. Unit 1 of every subject is free.",
-    "ctaFree": "Start the free unit"
+    "ctaFree": "Start the free unit",
+    "scene": {
+      "beforeLabel": "Every lesson starts where you are now",
+      "before": "Scroll to see where you stand",
+      "afterLabel": "The point of contact",
+      "after": "This is where you see your real score",
+      "steps": {
+        "explain": "Explanation",
+        "practice": "Practice",
+        "ministry": "Ministry questions",
+        "score": "Your score"
+      }
+    }
   },
   "signin": {
     "title": "Sign in",

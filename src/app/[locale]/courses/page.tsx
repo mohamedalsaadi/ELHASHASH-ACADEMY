@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -30,7 +31,11 @@ export default async function CoursesPage({ params }: { params: Promise<{ locale
   return (
     <main className="mx-auto grid max-w-5xl gap-12 px-4 py-12">
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-      {grades.length === 0 && <p className="text-ink-muted">{t("empty")}</p>}
+      {grades.length === 0 && (
+        <EmptyState>
+          <p className="text-ink-muted">{t("empty")}</p>
+        </EmptyState>
+      )}
       {grades.map((g) => (
         <section key={g.id} className="grid gap-4">
           <h2 className="font-display text-h2 font-semibold">{ar ? g.nameAr : g.nameEn}</h2>
@@ -41,9 +46,10 @@ export default async function CoursesPage({ params }: { params: Promise<{ locale
                 <li key={c.id}>
                   <Link
                     href={`/courses/${c.slug}`}
-                    className="grid h-full gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                    className="grid h-full content-start gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                   >
                     <span className="font-display text-h3 font-semibold">{ar ? c.titleAr : c.titleEn}</span>
+                    <span className="h-px bg-hairline" aria-hidden="true" />
                     {c.units.length > 0 && <span className="text-small text-up">{t("freeUnit")}</span>}
                     {from && (
                       <span className="text-small text-ink-muted">

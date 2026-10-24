@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { Mark } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { hasAccess } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -102,7 +103,8 @@ export default async function LessonPage({
   const title = ar ? lesson.titleAr : lesson.titleEn;
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
-      <Link href={`/courses/${slug}`} className="w-fit text-small text-ink-muted hover:text-ink">
+      <Link href={`/courses/${slug}`} className="flex w-fit items-center gap-2 text-small text-ink-muted hover:text-ink">
+        <Mark size={16} />
         {ar ? course.titleAr : course.titleEn} · {ar ? unit.titleAr : unit.titleEn}
       </Link>
       <div className="grid gap-1">

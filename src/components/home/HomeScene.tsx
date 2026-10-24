@@ -19,7 +19,20 @@ function canWebGL() {
   }
 }
 
-type Copy = { before: [string, string]; after: [string, string]; steps: string[] };
+// GSAP and three wait for the first scroll or touch, so page load stays free for the visitor.
+function afterFirstInput(run: () => void) {
+  const events = ["scroll", "wheel", "touchstart", "pointerdown", "keydown"];
+  const stop = () => events.forEach((e) => removeEventListener(e, go));
+  const go = () => {
+    stop();
+    run();
+  };
+  if (scrollY > 0) run();
+  else events.forEach((e) => addEventListener(e, go, { passive: true }));
+  return stop;
+}
+
+type Copy ={ before: [string, string]; after: [string, string]; steps: string[] };
 
 /**
  * Home scroll scene: the ring descends onto the horizon, then the study steps sweep in along it.
@@ -33,29 +46,13 @@ export function HomeScene({ locale, copy }: { locale: string; copy: Copy }) {
   const rtl = locale === "ar";
 
   useEffect(() => {
-    const el = root.current;
-    if (!el || !canWebGL()) return;
-    let idle = 0;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting) return;
-        io.disconnect();
-        idle = (window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 200)))(() => setWebgl(true));
-      },
-      { rootMargin: "100% 0px" },
-    );
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      (window.cancelIdleCallback ?? window.clearTimeout)(idle);
-    };
+    if (canWebGL()) return afterFirstInput(() => setWebgl(true));
   }, []);
 
-  // GSAP is fetched after hydration, so it never sits in the home page's first-load JS.
   useEffect(() => {
     let revert = () => {};
     let cancelled = false;
-    Promise.all([import("gsap"), import("gsap/ScrollTrigger"), import("gsap/CustomEase")]).then(
+    const stop = afterFirstInput(() => Promise.all([import("gsap"), import("gsap/ScrollTrigger"), import("gsap/CustomEase")]).then(
       ([{ gsap }, { ScrollTrigger }, { CustomEase }]) => {
         if (cancelled) return;
         gsap.registerPlugin(ScrollTrigger, CustomEase);
@@ -90,8 +87,9 @@ export function HomeScene({ locale, copy }: { locale: string; copy: Copy }) {
         });
         revert = () => mm.revert();
       },
-    );
+    ));
     return () => {
+      stop();
       cancelled = true;
       revert();
     };

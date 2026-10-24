@@ -24,12 +24,18 @@ html[data-intro] .eh-dot {
   animation: eh-pop var(--dur-fast) var(--ease-out) 860ms forwards;
 }
 html[data-intro] .eh-word { opacity: 0; animation: eh-rise var(--dur-base) var(--ease-out) 860ms forwards; }
+/* The page stays hidden under the overlay until it fades, so the web-font swap behind it is not a layout shift. */
+html[data-intro] body > :not(main),
+html[data-intro] main > :not(.eh-intro) { animation: eh-reveal 0s 1360ms both; }
+html[data-intro="skip"] body > :not(main),
+html[data-intro="skip"] main > :not(.eh-intro) { animation-delay: 0ms; }
 
 @keyframes eh-draw { to { stroke-dashoffset: 0; } }
 @keyframes eh-drop { from { transform: translateY(-6px); } to { transform: none; } }
 @keyframes eh-pop { to { transform: scale(1); } }
 @keyframes eh-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes eh-intro-out { to { opacity: 0; visibility: hidden; } }
+@keyframes eh-reveal { from { visibility: hidden; } }
 
 /* Route loader: the horizon draws only while a page is really loading. */
 .eh-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 2px; overflow: hidden; }

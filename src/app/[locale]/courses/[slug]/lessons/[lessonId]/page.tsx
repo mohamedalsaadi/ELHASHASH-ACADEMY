@@ -52,7 +52,7 @@ export default async function LessonPage({
 
   const lesson = await db.lesson.findFirst({
     where: { id: lessonId, unit: { course: { slug, published: true } } },
-    include: { video: true, unit: { include: { course: true } } },
+    include: { video: true, instructor: { select: { name: true } }, unit: { include: { course: { include: { instructor: { select: { name: true } } } } } } },
   });
   if (!lesson) notFound();
   const { unit } = lesson;
@@ -74,7 +74,9 @@ export default async function LessonPage({
       </Link>
       <div className="grid gap-1">
         <h1 className="font-display text-h1 font-semibold">{title}</h1>
-        <p className="text-small text-ink-muted">{t(`kind.${lesson.kind}`)}</p>
+        <p className="text-small text-ink-muted">
+          {t(`kind.${lesson.kind}`)} · {t("recordedBy", { name: (lesson.instructor ?? course.instructor).name })}
+        </p>
       </div>
       <div className="aspect-video overflow-hidden rounded-md border border-hairline bg-surface">
         {video?.provider === "YOUTUBE" ? (

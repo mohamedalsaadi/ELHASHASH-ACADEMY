@@ -69,7 +69,7 @@ export default async function TeacherLivePage({
     <main className="mx-auto grid max-w-4xl gap-10 px-4 py-12">
       <div className="grid gap-4">
         <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-        <TeacherNav current="live" id={me.id} />
+        <TeacherNav current="live" />
       </div>
 
       {courses.length > 0 && (

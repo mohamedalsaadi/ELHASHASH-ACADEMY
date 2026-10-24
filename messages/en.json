@@ -157,7 +157,6 @@
       "PDF": "PDF"
     },
     "videoSoon": "This lesson's video is coming soon.",
-    "teacher": "With {name}",
     "skill": "Courses",
     "schoolTab": "School subjects",
     "skillTab": "Courses",
@@ -180,7 +179,8 @@
     "available": "{count, plural, one {# course} other {# courses}} available",
     "pickSubject": "<m>{grade}</m> subjects",
     "subjectCount": "{count, plural, one {# subject} other {# subjects}} · {live, plural, =0 {none available yet} other {# available now}}",
-    "soon": "Coming soon"
+    "soon": "Coming soon",
+    "recordedBy": "Recorded by {name}"
   },
   "player": {
     "signIn": "Sign in to watch this lesson.",
@@ -260,7 +260,13 @@
     "rentals": "Lecture rentals",
     "rentalsHint": "A price and number of days for each lesson in paid units. A lesson is offered for rent only once it has a price and is switched on.",
     "addRental": "Add a rental price",
-    "rentalOn": "Available to rent"
+    "rentalOn": "Available to rent",
+    "lessonTeacher": "Recorded by",
+    "subjectsTitle": "Subjects per grade",
+    "subjectsHint": "Tick the subjects this grade teaches. Students see them on the grade page; unticked subjects that already have a course still show.",
+    "subjectsGrade": "Grade",
+    "subjectsOpen": "Show subjects",
+    "subjectsLink": "Subjects per grade"
   },
   "signup": {
     "title": "Create a student account",
@@ -305,8 +311,7 @@
   "teacher": {
     "hello": "Hello, {name}",
     "navHome": "Overview",
-    "navProfile": "My profile",
-    "viewPublic": "My public page",
+    "navProfile": "My account",
     "statStudents": "Students subscribed now",
     "statNew": "New subscriptions this week",
     "statEarnings": "Sales this month",
@@ -320,12 +325,6 @@
     "noStudents": "No students are subscribed right now.",
     "until": "Until {date}",
     "forever": "Lifetime access",
-    "profileHint": "Students see this on your public page.",
-    "photoUrl": "Link to your photo (starts with https)",
-    "bioAr": "About you, in Arabic",
-    "bioEn": "About you, in English",
-    "publicCourses": "Courses ({count})",
-    "title": "{name}",
     "navLive": "Live lectures"
   },
   "live": {

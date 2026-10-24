@@ -30,10 +30,10 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       grade: { include: { country: true } },
       // Upcoming sessions; ones that started up to 5 hours ago are checked against their end below.
       liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
-      instructor: { select: { id: true, name: true } },
+      instructor: { select: { name: true } },
       units: {
         orderBy: { order: "asc" },
-        include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now), take: 1 } } } },
+        include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now), take: 1 }, instructor: { select: { name: true } } } } },
       },
       skus: { where: { ...onSale(now), lessonId: null, liveSessionId: null }, orderBy: { price: "asc" } },
     },
@@ -52,9 +52,6 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       <section className="grid gap-3">
         <p className="text-small text-ink-muted">{course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}</p>
         <h1 className="font-display text-h1 font-semibold text-balance">{ar ? course.titleAr : course.titleEn}</h1>
-        <Link href={`/teachers/${course.instructor.id}`} className="w-fit text-ink-muted hover:text-ink">
-          {t("teacher", { name: course.instructor.name })}
-        </Link>
         {(ar ? course.descAr : course.descEn) && <p className="max-w-[65ch] text-ink-muted">{ar ? course.descAr : course.descEn}</p>}
         {owned ? (
           <p className="w-fit rounded-full border border-up px-3 py-1 text-label text-up">{t("owned")}</p>
@@ -87,7 +84,10 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                   const rent = l.skus[0];
                   const label = (
                     <>
-                      <span>{ar ? l.titleAr : l.titleEn}</span>
+                      <span className="grid">
+                        <span>{ar ? l.titleAr : l.titleEn}</span>
+                        <span className="text-label text-ink-muted">{(l.instructor ?? course.instructor).name}</span>
+                      </span>
                       <span className={`text-label ${rented ? "text-up" : "text-ink-muted"}`}>
                         {rented && until ? t("rented", { date: date.format(until) }) : t(`kind.${l.kind}`)}
                       </span>
@@ -106,7 +106,10 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                         <div className="flex items-center justify-between gap-3 px-2 py-3 text-ink-muted">
                           <span className="flex items-center gap-2">
                             <LockIcon />
-                            <span>{ar ? l.titleAr : l.titleEn}</span>
+                            <span className="grid">
+                              <span>{ar ? l.titleAr : l.titleEn}</span>
+                              <span className="text-label">{(l.instructor ?? course.instructor).name}</span>
+                            </span>
                           </span>
                           {rent ? (
                             <Link

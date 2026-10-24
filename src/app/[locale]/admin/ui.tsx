@@ -91,19 +91,40 @@ export function TeacherForm() {
 }
 
 type Option = { id: string; name: string };
+export type OptionGroup = { label: string; options: Option[] };
 
-export function CreateCourseForm({ locale, grades, subjects, teachers }: { locale: string; grades: Option[]; subjects: Option[]; teachers: Option[] }) {
+const optionList = (options: Option[]) =>
+  options.map((o) => (
+    <option key={o.id} value={o.id}>
+      {o.name}
+    </option>
+  ));
+
+/** Grades in one select, under a heading per country. */
+export function GradeSelect({ groups, name = "gradeId", defaultValue }: { groups: OptionGroup[]; name?: string; defaultValue?: string }) {
+  const t = useTranslations("admin");
+  return (
+    <label className={label}>
+      {t("grade")}
+      <select name={name} required defaultValue={defaultValue} className={field}>
+        {groups.map((g) => (
+          <optgroup key={g.label} label={g.label}>
+            {optionList(g.options)}
+          </optgroup>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function CreateCourseForm({ locale, gradeGroups, subjects, teachers }: { locale: string; gradeGroups: OptionGroup[]; subjects: Option[]; teachers: Option[] }) {
   const t = useTranslations("admin");
   const [kind, setKind] = useState<"SCHOOL" | "SKILL">("SCHOOL");
   const select = (name: string, options: Option[]) => (
     <label className={label}>
-      {t(name === "instructorId" ? "teacher" : name === "gradeId" ? "grade" : "subject")}
+      {t(name === "instructorId" ? "teacher" : "subject")}
       <select name={name} required className={field}>
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
+        {optionList(options)}
       </select>
     </label>
   );
@@ -119,7 +140,7 @@ export function CreateCourseForm({ locale, grades, subjects, teachers }: { local
       </label>
       {kind === "SCHOOL" ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          {select("gradeId", grades)}
+          <GradeSelect groups={gradeGroups} />
           {select("subjectId", subjects)}
         </div>
       ) : (

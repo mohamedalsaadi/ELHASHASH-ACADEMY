@@ -58,7 +58,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
     <main className="mx-auto grid max-w-4xl gap-10 px-4 py-12">
       <div className="grid gap-4">
         <h1 className="font-display text-h1 font-semibold">{t("hello", { name: me.name ?? "" })}</h1>
-        <TeacherNav current="home" id={me.id} />
+        <TeacherNav current="home" />
       </div>
 
       <section className="grid gap-3 sm:grid-cols-3">

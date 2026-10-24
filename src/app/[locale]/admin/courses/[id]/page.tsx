@@ -159,6 +159,21 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     <input name="externalId" defaultValue={l.video?.externalId ?? ""} dir="ltr" className={field} />
                   </label>
                 </div>
+                {isAdmin && (
+                  <label className={label}>
+                    {t("lessonTeacher")}
+                    <select name="instructorId" defaultValue={l.instructorId ?? ""} className={field}>
+                      <option value="">{teachers.find((u) => u.id === course.instructorId)?.name}</option>
+                      {teachers
+                        .filter((u) => u.id !== course.instructorId)
+                        .map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.name}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                )}
                 <div className="flex flex-wrap gap-3">
                   <SaveButton />
                   <DeleteButton action={deleteLesson} />

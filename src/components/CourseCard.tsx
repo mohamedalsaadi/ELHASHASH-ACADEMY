@@ -1,5 +1,4 @@
 import { useTranslations } from "next-intl";
-import { TeacherPhoto } from "@/components/TeacherPhoto";
 import { Link } from "@/i18n/navigation";
 import type { cardInclude } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
@@ -7,7 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 
 export type CardCourse = Prisma.CourseGetPayload<{ include: ReturnType<typeof cardInclude> }>;
 
-/** Course card: a navy header band like the top of an exam paper, then teacher and price. */
+/** Course card: a navy header band like the top of an exam paper, then the price. */
 export function CourseCard({ course: c, locale }: { course: CardCourse; locale: string }) {
   const t = useTranslations("catalog");
   const ar = locale === "ar";
@@ -24,11 +23,7 @@ export function CourseCard({ course: c, locale }: { course: CardCourse; locale: 
         <span className="text-small opacity-80">{c.grade ? (ar ? c.grade.nameAr : c.grade.nameEn) : t("skill")}</span>
         <span className="font-display text-h3 font-extrabold">{ar ? c.titleAr : c.titleEn}</span>
       </span>
-      <span className="grid content-between gap-4 p-5">
-        <span className="flex items-center gap-3">
-          <TeacherPhoto name={c.instructor.name} url={c.instructor.photoUrl} size={36} />
-          <span className="text-small">{t("teacher", { name: c.instructor.name })}</span>
-        </span>
+      <span className="grid content-end gap-4 p-5">
         {from && (
           <span className="flex flex-wrap items-baseline justify-between gap-2 border-t border-dashed border-rule pt-3">
             <span className="text-small text-ink-muted">

@@ -13,17 +13,23 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
   const t = await getTranslations("admin");
   const ar = locale === "ar";
   const tc = await getTranslations("catalog");
-  const [courses, grades, subjects, teachers] = await Promise.all([
+  const [courses, countries, subjects, teachers] = await Promise.all([
     db.course.findMany({ orderBy: { slug: "asc" }, include: { grade: true } }),
-    db.grade.findMany({ orderBy: [{ country: { code: "asc" } }, { level: "asc" }] }),
+    db.country.findMany({ orderBy: { order: "asc" }, include: { grades: { orderBy: { level: "asc" } } } }),
     db.subject.findMany({ orderBy: { slug: "asc" } }),
     db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const named = (rows: { id: string; nameAr: string; nameEn: string }[]) => rows.map((r) => ({ id: r.id, name: ar ? r.nameAr : r.nameEn }));
+  const gradeGroups = countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, options: named(c.grades) }));
 
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
-      <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
+        <Link href="/admin/subjects" className="text-pen underline-offset-4 hover:underline">
+          {t("subjectsLink")}
+        </Link>
+      </div>
       <section className="grid gap-3">
         <h2 className="font-display text-h2 font-semibold">{t("courses")}</h2>
         <ul className="grid gap-2">
@@ -47,7 +53,7 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
       </section>
       <section className="grid gap-3">
         <h2 className="font-display text-h2 font-semibold">{t("createCourse")}</h2>
-        <CreateCourseForm locale={locale} grades={named(grades)} subjects={named(subjects)} teachers={teachers} />
+        <CreateCourseForm locale={locale} gradeGroups={gradeGroups} subjects={named(subjects)} teachers={teachers} />
       </section>
       <section className="grid gap-3">
         <h2 className="font-display text-h2 font-semibold">{t("addTeacher")}</h2>

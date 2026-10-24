@@ -27,7 +27,6 @@ function done() {
   revalidatePath("/[locale]/admin", "layout");
   revalidatePath("/[locale]/courses", "layout");
   revalidatePath("/[locale]/teacher", "layout");
-  revalidatePath("/[locale]/teachers", "layout");
 }
 
 export async function updateCourse(form: FormData) {
@@ -67,7 +66,9 @@ export async function addLesson(form: FormData) {
   await assertCourse(me, await unitCourse(unitId));
   const last = await db.lesson.findFirst({ where: { unitId }, orderBy: { order: "desc" } });
   const order = (last?.order ?? 0) + 1;
-  await db.lesson.create({ data: { unitId, order, kind: "VIDEO", titleAr: `درس ${order}`, titleEn: `Lesson ${order}` } });
+  // A teacher adding a lesson is the one recording it; an admin's lesson falls back to the course's teacher.
+  const instructorId = me.role === "ADMIN" ? null : me.id;
+  await db.lesson.create({ data: { unitId, order, kind: "VIDEO", titleAr: `درس ${order}`, titleEn: `Lesson ${order}`, instructorId } });
   done();
 }
 
@@ -89,9 +90,12 @@ export async function updateLesson(form: FormData) {
       kind: z.enum(["VIDEO", "EXAM_STRUCTURE", "PAST_QUESTIONS", "PDF"]),
       provider: z.enum(["", "VDOCIPHER", "YOUTUBE"]),
       externalId: z.string().trim().max(200),
+      instructorId: z.string().optional(),
     })
     .parse(Object.fromEntries(form));
   await assertCourse(me, await lessonCourse(d.id));
+  // The admin picks who recorded it ("" = the course's teacher); a teacher editing a lesson becomes its instructor.
+  const instructorId = me.role !== "ADMIN" ? me.id : d.instructorId ? await teacherId.parseAsync(d.instructorId) : null;
 
   let videoId: string | null = null;
   if (d.provider && d.externalId) {
@@ -104,7 +108,7 @@ export async function updateLesson(form: FormData) {
     });
     videoId = video.id;
   }
-  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId } });
+  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId } });
   done();
 }
 
@@ -186,22 +190,6 @@ export async function changePassword(_: unknown, form: FormData): Promise<"ok" |
   return "ok";
 }
 
-const httpsUrl = z
-  .string()
-  .trim()
-  .max(500)
-  .refine((s) => !s || /^https:\/\/\S+$/.test(s), "https link")
-  .transform((s) => s || null);
-
-export async function updateProfile(form: FormData) {
-  const me = await requireStaff();
-  const data = z
-    .object({ photoUrl: httpsUrl, bioAr: optionalText, bioEn: optionalText })
-    .parse(Object.fromEntries(form));
-  await db.user.update({ where: { id: me.id }, data });
-  done();
-}
-
 export async function addTeacher(_: unknown, form: FormData): Promise<"ok" | "taken" | "invalid"> {
   await requireAdmin();
   const d = z
@@ -267,5 +255,18 @@ export async function setTeacher(form: FormData) {
   await requireAdmin();
   const d = await z.object({ id: z.string(), instructorId: teacherId }).parseAsync(Object.fromEntries(form));
   await db.course.update({ where: { id: d.id }, data: { instructorId: d.instructorId } });
+  done();
+}
+
+/** Which subjects a grade teaches, in the order they were ticked on the page. */
+export async function setGradeSubjects(form: FormData) {
+  await requireAdmin();
+  const gradeId = z.string().parse(form.get("gradeId"));
+  const ids = z.array(z.string()).parse(form.getAll("subject"));
+  const known = new Set((await db.subject.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((s) => s.id));
+  await db.$transaction([
+    db.gradeSubject.deleteMany({ where: { gradeId } }),
+    db.gradeSubject.createMany({ data: ids.filter((id) => known.has(id)).map((subjectId, order) => ({ gradeId, subjectId, order })) }),
+  ]);
   done();
 }

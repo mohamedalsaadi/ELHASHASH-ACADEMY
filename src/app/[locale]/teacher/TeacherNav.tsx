@@ -3,7 +3,7 @@ import { Link } from "@/i18n/navigation";
 
 const tab = "rounded-sm px-3 py-2 font-display text-label transition-colors duration-(--dur-fast) ease-(--ease-out)";
 
-export async function TeacherNav({ current, id }: { current: "home" | "live" | "profile"; id: string }) {
+export async function TeacherNav({ current }: { current: "home" | "live" | "profile" }) {
   const t = await getTranslations("teacher");
   const items = [
     { key: "home", href: "/teacher", label: t("navHome") },
@@ -22,9 +22,6 @@ export async function TeacherNav({ current, id }: { current: "home" | "live" | "
           {i.label}
         </Link>
       ))}
-      <Link href={`/teachers/${id}`} className={`${tab} ms-auto text-ink-muted hover:text-ink`}>
-        {t("viewPublic")}
-      </Link>
     </nav>
   );
 }

@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
-import { requireStaff } from "@/lib/staff";
+import { assertCourse, requireStaff } from "@/lib/staff";
 import { addLesson, addSku, addUnit, deleteLesson, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
 import { field, label } from "../../styles";
 import { DeleteButton, SaveButton } from "../../ui";
@@ -17,7 +17,9 @@ const check = "flex items-center gap-2 text-small";
 export default async function AdminCoursePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
-  await requireStaff();
+  const me = await requireStaff();
+  await assertCourse(me, id);
+  const isAdmin = me.role === "ADMIN";
   const t = await getTranslations("admin");
   const tc = await getTranslations("catalog");
 
@@ -36,7 +38,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   return (
     <main className="mx-auto grid max-w-4xl gap-10 px-4 py-12">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href="/admin" className="text-small text-ink-muted hover:text-ink">
+        <Link href={isAdmin ? "/admin" : "/teacher"} className="text-small text-ink-muted hover:text-ink">
           {t("back")}
         </Link>
         <Link href={`/courses/${course.slug}`} className="text-small text-ink-muted hover:text-ink">
@@ -151,55 +153,57 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
         </form>
       </section>
 
-      <section className="grid gap-4">
-        <h2 className="font-display text-h2 font-semibold">{t("packages")}</h2>
-        <p className="max-w-[65ch] text-small text-ink-muted">{t("packagesHint")}</p>
-        {course.skus.map((s) => (
-          <form key={s.id} action={updateSku} className={card}>
-            <input type="hidden" name="id" value={s.id} />
-            <h3 className="font-display text-h3 font-semibold">{tc(`access.${s.accessType}`)}</h3>
-            <div className="grid gap-3 sm:grid-cols-4">
-              <label className={label}>
-                {t("price", { currency: s.currency })}
-                <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / 100} required dir="ltr" className={`${field} num`} />
+      {isAdmin && (
+        <section className="grid gap-4">
+          <h2 className="font-display text-h2 font-semibold">{t("packages")}</h2>
+          <p className="max-w-[65ch] text-small text-ink-muted">{t("packagesHint")}</p>
+          {course.skus.map((s) => (
+            <form key={s.id} action={updateSku} className={card}>
+              <input type="hidden" name="id" value={s.id} />
+              <h3 className="font-display text-h3 font-semibold">{tc(`access.${s.accessType}`)}</h3>
+              <div className="grid gap-3 sm:grid-cols-4">
+                <label className={label}>
+                  {t("price", { currency: s.currency })}
+                  <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / 100} required dir="ltr" className={`${field} num`} />
+                </label>
+                <label className={label}>
+                  {t("accessEndsAt")}
+                  <input name="accessEndsAt" type="date" defaultValue={toDayInput(s.accessEndsAt)} className={field} />
+                </label>
+                <label className={label}>
+                  {t("saleFrom")}
+                  <input name="saleFrom" type="date" defaultValue={toDayInput(s.saleFrom)} className={field} />
+                </label>
+                <label className={label}>
+                  {t("saleTo")}
+                  <input name="saleTo" type="date" defaultValue={toDayInput(s.saleTo)} className={field} />
+                </label>
+              </div>
+              <label className={check}>
+                <input type="checkbox" name="active" defaultChecked={s.active} className="size-4" />
+                {t("activeHint")}
               </label>
-              <label className={label}>
-                {t("accessEndsAt")}
-                <input name="accessEndsAt" type="date" defaultValue={toDayInput(s.accessEndsAt)} className={field} />
-              </label>
-              <label className={label}>
-                {t("saleFrom")}
-                <input name="saleFrom" type="date" defaultValue={toDayInput(s.saleFrom)} className={field} />
-              </label>
-              <label className={label}>
-                {t("saleTo")}
-                <input name="saleTo" type="date" defaultValue={toDayInput(s.saleTo)} className={field} />
-              </label>
-            </div>
-            <label className={check}>
-              <input type="checkbox" name="active" defaultChecked={s.active} className="size-4" />
-              {t("activeHint")}
+              <div>
+                <SaveButton />
+              </div>
+            </form>
+          ))}
+          <form action={addSku} className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="courseId" value={course.id} />
+            <label className={label}>
+              {t("packageType")}
+              <select name="accessType" className={field}>
+                {(["SEMESTER", "YEARLY", "REVISION"] as const).map((a) => (
+                  <option key={a} value={a}>
+                    {tc(`access.${a}`)}
+                  </option>
+                ))}
+              </select>
             </label>
-            <div>
-              <SaveButton />
-            </div>
+            <SaveButton>{t("addPackage")}</SaveButton>
           </form>
-        ))}
-        <form action={addSku} className="flex flex-wrap items-end gap-3">
-          <input type="hidden" name="courseId" value={course.id} />
-          <label className={label}>
-            {t("packageType")}
-            <select name="accessType" className={field}>
-              {(["SEMESTER", "YEARLY", "REVISION"] as const).map((a) => (
-                <option key={a} value={a}>
-                  {tc(`access.${a}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <SaveButton>{t("addPackage")}</SaveButton>
-        </form>
-      </section>
+        </section>
+      )}
     </main>
   );
 }

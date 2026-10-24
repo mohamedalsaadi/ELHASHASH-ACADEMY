@@ -12,6 +12,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   setRequestLocale(locale);
   const session = await auth();
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/dashboard`)}`);
+  if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
   const t = await getTranslations("dashboard");
   const ar = locale === "ar";
   const now = new Date();

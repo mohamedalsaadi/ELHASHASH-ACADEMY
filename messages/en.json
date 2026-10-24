@@ -9,7 +9,8 @@
     "dashboard": "My dashboard",
     "admin": "Admin",
     "signOut": "Sign out",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "teacher": "Teacher dashboard"
   },
   "home": {
     "headline": "Know your real score in every lesson, before the exam",
@@ -121,7 +122,8 @@
       "PAST_QUESTIONS": "Past ministry questions",
       "PDF": "PDF"
     },
-    "videoSoon": "This lesson's video is coming soon."
+    "videoSoon": "This lesson's video is coming soon.",
+    "teacher": "With {name}"
   },
   "player": {
     "signIn": "Sign in to watch this lesson.",
@@ -212,5 +214,29 @@
     "refund": "Refund policy",
     "contact": "Contact us",
     "rights": "Elhashash Academy, United Arab Emirates"
+  },
+  "teacher": {
+    "hello": "Hello, {name}",
+    "navHome": "Overview",
+    "navProfile": "My profile",
+    "viewPublic": "My public page",
+    "statStudents": "Students subscribed now",
+    "statNew": "New subscriptions this week",
+    "statEarnings": "Sales this month",
+    "myCourses": "My courses",
+    "noCourses": "No courses are linked to you yet. Ask the admin to link your courses to your account.",
+    "courseStudents": "Students: {count}",
+    "published": "Published",
+    "hidden": "Hidden",
+    "edit": "Edit lessons",
+    "myStudents": "My students",
+    "noStudents": "No students are subscribed right now.",
+    "until": "Until {date}",
+    "forever": "Lifetime access",
+    "profileHint": "Students see this on your public page.",
+    "photoUrl": "Link to your photo (starts with https)",
+    "bioAr": "About you, in Arabic",
+    "bioEn": "About you, in English",
+    "publicCourses": "Courses ({count})"
   }
 }

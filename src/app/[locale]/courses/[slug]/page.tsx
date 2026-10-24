@@ -28,6 +28,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     where: { slug, published: true },
     include: {
       grade: true,
+      instructor: { select: { id: true, name: true } },
       units: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } },
       skus: { where: onSale(now), orderBy: { price: "asc" } },
     },
@@ -45,6 +46,9 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       <section className="grid gap-3">
         <p className="text-small text-ink-muted">{ar ? course.grade.nameAr : course.grade.nameEn}</p>
         <h1 className="font-display text-h1 font-semibold text-balance">{ar ? course.titleAr : course.titleEn}</h1>
+        <Link href={`/teachers/${course.instructor.id}`} className="w-fit text-ink-muted hover:text-ink">
+          {t("teacher", { name: course.instructor.name })}
+        </Link>
         {(ar ? course.descAr : course.descEn) && <p className="max-w-[65ch] text-ink-muted">{ar ? course.descAr : course.descEn}</p>}
         {owned ? (
           <p className="w-fit rounded-full border border-up px-3 py-1 text-label text-up">{t("owned")}</p>

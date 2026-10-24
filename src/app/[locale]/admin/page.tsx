@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
-import { requireStaff } from "@/lib/staff";
+import { requireAdmin } from "@/lib/staff";
 import { PasswordForm } from "./ui";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await requireStaff();
+  await requireAdmin();
   const t = await getTranslations("admin");
   const ar = locale === "ar";
   const courses = await db.course.findMany({ orderBy: { slug: "asc" }, include: { grade: true } });

@@ -79,6 +79,10 @@ model User {
   role         Role     @default(STUDENT)
   locale       String   @default("ar")
   gradeId      String?
+  /// Teacher profile, shown on the public teacher page.
+  photoUrl     String?
+  bioAr        String?
+  bioEn        String?
   createdAt    DateTime @default(now())
 
   grade        Grade?           @relation(fields: [gradeId], references: [id], onDelete: SetNull)

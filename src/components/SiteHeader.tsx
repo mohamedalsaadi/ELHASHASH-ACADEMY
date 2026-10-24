@@ -28,12 +28,19 @@ export async function SiteHeader() {
         </Link>
         {session?.user ? (
           <>
-            <Link href="/dashboard" className={navItem}>
-              {t("dashboard")}
-            </Link>
-            {(role === "ADMIN" || role === "INSTRUCTOR") && (
+            {role !== "INSTRUCTOR" && (
+              <Link href="/dashboard" className={navItem}>
+                {t("dashboard")}
+              </Link>
+            )}
+            {role === "ADMIN" && (
               <Link href="/admin" className={navItem}>
                 {t("admin")}
+              </Link>
+            )}
+            {role === "INSTRUCTOR" && (
+              <Link href="/teacher" className={navItem}>
+                {t("teacher")}
               </Link>
             )}
             <form action={signOutAction}>

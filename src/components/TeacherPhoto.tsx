@@ -9,7 +9,7 @@ export function TeacherPhoto({ name, url, size }: { name: string; url: string | 
     <span
       aria-hidden="true"
       style={{ ...box, fontSize: size * 0.4 }}
-      className="grid place-items-center rounded-full border-2 border-amber bg-surface font-display font-semibold text-amber"
+      className="grid place-items-center rounded-full border-2 border-pen bg-surface font-display font-semibold text-pen"
     >
       {name.trim().charAt(0)}
     </span>

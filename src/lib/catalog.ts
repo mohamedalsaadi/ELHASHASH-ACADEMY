@@ -19,3 +19,13 @@ export async function hasAccess(userId: string | undefined, courseId: string, no
   });
   return count > 0;
 }
+
+/** What a course card needs: the cheapest package on sale, whether a free unit exists, the grade and the teacher. */
+export function cardInclude(now: Date) {
+  return {
+    skus: { where: onSale(now), orderBy: { price: "asc" as const }, take: 1 },
+    units: { where: { isFree: true }, select: { id: true }, take: 1 },
+    grade: true,
+    instructor: { select: { name: true, photoUrl: true } },
+  };
+}

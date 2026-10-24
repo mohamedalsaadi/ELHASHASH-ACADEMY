@@ -10,23 +10,57 @@
     "admin": "Admin",
     "signOut": "Sign out",
     "signIn": "Sign in",
-    "teacher": "Teacher dashboard"
+    "teacher": "Teacher dashboard",
+    "signUp": "Sign up",
+    "teachers": "Teachers"
   },
   "home": {
-    "headline": "Know your real score in every lesson, before the exam",
-    "lede": "Curriculum lessons, exam structure and past ministry questions for Grades 10 to 12. Unit 1 of every subject is free.",
+    "eyebrow": "Grades 10 to 12 · UAE and Egypt",
+    "headline": "Know your <m>real</m> score in every lesson, before the exam",
+    "lede": "Curriculum lessons, exam structure and past ministry questions, with your teacher. Unit 1 of every subject is free.",
     "ctaFree": "Start the free unit",
-    "scene": {
-      "beforeLabel": "Every lesson starts where you are now",
-      "before": "Scroll to see where you stand",
-      "afterLabel": "The point of contact",
-      "after": "This is where you see your real score",
-      "steps": {
-        "explain": "Explanation",
-        "practice": "Practice",
-        "ministry": "Ministry questions",
-        "score": "Your score"
+    "ctaGrade": "Choose your grade",
+    "paper": {
+      "label": "Practice exam · Mathematics",
+      "q": "Q1: Find the limit as x → 2",
+      "a": "Solution: substitute directly…",
+      "score": "Score 48 out of 50",
+      "markedBy": "Marked by {name}"
+    },
+    "ways": {
+      "title": "Three ways to learn",
+      "soon": "Soon",
+      "subscribe": {
+        "title": "Subscribe to a subject",
+        "body": "One subject for your grade: every lesson and exam until the end of the school year."
+      },
+      "rent": {
+        "title": "Rent a lecture",
+        "body": "Need just one lesson? Rent it for a set number of days, for less."
+      },
+      "live": {
+        "title": "Live lectures",
+        "body": "Join your teacher live and ask questions, with a private link that only works for you."
       }
+    },
+    "grades": {
+      "title": "Choose your grade",
+      "count": "{count, plural, =0 {No subjects} one {# subject} other {# subjects}}"
+    },
+    "teachers": {
+      "title": "Teachers",
+      "page": "Teacher page"
+    },
+    "skills": {
+      "title": "Courses",
+      "lede": "Courses outside the school curriculum, such as IELTS, at one price for a set number of days.",
+      "all": "All courses"
+    },
+    "trust": {
+      "free": "Unit 1 of every subject is free",
+      "device": "One device per account, to protect lessons",
+      "pay": "Secure card payment",
+      "lang": "In Arabic and English"
     }
   },
   "signin": {
@@ -242,7 +276,8 @@
     "terms": "Terms of use",
     "refund": "Refund policy",
     "contact": "Contact us",
-    "rights": "Elhashash Academy, United Arab Emirates"
+    "rights": "Elhashash Academy, United Arab Emirates",
+    "tagline": "Know your real score before the exam."
   },
   "teacher": {
     "hello": "Hello, {name}",

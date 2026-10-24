@@ -93,7 +93,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
                   <span className="flex items-center gap-4 text-label">
                     <span className="num text-ink-muted">{t("courseStudents", { count: perCourse(c.id) })}</span>
                     <span className={c.published ? "text-up" : "text-ink-muted"}>{c.published ? t("published") : t("hidden")}</span>
-                    <span className="text-amber">{t("edit")}</span>
+                    <span className="text-pen">{t("edit")}</span>
                   </span>
                 </Link>
               </li>

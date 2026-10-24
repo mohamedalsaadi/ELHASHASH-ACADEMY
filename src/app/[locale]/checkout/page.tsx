@@ -76,8 +76,8 @@ export default async function CheckoutPage({
       <PayForm skuIds={skuIds} locale={locale} {...activeGateway()} />
       <p className="text-small text-ink-muted">
         {t.rich("agree", {
-          terms: (c) => <Link href="/terms" className="text-amber underline">{c}</Link>,
-          refund: (c) => <Link href="/refund" className="text-amber underline">{c}</Link>,
+          terms: (c) => <Link href="/terms" className="text-pen underline">{c}</Link>,
+          refund: (c) => <Link href="/refund" className="text-pen underline">{c}</Link>,
         })}
       </p>
     </main>

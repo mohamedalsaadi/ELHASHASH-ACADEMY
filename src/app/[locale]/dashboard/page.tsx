@@ -41,7 +41,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             <p className="text-ink-muted">{t("empty")}</p>
             <Link
               href="/courses"
-              className="w-fit rounded-sm bg-amber-fill px-[18px] py-3 font-display font-semibold text-on-amber transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-amber-fill)_86%,#fff)]"
+              className="w-fit rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]"
             >
               {t("browse")}
             </Link>

@@ -14,7 +14,7 @@ function Submit() {
   return (
     <button
       disabled={pending}
-      className="rounded-sm bg-amber-fill px-[18px] py-3 font-display font-semibold text-on-amber transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-amber-fill)_86%,#fff)] disabled:cursor-not-allowed disabled:opacity-45"
+      className="rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)] disabled:cursor-not-allowed disabled:opacity-45"
     >
       {pending ? t("submitting") : t("submit")}
     </button>

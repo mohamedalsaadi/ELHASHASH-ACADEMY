@@ -36,9 +36,9 @@ export function PayForm({ skuIds, locale, methods, gateway }: { skuIds: string[]
         {methods.map((m) => (
           <label
             key={m}
-            className="flex cursor-pointer items-start gap-3 rounded-sm border border-hairline p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised has-checked:border-amber"
+            className="flex cursor-pointer items-start gap-3 rounded-sm border border-hairline p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised has-checked:border-pen"
           >
-            <input type="radio" name="method" value={m} checked={method === m} onChange={() => setMethod(m)} className="mt-1 accent-(--color-amber-fill)" />
+            <input type="radio" name="method" value={m} checked={method === m} onChange={() => setMethod(m)} className="mt-1 accent-(--color-primary)" />
             <span className="grid">
               <span className="font-display font-medium">{t(`methods.${m}.name`)}</span>
               <span className="text-small text-ink-muted">{t(gateway === "STRIPE" && m === "CARD" ? "methods.CARD.hintStripe" : `methods.${m}.hint`)}</span>
@@ -53,7 +53,7 @@ export function PayForm({ skuIds, locale, methods, gateway }: { skuIds: string[]
       )}
       <button
         disabled={busy}
-        className="rounded-sm bg-amber-fill px-[18px] py-3 font-display font-semibold text-on-amber transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-amber-fill)_86%,#fff)] disabled:cursor-not-allowed disabled:opacity-45"
+        className="rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)] disabled:cursor-not-allowed disabled:opacity-45"
       >
         {busy ? t("redirecting") : t("pay")}
       </button>

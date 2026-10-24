@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Readex_Pro, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Alexandria, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -8,10 +8,10 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import "../globals.css";
 
-const readex = Readex_Pro({
+const alexandria = Alexandria({
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-readex",
+  weight: ["400", "600", "700", "800"],
+  variable: "--font-alexandria",
   display: "swap",
 });
 
@@ -44,7 +44,7 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${readex.variable} ${plex.variable}`}>
+    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${alexandria.variable} ${plex.variable}`}>
       <body className="antialiased">
         <NextIntlClientProvider>
           <SiteHeader />

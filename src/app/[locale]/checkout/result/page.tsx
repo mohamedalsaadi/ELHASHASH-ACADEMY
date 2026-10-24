@@ -31,7 +31,7 @@ export default async function ResultPage({
     order = await db.order.findUniqueOrThrow({ where: { id: order.id } });
   }
 
-  const tone = { PAID: "text-up", PENDING: "text-amber", FAILED: "text-down", EXPIRED: "text-down", REFUNDED: "text-ink-muted" }[order.status];
+  const tone = { PAID: "text-up", PENDING: "text-ink", FAILED: "text-down", EXPIRED: "text-down", REFUNDED: "text-ink-muted" }[order.status];
 
   return (
     <main className="mx-auto grid max-w-xl gap-4 px-4 py-16">
@@ -39,7 +39,7 @@ export default async function ResultPage({
       <p className="text-ink-muted">{t(`detail.${order.status}`)}</p>
       {order.status === "PENDING" && order.kioskRef && (
         <p className="rounded-md border border-hairline bg-surface p-4">
-          {t("kioskRef")} <span className="num font-semibold text-amber">{order.kioskRef}</span>
+          {t("kioskRef")} <span className="num font-semibold text-pen">{order.kioskRef}</span>
         </p>
       )}
       <p className="num text-small text-ink-muted">

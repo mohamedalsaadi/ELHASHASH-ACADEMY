@@ -1,28 +1,31 @@
 /* Generated from DESIGN.md. Tailwind v4: import after `@import "tailwindcss";`.
-   Dusk is the default; afternoon applies via data-theme="light" or the OS light preference. */
+   Direction A "exam paper": paper ground, navy ink, red correction pen, yellow highlighter. Light only. */
 
 @theme {
-  --color-ground: #161A26;
-  --color-surface: #1E2332;
-  --color-raised: #272D3F;
-  --color-hairline: #3A4157;
-  --color-field: #6B7189;
-  --color-ink: #ECE6DA;
-  --color-ink-muted: #A9A6B4;
-  --color-amber: #F2A65A;
-  --color-amber-fill: #F2A65A;
-  --color-on-amber: #1F1407;
-  --color-up: #6FCFB0;
-  --color-down: #EE7B6A;
-  --color-focus: #ECE6DA;
+  --color-ground: #FBFAF6;
+  --color-surface: #FFFFFF;
+  --color-raised: #F3F1EA;
+  --color-hairline: #E3E0D6;
+  --color-rule: #DCE6F5;
+  --color-field: #8A93A8;
+  --color-ink: #14213D;
+  --color-ink-muted: #4A5672;
+  --color-primary: #14213D;
+  --color-on-primary: #FBFAF6;
+  --color-pen: #D7263D;
+  --color-marker: #FFE45E;
+  --color-up: #1C7A4F;
+  --color-down: #B42335;
+  --color-focus: #D7263D;
 
-  --font-display: var(--font-readex), var(--font-plex), "Segoe UI", Tahoma, system-ui, sans-serif;
+  --font-display: var(--font-alexandria), var(--font-plex), "Segoe UI", Tahoma, system-ui, sans-serif;
   --font-body: var(--font-plex), "Segoe UI", Tahoma, system-ui, sans-serif;
   --font-data: var(--font-plex), "Segoe UI", Tahoma, system-ui, sans-serif;
 
-  --text-display: clamp(2rem, 1.6rem + 1.8vw, 2.5rem);
-  --text-h1: clamp(1.625rem, 1.4rem + 1vw, 2rem);
-  --text-h2: clamp(1.375rem, 1.25rem + .55vw, 1.5625rem);
+  --text-hero: clamp(2.25rem, 1.5rem + 3vw, 3.75rem);
+  --text-display: clamp(2rem, 1.6rem + 1.8vw, 2.75rem);
+  --text-h1: clamp(1.625rem, 1.4rem + 1vw, 2.125rem);
+  --text-h2: clamp(1.375rem, 1.25rem + .55vw, 1.625rem);
   --text-h3: 1.25rem;
   --text-body-ar: 1.0625rem;
   --text-body: 1rem;
@@ -32,9 +35,12 @@
 
   --spacing: 4px;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-full: 9999px;
+
+  --shadow-paper: 0 1px 2px rgb(20 33 61 / .05), 0 12px 32px -18px rgb(20 33 61 / .25);
 
   --ease-out: cubic-bezier(.2, .7, .2, 1);
   --dur-fast: 160ms;
@@ -43,26 +49,7 @@
   --stagger: 30ms;
 }
 
-:root { color-scheme: dark; }
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    color-scheme: light;
-    --color-ground: #EEECF2; --color-surface: #F8F7FA; --color-raised: #E4E2EA;
-    --color-hairline: #B9B6C6; --color-field: #7D8196;
-    --color-ink: #1D2131; --color-ink-muted: #555A6E;
-    --color-amber: #A9561A; --color-amber-fill: #E8924A; --color-on-amber: #1F1407;
-    --color-up: #1C7A60; --color-down: #B4442F; --color-focus: #1D2131;
-  }
-}
-:root[data-theme="light"] {
-  color-scheme: light;
-  --color-ground: #EEECF2; --color-surface: #F8F7FA; --color-raised: #E4E2EA;
-  --color-hairline: #B9B6C6; --color-field: #7D8196;
-  --color-ink: #1D2131; --color-ink-muted: #555A6E;
-  --color-amber: #A9561A; --color-amber-fill: #E8924A; --color-on-amber: #1F1407;
-  --color-up: #1C7A60; --color-down: #B4442F; --color-focus: #1D2131;
-}
+:root { color-scheme: light; }
 
 body {
   background: var(--color-ground);
@@ -72,6 +59,10 @@ body {
 :lang(ar) body, body:lang(ar) { font-size: var(--text-body-ar); line-height: 1.8; }
 .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+/* Notebook rules and the highlighter stroke, the two textures of the brand. */
+.paper-lines { background-image: repeating-linear-gradient(to bottom, transparent 0 39px, var(--color-rule) 39px 40px); }
+.marker { background: linear-gradient(transparent 58%, var(--color-marker) 58% 92%, transparent 92%); padding-inline: .08em; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-count: 0ms; --stagger: 0ms; }

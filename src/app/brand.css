@@ -1,7 +1,7 @@
 /* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay and the route loader.
    Every duration is a token; every ease is --ease-out. */
 
-/* Intro: F1 0–700 horizon draws · F2 160–860 ring draws + drops 6px · F3 860–1020 dot
+/* Intro: F1 0–700 pen circle draws · F2 160–860 letter fades in + drops 6px · F3 860–1020 tick draws
    · F4 860–1100 wordmark · F5 hold · F6 1360–1600 overlay fades. */
 .eh-intro { display: none; }
 html[data-intro] .eh-intro {
@@ -13,16 +13,12 @@ html[data-intro] .eh-intro {
 }
 html[data-intro="skip"] .eh-intro { animation-delay: 0ms; }
 html[data-intro] .eh-line,
-html[data-intro] .eh-ring path {
+html[data-intro] .eh-dot {
   stroke-dasharray: 1; stroke-dashoffset: 1;
   animation: eh-draw var(--dur-count) var(--ease-out) forwards;
 }
-html[data-intro] .eh-ring path { animation-delay: 160ms; }
+html[data-intro] .eh-dot { animation-duration: var(--dur-fast); animation-delay: 860ms; }
 html[data-intro] .eh-ring { animation: eh-drop var(--dur-count) var(--ease-out) 160ms both; }
-html[data-intro] .eh-dot {
-  transform-box: fill-box; transform-origin: center; transform: scale(0);
-  animation: eh-pop var(--dur-fast) var(--ease-out) 860ms forwards;
-}
 html[data-intro] .eh-word { opacity: 0; animation: eh-rise var(--dur-base) var(--ease-out) 860ms forwards; }
 /* The page stays hidden under the overlay until it fades, so the web-font swap behind it is not a layout shift. */
 html[data-intro] body > :not(main),
@@ -31,17 +27,16 @@ html[data-intro="skip"] body > :not(main),
 html[data-intro="skip"] main > :not(.eh-intro) { animation-delay: 0ms; }
 
 @keyframes eh-draw { to { stroke-dashoffset: 0; } }
-@keyframes eh-drop { from { transform: translateY(-6px); } to { transform: none; } }
-@keyframes eh-pop { to { transform: scale(1); } }
+@keyframes eh-drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @keyframes eh-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes eh-intro-out { to { opacity: 0; visibility: hidden; } }
 @keyframes eh-reveal { from { visibility: hidden; } }
 
-/* Route loader: the horizon draws only while a page is really loading. */
+/* Route loader: a red pen line draws only while a page is really loading. */
 .eh-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 2px; overflow: hidden; }
 .eh-loader::after {
   content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 100%;
-  background: var(--color-amber);
+  background: var(--color-pen);
   transform-origin: var(--eh-origin, right);
   animation: eh-load 1400ms var(--ease-out) infinite;
 }
@@ -51,4 +46,11 @@ html[data-intro="skip"] main > :not(.eh-intro) { animation-delay: 0ms; }
 @media (prefers-reduced-motion: reduce) {
   html[data-intro] .eh-intro { display: none; }
   .eh-loader::after { animation: none; transform: scaleX(.4); }
+}
+
+/* Home hero: the pen circles the score once, after the intro when it plays. */
+.eh-score { stroke-dasharray: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .eh-score { stroke-dashoffset: 1; animation: eh-draw var(--dur-count) var(--ease-out) 300ms forwards; }
+  html[data-intro] .eh-score { animation-delay: 1600ms; }
 }

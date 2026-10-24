@@ -19,7 +19,7 @@ export function LegalPage({ locale, title, sections }: { locale: string; title: 
             <span className="num text-ink-muted">{i + 1}. </span>
             {s.h}
           </h2>
-          <div className="grid gap-2 text-ink-muted [&_a]:text-amber [&_a]:underline [&_li]:ms-5 [&_ul]:list-disc">{s.body}</div>
+          <div className="grid gap-2 text-ink-muted [&_a]:text-pen [&_a]:underline [&_li]:ms-5 [&_ul]:list-disc">{s.body}</div>
         </section>
       ))}
     </main>

@@ -5,10 +5,14 @@ import { LocaleSwitch } from "@/components/LocaleSwitch";
 import { Mark, Wordmark } from "@/components/brand/Mark";
 
 const navItem =
-  "rounded-sm px-3 py-2 font-display text-label transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+  "rounded-sm px-3 py-2 font-display text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export async function SiteHeader() {
-  const [t, locale, session] = await Promise.all([getTranslations("nav"), getLocale(), auth()]);
+  const [t, locale, session] = await Promise.all([
+    getTranslations("nav"),
+    getLocale(),
+    auth(),
+  ]);
   const role = session?.user?.role;
 
   async function signOutAction() {
@@ -17,43 +21,55 @@ export async function SiteHeader() {
   }
 
   return (
-    <header className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-4">
-      <Link href="/" className="flex items-center gap-3 rounded-sm">
-        <Mark size={28} />
-        <Wordmark locale={locale} className="text-[1.0625rem] sm:text-h3" />
-      </Link>
-      <nav className="flex flex-wrap items-center gap-1">
-        <Link href="/courses" className={navItem}>
-          {t("courses")}
+    <header className="border-b border-hairline bg-surface">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+        <Link href="/" className="flex items-center gap-2.5 rounded-sm">
+          <Mark size={40} />
+          <Wordmark locale={locale} className="text-h3" />
         </Link>
-        {session?.user ? (
-          <>
-            {role !== "INSTRUCTOR" && (
-              <Link href="/dashboard" className={navItem}>
-                {t("dashboard")}
-              </Link>
-            )}
-            {role === "ADMIN" && (
-              <Link href="/admin" className={navItem}>
-                {t("admin")}
-              </Link>
-            )}
-            {role === "INSTRUCTOR" && (
-              <Link href="/teacher" className={navItem}>
-                {t("teacher")}
-              </Link>
-            )}
-            <form action={signOutAction}>
-              <button className={`${navItem} text-ink-muted`}>{t("signOut")}</button>
-            </form>
-          </>
-        ) : (
-          <Link href="/signin" className={navItem}>
-            {t("signIn")}
+        <nav className="flex flex-wrap items-center gap-1">
+          <Link href="/courses" className={navItem}>
+            {t("courses")}
           </Link>
-        )}
-        <LocaleSwitch />
-      </nav>
+          {session?.user ? (
+            <>
+              {role !== "INSTRUCTOR" && (
+                <Link href="/dashboard" className={navItem}>
+                  {t("dashboard")}
+                </Link>
+              )}
+              {role === "ADMIN" && (
+                <Link href="/admin" className={navItem}>
+                  {t("admin")}
+                </Link>
+              )}
+              {role === "INSTRUCTOR" && (
+                <Link href="/teacher" className={navItem}>
+                  {t("teacher")}
+                </Link>
+              )}
+              <form action={signOutAction}>
+                <button className={`${navItem} text-ink-muted`}>
+                  {t("signOut")}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/signin" className={navItem}>
+                {t("signIn")}
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-sm bg-primary px-4 py-2 font-display text-small font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]"
+              >
+                {t("signUp")}
+              </Link>
+            </>
+          )}
+          <LocaleSwitch />
+        </nav>
+      </div>
     </header>
   );
 }

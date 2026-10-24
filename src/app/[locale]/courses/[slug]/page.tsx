@@ -56,7 +56,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
           firstFree && (
             <Link
               href={lessonHref(firstFree.id)}
-              className="w-fit rounded-sm bg-amber-fill px-[18px] py-3 font-display font-semibold text-on-amber transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-amber-fill)_86%,#fff)]"
+              className="w-fit rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]"
             >
               {t("startFree")}
             </Link>

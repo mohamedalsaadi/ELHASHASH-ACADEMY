@@ -1,5 +1,10 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { VerifyForm } from "./VerifyForm";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/verify", "verify", { key: "title", noindex: true });
+}
 
 export default async function VerifyPage({ params }: { params: Promise<{ locale: string; token: string }> }) {
   const { locale, token } = await params;

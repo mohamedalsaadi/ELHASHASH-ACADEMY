@@ -6,7 +6,10 @@
     "errorBody": "Try again. If it keeps happening, contact us.",
     "retry": "Try again",
     "home": "Home",
-    "courses": "Courses"
+    "courses": "Courses",
+    "contact": "Contact support",
+    "backToAdmin": "Back to admin",
+    "backToTeacher": "Back to teacher dashboard"
   },
   "meta": {
     "title": "AAcademy",
@@ -20,6 +23,19 @@
     "title": "You are offline",
     "body": "Videos, live sessions, sign-in, checkout and the dashboards need a connection. Reconnect and try again.",
     "back": "Back to the home page"
+  },
+  "common": {
+    "saving": "Saving…",
+    "saved": "Saved",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "copy": "Copy",
+    "copied": "Copied",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "retry": "Try again",
+    "back": "Back"
   },
   "contactForm": {
     "title": "Send us a message",
@@ -49,10 +65,15 @@
     "dashboard": "My dashboard",
     "admin": "Admin",
     "signOut": "Sign out",
+    "signingOut": "Signing out…",
     "signIn": "Sign in",
     "teacher": "Teacher dashboard",
     "signUp": "Sign up",
     "teachers": "Teachers",
+    "skipToContent": "Skip to content",
+    "mainNav": "Main navigation",
+    "menu": "Menu",
+    "close": "Close",
     "parent": "Parent dashboard",
     "notifications": "Notifications",
     "account": "My account"
@@ -63,6 +84,7 @@
     "lede": "Curriculum lessons, exam structure and past ministry questions, with your teacher. Unit 1 of every subject is free.",
     "ctaFree": "Start the free unit",
     "ctaGrade": "Choose your country",
+    "skipIntro": "Skip intro",
     "paper": {
       "label": "Practice exam · Mathematics",
       "q": "Q1: Find the limit as x → 2",
@@ -100,6 +122,7 @@
       "all": "All courses"
     },
     "promotions": "Offers",
+    "noCountries": "Countries are being prepared. Check back soon.",
     "trust": {
       "free": "Unit 1 of every subject is free",
       "device": "One device per account, to protect lessons",
@@ -117,11 +140,14 @@
     "signUp": "Create one",
     "forgot": "Forgot your password?",
     "verified": "Your email is confirmed. Sign in.",
-    "resetDone": "Your password was changed. Sign in."
+    "resetDone": "Your password was changed. Sign in.",
+    "submitting": "Signing in…"
   },
   "checkout": {
     "title": "Complete your purchase",
+    "unavailableTitle": "This package is unavailable",
     "unavailable": "This package can't be bought right now. Go back to the subject page and pick another package.",
+    "backToCourses": "Browse courses",
     "subtotal": "Subtotal",
     "bundle": "Bundle discount",
     "total": "Total to pay",
@@ -167,6 +193,14 @@
       "currency_not_supported": "Paying in AED isn't available yet.",
       "gateway_unavailable": "We couldn't reach the payment gateway. Try again in a minute.",
       "generic": "Something went wrong. Try again.",
+      "network": "The connection dropped. Check your internet and try again.",
+      "invalid_request": "The request was incomplete. Refresh the page and try again.",
+      "coupon_invalid": "That discount code isn't valid.",
+      "coupon_not_started": "That discount code isn't active yet.",
+      "coupon_expired": "That discount code has expired.",
+      "coupon_used_up": "That discount code has reached its limit.",
+      "coupon_used_by_you": "You have already used that discount code.",
+      "coupon_currency": "That discount code can't be used with this currency.",
       "method_unavailable": "That payment method isn’t available right now. Pick another one."
     },
     "couponErrors": {
@@ -193,9 +227,21 @@
         "REFUNDED": "The amount went back to your original payment method."
       },
       "kioskRef": "Reference number:",
-      "receipt": "View the receipt"
+      "receipt": "View the receipt",
+      "reference": "Order reference",
+      "refresh": "Check the payment now",
+      "retry": "Try this order again",
+      "dashboard": "Go to my dashboard",
+      "contact": "Contact support"
     },
-    "agree": "By paying you agree to the <terms>terms of use</terms> and the <refund>refund policy</refund>. All sales are final."
+    "agree": "By paying you agree to the <terms>terms of use</terms>, the <privacy>privacy policy</privacy> and the <refund>refund policy</refund>. All sales are final. See the <faq>FAQ</faq>."
+  },
+  "payment": {
+    "gateways": {
+      "PAYMOB": "Paymob",
+      "STRIPE": "Stripe",
+      "MANUAL": "Manual"
+    }
   },
   "catalog": {
     "title": "Courses",
@@ -205,6 +251,11 @@
     "percentOff": "{pct}% off",
     "progress": "{pct}% complete · {done} of {total} lessons",
     "otherGrades": "Other grades",
+    "noCountries": "No countries are open yet. Check back soon.",
+    "noGrades": "No grades are open for this country yet.",
+    "noSubjects": "No subjects are open for this grade yet.",
+    "noUnits": "The lessons are being prepared.",
+    "noPackages": "Subscriptions for this course are being prepared. Contact support if you need access now.",
     "search": "Search courses",
     "searchPlaceholder": "Subject, grade or course name",
     "searchButton": "Search",
@@ -280,6 +331,7 @@
     }
   },
   "player": {
+    "title": "Lesson",
     "signIn": "Sign in to watch this lesson.",
     "signInCta": "Sign in",
     "reload": "Refresh the page to play the video.",
@@ -404,6 +456,8 @@
     "couponActive": "Active",
     "couponUsed": "{count, plural, one {# paid use} other {# paid uses}}",
     "confirmDeleteCoupon": "Delete this discount code?",
+    "noPromotions": "No promotions yet. Add one below.",
+    "noCoupons": "No discount codes yet. Add one below.",
     "catalogTitle": "Catalog",
     "countriesTitle": "Countries",
     "countriesHint": "Add a country or edit its details. An inactive country is hidden from students.",
@@ -446,6 +500,10 @@
       "AMERICAN": "American",
       "IB": "International Baccalaureate"
     },
+    "noCatalogCountries": "No countries yet. Add the first below.",
+    "noStages": "No stages yet for this country. Add one below.",
+    "noCatalogGrades": "No grades yet for this country. Add one below.",
+    "noCatalogSubjects": "No subjects yet. Add the first below.",
     "catalogErrors": {
       "duplicate": "That value is already used.",
       "overlap": "This stage range overlaps another stage.",
@@ -457,7 +515,7 @@
     }
   },
   "signup": {
-    "title": "Create a student account",
+    "title": "Create an account",
     "name": "Full name",
     "email": "Email",
     "emailHint": "Receipts and lesson updates go here.",
@@ -471,6 +529,8 @@
     "gradePick": "Choose your grade",
     "password": "Password",
     "passwordHint": "At least 8 characters",
+    "noGrades": "No grades are open for registration yet. Contact support.",
+    "terms": "By creating an account you agree to the <terms>terms of use</terms> and the <privacy>privacy policy</privacy>.",
     "submit": "Create account",
     "submitting": "Creating account…",
     "haveAccount": "Already have an account?",
@@ -487,6 +547,7 @@
     }
   },
   "dashboard": {
+    "title": "Student dashboard",
     "hello": "Hi, {name}",
     "myCourses": "My courses",
     "empty": "You haven't subscribed to a course yet. Start with the free unit in any subject.",
@@ -504,6 +565,7 @@
     "refund": "Refund policy",
     "privacy": "Privacy",
     "faq": "FAQ",
+    "legalNav": "Help and legal",
     "contact": "Contact us",
     "rights": "AAcademy, United Arab Emirates",
     "tagline": "Every page counts."
@@ -515,6 +577,7 @@
     "statStudents": "Students subscribed now",
     "statNew": "New subscriptions this week",
     "statEarnings": "Sales this month",
+    "noSales": "No sales yet",
     "myCourses": "My courses",
     "noCourses": "No courses are linked to you yet. Ask the admin to link your courses to your account.",
     "courseStudents": "Students: {count}",
@@ -568,7 +631,8 @@
     "subscribe": "See subscriptions",
     "opensIn": "The room opens in",
     "opensHint": "You can enter {minutes} minutes before the start. This page opens the room by itself.",
-    "pastError": "That time has already passed. Pick a time in the future."
+    "pastError": "That time has already passed. Pick a time in the future.",
+    "noCourses": "No courses are linked to you yet. Ask the admin to link one before scheduling a live lecture."
   },
   "questions": {
     "title": "Questions",
@@ -658,6 +722,8 @@
     "markPaid": "Confirm payment",
     "markPaidHint": "Use after cash or a transfer arrives. It grants access and records the operation.",
     "refund": "Refund",
+    "confirmRefund": "Refund this order and end its access?",
+    "confirmMarkPaid": "Mark this order as paid and grant access?",
     "refundHint": "Refunds the amount through Stripe and ends the access it granted.",
     "refundPaymobHint": "For Paymob, refund in the Paymob dashboard first, then press the button to end access and record it.",
     "orderStatus": {
@@ -667,7 +733,9 @@
       "EXPIRED": "Expired",
       "REFUNDED": "Refunded"
     },
-    "noOrders": "No orders.",
+    "noOrders": "No orders yet. Paid checkouts appear here.",
+    "noCourses": "No courses yet. Create the first one below.",
+    "noTeachers": "No teachers yet. Add the first one below.",
     "recentViews": "Recent lessons",
     "minutes": "{n} min watched",
     "noViews": "No lessons watched yet.",
@@ -716,6 +784,8 @@
     "unverified": "Email not confirmed",
     "verifiedNow": "Your email is confirmed.",
     "sendVerification": "Send confirmation link",
+    "sending": "Sending…",
+    "confirmUnlink": "Remove this parent link?",
     "passwordTitle": "Password",
     "currentPassword": "Current password",
     "newPassword": "New password (at least 8 characters)",
@@ -763,7 +833,9 @@
   "notifications": {
     "title": "Notifications",
     "markAll": "Mark all as read",
-    "empty": "No notifications yet."
+    "empty": "No notifications yet.",
+    "unread": "Unread",
+    "older": "Older notifications"
   },
   "receipt": {
     "title": "Receipt",
@@ -778,7 +850,8 @@
     "subtotal": "Subtotal",
     "discount": "Discount",
     "total": "Paid",
-    "thanks": "Thank you. This receipt is valid without a stamp."
+    "thanks": "Thank you. This receipt is valid without a stamp.",
+    "noItems": "This order has no items (a manual access change)."
   },
   "parent": {
     "title": "Parent dashboard",
@@ -795,6 +868,7 @@
       "already": "This student is already linked."
     },
     "unlink": "Unlink",
+    "confirmUnlink": "Remove this student link?",
     "courses": "Active courses",
     "completedWeek": "Lessons completed this week",
     "attendedMonth": "Live sessions this month",

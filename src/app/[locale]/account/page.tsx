@@ -1,6 +1,9 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { ConfirmButton } from "@/components/ui/ConfirmButton";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
@@ -10,6 +13,10 @@ export const dynamic = "force-dynamic";
 
 const panel = "grid gap-3 rounded-md border border-hairline bg-surface p-5";
 const smallButton = "w-fit rounded-sm border border-ink-muted px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/account", "account", { key: "title", noindex: true });
+}
 
 export default async function AccountPage({
   params,
@@ -54,7 +61,9 @@ export default async function AccountPage({
             <span className={`text-small ${verified ? "text-up" : "text-ink-muted"}`}>{verified ? t("verified") : t("unverified")}</span>
             {!verified && (
               <form action={sendVerification}>
-                <button className={smallButton}>{t("sendVerification")}</button>
+                <SubmitButton pendingLabel={t("sending")} className={smallButton}>
+                  {t("sendVerification")}
+                </SubmitButton>
               </form>
             )}
           </div>
@@ -77,7 +86,13 @@ export default async function AccountPage({
                   <span className="text-small">{l.parent.name}</span>
                   <form action={unlinkParent}>
                     <input type="hidden" name="id" value={l.id} />
-                    <button className="text-small text-down underline-offset-4 hover:underline">{t("unlink")}</button>
+                    <ConfirmButton
+                      action={unlinkParent}
+                      confirmText={t("confirmUnlink")}
+                      className="text-small text-down underline-offset-4 hover:underline"
+                    >
+                      {t("unlink")}
+                    </ConfirmButton>
                   </form>
                 </li>
               ))}
@@ -98,7 +113,13 @@ export default async function AccountPage({
                   <span className="text-small">{l.student.name}</span>
                   <form action={unlinkParent}>
                     <input type="hidden" name="id" value={l.id} />
-                    <button className="text-small text-down underline-offset-4 hover:underline">{t("unlink")}</button>
+                    <ConfirmButton
+                      action={unlinkParent}
+                      confirmText={t("confirmUnlink")}
+                      className="text-small text-down underline-offset-4 hover:underline"
+                    >
+                      {t("unlink")}
+                    </ConfirmButton>
                   </form>
                 </li>
               ))}

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Landmark } from "@/components/brand/Landmark";
-import { CIRCLE_PATH } from "@/components/brand/Mark";
+import { CIRCLE_PATH, EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { groupByStage } from "@/lib/catalog";
 import { KNOWN_COUNTRIES } from "@/lib/countries";
@@ -49,7 +49,7 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
   if (!country) notFound();
 
   const mine = session?.user ? (await db.user.findUnique({ where: { id: session.user.id }, select: { gradeId: true } }))?.gradeId : null;
-  const numeral = new Intl.NumberFormat(ar ? "ar-EG" : "en");
+  const numeral = new Intl.NumberFormat(ar ? "ar-EG-u-nu-latn" : "en");
   const name = ar ? country.nameAr : country.nameEn;
   // One tile per level; the URL has no curriculum segment, so the first curriculum wins.
   const grades = country.grades.filter((g, i, all) => all.findIndex((x) => x.level === g.level) === i);
@@ -64,7 +64,7 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
             <Link href="/courses" className="text-pen underline-offset-4 hover:underline">
               {t("title")}
             </Link>
-            <span aria-hidden="true">‹</span>
+            <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
             {KNOWN_COUNTRIES.has(code) ? (
               <Image src={`/flags/${slug.toLowerCase()}.svg`} alt="" width={20} height={15} className="rounded-[2px] ring-1 ring-hairline" />
             ) : (
@@ -76,6 +76,11 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
         </div>
       </header>
 
+      {groups.length === 0 && (
+        <EmptyState>
+          <p className="text-ink-muted">{t("noGrades")}</p>
+        </EmptyState>
+      )}
       {groups.map(({ stage, grades }) => (
         <section key={stage?.id ?? "other"} className="grid gap-3">
           <h2 className="flex items-baseline gap-3">
@@ -94,7 +99,7 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
                   <Link
                     href={`/courses/c/${slug.toLowerCase()}/${g.level}`}
                     aria-label={isMine ? `${ar ? g.nameAr : g.nameEn}، ${t("yourGrade")}` : undefined}
-                    className="flex h-36 flex-col justify-between rounded-md border-[1.5px] border-ink bg-surface p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
+                    className="flex h-36 flex-col justify-between rounded-md border-strong border-ink bg-surface p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
                   >
                     <span className="flex items-start justify-between gap-1">
                       <span className="relative grid place-items-center">

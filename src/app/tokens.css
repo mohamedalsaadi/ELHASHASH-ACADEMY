@@ -8,15 +8,17 @@
   --color-raised: #EDEFF7;
   --color-hairline: #E3E6F3;
   --color-rule: #DDE1F2;
-  --color-field: #8A90B0;
+  --color-field: #6A7093;
   --color-ink: #0D1030;
   --color-ink-muted: #545A7A;
   --color-primary: #2430D8;
   --color-on-primary: #FFFFFF;
   --color-night: #0B0F4A;
+  --color-night-text: #C9CDF2;
+  --color-night-muted: #9EA5E0;
   --color-pen: #2430D8;
   --color-marker: #F2B544;
-  --color-up: #0F8A5F;
+  --color-up: #0B7A54;
   --color-down: #C8323C;
   --color-focus: #2430D8;
 
@@ -42,12 +44,18 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
 
+  --control-h: 44px;
+  --border-strong: 1.5px;
+  --container-page: 72rem;
+  --container-reading: 48rem;
+
   --shadow-paper: 0 1px 2px rgb(13 16 48 / .05), 0 18px 40px -24px rgb(13 16 48 / .3);
 
   --ease-out: cubic-bezier(.2, .7, .2, 1);
   --dur-fast: 160ms;
   --dur-base: 240ms;
   --dur-count: 700ms;
+  --dur-press: 80ms;
   --stagger: 30ms;
 }
 
@@ -74,5 +82,5 @@ body {
 [dir="rtl"] .fold { clip-path: polygon(var(--cut) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--cut) * var(--fold))); }
 
 @media (prefers-reduced-motion: reduce) {
-  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-count: 0ms; --stagger: 0ms; }
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-count: 0ms; --dur-press: 0ms; --stagger: 0ms; }
 }

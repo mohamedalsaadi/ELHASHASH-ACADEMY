@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
-import { CIRCLE_PATH } from "@/components/brand/Mark";
+import { CIRCLE_PATH, EmptyState } from "@/components/brand/Mark";
 import { JsonLd } from "@/components/JsonLd";
 import { Link } from "@/i18n/navigation";
 import { grantsFor, onSale } from "@/lib/catalog";
@@ -54,7 +54,7 @@ type Offer = { id: string | null; label?: string; price: string; was?: string; n
 /** One plan as a card: what it includes, then each way to buy it with its price per lecture and saving. */
 function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }: { name: string; lines: Line[]; offers: Offer[]; best?: boolean; bestLabel: string; cta: string; className?: string }) {
   return (
-    <li className={`grid content-start gap-4 rounded-lg bg-surface p-5 ${best ? "border-[1.5px] border-ink shadow-paper" : "border border-hairline"} ${className}`}>
+    <li className={`grid content-start gap-4 rounded-lg bg-surface p-5 ${best ? "border-strong border-ink shadow-paper" : "border border-hairline"} ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-display text-h3 font-bold">{name}</h3>
         {best && (
@@ -89,7 +89,7 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
           {o.id ? (
             <Link
               href={{ pathname: "/checkout", query: { sku: o.id } }}
-              className={`mt-1 rounded-sm px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]" : "border-[1.5px] border-ink hover:bg-marker"}`}
+              className={`mt-1 rounded-sm px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]" : "border-strong border-ink hover:bg-marker"}`}
             >
               {cta}
             </Link>
@@ -193,7 +193,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
           firstFree && (
             <Link
               href={lessonHref(firstFree.id)}
-              className="w-fit rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]"
+              className="btn btn-primary w-fit"
             >
               {t("startFree")}
             </Link>
@@ -201,8 +201,13 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
         )}
       </section>
 
-      <section id="units" className="grid scroll-mt-24 gap-4">
+      <section id="units" className="grid scroll-mt-6 gap-4">
         <h2 className="font-display text-h2 font-semibold">{t("units")}</h2>
+        {course.units.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noUnits")}</p>
+          </EmptyState>
+        )}
         {course.units.map((u) => {
           return (
             <div key={u.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
@@ -249,7 +254,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                           {rent ? (
                             <Link
                               href={{ pathname: "/checkout", query: { sku: rent.id } }}
-                              className="shrink-0 rounded-sm border-[1.5px] border-ink px-3 py-1.5 text-small font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
+                              className="btn btn-outline shrink-0 px-3 py-1.5 text-small"
                             >
                               {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span> · {t("rentFor", { days: rent.accessDays ?? 0 })}
                             </Link>
@@ -268,7 +273,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       </section>
 
       {live.length > 0 && (
-        <section id="live" className="grid gap-4">
+        <section id="live" className="grid scroll-mt-6 gap-4">
           <h2 className="font-display text-h2 font-semibold">{t("live")}</h2>
           <ul className="grid gap-3">
             {live.map((l) => {
@@ -303,7 +308,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       )}
 
       {!owned && (single || months.length > 0 || terms.length > 0) && (
-        <section id="packages" className="grid scroll-mt-24 gap-4">
+        <section id="packages" className="grid scroll-mt-6 gap-4">
           <h2 className="font-display text-h2 font-semibold">{tp("title")}</h2>
           {/* Side by side from tablet width; on phones the semester comes first. */}
           <ul className="grid gap-4 sm:grid-cols-3">
@@ -357,6 +362,13 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
               />
             )}
           </ul>
+        </section>
+      )}
+
+      {!owned && !single && months.length === 0 && terms.length === 0 && (
+        <section className="grid gap-2">
+          <h2 className="font-display text-h2 font-semibold">{tp("title")}</h2>
+          <p className="text-ink-muted">{t("noPackages")}</p>
         </section>
       )}
 

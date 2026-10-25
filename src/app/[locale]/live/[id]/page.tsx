@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
@@ -14,10 +15,14 @@ import { Countdown } from "./Countdown";
 export const dynamic = "force-dynamic";
 
 const primaryButton =
-  "rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]";
+  "btn btn-primary";
 
 /** Students may enter this long before the start; the teacher 30 minutes. Matches the token windows in lib/daily.ts. */
 const LEAD_MIN = { student: 10, host: 30 };
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/live", "live", { key: "title", noindex: true });
+}
 
 export default async function LivePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;

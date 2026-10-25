@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -10,6 +11,10 @@ import { AdminNav, panel, stat } from "../../AdminNav";
 import { DeleteButton, ResetPasswordForm } from "../../ui";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/teachers", "office", { key: "nav.teachers", noindex: true });
+}
 
 export default async function TeacherPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;

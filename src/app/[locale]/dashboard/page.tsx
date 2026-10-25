@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
@@ -7,6 +8,10 @@ import { db } from "@/lib/db";
 import { courseZone, formatWhen } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/dashboard", "dashboard", { key: "title", noindex: true });
+}
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -104,7 +109,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             <p className="text-ink-muted">{t("empty")}</p>
             <Link
               href="/courses"
-              className="w-fit rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]"
+              className="btn btn-primary w-fit"
             >
               {t("browse")}
             </Link>

@@ -131,5 +131,5 @@ export default function IntroScene() {
     };
   }, []);
 
-  return <div ref={host} className="as-intro-scene [&>canvas]:block [&>canvas]:size-full" />;
+  return <div ref={host} aria-hidden="true" className="as-intro-scene [&>canvas]:block [&>canvas]:size-full" />;
 }

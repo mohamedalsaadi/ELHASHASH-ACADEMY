@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
@@ -10,6 +11,10 @@ import { PasswordForm } from "./ui";
 export const dynamic = "force-dynamic";
 
 const DAY = 86_400_000;
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin", "admin", { key: "title", noindex: true });
+}
 
 export default async function AdminOverviewPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -65,7 +70,7 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
 
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
-          <li key={s.l} className={`${stat} ${s.alert ? "border-[1.5px] border-pen" : ""}`}>
+          <li key={s.l} className={`${stat} ${s.alert ? "border-strong border-pen" : ""}`}>
             <span className={`num font-display text-h2 font-semibold ${s.alert ? "text-pen" : ""}`}>{s.n}</span>
             <span className="text-label text-ink-muted">{s.l}</span>
           </li>
@@ -80,9 +85,9 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
               <table className={table}>
                 <thead>
                   <tr>
-                    <th>{t("lecture")}</th>
-                    <th>{t("when")}</th>
-                    <th>{t("seats")}</th>
+                    <th scope="col">{t("lecture")}</th>
+                    <th scope="col">{t("when")}</th>
+                    <th scope="col">{t("seats")}</th>
                   </tr>
                 </thead>
                 <tbody>

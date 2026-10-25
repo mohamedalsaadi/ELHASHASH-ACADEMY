@@ -1,3 +1,132 @@
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./brand.css";
+
+html {
+  scrollbar-gutter: stable;
+  scroll-padding-top: 1.5rem;
+}
+
+/* Long course titles, IDs and emails wrap instead of pushing the row wide. */
+body {
+  overflow-wrap: break-word;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  button:not(:disabled):active {
+    transform: translateY(1px);
+  }
+
+  ::view-transition-old(root) {
+    animation: as-vt-out 160ms var(--ease-out) both;
+  }
+  ::view-transition-new(root) {
+    animation: as-vt-in 200ms var(--ease-out) both;
+  }
+}
+
+@keyframes as-vt-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes as-vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer components {
+  /* The one action shape. Padding, font and press state live here so 20 call sites cannot drift. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding-block: 12px;
+    padding-inline: 18px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .btn-primary:hover {
+    background: color-mix(in oklab, var(--color-primary) 86%, #fff);
+  }
+  .btn-outline {
+    border: var(--border-strong) solid var(--color-ink);
+    color: var(--color-ink);
+  }
+  .btn-outline:hover {
+    background: var(--color-marker);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* The brand's heavier hairline: selected cards, outlines, alert stats. */
+@utility border-strong {
+  border-width: var(--border-strong);
+}
+
+::selection {
+  background: var(--color-marker);
+  color: var(--color-ink);
+}
+
+button:disabled {
+  pointer-events: none;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--color-ink);
+}
+
+.hover-lift {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.hover-lift:hover,
+.hover-lift:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .hover-lift,
+  .hover-lift:hover,
+  .hover-lift:focus-visible {
+    transform: none;
+    box-shadow: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

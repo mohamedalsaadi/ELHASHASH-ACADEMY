@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/staff";
@@ -14,6 +15,10 @@ const median = (xs: number[]) => {
   const m = s.length >> 1;
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/questions", "office", { key: "nav.questions", noindex: true });
+}
 
 export default async function AdminQuestionsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -51,11 +56,11 @@ export default async function AdminQuestionsPage({ params }: { params: Promise<{
           <table className={table}>
             <thead>
               <tr>
-                <th>{t("teacher")}</th>
-                <th>{t("answered")}</th>
-                <th>{t("unanswered")}</th>
-                <th>{t("medianReply")}</th>
-                <th>{t("oldestOpen")}</th>
+                <th scope="col">{t("teacher")}</th>
+                <th scope="col">{t("answered")}</th>
+                <th scope="col">{t("unanswered")}</th>
+                <th scope="col">{t("medianReply")}</th>
+                <th scope="col">{t("oldestOpen")}</th>
               </tr>
             </thead>
             <tbody>

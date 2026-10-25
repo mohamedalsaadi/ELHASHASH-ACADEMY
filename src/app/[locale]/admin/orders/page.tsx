@@ -1,4 +1,6 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
@@ -14,12 +16,17 @@ const STATUSES = ["PENDING", "PAID", "FAILED", "EXPIRED", "REFUNDED"] as const;
 const GATEWAYS = ["PAYMOB", "STRIPE", "MANUAL"] as const;
 const button = "min-h-11 rounded-sm border border-ink-muted px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/orders", "office", { key: "nav.orders", noindex: true });
+}
+
 export default async function OrdersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ status?: string; gateway?: string; page?: string }> }) {
   const { locale } = await params;
   const f = await searchParams;
   setRequestLocale(locale);
   await requireAdmin();
   const t = await getTranslations("office");
+  const tm = await getTranslations("checkout");
   const ar = locale === "ar";
   const page = Math.max(1, Number(f.page) || 1);
   const status = STATUSES.find((s) => s === f.status);
@@ -62,14 +69,19 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
       </form>
 
       <section className={`${panel} overflow-x-auto`}>
+        {orders.length === 0 ? (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noOrders")}</p>
+          </EmptyState>
+        ) : (
         <table className={table}>
           <thead>
             <tr>
-              <th>{t("date")}</th>
-              <th>{t("student")}</th>
-              <th>{t("status")}</th>
-              <th>{t("gateway")}</th>
-              <th>{t("amount")}</th>
+              <th scope="col">{t("date")}</th>
+              <th scope="col">{t("student")}</th>
+              <th scope="col">{t("status")}</th>
+              <th scope="col">{t("gateway")}</th>
+              <th scope="col">{t("amount")}</th>
             </tr>
           </thead>
           <tbody>
@@ -88,13 +100,14 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
                 <td className={o.status === "PAID" ? "font-semibold text-up" : o.status === "PENDING" ? "" : "text-ink-muted"}>{t(`orderStatus.${o.status}`)}</td>
                 <td>
                   {o.gateway}
-                  {o.method ? ` · ${o.method}` : ""}
+                  {o.method ? ` · ${tm(`methods.${o.method}.name`)}` : ""}
                 </td>
                 <td className="num">{formatMoney(o.total, o.currency, locale)}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        )}
         <p className="flex flex-wrap items-center gap-4 text-small text-ink-muted">
           <span>{t("pageOf", { shown: orders.length, total, page })}</span>
           {page > 1 && (

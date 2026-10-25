@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { CIRCLE_PATH } from "@/components/brand/Mark";
+import { CIRCLE_PATH, EmptyState } from "@/components/brand/Mark";
 import { SubjectIcon } from "@/components/brand/SubjectIcon";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
@@ -75,11 +75,11 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
           <Link href="/courses" className="text-pen underline-offset-4 hover:underline">
             {t("title")}
           </Link>
-          <span aria-hidden="true">‹</span>
+          <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
           <Link href={`/courses/c/${slug.toLowerCase()}`} className="text-pen underline-offset-4 hover:underline">
             {ar ? grade.country.nameAr : grade.country.nameEn}
           </Link>
-          <span aria-hidden="true">‹</span>
+          <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
           {ar ? grade.nameAr : grade.nameEn}
         </p>
         <h1 className="font-display text-h1 font-extrabold">{t.rich("pickSubject", { grade: ar ? grade.nameAr : grade.nameEn, m: (c) => <span className="marker">{c}</span> })}</h1>
@@ -87,6 +87,13 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
       </header>
 
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {tiles.length === 0 && (
+          <li className="col-span-full">
+            <EmptyState>
+              <p className="text-ink-muted">{t("noSubjects")}</p>
+            </EmptyState>
+          </li>
+        )}
         {tiles.map(({ subject, course, from }) => {
           const label = (
             <span className="grid">
@@ -101,7 +108,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
               {course ? (
                 <Link
                   href={`/courses/${course.slug}`}
-                  className={`${card} border border-hairline bg-surface shadow-paper transition-transform duration-(--dur-fast) ease-(--ease-out) hover:-translate-y-0.5`}
+                  className={`${card} border border-hairline bg-surface shadow-paper hover-lift`}
                 >
                   <SubjectIcon icon={subject.icon} size={44} />
                   {label}

@@ -1,4 +1,6 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { minorPerUnit } from "@/lib/format";
@@ -12,6 +14,10 @@ export const dynamic = "force-dynamic";
 
 const check = "flex min-h-11 items-center gap-2 text-small text-ink-muted";
 const CURRENCIES = ["EGP", "SAR", "AED", "KWD", "QAR", "BHD", "OMR"] as const;
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/marketing", "office", { key: "nav.marketing", noindex: true });
+}
 
 export default async function MarketingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -161,6 +167,11 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
             </div>
           </form>
         ))}
+        {promotions.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noPromotions")}</p>
+          </EmptyState>
+        )}
         <form action={savePromotion} className={panel}>
           <h3 className="font-display text-h3 font-semibold">{t("addPromotion")}</h3>
           {promoFields()}
@@ -194,6 +205,11 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
             </div>
           </form>
         ))}
+        {coupons.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noCoupons")}</p>
+          </EmptyState>
+        )}
         <form action={saveCoupon} className={panel}>
           <h3 className="font-display text-h3 font-semibold">{t("addCoupon")}</h3>
           {couponFields()}

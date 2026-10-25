@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -12,6 +13,10 @@ import { field, label } from "../../styles";
 import { ResetPasswordForm, SaveButton } from "../../ui";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/subscribers", "office", { key: "nav.subscribers", noindex: true });
+}
 
 export default async function SubscriberPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
@@ -86,9 +91,9 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
             <table className={table}>
               <thead>
                 <tr>
-                  <th>{t("course")}</th>
-                  <th>{t("status")}</th>
-                  <th>{t("endsAt")}</th>
+                  <th scope="col">{t("course")}</th>
+                  <th scope="col">{t("status")}</th>
+                  <th scope="col">{t("endsAt")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,10 +180,10 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
             <table className={table}>
               <thead>
                 <tr>
-                  <th>{t("date")}</th>
-                  <th>{t("items")}</th>
-                  <th>{t("status")}</th>
-                  <th>{t("amount")}</th>
+                  <th scope="col">{t("date")}</th>
+                  <th scope="col">{t("items")}</th>
+                  <th scope="col">{t("status")}</th>
+                  <th scope="col">{t("amount")}</th>
                 </tr>
               </thead>
               <tbody>

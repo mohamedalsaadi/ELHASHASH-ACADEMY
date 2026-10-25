@@ -2,8 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
-import { useFormStatus } from "react-dom";
 import type { Currency } from "@/lib/pricing-engine";
+import { ConfirmButton } from "@/components/ui/ConfirmButton";
+import { PasswordField } from "@/components/ui/PasswordField";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { formatMoney, toMinor } from "@/lib/format";
 import { planValue } from "@/lib/plans";
 import { addTeacher, changePassword, createCourse, resetPassword } from "./actions";
@@ -14,27 +16,20 @@ const button =
 
 export function SaveButton({ children, danger }: { children?: React.ReactNode; danger?: boolean }) {
   const t = useTranslations("admin");
-  const { pending } = useFormStatus();
   return (
-    <button disabled={pending} className={`${button} ${danger ? "border-down text-down" : ""}`}>
-      {pending ? t("saving") : (children ?? t("save"))}
-    </button>
+    <SubmitButton pendingLabel={t("saving")} className={`${button} ${danger ? "border-down text-down" : ""}`}>
+      {children ?? t("save")}
+    </SubmitButton>
   );
 }
 
-/** Submits the surrounding form to `action` only after the browser's confirm dialog. */
+/** Submits the surrounding form to `action` only after an accessible confirmation dialog. */
 export function DeleteButton({ action, label, confirmText }: { action: (form: FormData) => Promise<void>; label?: string; confirmText?: string }) {
   const t = useTranslations("admin");
   return (
-    <button
-      formAction={action}
-      onClick={(e) => {
-        if (!confirm(confirmText ?? t("confirmDelete"))) e.preventDefault();
-      }}
-      className={`${button} border-down text-down`}
-    >
+    <ConfirmButton action={action} confirmText={confirmText ?? t("confirmDelete")} className={`${button} border-down text-down`}>
       {label ?? t("delete")}
-    </button>
+    </ConfirmButton>
   );
 }
 
@@ -45,11 +40,11 @@ export function PasswordForm() {
     <form action={action} className="grid max-w-sm gap-3">
       <label className={label}>
         {t("currentPassword")}
-        <input name="current" type="password" autoComplete="current-password" required className={field} />
+        <PasswordField name="current" autoComplete="current-password" required className={field} />
       </label>
       <label className={label}>
         {t("newPassword")}
-        <input name="next" type="password" autoComplete="new-password" minLength={10} required className={field} />
+        <PasswordField name="next" autoComplete="new-password" minLength={10} required className={field} />
       </label>
       {state && (
         <p role="status" className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
@@ -123,7 +118,7 @@ export function ResetPasswordForm({ userId }: { userId: string }) {
       <input type="hidden" name="userId" value={userId} />
       <label className={label}>
         {t("tempPassword")}
-        <input name="password" required minLength={10} dir="ltr" autoComplete="new-password" className={field} />
+        <PasswordField name="password" required minLength={10} dir="ltr" autoComplete="new-password" className={field} />
       </label>
       <SaveButton>{to("resetPassword")}</SaveButton>
       {state && (

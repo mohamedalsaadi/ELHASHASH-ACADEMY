@@ -1,4 +1,6 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { SubjectIcon, SUBJECT_ICONS } from "@/components/brand/SubjectIcon";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/staff";
@@ -24,6 +26,10 @@ const smallButton =
   "rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 const CURRENCIES = ["EGP", "SAR", "AED", "KWD", "QAR", "BHD", "OMR"] as const;
 const CURRICULA = ["NATIONAL_EG", "MOE", "BRITISH", "AMERICAN", "IB"] as const;
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/catalog", "office", { key: "nav.catalog", noindex: true });
+}
 
 export default async function CatalogPage({
   params,
@@ -237,6 +243,11 @@ export default async function CatalogPage({
             </div>
           </form>
         ))}
+        {countries.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noCatalogCountries")}</p>
+          </EmptyState>
+        )}
         <form action={saveCountry} className={panel}>
           <input type="hidden" name="locale" value={locale} />
           <h3 className="font-display text-h3 font-semibold">{t("addCountry")}</h3>
@@ -278,6 +289,11 @@ export default async function CatalogPage({
               </div>
             </form>
           ))}
+        {country && country.stages.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noStages")}</p>
+          </EmptyState>
+        )}
         {country && (
           <form action={saveStage} className={panel}>
             <input type="hidden" name="locale" value={locale} />
@@ -319,6 +335,11 @@ export default async function CatalogPage({
               </div>
             </form>
           ))}
+        {country && country.grades.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noCatalogGrades")}</p>
+          </EmptyState>
+        )}
         {country && (
           <form action={saveGrade} className={panel}>
             <input type="hidden" name="locale" value={locale} />
@@ -359,6 +380,11 @@ export default async function CatalogPage({
             </div>
           </form>
         ))}
+        {subjects.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noCatalogSubjects")}</p>
+          </EmptyState>
+        )}
         <form action={saveSubject} className={panel}>
           <input type="hidden" name="locale" value={locale} />
           <h3 className="font-display text-h3 font-semibold">{t("addSubject")}</h3>

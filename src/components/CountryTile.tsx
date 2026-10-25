@@ -19,7 +19,7 @@ export function CountryTile({ country: c, locale }: { country: Country; locale: 
   return (
     <Link
       href={`/courses/c/${c.code.toLowerCase()}`}
-      className="grid h-full content-between gap-4 rounded-lg border border-hairline bg-surface p-5 shadow-paper transition-transform duration-(--dur-fast) ease-(--ease-out) hover:-translate-y-0.5"
+      className="grid h-full content-between gap-4 rounded-lg border border-hairline bg-surface p-5 shadow-paper hover-lift"
     >
       <span className="flex items-start justify-between gap-3">
         <Landmark code={c.code} size={72} />

@@ -59,7 +59,7 @@ export function PromoBand({ promos, locale, variant, label }: { promos: Promo[];
           <div key={p.id}>
             {wrap(
               p.href,
-              "fold grid content-start gap-2 rounded-lg bg-night p-6 text-on-primary shadow-paper transition-transform duration-(--dur-fast) ease-(--ease-out) hover:-translate-y-0.5 [--cut:22px]",
+              "fold grid content-start gap-2 rounded-lg bg-night p-6 text-on-primary shadow-paper hover-lift [--cut:22px]",
               <>
                 <h2 className="font-display text-h3 font-bold">{ar ? p.titleAr : p.titleEn}</h2>
                 {body && <p className="text-small opacity-80">{body}</p>}

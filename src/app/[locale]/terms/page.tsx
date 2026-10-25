@@ -31,7 +31,11 @@ const ar: Section[] = [
     h: "الباقات والدفع",
     body: (
       <ul>
-        <li>الأسعار بالدرهم الإماراتي كما تظهر في صفحة الدفع، ويتم الدفع عبر Stripe. لا نحتفظ ببيانات بطاقتك.</li>
+        <li>
+          الأسعار بعملة بلدك كما تظهر في صفحة الدفع (سبع عملات: الجنيه المصري، الريال السعودي، الدرهم الإماراتي، الدينار
+          الكويتي، الريال القطري، الدينار البحريني، الريال العماني). الدفع عبر Stripe أو Paymob: بطاقة، محفظة موبايل، كاش في
+          منفذ، أو تقسيط valU. لا نحتفظ ببيانات بطاقتك.
+        </li>
         <li>كل باقة تفتح مادة محددة حتى تاريخ الانتهاء المكتوب عند الشراء (فصل دراسي، سنة كاملة، أو مراجعة نهائية).</li>
         <li>
           جميع المبيعات نهائية، وتفاصيل الحالات الاستثنائية في <Link href="/refund">سياسة الاسترداد</Link>.
@@ -106,7 +110,11 @@ const en: Section[] = [
     h: "Packages and payment",
     body: (
       <ul>
-        <li>Prices are in UAE dirhams as shown at checkout, and payment is handled by Stripe. We never store your card.</li>
+        <li>
+          Prices are in your country&apos;s currency as shown at checkout (seven currencies: EGP, SAR, AED, KWD, QAR, BHD,
+          OMR). Payment is handled by Stripe or Paymob: card, mobile wallet, cash at a kiosk, or valU instalments. We never
+          store your card.
+        </li>
         <li>Each package unlocks one subject until the end date shown at purchase (semester, full year or final revision).</li>
         <li>
           All sales are final; the exceptions are in the <Link href="/refund">refund policy</Link>.
@@ -163,5 +171,5 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params;
   setRequestLocale(locale);
   const isAr = locale === "ar";
-  return <LegalPage locale={locale} title={isAr ? "الشروط والأحكام" : "Terms of use"} sections={isAr ? ar : en} />;
+  return <LegalPage locale={locale} title={isAr ? "الشروط والأحكام" : "Terms of use"} sections={isAr ? ar : en} updated="2026-10-25" />;
 }

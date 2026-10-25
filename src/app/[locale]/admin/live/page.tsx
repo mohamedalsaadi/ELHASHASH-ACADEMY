@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
@@ -9,6 +10,10 @@ import { field, label } from "../styles";
 import { SaveButton } from "../ui";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/live", "office", { key: "nav.live", noindex: true });
+}
 
 export default async function AdminLivePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -26,7 +31,8 @@ export default async function AdminLivePage({ params }: { params: Promise<{ loca
     include: {
       course: { select: { titleAr: true, titleEn: true, instructor: { select: { name: true } }, grade: { select: { country: { select: { code: true, timeZone: true } } } } } },
       sku: true,
-      entitlements: { orderBy: { startsAt: "asc" }, select: { id: true, user: { select: { id: true, name: true } } } },
+      _count: { select: { entitlements: true } },
+      attendance: { orderBy: { joinedAt: "asc" }, select: { user: { select: { id: true, name: true } } } },
     },
   });
 
@@ -48,7 +54,7 @@ export default async function AdminLivePage({ params }: { params: Promise<{ loca
               <span className="grid gap-0.5 text-label sm:justify-items-end">
                 <span className="num">{formatWhen(s.startsAt, courseZone(s.course), locale)}</span>
                 <span className={s.cancelledAt ? "font-semibold text-down" : upcoming ? "" : "text-ink-muted"}>
-                  {s.cancelledAt ? t("cancelled") : t("seatsSold", { count: s.entitlements.length })}
+                  {s.cancelledAt ? t("cancelled") : t("seatsSold", { count: s._count.entitlements })}
                   {s.sku && !s.cancelledAt ? ` · ${formatMoney(s.sku.price, s.sku.currency, locale)}` : ""}
                 </span>
               </span>
@@ -67,14 +73,14 @@ export default async function AdminLivePage({ params }: { params: Promise<{ loca
                 <SaveButton />
               </form>
             )}
-            {s.entitlements.length > 0 && (
+            {s.attendance.length > 0 && (
               <details className="text-small">
-                <summary className="cursor-pointer text-pen">{t("attendees", { count: s.entitlements.length })}</summary>
+                <summary className="cursor-pointer text-pen">{t("attendees", { count: s.attendance.length })}</summary>
                 <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                  {s.entitlements.map((e) => (
-                    <li key={e.id}>
-                      <Link href={`/admin/subscribers/${e.user.id}`} className="underline-offset-4 hover:underline">
-                        {e.user.name}
+                  {s.attendance.map((a) => (
+                    <li key={a.user.id}>
+                      <Link href={`/admin/subscribers/${a.user.id}`} className="underline-offset-4 hover:underline">
+                        {a.user.name}
                       </Link>
                     </li>
                   ))}

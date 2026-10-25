@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BookOpenCheck, CalendarClock, Languages, LockKeyhole, Radio, Smartphone, Unlock } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { Intro } from "@/components/brand/Intro";
 import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
@@ -83,7 +84,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <main>
       <JsonLd data={jsonLd} />
-      <Intro />
+      <Intro skipLabel={t("skipIntro")} />
       <PromoBand promos={bar} locale={locale} variant="BAR" label={t("promotions")} />
 
       <section className="border-b border-hairline">
@@ -98,7 +99,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <Link href="/courses" className={`${button} bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--color-primary)_84%,#000)]`}>
                 {t("ctaFree")}
               </Link>
-              <a href="#grades" className={`${button} border-[1.5px] border-ink hover:bg-raised`}>
+              <a href="#grades" className={`${button} border-strong border-ink hover:bg-raised`}>
                 {t("ctaGrade")}
               </a>
             </div>
@@ -106,13 +107,15 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
           {/* A sample result card on night: the brand's promise that every page counts, as a number. */}
           <div aria-hidden="true" className="fold mx-auto grid w-full max-w-[420px] gap-5 bg-night p-7 text-on-primary shadow-paper [--cut:34px]">
-            <span className="flex items-center justify-between gap-2 text-small text-[#B9BEE6]">
+            <span className="flex items-center justify-between gap-2 text-small text-night-text">
               {t("paper.label")}
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-label text-[#C9CDF2]">{t("paper.sample")}</span>
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-label text-night-text">{t("paper.sample")}</span>
             </span>
             <span className="font-display text-h3 font-semibold">{t("paper.q")}</span>
             <span className="flex items-end justify-between gap-3">
-              <span className="num text-[3.4rem] leading-none font-semibold">{ar ? "٤٨" : "48"}<span className="text-h3 font-normal text-[#9EA5E0]"> / {ar ? "٥٠" : "50"}</span></span>
+              <span className="num text-[3.4rem] leading-none font-semibold">
+                48<span className="text-h3 font-normal text-night-muted"> / 50</span>
+              </span>
               <span className="rounded-sm bg-marker px-2.5 py-1 text-label font-semibold text-ink">{t("paper.score")}</span>
             </span>
             <span className="h-1.5 bg-white/15"><span className="block h-full w-[96%] bg-marker" /></span>
@@ -144,7 +147,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </ul>
         </section>
 
-        <section id="grades" className="grid scroll-mt-24 gap-6">
+        <section id="grades" className="grid scroll-mt-6 gap-6">
           <h2 className="font-display text-h1 font-extrabold">{t("grades.title")}</h2>
           <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {countries.map((c) => (
@@ -153,6 +156,11 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </li>
             ))}
           </ul>
+          {countries.length === 0 && (
+            <EmptyState>
+              <p className="text-ink-muted">{t("noCountries")}</p>
+            </EmptyState>
+          )}
         </section>
 
         {skills.length > 0 && (

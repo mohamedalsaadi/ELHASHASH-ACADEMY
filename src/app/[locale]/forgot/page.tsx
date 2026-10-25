@@ -1,6 +1,11 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { ForgotForm } from "./ForgotForm";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/forgot", "forgot", { key: "title", noindex: true });
+}
 
 export default async function ForgotPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

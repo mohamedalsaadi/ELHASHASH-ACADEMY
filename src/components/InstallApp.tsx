@@ -41,7 +41,11 @@ export function InstallApp() {
     <span className="inline-flex items-center gap-2">
       <button
         onClick={async () => {
-          await prompt.prompt();
+          try {
+            await prompt.prompt();
+          } catch {
+            // The browser can cancel the prompt; dismissal still applies.
+          }
           dismiss();
         }}
         className="rounded-sm border border-ink-muted px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"

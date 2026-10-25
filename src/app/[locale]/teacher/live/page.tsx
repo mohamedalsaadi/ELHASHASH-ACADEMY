@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
@@ -14,6 +15,10 @@ export const dynamic = "force-dynamic";
 
 const card = "grid gap-4 rounded-md border border-hairline bg-surface p-4";
 const row = "grid gap-3 sm:grid-cols-2";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/teacher/live", "live", { key: "title", noindex: true });
+}
 
 export default async function TeacherLivePage({
   params,
@@ -72,6 +77,11 @@ export default async function TeacherLivePage({
         <TeacherNav current="live" />
       </div>
 
+      {courses.length === 0 && (
+        <EmptyState>
+          <p className="text-ink-muted">{t("noCourses")}</p>
+        </EmptyState>
+      )}
       {courses.length > 0 && (
         <form action={scheduleLive} className={card}>
           <h2 className="font-display text-h2 font-semibold">{t("schedule")}</h2>

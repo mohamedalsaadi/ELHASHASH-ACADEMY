@@ -1,14 +1,19 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
+import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { requireAdmin } from "@/lib/staff";
 import { markOrderPaid, refundOrder } from "../../actions";
 import { AdminNav, panel, table } from "../../AdminNav";
-import { SaveButton } from "../../ui";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/orders", "office", { key: "nav.orders", noindex: true });
+}
 
 export default async function OrderPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
@@ -16,6 +21,8 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
   await requireAdmin();
   const t = await getTranslations("office");
   const tc = await getTranslations("catalog");
+  const tp = await getTranslations("payment");
+  const tm = await getTranslations("checkout");
   const ar = locale === "ar";
 
   const o = await db.order.findUnique({
@@ -46,14 +53,24 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
           </dd>
           <dt>{t("gateway")}</dt>
           <dd>
-            {o.gateway}
-            {o.method ? ` · ${o.method}` : ""}
+            {tp(`gateways.${o.gateway}`)}
+            {o.method ? ` · ${tm(`methods.${o.method}.name`)}` : ""}
             {o.kioskRef ? ` · ${o.kioskRef}` : ""}
           </dd>
           <dt>{t("date")}</dt>
           <dd className="num">
             {date.format(o.createdAt)}
-            {o.paidAt ? ` → ${date.format(o.paidAt)}` : ""}
+            {o.paidAt ? (
+              <>
+                {" "}
+                <span aria-hidden="true" className="rtl:-scale-x-100">
+                  →
+                </span>{" "}
+                {date.format(o.paidAt)}
+              </>
+            ) : (
+              ""
+            )}
           </dd>
           <dt>{t("amount")}</dt>
           <dd className="num">
@@ -101,7 +118,14 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
               <input type="hidden" name="id" value={o.id} />
               <p className="text-small text-ink-muted">{t("markPaidHint")}</p>
               <div>
-                <SaveButton>{t("markPaid")}</SaveButton>
+                <ConfirmButton
+                  action={markOrderPaid}
+                  confirmText={t("confirmMarkPaid")}
+                  tone="primary"
+                  className="rounded-sm border border-ink-muted px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                >
+                  {t("markPaid")}
+                </ConfirmButton>
               </div>
             </form>
           )}
@@ -110,7 +134,13 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
               <input type="hidden" name="id" value={o.id} />
               <p className="text-small text-ink-muted">{o.gateway === "PAYMOB" ? t("refundPaymobHint") : t("refundHint")}</p>
               <div>
-                <SaveButton danger>{t("refund")}</SaveButton>
+                <ConfirmButton
+                  action={refundOrder}
+                  confirmText={t("confirmRefund")}
+                  className="rounded-sm border border-down px-4 py-2 font-display font-semibold text-down transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                >
+                  {t("refund")}
+                </ConfirmButton>
               </div>
             </form>
           )}

@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic";
 
 const card = "rounded-md border border-hairline bg-surface p-4";
 const DAY = 24 * 60 * 60 * 1000;
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/teacher", "teacher", { key: "navHome", noindex: true });
+}
 
 export default async function TeacherPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -47,7 +52,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
   const newThisWeek = new Set(subs.filter((s) => now.getTime() - s.startsAt.getTime() < 7 * DAY).map((s) => s.user.id)).size;
   const perCourse = (id: string) => new Set(subs.filter((s) => s.courseId === id).map((s) => s.user.id)).size;
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "Asia/Dubai" });
-  const money = [...earnings].map(([cur, n]) => formatMoney(n, cur, locale)).join(" · ") || formatMoney(0, "AED", locale);
+  const money = [...earnings].map(([cur, n]) => formatMoney(n, cur, locale)).join(" · ") || t("noSales");
 
   return (
     <main className="mx-auto grid max-w-4xl gap-10 px-4 py-12">

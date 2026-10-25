@@ -15,18 +15,23 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon }: { skuIds: 
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ skuIds, method, locale, coupon }),
-    });
-    const data = (await res.json().catch(() => ({}))) as { checkoutUrl?: string; error?: string };
-    if (data.checkoutUrl) {
-      window.location.assign(data.checkoutUrl);
-      return;
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skuIds, method, locale, coupon }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { checkoutUrl?: string; error?: string };
+      if (data.checkoutUrl) {
+        window.location.assign(data.checkoutUrl);
+        return;
+      }
+      setError(data.error && t.has(`errors.${data.error}`) ? t(`errors.${data.error}`) : t("errors.generic"));
+    } catch {
+      setError(t("errors.network"));
+    } finally {
+      setBusy(false);
     }
-    setError(t.has(`errors.${data.error}`) ? t(`errors.${data.error}`) : t("errors.generic"));
-    setBusy(false);
   }
 
   return (
@@ -53,7 +58,7 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon }: { skuIds: 
       )}
       <button
         disabled={busy}
-        className="rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)] disabled:cursor-not-allowed disabled:opacity-45"
+        className="btn btn-primary"
       >
         {busy ? t("redirecting") : t("pay")}
       </button>

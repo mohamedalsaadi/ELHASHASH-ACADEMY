@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -13,7 +14,11 @@ type CouponError = "invalid" | "not_started" | "expired" | "used_up" | "used_by_
 
 const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
 const applyButton =
-  "min-h-11 rounded-sm border-[1.5px] border-ink px-4 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+  "min-h-11 rounded-sm border-strong border-ink px-4 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/checkout", "checkout", { key: "title", noindex: true });
+}
 
 export default async function CheckoutPage({
   params,
@@ -46,8 +51,12 @@ export default async function CheckoutPage({
   }
   if (!result || result.missing) {
     return (
-      <main className="mx-auto max-w-xl px-4 py-16">
+      <main className="mx-auto grid max-w-xl gap-4 px-4 py-16">
+        <h1 className="font-display text-h1 font-semibold">{t("unavailableTitle")}</h1>
         <p className="text-ink-muted">{t("unavailable")}</p>
+        <Link href="/courses" className="btn btn-outline w-fit px-4 py-2 text-small">
+          {t("backToCourses")}
+        </Link>
       </main>
     );
   }
@@ -135,7 +144,9 @@ export default async function CheckoutPage({
       <p className="text-small text-ink-muted">
         {t.rich("agree", {
           terms: (c) => <Link href="/terms" className="text-pen underline">{c}</Link>,
+          privacy: (c) => <Link href="/privacy" className="text-pen underline">{c}</Link>,
           refund: (c) => <Link href="/refund" className="text-pen underline">{c}</Link>,
+          faq: (c) => <Link href="/faq" className="text-pen underline">{c}</Link>,
         })}
       </p>
     </main>

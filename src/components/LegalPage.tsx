@@ -1,13 +1,28 @@
 import { CONTACT_EMAIL } from "@/lib/site";
 
-const UPDATED = new Date("2026-10-24T00:00:00Z");
+/** Policy pages carry their own date: a currency change edits the terms, not the privacy page. */
+const DEFAULT_UPDATED = "2026-10-24";
 
 export type Section = { h: string; body: React.ReactNode };
 
 /** Plain reading page for the policies: title, last-updated date, numbered sections. */
-export function LegalPage({ locale, title, sections, children }: { locale: string; title: string; sections: Section[]; children?: React.ReactNode }) {
+export function LegalPage({
+  locale,
+  title,
+  sections,
+  updated = DEFAULT_UPDATED,
+  children,
+}: {
+  locale: string;
+  title: string;
+  sections: Section[];
+  updated?: string;
+  children?: React.ReactNode;
+}) {
   const ar = locale === "ar";
-  const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "UTC" }).format(UPDATED);
+  const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "UTC" }).format(
+    new Date(`${updated}T00:00:00Z`),
+  );
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
       <div className="grid gap-2">

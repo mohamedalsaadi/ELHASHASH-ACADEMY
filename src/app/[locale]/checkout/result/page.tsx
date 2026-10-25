@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -5,9 +6,14 @@ import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { stripe, syncCheckoutSession } from "@/lib/stripe";
+import { PendingPoll } from "./PendingPoll";
 
 // Paymob redirects here after the hosted checkout. The status shown comes from our database
 // (set by the webhook), never from the redirect's query string, which the browser can edit.
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/checkout", "checkout", { key: "title", noindex: true });
+}
+
 export default async function ResultPage({
   params,
   searchParams,
@@ -21,18 +27,30 @@ export default async function ResultPage({
   const t = await getTranslations("checkout.result");
 
   const session = await auth();
-  if (!session?.user) redirect(`/${locale}/signin`);
-  let order = orderId ? await db.order.findFirst({ where: { id: orderId, userId: session.user.id } }) : null;
+  if (!session?.user) {
+    const back = `/${locale}/checkout/result${orderId ? `?order=${encodeURIComponent(orderId)}` : ""}`;
+    redirect(`/${locale}/signin?next=${encodeURIComponent(back)}`);
+  }
+
+  let order = orderId
+    ? await db.order.findFirst({
+        where: { id: orderId, userId: session.user.id },
+        include: { items: { select: { skuId: true } } },
+      })
+    : null;
   if (!order) redirect(`/${locale}`);
 
   // The webhook may land after the student is back here (or not at all in local dev), so ask Stripe directly.
   if (order.status === "PENDING" && order.gateway === "STRIPE" && order.gatewayOrderId) {
     const cs = await stripe().checkout.sessions.retrieve(order.gatewayOrderId);
     await syncCheckoutSession(cs, `stripe:${cs.id}:${cs.status}:${cs.payment_status}`);
-    order = await db.order.findUniqueOrThrow({ where: { id: order.id } });
+    order = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: { select: { skuId: true } } } });
   }
 
   const tone = { PAID: "text-up", PENDING: "text-ink", FAILED: "text-down", EXPIRED: "text-down", REFUNDED: "text-ink-muted" }[order.status];
+  const retryPath = order.items.length ? `/checkout?${order.items.map((i) => `sku=${encodeURIComponent(i.skuId)}`).join("&")}` : "/courses";
+  const primaryButton =
+    "w-fit rounded-sm border-strong border-ink px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
 
   return (
     <main className="mx-auto grid max-w-xl gap-4 px-4 py-16">
@@ -43,19 +61,33 @@ export default async function ResultPage({
           {t("kioskRef")} <span className="num font-semibold text-pen">{order.kioskRef}</span>
         </p>
       )}
-      <p className="num text-small text-ink-muted">
-        {formatMoney(order.total, order.currency, locale)} · {order.id}
+      {order.status === "PENDING" && <PendingPoll />}
+      <p className="num text-small text-ink-muted">{formatMoney(order.total, order.currency, locale)}</p>
+      <p className="text-small text-ink-muted">
+        {t("reference")} <span className="num" dir="ltr">{order.id}</span>
       </p>
-      {(order.status === "PAID" || order.status === "REFUNDED") && (
-        <p>
-          <Link
-            href={`/orders/${order.id}`}
-            className="w-fit rounded-sm border-[1.5px] border-ink px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
-          >
+      <div className="flex flex-wrap gap-3">
+        {(order.status === "PAID" || order.status === "REFUNDED") && (
+          <Link href={`/orders/${order.id}`} className={primaryButton}>
             {t("receipt")}
           </Link>
-        </p>
-      )}
+        )}
+        {(order.status === "FAILED" || order.status === "EXPIRED") && (
+          <Link href={retryPath} className={primaryButton}>
+            {t("retry")}
+          </Link>
+        )}
+        {order.status === "PAID" && (
+          <Link href="/dashboard" className={primaryButton}>
+            {t("dashboard")}
+          </Link>
+        )}
+        {(order.status === "FAILED" || order.status === "EXPIRED") && (
+          <Link href="/contact" className="w-fit text-small text-pen underline-offset-4 hover:underline">
+            {t("contact")}
+          </Link>
+        )}
+      </div>
     </main>
   );
 }

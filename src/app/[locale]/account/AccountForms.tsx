@@ -2,12 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { changeOwnPassword, generateParentCode, updateProfile } from "./actions";
 
 const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
 const label = "grid gap-1 text-label text-ink-muted";
 const button =
-  "w-fit rounded-sm bg-primary px-[18px] py-3 font-display text-small font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)] disabled:opacity-45";
+  "btn btn-primary w-fit text-small";
 
 export function ProfileForm({ name, email }: { name: string; email: string }) {
   const t = useTranslations("account");
@@ -16,14 +18,34 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
     <form action={action} className="grid gap-3">
       <label className={label}>
         {t("name")}
-        <input name="name" required minLength={2} maxLength={80} defaultValue={name} className={field} />
+        <input
+          name="name"
+          required
+          minLength={2}
+          maxLength={80}
+          defaultValue={name}
+          dir="auto"
+          aria-invalid={state === "invalid_name"}
+          aria-describedby="account-profile-error"
+          className={field}
+        />
       </label>
       <label className={label}>
         {t("email")}
-        <input name="email" type="email" required dir="ltr" autoComplete="email" defaultValue={email} className={field} />
+        <input
+          name="email"
+          type="email"
+          required
+          dir="ltr"
+          autoComplete="email"
+          defaultValue={email}
+          aria-invalid={state === "invalid_email" || state === "email_taken"}
+          aria-describedby="account-profile-error"
+          className={field}
+        />
       </label>
       {state && (
-        <p role="status" className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
+        <p id="account-profile-error" role={state === "ok" ? "status" : "alert"} className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
           {t(`profile.${state}`)}
         </p>
       )}
@@ -41,14 +63,29 @@ export function PasswordForm() {
     <form action={action} className="grid gap-3">
       <label className={label}>
         {t("currentPassword")}
-        <input name="current" type="password" autoComplete="current-password" required className={field} />
+        <PasswordField
+          name="current"
+          autoComplete="current-password"
+          required
+          aria-invalid={state === "wrong"}
+          aria-describedby="account-password-error"
+          className={field}
+        />
       </label>
       <label className={label}>
         {t("newPassword")}
-        <input name="next" type="password" autoComplete="new-password" required minLength={8} className={field} />
+        <PasswordField
+          name="next"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          aria-invalid={state === "short"}
+          aria-describedby="account-password-error"
+          className={field}
+        />
       </label>
       {state && (
-        <p role="status" className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
+        <p id="account-password-error" role={state === "ok" ? "status" : "alert"} className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
           {t(`password.${state}`)}
         </p>
       )}
@@ -66,9 +103,12 @@ export function ParentCodeForm() {
     <form action={action} className="grid gap-3">
       <p className="text-small text-ink-muted">{t("parentCodeHint")}</p>
       {code && (
-        <p className="num font-display text-h1 font-semibold tracking-[0.3em]" dir="ltr">
-          {code}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="num font-display text-h1 font-semibold tracking-[0.3em]" dir="ltr">
+            {code}
+          </p>
+          <CopyButton value={code} />
+        </div>
       )}
       <button disabled={pending} className={button}>
         {code ? t("newCode") : t("generateCode")}

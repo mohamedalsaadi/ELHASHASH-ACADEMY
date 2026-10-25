@@ -5,6 +5,7 @@
    and the overlay fades 1.76–2.00 s. The overlay is pure CSS, so the wordmark still plays if WebGL or the scene
    chunk never arrives. --intro-k is applied here and to the scene clock in IntroScene.tsx, so they stay aligned. */
 .as-intro { display: none; }
+html[data-intro] { overflow: hidden; }
 html[data-intro] .as-intro {
   position: fixed; inset: 0; z-index: 50;
   display: grid; place-items: center;
@@ -13,7 +14,7 @@ html[data-intro] .as-intro {
   cursor: pointer;
   animation: as-intro-out calc(var(--dur-base) * var(--intro-k)) var(--ease-out) calc(1760ms * var(--intro-k)) forwards;
 }
-html[data-intro="skip"] .as-intro { animation-delay: 0ms; }
+html[data-intro="skip"] .as-intro { animation-delay: 0ms; animation-duration: var(--dur-fast); }
 .as-intro-scene { position: absolute; inset: 0; }
 html[data-intro] .as-intro-scene { animation: as-fade-out calc(450ms * var(--intro-k)) var(--ease-out) calc(1400ms * var(--intro-k)) forwards; }
 html[data-intro] .as-intro-word { opacity: 0; animation: as-rise calc(500ms * var(--intro-k)) var(--ease-out) calc(1450ms * var(--intro-k)) forwards; }

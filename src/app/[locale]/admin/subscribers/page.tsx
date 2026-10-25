@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
@@ -10,6 +11,10 @@ import { field, label } from "../styles";
 export const dynamic = "force-dynamic";
 
 const button = "min-h-11 rounded-sm border border-ink-muted px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/subscribers", "office", { key: "nav.subscribers", noindex: true });
+}
 
 export default async function SubscribersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<SubscriberFilter> }) {
   const { locale } = await params;
@@ -100,11 +105,11 @@ export default async function SubscribersPage({ params, searchParams }: { params
           <table className={table}>
             <thead>
               <tr>
-                <th>{t("student")}</th>
-                <th>{t("grade")}</th>
-                <th>{t("course")}</th>
-                <th>{t("status")}</th>
-                <th>{t("endsAt")}</th>
+                <th scope="col">{t("student")}</th>
+                <th scope="col">{t("grade")}</th>
+                <th scope="col">{t("course")}</th>
+                <th scope="col">{t("status")}</th>
+                <th scope="col">{t("endsAt")}</th>
               </tr>
             </thead>
             <tbody>

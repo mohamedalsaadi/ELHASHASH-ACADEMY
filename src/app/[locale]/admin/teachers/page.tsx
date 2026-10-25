@@ -1,4 +1,6 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
@@ -8,6 +10,10 @@ import { AdminNav, panel, table } from "../AdminNav";
 import { TeacherForm } from "../ui";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/teachers", "office", { key: "nav.teachers", noindex: true });
+}
 
 export default async function TeachersPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -32,11 +38,11 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
         <table className={table}>
           <thead>
             <tr>
-              <th>{t("teacher")}</th>
-              <th>{ta("courses")}</th>
-              <th>{t("lessonsRecorded")}</th>
-              <th>{t("activeStudents")}</th>
-              <th>{t("earningsMonth")}</th>
+              <th scope="col">{t("teacher")}</th>
+              <th scope="col">{ta("courses")}</th>
+              <th scope="col">{t("lessonsRecorded")}</th>
+              <th scope="col">{t("activeStudents")}</th>
+              <th scope="col">{t("earningsMonth")}</th>
             </tr>
           </thead>
           <tbody>
@@ -54,6 +60,11 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
             ))}
           </tbody>
         </table>
+        {teachers.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noTeachers")}</p>
+          </EmptyState>
+        )}
       </section>
 
       <section className="grid gap-3">

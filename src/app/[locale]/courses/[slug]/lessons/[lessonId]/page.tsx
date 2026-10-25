@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
@@ -7,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { canAsk, hasLessonAccess, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { AskForm } from "./AskForm";
 import { markLessonComplete } from "./actions";
 
@@ -40,6 +42,10 @@ async function SecurePlayer({ videoId, title, path }: { videoId: string; title: 
     return <Notice>{t("unavailable")}</Notice>;
   }
   return <iframe src={src} title={title} allow="encrypted-media; fullscreen" allowFullScreen className="size-full" />;
+}
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/courses", "player", { key: "title", noindex: true });
 }
 
 export default async function LessonPage({
@@ -115,9 +121,9 @@ export default async function LessonPage({
           {view?.completedAt ? (
             <span className="w-fit rounded-full border border-up px-3 py-1 text-label text-up">{t("completed")}</span>
           ) : (
-            <button className="w-fit rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
+            <SubmitButton className="w-fit rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
               {t("markComplete")}
-            </button>
+            </SubmitButton>
           )}
         </form>
       )}

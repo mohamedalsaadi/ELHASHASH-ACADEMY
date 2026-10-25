@@ -3,7 +3,9 @@ import { Readex_Pro } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { ViewTransitions } from "next-view-transitions";
 import { routing } from "@/i18n/routing";
+import { RouteAnnouncer } from "@/components/RouteAnnouncer";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PwaRegister } from "@/components/PwaRegister";
@@ -43,16 +45,28 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  const t = await getTranslations("nav");
 
   return (
     <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={readex.variable}>
       <body className="antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[60] focus:rounded-sm focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:shadow-paper"
+        >
+          {t("skipToContent")}
+        </a>
         <PwaRegister />
-        <NextIntlClientProvider>
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-        </NextIntlClientProvider>
+        <ViewTransitions>
+          <NextIntlClientProvider>
+            <SiteHeader />
+            <div id="main-content" tabIndex={-1} className="outline-none">
+              {children}
+            </div>
+            <SiteFooter />
+          </NextIntlClientProvider>
+        </ViewTransitions>
+        <RouteAnnouncer />
       </body>
     </html>
   );

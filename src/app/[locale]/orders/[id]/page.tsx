@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
@@ -8,6 +9,10 @@ import { PrintButton } from "./PrintButton";
 
 export const dynamic = "force-dynamic";
 
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/orders", "receipt", { key: "title", noindex: true });
+}
+
 export default async function ReceiptPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
@@ -16,6 +21,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
   const t = await getTranslations("receipt");
   const tr = await getTranslations("checkout.result");
   const tc = await getTranslations("catalog");
+  const tp = await getTranslations("payment");
+  const tm = await getTranslations("checkout");
   const ar = locale === "ar";
 
   const o = await db.order.findUnique({
@@ -46,7 +53,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
     <main className="mx-auto grid max-w-2xl gap-6 px-4 py-12 print:py-0">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href="/dashboard" className="text-small text-pen underline-offset-4 hover:underline">
-          ← {t("back")}
+          <span aria-hidden="true" className="rtl:-scale-x-100">←</span> {t("back")}
         </Link>
         <PrintButton label={t("print")} />
       </div>
@@ -69,8 +76,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
           <dd className="num">{date.format(o.paidAt ?? o.createdAt)}</dd>
           <dt>{t("gateway")}</dt>
           <dd>
-            {o.gateway}
-            {o.method ? ` · ${o.method}` : ""}
+            {tp(`gateways.${o.gateway}`)}
+            {o.method ? ` · ${tm(`methods.${o.method}.name`)}` : ""}
           </dd>
           {o.gatewayOrderId && (
             <>
@@ -82,17 +89,21 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
           )}
         </dl>
 
+        {o.items.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("noItems")}</p>
+        ) : (
+        <div className="overflow-x-auto print:overflow-visible">
         <table className="w-full border-collapse text-small">
           <thead>
             <tr className="border-b border-hairline text-label text-ink-muted">
-              <th className="py-2 text-start font-medium">{t("item")}</th>
-              <th className="py-2 text-end font-medium">{t("amount")}</th>
+              <th scope="col" className="py-2 text-start font-medium">{t("item")}</th>
+              <th scope="col" className="py-2 text-end font-medium">{t("amount")}</th>
             </tr>
           </thead>
           <tbody>
             {o.items.map((i) => (
               <tr key={i.id} className="border-b border-dashed border-rule">
-                <td className="py-2">
+                <td className="min-w-0 py-2 break-words">
                   {name(i.sku.liveSession ?? i.sku.lesson ?? i.sku.course)} · {tc(`access.${i.sku.accessType}`, { days: i.sku.accessDays ?? 0 })}
                 </td>
                 <td className="num py-2 text-end">{money(i.price)}</td>
@@ -100,6 +111,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
             ))}
           </tbody>
         </table>
+        </div>
+        )}
 
         <dl className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 border-t border-hairline pt-3">
           <dt className="text-ink-muted">{t("subtotal")}</dt>

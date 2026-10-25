@@ -28,7 +28,7 @@ export function LinkChildForm() {
       <div className="basis-full">
         <button
           disabled={pending}
-          className="w-fit rounded-sm bg-primary px-[18px] py-3 font-display text-small font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)] disabled:opacity-45"
+          className="btn btn-primary w-fit text-small"
         >
           {t("link")}
         </button>

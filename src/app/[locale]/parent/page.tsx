@@ -1,8 +1,10 @@
+import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { db } from "@/lib/db";
-import { formatMoney } from "@/lib/format";
+import { courseZone, formatMoney } from "@/lib/format";
 import { unlinkParent } from "../account/actions";
 import { LinkChildForm } from "./LinkChildForm";
 
@@ -11,6 +13,10 @@ export const dynamic = "force-dynamic";
 const DAY = 86_400_000;
 const panel = "grid gap-4 rounded-md border border-hairline bg-surface p-5";
 const small = "text-small text-ink-muted";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/parent", "parent", { key: "title", noindex: true });
+}
 
 export default async function ParentPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -29,6 +35,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
   const weekStart = new Date(now.getTime() - 7 * DAY);
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Asia/Dubai" });
+  const dateIn = (zone: string) => new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: zone });
 
   const links = await db.parentLink.findMany({
     where: { parentId: session.user.id },
@@ -50,10 +57,11 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
           select: { courseId: true },
           distinct: ["courseId"],
         }),
+        // Course-level access only: a rented lesson expiring tomorrow is not the plan ending.
         db.entitlement.findFirst({
-          where: { userId: link.student.id, endsAt: { gt: now } },
+          where: { userId: link.student.id, endsAt: { gt: now }, lessonId: null, liveSessionId: null },
           orderBy: { endsAt: "asc" },
-          select: { endsAt: true },
+          select: { endsAt: true, course: { select: { grade: { select: { country: { select: { timeZone: true } } } } } } },
         }),
         db.lessonView.count({ where: { userId: link.student.id, completedAt: { gte: weekStart } } }),
         db.liveAttendance.count({ where: { userId: link.student.id, joinedAt: { gte: monthStart } } }),
@@ -63,7 +71,15 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
           select: { total: true, currency: true, paidAt: true },
         }),
       ]);
-      return { link, courses: courses.length, nextExpiry: nextExpiry?.endsAt ?? null, done, attended, lastOrder };
+      return {
+        link,
+        courses: courses.length,
+        nextExpiry: nextExpiry?.endsAt ?? null,
+        nextZone: nextExpiry?.course ? courseZone(nextExpiry.course) : "Asia/Dubai",
+        done,
+        attended,
+        lastOrder,
+      };
     }),
   );
 
@@ -84,13 +100,19 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
         <p className={small}>{t("noChildren")}</p>
       ) : (
         <ul className="grid gap-4">
-          {children.map(({ link, courses, nextExpiry, done, attended, lastOrder }) => (
+          {children.map(({ link, courses, nextExpiry, nextZone, done, attended, lastOrder }) => (
             <li key={link.id} className={panel}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-display text-h3 font-semibold">{link.student.name}</h2>
                 <form action={unlinkParent}>
                   <input type="hidden" name="id" value={link.id} />
-                  <button className="text-small text-down underline-offset-4 hover:underline">{t("unlink")}</button>
+                  <ConfirmButton
+                    action={unlinkParent}
+                    confirmText={t("confirmUnlink")}
+                    className="text-small text-down underline-offset-4 hover:underline"
+                  >
+                    {t("unlink")}
+                  </ConfirmButton>
                 </form>
               </div>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-small [&_dt]:text-label [&_dt]:text-ink-muted">
@@ -101,7 +123,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
                 <dt>{t("attendedMonth")}</dt>
                 <dd className="num">{attended}</dd>
                 <dt>{t("nextExpiry")}</dt>
-                <dd>{nextExpiry ? date.format(nextExpiry) : t("noExpiry")}</dd>
+                <dd>{nextExpiry ? dateIn(nextZone).format(nextExpiry) : t("noExpiry")}</dd>
                 <dt>{t("lastPayment")}</dt>
                 <dd>{lastOrder?.paidAt ? `${formatMoney(lastOrder.total, lastOrder.currency, locale)} · ${date.format(lastOrder.paidAt)}` : t("noPayment")}</dd>
               </dl>

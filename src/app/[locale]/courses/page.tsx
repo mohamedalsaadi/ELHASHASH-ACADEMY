@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
+import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -11,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  return { alternates: alternates(locale, "/courses") };
+  const t = await getTranslations({ locale, namespace: "catalog" });
+  return { title: t("title"), alternates: alternates(locale, "/courses") };
 }
 
 export default async function CoursesPage({
@@ -55,7 +57,7 @@ export default async function CoursesPage({
         })
       : Promise.resolve([]),
   ]);
-  const tab = "rounded-full border-[1.5px] border-ink px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+  const tab = "rounded-full border-strong border-ink px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
 
   return (
     <main>
@@ -91,7 +93,7 @@ export default async function CoursesPage({
       </section>
 
       {q.length >= 2 && (
-        <section id="results" className="border-b border-hairline">
+        <section id="results" className="scroll-mt-6 border-b border-hairline">
           <div className="mx-auto grid max-w-5xl gap-4 px-4 py-8">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 className="font-display text-h2 font-semibold">{t("searchResults", { count: results.length })}</h2>
@@ -114,14 +116,19 @@ export default async function CoursesPage({
         </section>
       )}
       <div className="mx-auto grid max-w-5xl gap-12 px-4 py-10">
-        <ul id="school" className="grid scroll-mt-24 grid-cols-2 gap-4 lg:grid-cols-4">
+        <ul id="school" className="grid scroll-mt-6 grid-cols-2 gap-4 lg:grid-cols-4">
           {countries.map((c) => (
             <li key={c.id}>
               <CountryTile country={c} locale={locale} />
             </li>
           ))}
         </ul>
-        <section id="skills" className="grid scroll-mt-24 gap-4 border-t border-hairline pt-10">
+        {countries.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noCountries")}</p>
+          </EmptyState>
+        )}
+        <section id="skills" className="grid scroll-mt-6 gap-4 border-t border-hairline pt-10">
           <h2 className="font-display text-h2 font-semibold">{t("skillTab")}</h2>
           {skills.length ? (
             <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

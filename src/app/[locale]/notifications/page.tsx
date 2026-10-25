@@ -1,21 +1,39 @@
+import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { EmptyState } from "@/components/brand/Mark";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
-import { markAllRead } from "./actions";
+import { markAllRead, openNotification } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function NotificationsPage({ params }: { params: Promise<{ locale: string }> }) {
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/notifications", "notifications", { key: "title", noindex: true });
+}
+
+export default async function NotificationsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ before?: string }>;
+}) {
   const { locale } = await params;
+  const { before } = await searchParams;
   setRequestLocale(locale);
   const session = await auth();
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/notifications`)}`);
   const t = await getTranslations("notifications");
   const ar = locale === "ar";
-  const items = await db.notification.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: "desc" }, take: 50 });
+  const beforeDate = before ? new Date(before) : null;
+  const items = await db.notification.findMany({
+    where: { userId: session.user.id, ...(beforeDate && !Number.isNaN(beforeDate.getTime()) ? { createdAt: { lt: beforeDate } } : {}) },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
   const when = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" });
   const unread = items.some((n) => !n.readAt);
 
@@ -25,9 +43,9 @@ export default async function NotificationsPage({ params }: { params: Promise<{ 
         <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
         {unread && (
           <form action={markAllRead}>
-            <button className="rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
+            <SubmitButton className="rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
               {t("markAll")}
-            </button>
+            </SubmitButton>
           </form>
         )}
       </div>
@@ -42,20 +60,26 @@ export default async function NotificationsPage({ params }: { params: Promise<{ 
             const body = ar ? n.bodyAr : n.bodyEn;
             const content = (
               <span className="grid gap-1">
-                <span className="font-display font-semibold">{title}</span>
+                <span className="flex items-center justify-between gap-2">
+                  <span className="font-display font-semibold">{title}</span>
+                  {!n.readAt && <span className="text-label font-semibold text-pen">{t("unread")}</span>}
+                </span>
                 {body && <span className="text-small text-ink-muted">{body}</span>}
                 <span className="num text-label text-ink-muted">{when.format(n.createdAt)}</span>
               </span>
             );
-            const className = `block rounded-md border p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) ${
+            const className = `block w-full rounded-md border p-4 text-start transition-colors duration-(--dur-fast) ease-(--ease-out) ${
               n.readAt ? "border-hairline bg-surface" : "border-pen bg-surface"
             } ${n.href ? "hover:bg-raised" : ""}`;
             return (
               <li key={n.id}>
                 {n.href?.startsWith("/") ? (
-                  <Link href={n.href} className={className}>
-                    {content}
-                  </Link>
+                  <form action={openNotification}>
+                    <input type="hidden" name="id" value={n.id} />
+                    <button type="submit" className={className}>
+                      {content}
+                    </button>
+                  </form>
                 ) : (
                   <div className={className}>{content}</div>
                 )}
@@ -63,6 +87,14 @@ export default async function NotificationsPage({ params }: { params: Promise<{ 
             );
           })}
         </ul>
+      )}
+      {items.length === 50 && (
+        <Link
+          href={{ pathname: "/notifications", query: { before: items[items.length - 1].createdAt.toISOString() } }}
+          className="w-fit text-small text-pen underline-offset-4 hover:underline"
+        >
+          {t("older")}
+        </Link>
       )}
     </main>
   );

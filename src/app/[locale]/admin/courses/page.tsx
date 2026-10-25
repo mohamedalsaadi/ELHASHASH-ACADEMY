@@ -1,4 +1,6 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/staff";
@@ -9,6 +11,10 @@ import { CreateCourseForm } from "../ui";
 export const dynamic = "force-dynamic";
 
 const button = "min-h-11 rounded-sm border border-ink-muted px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/courses", "office", { key: "nav.courses", noindex: true });
+}
 
 export default async function AdminCoursesPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ country?: string; grade?: string }> }) {
   const { locale } = await params;
@@ -89,6 +95,11 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
             </li>
           ))}
         </ul>
+        {courses.length === 0 && (
+          <EmptyState>
+            <p className="text-ink-muted">{to("noCourses")}</p>
+          </EmptyState>
+        )}
       </section>
 
       <section className="grid gap-3">

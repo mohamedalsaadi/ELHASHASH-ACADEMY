@@ -1,9 +1,14 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { SignUpForm } from "./SignUpForm";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/signup", "signup", { key: "title", noindex: true });
+}
 
 export default async function SignUpPage({
   params,

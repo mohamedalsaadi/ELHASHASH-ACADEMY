@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -15,6 +16,10 @@ export const dynamic = "force-dynamic";
 const card = "grid gap-4 rounded-md border border-hairline bg-surface p-4";
 const tile = "grid gap-3 rounded-sm bg-raised p-3";
 const check = "flex items-center gap-2 text-small";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/admin/courses", "office", { key: "nav.courses", noindex: true });
+}
 
 export default async function AdminCoursePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;

@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
@@ -11,6 +12,10 @@ import { answerQuestion } from "./actions";
 export const dynamic = "force-dynamic";
 
 /** Questions on the teacher's own courses (every course for an admin): unanswered first, oldest first. */
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/teacher/questions", "questions", { key: "title", noindex: true });
+}
+
 export default async function TeacherQuestionsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);

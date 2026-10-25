@@ -1,19 +1,28 @@
+import { pageMetadata } from "@/lib/seo";
 import { AuthError } from "next-auth";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
+import { PasswordField } from "@/components/ui/PasswordField";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { safeNext } from "@/lib/safe-redirect";
+
+const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
+
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return pageMetadata(params, "/signin", "signin", { key: "title", noindex: true });
+}
 
 export default async function SignInPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string; next?: string; verified?: string; reset?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; verified?: string; reset?: string; login?: string }>;
 }) {
   const { locale } = await params;
-  const { error, next, verified, reset } = await searchParams;
+  const { error, next, verified, reset, login } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("signin");
   const target = safeNext(next, `/${locale}/dashboard`);
@@ -23,7 +32,10 @@ export default async function SignInPage({
     try {
       await signIn("credentials", { login: form.get("login"), password: form.get("password"), redirectTo: target });
     } catch (e) {
-      if (e instanceof AuthError) redirect(`/${locale}/signin?error=1&next=${encodeURIComponent(target)}`);
+      if (e instanceof AuthError) {
+        const entered = encodeURIComponent(String(form.get("login") ?? ""));
+        redirect(`/${locale}/signin?error=1&next=${encodeURIComponent(target)}&login=${entered}`);
+      }
       throw e;
     }
   }
@@ -40,21 +52,25 @@ export default async function SignInPage({
             autoComplete="username"
             dir="ltr"
             required
-            className="min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink"
+            defaultValue={login ?? ""}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "signin-error" : undefined}
+            className={field}
           />
         </label>
         <label className="grid gap-2 text-label text-ink-muted">
           {t("password")}
-          <input
+          <PasswordField
             name="password"
-            type="password"
             autoComplete="current-password"
             required
-            className="min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "signin-error" : undefined}
+            className={field}
           />
         </label>
         {error && (
-          <p role="alert" className="text-small text-down">
+          <p id="signin-error" role="alert" className="text-small text-down">
             {t("error")}
           </p>
         )}
@@ -68,9 +84,12 @@ export default async function SignInPage({
             {t("resetDone")}
           </p>
         )}
-        <button className="rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]">
+        <SubmitButton
+          pendingLabel={t("submitting")}
+          className="btn btn-primary"
+        >
           {t("submit")}
-        </button>
+        </SubmitButton>
       </form>
       <p className="text-small text-ink-muted">
         <Link href="/forgot" className="text-ink underline underline-offset-4">

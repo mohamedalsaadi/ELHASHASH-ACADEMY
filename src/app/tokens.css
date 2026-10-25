@@ -1,5 +1,5 @@
 /* Generated from DESIGN.md. Tailwind v4: import after `@import "tailwindcss";`.
-   Alsaadi "illuminated page": vellum ground, ink text, lapis brand, gold leaf only for what a student earned. Light only.
+   AAcademy "illuminated page": vellum ground, ink text, lapis brand, gold leaf only for what a student earned. Light only.
    Token names are kept from the first brand so components inherit the palette: `pen` is the lapis accent, `marker` is gold. */
 
 @theme {
@@ -54,8 +54,8 @@
 :root {
   color-scheme: light;
   --fold: 2.904; /* tan 71°: the slope of the A's legs, the brand's only diagonal */
-  /* Intro time multiplier, read by brand.css and IntroScene. 2.0 s × 1.45 ≈ 2.9 s. */
-  --intro-k: 1.45;
+  /* Intro time multiplier, read by brand.css and IntroScene. 2.0 s × 1.825 ≈ 3.65 s. */
+  --intro-k: 1.825;
 }
 
 body {
@@ -63,9 +63,6 @@ body {
   color: var(--color-ink);
   font: 400 var(--text-body)/1.65 var(--font-body);
 }
-/* Reem Kufi sets the big Arabic headings only; at button and label sizes its Kufi forms get hard to read.
-   Unlayered, so it wins over the font-display utility on those headings. */
-:lang(ar) :is(h1, h2) { font-family: var(--font-kufi), var(--font-readex), Tahoma, sans-serif; }
 :lang(ar) body, body:lang(ar) { font-size: var(--text-body-ar); line-height: 1.85; }
 .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

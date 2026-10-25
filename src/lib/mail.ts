@@ -1,7 +1,7 @@
 // Transactional email through Resend's HTTP API. No SDK: one POST. When RESEND_API_KEY is missing the
 // message is logged and skipped, so local dev and preview builds keep working.
 
-const FROM = process.env.MAIL_FROM || "Alsaadi Academy <onboarding@resend.dev>";
+const FROM = process.env.MAIL_FROM || "AAcademy <onboarding@resend.dev>";
 
 export const appUrl = () => (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 
@@ -15,7 +15,7 @@ export function emailLayout(title: string, lines: string[], cta: { href: string;
   const dir = ar ? "rtl" : "ltr";
   return `<!doctype html><html dir="${dir}" lang="${locale}"><body style="margin:0;background:#F6F7FB;font-family:Tahoma,Arial,sans-serif;color:#0D1030">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px">
-    <div style="background:#0B0F4A;color:#fff;border-radius:10px 10px 0 0;padding:20px 24px;font-size:20px;font-weight:700">${ar ? "أكاديمية السعدي" : "Alsaadi Academy"}</div>
+    <div style="background:#0B0F4A;color:#fff;border-radius:10px 10px 0 0;padding:20px 24px;font-size:20px;font-weight:700">AAcademy</div>
     <div style="background:#fff;border:1px solid #E3E6F3;border-top:0;border-radius:0 0 10px 10px;padding:24px">
       <h1 style="margin:0 0 12px;font-size:20px">${esc(title)}</h1>
       ${lines.map((l) => `<p style="margin:0 0 12px;line-height:1.7">${esc(l)}</p>`).join("")}
@@ -26,7 +26,7 @@ export function emailLayout(title: string, lines: string[], cta: { href: string;
 </body></html>`;
 }
 
-export async function sendMail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<boolean> {
+export async function sendMail({ to, subject, html, replyTo }: { to: string; subject: string; html: string; replyTo?: string }): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn(`[mail] skipped (no RESEND_API_KEY): ${subject}`);
@@ -36,7 +36,7 @@ export async function sendMail({ to, subject, html }: { to: string; subject: str
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
+      body: JSON.stringify({ from: FROM, to, subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
     });
     if (!res.ok) {
       console.error("[mail] failed", res.status, await res.text());

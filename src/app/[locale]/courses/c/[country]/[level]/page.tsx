@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CIRCLE_PATH } from "@/components/brand/Mark";
@@ -7,35 +8,57 @@ import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { cheapestSku, effectivePrice } from "@/lib/pricing-engine";
-import { STAGES } from "@/lib/stages";
+import { alternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; country: string; level: string }> }): Promise<Metadata> {
+  const { locale, country: slug, level: raw } = await params;
+  const level = Number(raw);
+  const grade = await db.grade.findFirst({
+    where: { country: { code: slug.toUpperCase(), active: true }, level, active: true },
+    orderBy: [{ order: "asc" }, { curriculum: "asc" }],
+    select: { nameAr: true, nameEn: true },
+  });
+  if (!grade) return {};
+  const name = locale === "ar" ? grade.nameAr : grade.nameEn;
+  return {
+    title: name,
+    description: locale === "ar" ? `مواد ${name} وكورساتها على AAcademy.` : `${name} subjects and courses on AAcademy.`,
+    alternates: alternates(locale, `/courses/c/${slug.toLowerCase()}/${level}`),
+  };
+}
 
 export default async function GradePage({ params }: { params: Promise<{ locale: string; country: string; level: string }> }) {
   const { locale, country: slug, level: raw } = await params;
   setRequestLocale(locale);
-  const code = slug.toUpperCase() as keyof typeof STAGES;
+  const code = slug.toUpperCase();
   const level = Number(raw);
-  if (!(code in STAGES) || !Number.isInteger(level) || level < 1 || level > 12) notFound();
+  if (!Number.isInteger(level) || level < 1 || level > 12) notFound();
   const ar = locale === "ar";
   const now = new Date();
 
   const [t, grade] = await Promise.all([
     getTranslations("catalog"),
     db.grade.findFirst({
-      where: { country: { code }, level },
+      where: { country: { code, active: true }, level, active: true },
+      orderBy: [{ order: "asc" }, { curriculum: "asc" }],
       include: {
         country: true,
-        subjects: { orderBy: { order: "asc" }, include: { subject: true } },
-        courses: { where: { published: true, kind: "SCHOOL" }, orderBy: { createdAt: "asc" }, include: { ...cardInclude(new Date()), subject: true } },
+        subjects: { where: { subject: { active: true } }, orderBy: { order: "asc" }, include: { subject: true } },
+        courses: {
+          where: { published: true, kind: "SCHOOL", subject: { is: { active: true } } },
+          orderBy: { createdAt: "asc" },
+          include: { ...cardInclude(new Date()), subject: true },
+        },
       },
     }),
   ]);
   if (!grade) notFound();
 
-  // The owner's subject list first, then any subject that has a course but isn't on the list yet.
+  // The owner's subject list first, then any active subject that has a course but isn't on the list yet.
   const listed = grade.subjects.map((s) => s.subject);
-  const extra = grade.courses.flatMap((c) => (c.subject && !listed.some((s) => s.id === c.subject!.id) ? [c.subject] : []));
+  const extra = grade.courses.flatMap((c) => (c.subject && c.subject.active && !listed.some((s) => s.id === c.subject!.id) ? [c.subject] : []));
   const tiles = [...listed, ...extra.filter((s, i) => extra.findIndex((x) => x.id === s.id) === i)].map((subject) => {
     const courses = grade.courses.filter((c) => c.subjectId === subject.id);
     // ponytail: two courses of one subject link to the oldest; a chooser page if teachers ever split a subject.

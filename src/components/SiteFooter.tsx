@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Wordmark } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
+import { InstallApp } from "@/components/InstallApp";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export async function SiteFooter() {
@@ -15,7 +16,7 @@ export async function SiteFooter() {
           <span>{t("tagline")}</span>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
-          {(["terms", "refund", "contact"] as const).map((k) => (
+          {(["terms", "refund", "privacy", "faq", "contact"] as const).map((k) => (
             <Link key={k} href={`/${k}`} className="hover:text-ink">
               {t(k)}
             </Link>
@@ -23,6 +24,7 @@ export async function SiteFooter() {
           <a href={`mailto:${CONTACT_EMAIL}`} dir="ltr" className="hover:text-ink">
             {CONTACT_EMAIL}
           </a>
+          <InstallApp />
         </nav>
         <span className="basis-full">© {new Date().getFullYear()} {t("rights")}</span>
       </div>

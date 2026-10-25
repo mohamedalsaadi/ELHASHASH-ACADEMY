@@ -1,14 +1,14 @@
-# ALSAADI ACADEMY · Design DNA
+# AACADEMY · Design DNA
 
 The single source of truth for every screen. Every colour, size, radius and duration in code comes from this file through `tokens.css`. No raw hex, px or ms values in components.
 
-Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, and the parents who pay. Identity "the illuminated page" (chosen 2026-10-25): two open books laid face down form the double A of ALSAADI. Brand book: `docs/brand/brand-book.html`. Arabic first (RTL), English second.
+Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, and the parents who pay. Identity "the illuminated page" (chosen 2026-10-25): two open books laid face down form the double A of AAcademy. Brand book: `docs/brand/brand-book.html`. Arabic first (RTL), English second.
 
 ## 0. Brand
 
-**Idea.** A book laid open, spine up, to keep your place is an A. ALSAADI holds two of them side by side, tied by one gold ribbon. It promises: pick up exactly where you left off. Alsaadi is the owner's surname; never explain the name.
+**Idea.** A book laid open, spine up, to keep your place is an A. AAcademy holds two of them side by side, tied by one gold ribbon. It promises: pick up exactly where you left off.
 
-**Wordmark.** Latin only, in both locales. ALSAADI drawn on a 100-unit cap height with a 14-unit stroke: the A's have rounded spines (round joins) at 38°, every other corner is square. The first A has an ink crossbar; the double A shares one gold ribbon. "ACADEMY" sits under it in Readex Pro, letter-spaced .85em. Ink is `currentColor`. Code: `src/components/brand/Mark.tsx` (`Wordmark`).
+**Wordmark.** Latin only, in both locales. The two-A monogram sits beside "AAcademy" set in Readex Pro. The monogram is drawn on a 100-unit cap height with a 14-unit stroke; the double A shares one gold ribbon. Ink is `currentColor`. Code: `src/components/brand/Mark.tsx` (`Wordmark`).
 
 **Monogram.** The double A with its ribbon (`Mark`). Favicon and app icon: lapis tile, vellum A A, gold ribbon (`src/app/icon.svg`, `apple-icon.tsx`). Share image: `opengraph-image.tsx`. Static SVG strings for generated images: `src/app/brand-svg.ts`.
 
@@ -18,11 +18,11 @@ Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE,
 
 ## 1. Theses (validated)
 
-**Visual.** The illuminated page: a vellum ground with ink text, lapis for the brand, links and the primary action, and gold leaf only for what a student earned (progress, achievements, the ribbon, one underline per heading at most). Night (deep lapis) for heroes, result cards and the trust strip. Reem Kufi for Arabic headings, Readex Pro for everything else in both scripts. Cards are white with a soft shadow; one feature card per view may take the fold cut. Light only.
+**Visual.** The illuminated page: a vellum ground with ink text, lapis for the brand, links and the primary action, and gold leaf only for what a student earned (progress, achievements, the ribbon, one underline per heading at most). Night (deep lapis) for heroes, result cards and the trust strip. Readex Pro sets both scripts at all sizes, headings included. Cards are white with a soft shadow; one feature card per view may take the fold cut. Light only.
 
 **Interaction.** Quick and dry: 160ms for hover, 240ms for state changes, one 700ms draw when a mark first appears, all on one ease-out `cubic-bezier(.2,.7,.2,1)`. Hover shifts tone or lifts a card 2px. Forbidden: bounce, elastic, looping glows or pulses, confetti, autoplay carousels, smooth-scroll libraries.
 
-**Marketing vs app.** The home page may move: a 2s three.js intro once per tab session (the one WebGL scene on the site, loaded only when it plays). App pages stay calm: no scroll effects, no parallax, no intro.
+**Marketing vs app.** The home page may move: a 3.65s three.js intro once per tab session (the one WebGL scene on the site, loaded only when it plays). App pages stay calm: no scroll effects, no parallax, no intro.
 
 **Allowed patterns:** tabular numbers, the gold ribbon underline, the fold cut, A-shaped progress marks, the pen circle on catalog highlights, the session-once intro, a gold ribbon loader only while a route is loading, example figures only when labelled.
 
@@ -78,11 +78,11 @@ Token names `pen` and `marker` are kept from the first brand so components inher
 
 | Token | Family | Use |
 |---|---|---|
-| `--font-display` | `"Reem Kufi", "Readex Pro", "Segoe UI", Tahoma, system-ui, sans-serif`; English pages use Readex Pro | headings, hero figures, buttons, chips |
+| `--font-display` | `"Readex Pro", "Segoe UI", Tahoma, system-ui, sans-serif` | headings, hero figures, buttons, chips |
 | `--font-body` | `"Readex Pro", "Segoe UI", Tahoma, system-ui, sans-serif` | reading text, inputs |
 | `--font-data` | `"Readex Pro", "Segoe UI", Tahoma, system-ui, sans-serif` + `font-variant-numeric: tabular-nums` | tables, scores in lists, prices, timers |
 
-Loaded with `next/font/google` (self-hosted at build, `display: swap`), subsets `arabic` + `latin`. Weights: Readex Pro 300–700, Reem Kufi 500/600/700 (heavier requests render at 700). Reem Kufi's straight strokes and angled joins echo the 38° A; Readex Pro is one bilingual family, so mixed Arabic and English never change tone.
+Loaded with `next/font/google` (self-hosted at build, `display: swap`), subsets `arabic` + `latin`. Weights: Readex Pro 300–700. One bilingual family, so mixed Arabic and English never change tone.
 
 **Digits.** Data uses Western digits (0–9): they are the only fixed-width digits in either face, and Egyptian exam results are published with them. Arabic-Indic digits (٠–٩) are fine in Arabic prose labels ("منذ ٣ دقائق"), never in a column.
 
@@ -123,13 +123,13 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 
 - Animate only `transform`, `opacity`, `background-color`, `border-color`, `color`.
 - Every unmount has an exit (opacity + 4px translate, `--dur-base`).
-- **Intro** (home, `src/components/brand/Intro.tsx`, `IntroScene.tsx` + `src/app/brand.css`), fixed night overlay over the rendered page, 2.0s: 0–0.9s two lapis books (three.js) fall with pages fluttering and land face down as A A · 0.95–1.33s the gold ribbon threads through both · 1.40–1.85s the scene fades while the wordmark rises 12px (1.45–1.95s) · 1.76–2.00s overlay fades. The overlay and wordmark are CSS, so they play without WebGL. three.js loads only when the intro plays. Click, tap or any key skips. Once per tab session (`sessionStorage`), never under reduced motion.
+- **Intro** (home, `src/components/brand/Intro.tsx`, `IntroScene.tsx` + `src/app/brand.css`), fixed night overlay over the rendered page, 3.65s (2.0s authored × 1.825): 0–0.9s two lapis books (three.js) fall with pages fluttering and land face down as A A · 0.95–1.33s the gold ribbon threads through both · 1.40–1.85s the scene fades while the wordmark rises 12px (1.45–1.95s) · 1.76–2.00s overlay fades. The overlay and wordmark are CSS, so they play without WebGL. three.js loads only when the intro plays. Click, tap or any key skips. Once per tab session (`sessionStorage`), never under reduced motion.
 - Nothing else reacts to scroll.
 - `prefers-reduced-motion` or the in-app toggle: durations become 0, count-ups show the final value, colour still changes.
 
 ## 7. Components (5 states each: default · hover · focus-visible · active · disabled)
 
-- **Button primary:** `--color-primary` background, `--color-on-primary` text, Reem Kufi / Readex Pro 600, padding 14/24, `--radius-sm`. Hover: mix 84% fill + 16% black. Focus: 2px `--color-focus` outline, 2px offset. Disabled: 45% opacity, `not-allowed`. One primary button per view.
+- **Button primary:** `--color-primary` background, `--color-on-primary` text, Readex Pro 600, padding 14/24, `--radius-sm`. Hover: mix 84% fill + 16% black. Focus: 2px `--color-focus` outline, 2px offset. Disabled: 45% opacity, `not-allowed`. One primary button per view.
 - **Button secondary:** transparent, `--color-ink`, 1.5px `--color-ink` border. Hover: `--color-raised` background.
 - **Input:** `--color-surface` background, 1px `--color-field`, `--radius-sm`, 44px min height. Focus: border `--color-ink` + focus ring. Error: border `--color-down` and a text message under it saying what to fix.
 - **Card:** `--color-surface`, 1px hairline, `--shadow-paper`, `--radius-lg`, padding 20–24. Course card: lapis band (grade, title, free badge) over teacher and price (`src/components/CourseCard.tsx`). Never a card inside a card; inner groups use `--color-raised` tiles.

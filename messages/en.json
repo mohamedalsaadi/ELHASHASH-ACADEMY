@@ -1,7 +1,47 @@
 {
+  "errors": {
+    "notFoundTitle": "This page could not be found",
+    "notFoundBody": "The link may be old, or the page moved. Start from the home page or the course catalog.",
+    "errorTitle": "Something went wrong",
+    "errorBody": "Try again. If it keeps happening, contact us.",
+    "retry": "Try again",
+    "home": "Home",
+    "courses": "Courses"
+  },
   "meta": {
-    "title": "Alsaadi Academy",
+    "title": "AAcademy",
     "description": "Grade 10–12 lessons for students across the GCC and Egypt, with your real scores in front of you."
+  },
+  "pwa": {
+    "install": "Install the app",
+    "dismiss": "Not now"
+  },
+  "offline": {
+    "title": "You are offline",
+    "body": "Videos, live sessions, sign-in, checkout and the dashboards need a connection. Reconnect and try again.",
+    "back": "Back to the home page"
+  },
+  "contactForm": {
+    "title": "Send us a message",
+    "name": "Your name",
+    "email": "Email",
+    "phone": "Mobile (optional)",
+    "topic": "Topic",
+    "topics": {
+      "general": "General",
+      "billing": "Payments",
+      "technical": "Technical",
+      "privacy": "Privacy request"
+    },
+    "message": "Message",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Sent. We reply within two business days.",
+    "errors": {
+      "invalid": "Check the name, email and message (at least 20 characters).",
+      "limited": "Too many messages from this network. Try again in an hour.",
+      "unavailable": "Email is unavailable right now. Write to us directly:"
+    }
   },
   "nav": {
     "switchLocale": "العربية",
@@ -27,7 +67,13 @@
       "label": "Practice exam · Mathematics",
       "q": "Q1: Find the limit as x → 2",
       "a": "Solution: substitute directly…",
-      "score": "Score 48 out of 50"
+      "score": "Score 48 out of 50",
+      "sample": "Sample result"
+    },
+    "stats": {
+      "courses": "{count, plural, one {# course} other {# courses}}",
+      "lessons": "{count, plural, one {# lesson} other {# lessons}}",
+      "subjects": "{count, plural, one {# subject} other {# subjects}}"
     },
     "ways": {
       "title": "Three ways to learn",
@@ -158,6 +204,13 @@
     "from": "From",
     "percentOff": "{pct}% off",
     "progress": "{pct}% complete · {done} of {total} lessons",
+    "otherGrades": "Other grades",
+    "search": "Search courses",
+    "searchPlaceholder": "Subject, grade or course name",
+    "searchButton": "Search",
+    "searchResults": "{count, plural, =0 {No results} one {# result} other {# results}}",
+    "searchEmpty": "Nothing matched. Try the subject or grade name, or browse the countries below.",
+    "searchClear": "Clear search",
     "owned": "You're subscribed to this course",
     "startFree": "Start the free unit",
     "units": "Units",
@@ -350,7 +403,58 @@
     "couponPerUser": "Uses per student",
     "couponActive": "Active",
     "couponUsed": "{count, plural, one {# paid use} other {# paid uses}}",
-    "confirmDeleteCoupon": "Delete this discount code?"
+    "confirmDeleteCoupon": "Delete this discount code?",
+    "catalogTitle": "Catalog",
+    "countriesTitle": "Countries",
+    "countriesHint": "Add a country or edit its details. An inactive country is hidden from students.",
+    "countryGradeCount": "{count, plural, one {# grade} other {# grades}}",
+    "addCountry": "Add country",
+    "confirmDeleteCountry": "Delete this country? It cannot be deleted while it has grades.",
+    "code": "Code",
+    "currency": "Currency",
+    "timeZone": "Time zone",
+    "order": "Order",
+    "active": "Active",
+    "stagesTitle": "Stages",
+    "stagesHint": "How the selected country groups its levels. Stages cannot overlap.",
+    "fromLevel": "From level",
+    "toLevel": "To level",
+    "addStage": "Add stage",
+    "confirmDeleteStage": "Delete this stage?",
+    "gradesTitle": "Grades",
+    "gradesHint": "Add a grade and place it inside a stage range.",
+    "curriculum": "Curriculum",
+    "level": "Level",
+    "terminal": "Final year",
+    "addGrade": "Add grade",
+    "confirmDeleteGrade": "Delete this grade?",
+    "gradeUsage": "{courses} courses · {users} students",
+    "inUse": "In use, cannot delete.",
+    "subjectsListTitle": "Subjects",
+    "subjectsListHint": "Add a subject or edit its name and icon. An inactive subject is hidden from students.",
+    "subjectSlug": "Slug",
+    "subjectIcon": "Icon",
+    "addSubject": "Add subject",
+    "confirmDeleteSubject": "Delete this subject?",
+    "subjectUsage": "{courses} courses · {grades} grades",
+    "chooseCountry": "Country",
+    "show": "Show",
+    "curricula": {
+      "NATIONAL_EG": "Egyptian national",
+      "MOE": "Ministry of Education",
+      "BRITISH": "British",
+      "AMERICAN": "American",
+      "IB": "International Baccalaureate"
+    },
+    "catalogErrors": {
+      "duplicate": "That value is already used.",
+      "overlap": "This stage range overlaps another stage.",
+      "in_use": "This record is in use and cannot be deleted.",
+      "bad_code": "The code must be two Latin letters.",
+      "bad_timezone": "That time zone is not valid.",
+      "bad_range": "The end level is before the start level.",
+      "bad_slug": "The slug may contain lowercase letters, digits and dashes only."
+    }
   },
   "signup": {
     "title": "Create a student account",
@@ -362,7 +466,7 @@
     "typeParent": "Parent",
     "parentHint": "A parent account follows your children after you link them with a code from the student's account.",
     "phone": "Mobile number",
-    "phoneHint": "Egypt: 01xxxxxxxxx · Gulf: 05xxxxxxxx or 8 digits",
+    "phoneHint": "Egypt: 01xxxxxxxxx · Gulf: 05xxxxxxxx or 8 digits · elsewhere: +country code",
     "grade": "Grade",
     "gradePick": "Choose your grade",
     "password": "Password",
@@ -375,7 +479,7 @@
       "invalid_name": "Enter your full name (at least 2 letters).",
       "invalid_email": "Enter a valid email address.",
       "email_taken": "This email already has an account. Sign in instead.",
-      "invalid_phone": "That mobile number isn't valid. Use your local mobile format (Egypt 01xxxxxxxxx, Gulf 05xxxxxxxx or 8 digits).",
+      "invalid_phone": "That mobile number isn't valid. Use your local mobile format, or an international number starting with +.",
       "password_too_short": "The password is too short. Use at least 8 characters.",
       "invalid_grade": "Choose your grade.",
       "phone_taken": "This number already has an account. Sign in instead.",
@@ -398,8 +502,10 @@
   "footer": {
     "terms": "Terms of use",
     "refund": "Refund policy",
+    "privacy": "Privacy",
+    "faq": "FAQ",
     "contact": "Contact us",
-    "rights": "Alsaadi Academy, United Arab Emirates",
+    "rights": "AAcademy, United Arab Emirates",
     "tagline": "Every page counts."
   },
   "teacher": {

@@ -1,15 +1,23 @@
+import type { Metadata } from "next";
 import { BookOpenCheck, CalendarClock, Languages, LockKeyhole, Radio, Smartphone, Unlock } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Intro } from "@/components/brand/Intro";
 import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
+import { JsonLd } from "@/components/JsonLd";
 import { PromoBand } from "@/components/PromoBand";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { alternates, siteUrl } from "@/lib/seo";
 
 // Catalog data changes rarely; a five-minute cache keeps the home page fast.
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return { alternates: alternates(locale) };
+}
 
 const button =
   "inline-flex items-center justify-center rounded-md px-6 py-3.5 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out)";
@@ -18,7 +26,11 @@ function getHome() {
   const published = { published: true };
   const now = new Date();
   return Promise.all([
-    db.country.findMany({ orderBy: { order: "asc" } }),
+    db.country.findMany({
+      where: { active: true },
+      orderBy: { order: "asc" },
+      include: { _count: { select: { grades: { where: { active: true } } } } },
+    }),
     db.course.findMany({ where: { kind: "SKILL", ...published }, orderBy: { createdAt: "desc" }, take: 3, include: cardInclude(now) }),
     db.promotion.findMany({
       where: {
@@ -30,16 +42,26 @@ function getHome() {
       },
       orderBy: { order: "asc" },
     }),
+    Promise.all([
+      db.course.count({ where: { published: true } }),
+      db.lesson.count({ where: { unit: { course: { published: true } } } }),
+      db.subject.count({ where: { active: true, courses: { some: { published: true } } } }),
+    ]),
   ]);
 }
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [t, [countries, skills, promos]] = await Promise.all([getTranslations("home"), getHome()]);
+  const [t, [countries, skills, promos, [courseCount, lessonCount, subjectCount]]] = await Promise.all([getTranslations("home"), getHome()]);
   const ar = locale === "ar";
   const bar = promos.filter((p) => p.placement === "BAR");
   const cards = promos.filter((p) => p.placement === "CARD");
+  const stats = [
+    { key: "courses", value: courseCount },
+    { key: "lessons", value: lessonCount },
+    { key: "subjects", value: subjectCount },
+  ].filter((s) => s.value > 0);
 
   const ways = [
     { key: "subscribe", Icon: BookOpenCheck, soon: false },
@@ -53,8 +75,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     { key: "lang", Icon: Languages },
   ] as const;
 
+  const jsonLd = [
+    { "@context": "https://schema.org", "@type": "Organization", name: "AAcademy", url: siteUrl, logo: `${siteUrl}/icon.svg` },
+    { "@context": "https://schema.org", "@type": "WebSite", name: "AAcademy", url: siteUrl, inLanguage: ["ar", "en"] },
+  ];
+
   return (
     <main>
+      <JsonLd data={jsonLd} />
       <Intro />
       <PromoBand promos={bar} locale={locale} variant="BAR" label={t("promotions")} />
 
@@ -78,7 +106,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
           {/* A sample result card on night: the brand's promise that every page counts, as a number. */}
           <div aria-hidden="true" className="fold mx-auto grid w-full max-w-[420px] gap-5 bg-night p-7 text-on-primary shadow-paper [--cut:34px]">
-            <span className="text-small text-[#B9BEE6]">{t("paper.label")}</span>
+            <span className="flex items-center justify-between gap-2 text-small text-[#B9BEE6]">
+              {t("paper.label")}
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-label text-[#C9CDF2]">{t("paper.sample")}</span>
+            </span>
             <span className="font-display text-h3 font-semibold">{t("paper.q")}</span>
             <span className="flex items-end justify-between gap-3">
               <span className="num text-[3.4rem] leading-none font-semibold">{ar ? "٤٨" : "48"}<span className="text-h3 font-normal text-[#9EA5E0]"> / {ar ? "٥٠" : "50"}</span></span>
@@ -143,6 +174,17 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               ))}
             </ul>
           </section>
+        )}
+
+        {stats.length > 0 && (
+          <ul className="grid gap-4 rounded-lg bg-raised p-5 sm:grid-cols-3">
+            {stats.map((s) => (
+              <li key={s.key} className="grid gap-0.5">
+                <span className="num font-display text-h2 font-bold">{s.value}</span>
+                <span className="text-small text-ink-muted">{t(`stats.${s.key}`, { count: s.value })}</span>
+              </li>
+            ))}
+          </ul>
         )}
 
         <ul className="grid gap-4 rounded-lg bg-night p-6 text-on-primary sm:grid-cols-2 lg:grid-cols-4">

@@ -2,14 +2,22 @@ import { describe, expect, it } from "vitest";
 import { phoneSchema, signUpSchema } from "./schemas/auth";
 
 describe("phoneSchema", () => {
-  it.each(["01012345678", "01112345678", "0501234567", "51234567", "31234567", "66123456", "71234567"])(
-    "accepts the local mobile %s",
-    (phone) => {
-      expect(phoneSchema.safeParse(phone).success).toBe(true);
-    },
-  );
+  it.each([
+    "01012345678",
+    "01112345678",
+    "0501234567",
+    "51234567",
+    "31234567",
+    "66123456",
+    "71234567",
+    "+201012345678",
+    "+966501234567",
+    "+971501234567",
+  ])("accepts the mobile %s", (phone) => {
+    expect(phoneSchema.safeParse(phone).success).toBe(true);
+  });
 
-  it.each(["1234567", "0612345678", "0101234567", "phone", "+201012345678"])("rejects %s", (phone) => {
+  it.each(["1234567", "0612345678", "0101234567", "phone", "+12", "+abc123456"])("rejects %s", (phone) => {
     expect(phoneSchema.safeParse(phone).success).toBe(false);
   });
 });

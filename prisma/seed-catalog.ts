@@ -4,20 +4,76 @@
 import { config } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { gradeName } from "../src/lib/stages";
 
 config({ path: ".env.local" });
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 const COUNTRIES = [
-  { code: "EG", nameAr: "مصر", nameEn: "Egypt", currency: "EGP" },
-  { code: "SA", nameAr: "السعودية", nameEn: "Saudi Arabia", currency: "SAR" },
-  { code: "AE", nameAr: "الإمارات", nameEn: "UAE", currency: "AED" },
-  { code: "KW", nameAr: "الكويت", nameEn: "Kuwait", currency: "KWD" },
-  { code: "QA", nameAr: "قطر", nameEn: "Qatar", currency: "QAR" },
-  { code: "BH", nameAr: "البحرين", nameEn: "Bahrain", currency: "BHD" },
-  { code: "OM", nameAr: "عُمان", nameEn: "Oman", currency: "OMR" },
+  { code: "EG", nameAr: "مصر", nameEn: "Egypt", currency: "EGP", timeZone: "Africa/Cairo" },
+  { code: "SA", nameAr: "السعودية", nameEn: "Saudi Arabia", currency: "SAR", timeZone: "Asia/Riyadh" },
+  { code: "AE", nameAr: "الإمارات", nameEn: "UAE", currency: "AED", timeZone: "Asia/Dubai" },
+  { code: "KW", nameAr: "الكويت", nameEn: "Kuwait", currency: "KWD", timeZone: "Asia/Kuwait" },
+  { code: "QA", nameAr: "قطر", nameEn: "Qatar", currency: "QAR", timeZone: "Asia/Qatar" },
+  { code: "BH", nameAr: "البحرين", nameEn: "Bahrain", currency: "BHD", timeZone: "Asia/Bahrain" },
+  { code: "OM", nameAr: "عُمان", nameEn: "Oman", currency: "OMR", timeZone: "Asia/Muscat" },
 ] as const;
+
+// Default stage groups, same as the values already in production. The owner edits them in admin.
+const STAGES: Record<string, { from: number; to: number; ar: string; en: string }[]> = {
+  EG: [
+    { from: 1, to: 6, ar: "المرحلة الابتدائية", en: "Primary" },
+    { from: 7, to: 9, ar: "المرحلة الإعدادية", en: "Preparatory" },
+    { from: 10, to: 12, ar: "المرحلة الثانوية", en: "Secondary" },
+  ],
+  SA: [
+    { from: 1, to: 6, ar: "المرحلة الابتدائية", en: "Primary" },
+    { from: 7, to: 9, ar: "المرحلة المتوسطة", en: "Intermediate" },
+    { from: 10, to: 12, ar: "المرحلة الثانوية", en: "Secondary" },
+  ],
+  BH: [
+    { from: 1, to: 6, ar: "المرحلة الابتدائية", en: "Primary" },
+    { from: 7, to: 9, ar: "المرحلة الإعدادية", en: "Intermediate" },
+    { from: 10, to: 12, ar: "المرحلة الثانوية", en: "Secondary" },
+  ],
+  QA: [
+    { from: 1, to: 6, ar: "المرحلة الابتدائية", en: "Primary" },
+    { from: 7, to: 9, ar: "المرحلة الإعدادية", en: "Preparatory" },
+    { from: 10, to: 12, ar: "المرحلة الثانوية", en: "Secondary" },
+  ],
+  KW: [
+    { from: 1, to: 5, ar: "المرحلة الابتدائية", en: "Primary" },
+    { from: 6, to: 9, ar: "المرحلة المتوسطة", en: "Intermediate" },
+    { from: 10, to: 12, ar: "المرحلة الثانوية", en: "Secondary" },
+  ],
+  AE: [
+    { from: 1, to: 4, ar: "الحلقة الأولى", en: "Cycle 1" },
+    { from: 5, to: 8, ar: "الحلقة الثانية", en: "Cycle 2" },
+    { from: 9, to: 12, ar: "الحلقة الثالثة", en: "Cycle 3" },
+  ],
+  OM: [
+    { from: 1, to: 4, ar: "الحلقة الأولى", en: "Cycle 1" },
+    { from: 5, to: 10, ar: "الحلقة الثانية", en: "Cycle 2" },
+    { from: 11, to: 12, ar: "ما بعد الأساسي", en: "Post-basic" },
+  ],
+};
+
+const ORDINAL = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر", "الحادي عشر", "الثاني عشر"];
+const PER_STAGE: Record<string, [string, string, string]> = {
+  EG: ["الابتدائي", "الإعدادي", "الثانوي"],
+  SA: ["الابتدائي", "المتوسط", "الثانوي"],
+  BH: ["الابتدائي", "الإعدادي", "الثانوي"],
+};
+
+/** Seed-only grade names; the public pages read the owner's Grade names from the database. */
+function gradeName(country: string, level: number): { nameAr: string; nameEn: string } {
+  const stages = STAGES[country];
+  const words = PER_STAGE[country];
+  if (!stages || !words) return { nameAr: `الصف ${ORDINAL[level - 1]}`, nameEn: `Grade ${level}` };
+  const i = stages.findIndex((s) => level >= s.from && level <= s.to);
+  const stage = stages[i];
+  const n = level - stage.from + 1;
+  return { nameAr: `الصف ${ORDINAL[n - 1]} ${words[i]}`, nameEn: `${stage.en} ${n}` };
+}
 
 // Slug, names, icon key. Existing slugs (math, physics, chemistry) keep their names.
 const SUBJECTS = [
@@ -61,9 +117,16 @@ async function main() {
   for (const [i, c] of COUNTRIES.entries()) {
     const country = await db.country.upsert({
       where: { code: c.code },
-      update: { nameAr: c.nameAr, nameEn: c.nameEn, currency: c.currency, order: i + 1 },
+      update: { nameAr: c.nameAr, nameEn: c.nameEn, currency: c.currency, timeZone: c.timeZone, order: i + 1 },
       create: { ...c, order: i + 1 },
     });
+    for (const [order, stage] of (STAGES[c.code] ?? []).entries()) {
+      await db.stage.upsert({
+        where: { countryId_fromLevel: { countryId: country.id, fromLevel: stage.from } },
+        update: {},
+        create: { countryId: country.id, nameAr: stage.ar, nameEn: stage.en, fromLevel: stage.from, toLevel: stage.to, order },
+      });
+    }
     const curriculum = c.code === "EG" ? "NATIONAL_EG" : "MOE";
     for (let level = 1; level <= 12; level++) {
       const names = gradeName(c.code, level);
@@ -71,7 +134,7 @@ async function main() {
       const grade = await db.grade.upsert({
         where: { countryId_curriculum_level: { countryId: country.id, curriculum, level } },
         update: { ...names, isTerminal },
-        create: { ...names, isTerminal, countryId: country.id, curriculum, level },
+        create: { ...names, isTerminal, countryId: country.id, curriculum, level, order: level },
       });
       if ((await db.gradeSubject.count({ where: { gradeId: grade.id } })) === 0) {
         await db.gradeSubject.createMany({
@@ -92,7 +155,7 @@ async function main() {
 
 main()
   .then(async () => {
-    const [countries, grades, links] = await Promise.all([db.country.count(), db.grade.count(), db.gradeSubject.count()]);
-    console.log(`Catalog seeded: ${countries} countries, ${grades} grades, ${links} grade subjects.`);
+    const [countries, stages, grades, links] = await Promise.all([db.country.count(), db.stage.count(), db.grade.count(), db.gradeSubject.count()]);
+    console.log(`Catalog seeded: ${countries} countries, ${stages} stages, ${grades} grades, ${links} grade subjects.`);
   })
   .finally(() => db.$disconnect());

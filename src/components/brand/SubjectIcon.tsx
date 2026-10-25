@@ -35,6 +35,9 @@ const ICONS: Record<string, { ink: string; pen: string }> = {
   book: { ink: "M12 8h22a2 2 0 0 1 2 2v30H14a2 2 0 0 1-2-2zM12 36a2 2 0 0 1 2-2h22", pen: "M28 8v12l-3-2.5-3 2.5V8" },
 };
 
+/** Keys accepted by `Subject.icon`; the admin catalog offers these. */
+export const SUBJECT_ICONS = Object.keys(ICONS);
+
 /** `muted` draws the whole icon in pencil grey: the "coming soon" state. */
 export function SubjectIcon({ icon, size = 48, muted = false }: { icon: string; size?: number; muted?: boolean }) {
   const { ink, pen } = ICONS[icon] ?? ICONS.book;

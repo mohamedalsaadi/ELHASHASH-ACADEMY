@@ -17,9 +17,9 @@ export function wallTime(value: string, zone: string): Date | null {
   return new Date(wall.getTime() - (sign === "-" ? -1 : 1) * (Number(h) * 60 + Number(m)) * 60_000);
 }
 
-/** "2027-01-31" as a Cairo calendar day. */
-export function cairoDay(value: string, edge: "start" | "end"): Date | null {
-  return value ? wallTime(`${value}T${edge === "start" ? "00:00:00" : "23:59:59"}`, "Africa/Cairo") : null;
+/** "2027-01-31" as a calendar day in `zone` (Cairo by default). */
+export function cairoDay(value: string, edge: "start" | "end", zone = "Africa/Cairo"): Date | null {
+  return value ? wallTime(`${value}T${edge === "start" ? "00:00:00" : "23:59:59"}`, zone) : null;
 }
 
 /** The datetime-local value showing `d` in `zone`. */
@@ -27,6 +27,6 @@ export function toTimeInput(d: Date, zone: string): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: zone, dateStyle: "short", timeStyle: "short" }).format(d).replace(" ", "T");
 }
 
-export function toDayInput(d: Date | null): string {
-  return d ? new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo" }).format(d) : "";
+export function toDayInput(d: Date | null, zone = "Africa/Cairo"): string {
+  return d ? new Intl.DateTimeFormat("en-CA", { timeZone: zone }).format(d) : "";
 }

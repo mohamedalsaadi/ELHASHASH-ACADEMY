@@ -15,7 +15,7 @@ export function subscriberWhere(f: SubscriberFilter, now = new Date()): Prisma.U
     ...(q && {
       OR: [{ name: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { email: { contains: q, mode: "insensitive" } }],
     }),
-    ...(f.grade ? { gradeId: f.grade } : f.country ? { grade: { country: { code: f.country as never } } } : {}),
+    ...(f.grade ? { gradeId: f.grade } : f.country ? { grade: { country: { code: f.country } } } : {}),
     AND: [
       ...(f.course ? [{ entitlements: { some: course } }] : []),
       ...(f.status === "active" ? [{ entitlements: { some: { ...course, ...current } } }] : []),
@@ -42,7 +42,13 @@ export function findSubscribers(f: SubscriberFilter, opts: { all?: boolean } = {
       entitlements: {
         where: { liveSessionId: null },
         orderBy: { startsAt: "desc" },
-        select: { startsAt: true, endsAt: true, accessType: true, lessonId: true, course: { select: { titleAr: true, titleEn: true } } },
+        select: {
+          startsAt: true,
+          endsAt: true,
+          accessType: true,
+          lessonId: true,
+          course: { select: { titleAr: true, titleEn: true, grade: { select: { country: { select: { timeZone: true } } } } } },
+        },
       },
     },
   });

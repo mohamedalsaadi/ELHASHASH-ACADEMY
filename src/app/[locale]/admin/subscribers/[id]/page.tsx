@@ -30,7 +30,11 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
         device: true,
         entitlements: {
           orderBy: { startsAt: "desc" },
-          include: { course: { select: { titleAr: true, titleEn: true } }, lesson: { select: { titleAr: true, titleEn: true } }, liveSession: { select: { titleAr: true, titleEn: true, startsAt: true } } },
+          include: {
+            course: { select: { titleAr: true, titleEn: true, grade: { select: { country: { select: { timeZone: true } } } } } },
+            lesson: { select: { titleAr: true, titleEn: true } },
+            liveSession: { select: { titleAr: true, titleEn: true, startsAt: true } },
+          },
         },
         orders: { orderBy: { createdAt: "desc" }, take: 30, include: { items: { include: { sku: { select: { accessType: true, course: { select: { titleAr: true, titleEn: true } } } } } } } },
         views: { orderBy: { completedAt: { sort: "desc", nulls: "last" } }, take: 10, include: { lesson: { select: { titleAr: true, titleEn: true } } } },
@@ -104,7 +108,13 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
                     <td>
                       <form action={extendAccess} className="flex flex-wrap items-center gap-2">
                         <input type="hidden" name="id" value={e.id} />
-                        <input type="date" name="endsAt" defaultValue={toDayInput(e.endsAt)} aria-label={t("endsAt")} className={`${field} num`} />
+                        <input
+                          type="date"
+                          name="endsAt"
+                          defaultValue={toDayInput(e.endsAt, e.course.grade?.country.timeZone ?? "Asia/Dubai")}
+                          aria-label={t("endsAt")}
+                          className={`${field} num`}
+                        />
                         <SaveButton>{t("setEnd")}</SaveButton>
                       </form>
                     </td>

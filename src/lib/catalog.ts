@@ -52,6 +52,20 @@ export async function liveRole(
   return (await grantsFor(user.id, session.courseId, now)).some((g) => opensLive(g, session.id, now)) ? "student" : null;
 }
 
+export type StageRow = { id: string; nameAr: string; nameEn: string; fromLevel: number; toLevel: number; order: number };
+
+/** Groups grades by the owner-managed stage ranges; levels outside every range go in one trailing group. */
+export function groupByStage<T extends { level: number }>(grades: T[], stages: readonly StageRow[]): { stage: StageRow | null; grades: T[] }[] {
+  const ordered = [...stages].sort((a, b) => a.order - b.order);
+  const groups = ordered.map((stage) => ({
+    stage: stage as StageRow | null,
+    grades: grades.filter((g) => g.level >= stage.fromLevel && g.level <= stage.toLevel),
+  }));
+  const other = grades.filter((g) => !ordered.some((s) => g.level >= s.fromLevel && g.level <= s.toLevel));
+  if (other.length) groups.push({ stage: null, grades: other });
+  return groups.filter((g) => g.grades.length > 0);
+}
+
 /** What a course card needs: the whole-course packages (the card picks the cheapest effective price), a free unit, the grade. */
 export function cardInclude(now: Date) {
   return {

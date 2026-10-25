@@ -60,11 +60,11 @@ describe("gateway", () => {
 
 describe("courseZone", () => {
   it("schedules live lectures in the course country's time, skill courses in UAE time", () => {
-    const zone = (code: string) => courseZone({ grade: { country: { code } } });
-    expect(zone("AE")).toBe("Asia/Dubai");
-    expect(zone("EG")).toBe("Africa/Cairo");
-    expect(zone("KW")).toBe("Asia/Kuwait");
-    expect(zone("OM")).toBe("Asia/Muscat");
+    const zone = (timeZone: string) => courseZone({ grade: { country: { timeZone } } });
+    expect(zone("Asia/Dubai")).toBe("Asia/Dubai");
+    expect(zone("Africa/Cairo")).toBe("Africa/Cairo");
+    expect(zone("Asia/Kuwait")).toBe("Asia/Kuwait");
+    expect(zone("Asia/Muscat")).toBe("Asia/Muscat");
     expect(courseZone({ grade: null })).toBe("Asia/Dubai");
   });
 });

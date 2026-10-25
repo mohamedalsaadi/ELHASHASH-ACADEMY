@@ -1,9 +1,10 @@
 import { setRequestLocale } from "next-intl/server";
 import { LegalPage, Mail, type Section } from "@/components/LegalPage";
 import { Link } from "@/i18n/navigation";
+import { alternates } from "@/lib/seo";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  return params.then(({ locale }) => ({ title: locale === "ar" ? "الشروط والأحكام" : "Terms of use" }));
+  return params.then(({ locale }) => ({ title: locale === "ar" ? "الشروط والأحكام" : "Terms of use", alternates: alternates(locale, "/terms") }));
 }
 
 const ar: Section[] = [
@@ -11,7 +12,7 @@ const ar: Section[] = [
     h: "من نحن",
     body: (
       <p>
-        أكاديمية السعدي منصة تعليمية في الإمارات العربية المتحدة تقدم شروحات فيديو للمناهج الدراسية. باستخدامك للموقع أو شرائك
+        AAcademy منصة تعليمية في الإمارات العربية المتحدة تقدم شروحات فيديو للمناهج الدراسية. باستخدامك للموقع أو شرائك
         لأي باقة فأنت توافق على هذه الشروط. للتواصل: <Mail />.
       </p>
     ),
@@ -86,7 +87,7 @@ const en: Section[] = [
     h: "Who we are",
     body: (
       <p>
-        Alsaadi Academy is an education platform in the United Arab Emirates offering video lessons for school
+        AAcademy is an education platform in the United Arab Emirates offering video lessons for school
         curricula. By using the site or buying any package you agree to these terms. Contact: <Mail />.
       </p>
     ),

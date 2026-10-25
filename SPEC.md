@@ -1,6 +1,8 @@
-# Alsaadi Academy — Milestone 1 Spec (Website MVP)
+# AAcademy — Milestone 1 Spec (Website MVP)
 
-Source: `Alsaadi Academy Development Plan.docx`. Markets: Egypt (primary, Thanawya Amma) and UAE.
+> Archived: the brand was renamed to AAcademy on 2026-10-25. This spec describes the original MVP.
+
+Source: the original development plan. Markets: Egypt (primary, Thanawya Amma) and UAE.
 
 ## Stack
 Next.js 15 (App Router, TS strict) · Tailwind v4 · next-intl (ar default/RTL, en/LTR) · Prisma + Neon Postgres · Auth.js (HttpOnly SameSite cookies) · VdoCipher (DRM + dynamic watermark) · Paymob · React Three Fiber · Vercel. Package manager: npm.

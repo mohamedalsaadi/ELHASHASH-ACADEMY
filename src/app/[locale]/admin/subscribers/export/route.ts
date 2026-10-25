@@ -28,7 +28,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ locale: 
         e && (ar ? e.course.titleAr : e.course.titleEn),
         e?.accessType,
         e ? (isCurrent(e, now) ? "active" : "expired") : "",
-        toDayInput(e?.endsAt ?? null),
+        toDayInput(e?.endsAt ?? null, e?.course.grade?.country.timeZone ?? "Asia/Dubai"),
       ];
     }),
   ];

@@ -31,7 +31,7 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
     : f.country === "skill"
       ? { kind: "SKILL" as const }
       : f.country
-        ? { grade: { country: { code: f.country as never } } }
+        ? { grade: { country: { code: f.country } } }
         : {};
   const courses = await db.course.findMany({ where, orderBy: { slug: "asc" }, include: { grade: { include: { country: true } }, instructor: { select: { name: true } } } });
   const named = (rows: { id: string; nameAr: string; nameEn: string }[]) => rows.map((r) => ({ id: r.id, name: ar ? r.nameAr : r.nameEn }));

@@ -12,6 +12,7 @@ import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
 import { toMinor } from "@/lib/format";
 import { applyPaymentOutcome } from "@/lib/payments";
+import { countryInput, gradeInput, rangesOverlap, stageInput, subjectInput } from "@/lib/schemas/catalog-admin";
 import { phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
 import { stripe } from "@/lib/stripe";
@@ -36,6 +37,13 @@ function done() {
   revalidatePath("/[locale]/admin", "layout");
   revalidatePath("/[locale]/courses", "layout");
   revalidatePath("/[locale]/teacher", "layout");
+  revalidatePath("/[locale]", "page");
+}
+
+/** Sends the owner back to the catalog with a readable error instead of a server error page. */
+function catalogError(form: FormData, error: string): never {
+  const locale = form.get("locale") === "en" ? "en" : "ar";
+  redirect(`/${locale}/admin/catalog?error=${error}`);
 }
 
 export async function updateCourse(form: FormData) {
@@ -122,10 +130,16 @@ export async function updateLesson(form: FormData) {
   done();
 }
 
-/** New packages are priced in the course country's currency; skill courses have no country and stay in AED. */
-async function courseCurrency(courseId: string) {
-  const c = await db.course.findUniqueOrThrow({ where: { id: courseId }, select: { grade: { select: { country: { select: { currency: true } } } } } });
-  return c.grade?.country.currency ?? "AED";
+/** New packages use the course country's currency and time zone; skill courses have no country and use AED/Dubai. */
+async function courseLocation(courseId: string) {
+  const c = await db.course.findUniqueOrThrow({
+    where: { id: courseId },
+    select: { grade: { select: { country: { select: { currency: true, timeZone: true } } } } },
+  });
+  return {
+    currency: c.grade?.country.currency ?? "AED",
+    timeZone: c.grade?.country.timeZone ?? "Asia/Dubai",
+  };
 }
 
 export async function updateSku(form: FormData) {
@@ -146,19 +160,21 @@ export async function updateSku(form: FormData) {
       month: z.coerce.number().int().min(1).max(12).optional(),
     })
     .parse(Object.fromEntries(form));
-  const { currency } = await db.sku.findUniqueOrThrow({ where: { id: d.id }, select: { currency: true } });
+  const sku = await db.sku.findUniqueOrThrow({ where: { id: d.id }, select: { currency: true, courseId: true } });
+  const { currency } = sku;
+  const { timeZone } = await courseLocation(sku.courseId);
   await db.sku.update({
     where: { id: d.id },
     data: {
       price: toMinor(d.price, currency),
       active: d.active,
-      accessEndsAt: cairoDay(d.accessEndsAt, "end"),
+      accessEndsAt: cairoDay(d.accessEndsAt, "end", timeZone),
       accessDays: d.accessDays,
-      saleFrom: cairoDay(d.saleFrom, "start"),
-      saleTo: cairoDay(d.saleTo, "end"),
+      saleFrom: cairoDay(d.saleFrom, "start", timeZone),
+      saleTo: cairoDay(d.saleTo, "end", timeZone),
       discountPrice: d.discountPrice === null ? null : toMinor(d.discountPrice, currency),
-      discountFrom: cairoDay(d.discountFrom, "start"),
-      discountTo: cairoDay(d.discountTo, "end"),
+      discountFrom: cairoDay(d.discountFrom, "start", timeZone),
+      discountTo: cairoDay(d.discountTo, "end", timeZone),
       term: d.term,
       month: d.month,
     },
@@ -173,13 +189,14 @@ export async function addSku(form: FormData) {
     .parse(Object.fromEntries(form));
   // New packages start hidden so a half-filled price never goes on sale.
   // A full year ends with the school year; a month runs 30 days; a fixed-days package starts at 90. The owner can change each.
+  const loc = await courseLocation(d.courseId);
   await db.sku.create({
     data: {
       ...d,
       price: 0,
-      currency: await courseCurrency(d.courseId),
+      currency: loc.currency,
       active: false,
-      accessEndsAt: d.accessType === "YEARLY" ? cairoDay(schoolYearEnd(new Date()), "end") : null,
+      accessEndsAt: d.accessType === "YEARLY" ? cairoDay(schoolYearEnd(new Date()), "end", loc.timeZone) : null,
       accessDays: d.accessType === "FIXED_DAYS" ? 90 : d.accessType === "MONTHLY" ? 30 : null,
       term: d.accessType === "SEMESTER" ? 1 : null,
       month: d.accessType === "MONTHLY" ? 1 : null,
@@ -195,7 +212,7 @@ export async function addRental(form: FormData) {
   const lesson = await db.lesson.findUniqueOrThrow({ where: { id: lessonId }, select: { unit: { select: { courseId: true } } } });
   if (!(await db.sku.count({ where: { lessonId } }))) {
     await db.sku.create({
-      data: { courseId: lesson.unit.courseId, lessonId, accessType: "RENTAL", price: 0, currency: await courseCurrency(lesson.unit.courseId), active: false, accessDays: 7 },
+      data: { courseId: lesson.unit.courseId, lessonId, accessType: "RENTAL", price: 0, currency: (await courseLocation(lesson.unit.courseId)).currency, active: false, accessDays: 7 },
     });
   }
   done();
@@ -423,6 +440,113 @@ export async function setGradeSubjects(form: FormData) {
   done();
 }
 
+export async function saveCountry(form: FormData) {
+  await requireAdmin();
+  const d = countryInput.parse(Object.fromEntries(form));
+  const data = { nameAr: d.nameAr, nameEn: d.nameEn, currency: d.currency, timeZone: d.timeZone, order: d.order, active: d.active };
+  try {
+    if (d.id) await db.country.update({ where: { id: d.id }, data });
+    else await db.country.create({ data: { ...data, code: d.code } });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") catalogError(form, "duplicate");
+    throw e;
+  }
+  done();
+}
+
+export async function deleteCountry(form: FormData) {
+  await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  if ((await db.grade.count({ where: { countryId: id } })) > 0) catalogError(form, "in_use");
+  await db.country.delete({ where: { id } });
+  done();
+}
+
+export async function saveStage(form: FormData) {
+  await requireAdmin();
+  const d = stageInput.parse(Object.fromEntries(form));
+  const siblings = await db.stage.findMany({
+    where: { countryId: d.countryId, ...(d.id ? { id: { not: d.id } } : {}) },
+    select: { fromLevel: true, toLevel: true },
+  });
+  if (siblings.some((s) => rangesOverlap(d, s))) catalogError(form, "overlap");
+  const data = { countryId: d.countryId, nameAr: d.nameAr, nameEn: d.nameEn, fromLevel: d.fromLevel, toLevel: d.toLevel, order: d.order };
+  try {
+    if (d.id) await db.stage.update({ where: { id: d.id }, data });
+    else await db.stage.create({ data });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") catalogError(form, "overlap");
+    throw e;
+  }
+  done();
+}
+
+export async function deleteStage(form: FormData) {
+  await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  await db.stage.delete({ where: { id } });
+  done();
+}
+
+export async function saveGrade(form: FormData) {
+  await requireAdmin();
+  const d = gradeInput.parse(Object.fromEntries(form));
+  const data = {
+    countryId: d.countryId,
+    curriculum: d.curriculum,
+    level: d.level,
+    nameAr: d.nameAr,
+    nameEn: d.nameEn,
+    isTerminal: d.isTerminal,
+    order: d.order,
+    active: d.active,
+  };
+  try {
+    if (d.id) await db.grade.update({ where: { id: d.id }, data });
+    else await db.grade.create({ data });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") catalogError(form, "duplicate");
+    throw e;
+  }
+  done();
+}
+
+export async function deleteGrade(form: FormData) {
+  await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  const grade = await db.grade.findUniqueOrThrow({ where: { id }, include: { _count: { select: { courses: true, users: true } } } });
+  if (grade._count.courses > 0 || grade._count.users > 0) catalogError(form, "in_use");
+  await db.grade.delete({ where: { id } });
+  done();
+}
+
+export async function saveSubject(form: FormData) {
+  await requireAdmin();
+  const d = subjectInput.parse(Object.fromEntries(form));
+  const data = { slug: d.slug, nameAr: d.nameAr, nameEn: d.nameEn, icon: d.icon, active: d.active };
+  try {
+    if (d.id) await db.subject.update({ where: { id: d.id }, data });
+    else await db.subject.create({ data });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") catalogError(form, "duplicate");
+    throw e;
+  }
+  done();
+}
+
+export async function deleteSubject(form: FormData) {
+  await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  const subject = await db.subject.findUniqueOrThrow({
+    where: { id },
+    include: { _count: { select: { courses: true, grades: true, concepts: true, bundles: true } } },
+  });
+  const { courses, grades, concepts, bundles } = subject._count;
+  if (courses > 0 || grades > 0 || concepts > 0 || bundles > 0) catalogError(form, "in_use");
+  await db.subject.delete({ where: { id } });
+  done();
+}
+
 /**
  * Manual access, logged as a MANUAL order paid at zero with a payment event naming the admin.
  * The plan's scope is copied from the SKU, as a real payment would; the end date defaults to the SKU's own.
@@ -432,6 +556,7 @@ export async function grantAccess(form: FormData) {
   const d = z.object({ userId: z.string(), skuId: z.string(), endsAt: z.string() }).parse(Object.fromEntries(form));
   const sku = await db.sku.findUniqueOrThrow({ where: { id: d.skuId } });
   if (sku.accessType === "LIVE") throw new Error("Live seats are granted from the live lecture");
+  const { timeZone } = await courseLocation(sku.courseId);
   const now = new Date();
   await db.$transaction(async (trx) => {
     const order = await trx.order.create({
@@ -445,7 +570,7 @@ export async function grantAccess(form: FormData) {
       data: {
         userId: d.userId, courseId: sku.courseId, orderId: order.id, lessonId: sku.lessonId,
         accessType: sku.accessType, term: sku.term, month: sku.month,
-        endsAt: d.endsAt ? cairoDay(d.endsAt, "end") : accessEnd(sku, now),
+        endsAt: d.endsAt ? cairoDay(d.endsAt, "end", timeZone) : accessEnd(sku, now),
       },
     });
   });
@@ -457,12 +582,13 @@ export async function extendAccess(form: FormData) {
   const me = await requireAdmin();
   const d = z.object({ id: z.string(), endsAt: z.string() }).parse(Object.fromEntries(form));
   const e = await db.entitlement.findUniqueOrThrow({ where: { id: d.id } });
-  const endsAt = cairoDay(d.endsAt, "end");
+  const { currency, timeZone } = await courseLocation(e.courseId);
+  const endsAt = cairoDay(d.endsAt, "end", timeZone);
   await db.$transaction([
     db.entitlement.update({ where: { id: e.id }, data: { endsAt } }),
     db.order.create({
       data: {
-        userId: e.userId, status: "PAID", gateway: "MANUAL", currency: await courseCurrency(e.courseId), subtotal: 0, discount: 0, total: 0, paidAt: new Date(),
+        userId: e.userId, status: "PAID", gateway: "MANUAL", currency, subtotal: 0, discount: 0, total: 0, paidAt: new Date(),
         events: { create: { gatewayEventId: `manual:${randomUUID()}`, payload: { action: "extend", entitlementId: e.id, from: e.endsAt, to: endsAt, by: me.id, byName: me.name ?? null } } },
       },
     }),

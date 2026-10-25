@@ -28,11 +28,13 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   const course = await db.course.findUnique({
     where: { id },
     include: {
+      grade: { include: { country: true } },
       units: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" }, include: { video: true } } } },
       skus: { orderBy: { accessType: "asc" } },
     },
   });
   if (!course) notFound();
+  const zone = course.grade?.country.timeZone ?? "Asia/Dubai";
   const teachers = isAdmin
     ? await db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } })
     : [];
@@ -267,16 +269,16 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                 ) : (
                   <label className={label}>
                     {t("accessEndsAt")}
-                    <input name="accessEndsAt" type="date" defaultValue={toDayInput(s.accessEndsAt)} className={field} />
+                    <input name="accessEndsAt" type="date" defaultValue={toDayInput(s.accessEndsAt, zone)} className={field} />
                   </label>
                 )}
                 <label className={label}>
                   {t("saleFrom")}
-                  <input name="saleFrom" type="date" defaultValue={toDayInput(s.saleFrom)} className={field} />
+                  <input name="saleFrom" type="date" defaultValue={toDayInput(s.saleFrom, zone)} className={field} />
                 </label>
                 <label className={label}>
                   {t("saleTo")}
-                  <input name="saleTo" type="date" defaultValue={toDayInput(s.saleTo)} className={field} />
+                  <input name="saleTo" type="date" defaultValue={toDayInput(s.saleTo, zone)} className={field} />
                 </label>
                 <label className={label}>
                   {t("discountPrice", { currency: s.currency })}
@@ -292,11 +294,11 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                 </label>
                 <label className={label}>
                   {t("discountFrom")}
-                  <input name="discountFrom" type="date" defaultValue={toDayInput(s.discountFrom)} className={field} />
+                  <input name="discountFrom" type="date" defaultValue={toDayInput(s.discountFrom, zone)} className={field} />
                 </label>
                 <label className={label}>
                   {t("discountTo")}
-                  <input name="discountTo" type="date" defaultValue={toDayInput(s.discountTo)} className={field} />
+                  <input name="discountTo" type="date" defaultValue={toDayInput(s.discountTo, zone)} className={field} />
                 </label>
               </div>
               <p className="text-label text-ink-muted">{t("discountHint")}</p>

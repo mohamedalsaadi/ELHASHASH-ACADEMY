@@ -17,7 +17,11 @@ export default async function SignUpPage({
   setRequestLocale(locale);
   const t = await getTranslations("signup");
   const ar = locale === "ar";
-  const countries = await db.country.findMany({ orderBy: { order: "asc" }, include: { grades: { orderBy: { level: "asc" } } } });
+  const countries = await db.country.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    include: { grades: { where: { active: true }, orderBy: [{ order: "asc" }, { level: "asc" }] } },
+  });
   const groups = countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, grades: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })) }));
 
   return (

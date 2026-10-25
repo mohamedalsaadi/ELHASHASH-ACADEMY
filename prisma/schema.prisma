@@ -15,16 +15,6 @@ enum Role {
   PARENT
 }
 
-enum CountryCode {
-  EG
-  SA
-  AE
-  KW
-  QA
-  BH
-  OM
-}
-
 enum Curriculum {
   NATIONAL_EG
   MOE
@@ -134,17 +124,39 @@ model User {
 }
 
 model Country {
-  id       String      @id @default(cuid())
-  code     CountryCode @unique
+  id       String   @id @default(cuid())
+  /// ISO-style two-letter code; owner-managed, not an enum.
+  code     String   @unique
   nameAr   String
   nameEn   String
   currency Currency
+  /// IANA zone used for live and course dates in this country.
+  timeZone String   @default("Asia/Dubai")
+  /// Owner-controlled visibility; inactive countries are hidden from students.
+  active   Boolean  @default(true)
   /// Display order on /courses.
-  order    Int         @default(0)
+  order    Int      @default(0)
   grades   Grade[]
+  stages   Stage[]
 }
 
-/// Level is the school year (1–12); stages per country live in src/lib/stages.ts. isTerminal marks Thanawya Amma / the national diploma year.
+/// How a country groups its grade levels (Primary, Cycle 1, …). Owner-managed.
+model Stage {
+  id        String @id @default(cuid())
+  countryId String
+  nameAr    String
+  nameEn    String
+  fromLevel Int
+  toLevel   Int
+  order     Int    @default(0)
+
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@unique([countryId, fromLevel])
+  @@index([countryId, order])
+}
+
+/// Level is the school year (1–12); stages per country are owner-managed in Stage. isTerminal marks Thanawya Amma / the national diploma year.
 model Grade {
   id         String     @id @default(cuid())
   countryId  String
@@ -153,6 +165,9 @@ model Grade {
   nameAr     String
   nameEn     String
   isTerminal Boolean    @default(false)
+  /// Owner-controlled visibility and ordering inside a stage.
+  active     Boolean    @default(true)
+  order      Int        @default(0)
 
   country  Country        @relation(fields: [countryId], references: [id], onDelete: Cascade)
   courses  Course[]
@@ -169,6 +184,8 @@ model Subject {
   nameEn   String
   /// Key into the subject icon set (src/components/brand/SubjectIcon.tsx).
   icon     String         @default("book")
+  /// Owner-controlled visibility; inactive subjects are hidden from students.
+  active   Boolean        @default(true)
   grades   GradeSubject[]
   courses  Course[]
   concepts Concept[]

@@ -1,15 +1,35 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { CIRCLE_PATH } from "@/components/brand/Mark";
+import { JsonLd } from "@/components/JsonLd";
 import { Link } from "@/i18n/navigation";
 import { grantsFor, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
-import { courseZone, formatMoney, formatWhen } from "@/lib/format";
+import { courseZone, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
+import { alternates, siteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const course = await db.course.findUnique({
+    where: { slug, published: true },
+    select: { titleAr: true, titleEn: true, descAr: true, descEn: true },
+  });
+  if (!course) return {};
+  const title = locale === "ar" ? course.titleAr : course.titleEn;
+  const description = (locale === "ar" ? course.descAr : course.descEn) ?? undefined;
+  return {
+    title,
+    description,
+    alternates: alternates(locale, `/courses/${slug}`),
+    openGraph: { title, description, type: "article" },
+  };
+}
 
 function LockIcon() {
   return (
@@ -139,9 +159,27 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
   const lessonHref = (id: string) => `/courses/${course.slug}/lessons/${id}`;
   const live = course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime());
+  const courseTitle = ar ? course.titleAr : course.titleEn;
+  const courseUrl = `${siteUrl}/${locale}/courses/${course.slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: courseTitle,
+    description: (ar ? course.descAr : course.descEn) ?? undefined,
+    provider: { "@type": "Organization", name: "AAcademy", sameAs: siteUrl },
+    url: courseUrl,
+    offers: course.skus.map((s) => ({
+      "@type": "Offer",
+      price: (effectivePrice(s, now) / minorPerUnit(s.currency)).toFixed(2),
+      priceCurrency: s.currency,
+      availability: "https://schema.org/InStock",
+      url: courseUrl,
+    })),
+  };
 
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
+      <JsonLd data={jsonLd} />
       <section className="grid gap-3">
         <p className="text-small text-ink-muted">{course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}</p>
         <h1 className="font-display text-h1 font-semibold text-balance">{ar ? course.titleAr : course.titleEn}</h1>

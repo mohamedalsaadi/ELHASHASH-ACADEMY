@@ -24,7 +24,7 @@ export default async function AdminLivePage({ params }: { params: Promise<{ loca
     orderBy: { startsAt: "desc" },
     take: 100,
     include: {
-      course: { select: { titleAr: true, titleEn: true, instructor: { select: { name: true } }, grade: { select: { country: { select: { code: true } } } } } },
+      course: { select: { titleAr: true, titleEn: true, instructor: { select: { name: true } }, grade: { select: { country: { select: { code: true, timeZone: true } } } } } },
       sku: true,
       entitlements: { orderBy: { startsAt: "asc" }, select: { id: true, user: { select: { id: true, name: true } } } },
     },

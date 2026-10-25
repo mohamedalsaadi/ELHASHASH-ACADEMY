@@ -1,7 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
 import { LegalPage, Mail, type Section } from "@/components/LegalPage";
 import { Link } from "@/i18n/navigation";
+import { alternates } from "@/lib/seo";
 import { SUPPORT_PHONE, SUPPORT_WHATSAPP } from "@/lib/site";
+import { ContactForm } from "./ContactForm";
 
 function Channels() {
   return (
@@ -22,7 +24,7 @@ function Channels() {
 }
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  return params.then(({ locale }) => ({ title: locale === "ar" ? "تواصل معنا" : "Contact us" }));
+  return params.then(({ locale }) => ({ title: locale === "ar" ? "تواصل معنا" : "Contact us", alternates: alternates(locale, "/contact") }));
 }
 
 const ar: Section[] = [
@@ -49,7 +51,7 @@ const ar: Section[] = [
     h: "الجهة المقدمة للخدمة",
     body: (
       <p>
-        أكاديمية السعدي، الإمارات العربية المتحدة. اقرأ أيضًا <Link href="/terms">الشروط والأحكام</Link> و
+        AAcademy، الإمارات العربية المتحدة. اقرأ أيضًا <Link href="/terms">الشروط والأحكام</Link> و
         <Link href="/refund">سياسة الاسترداد</Link>.
       </p>
     ),
@@ -80,7 +82,7 @@ const en: Section[] = [
     h: "Service provider",
     body: (
       <p>
-        Alsaadi Academy, United Arab Emirates. See also the <Link href="/terms">terms of use</Link> and the{" "}
+        AAcademy, United Arab Emirates. See also the <Link href="/terms">terms of use</Link> and the{" "}
         <Link href="/refund">refund policy</Link>.
       </p>
     ),
@@ -91,5 +93,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const { locale } = await params;
   setRequestLocale(locale);
   const isAr = locale === "ar";
-  return <LegalPage locale={locale} title={isAr ? "تواصل معنا" : "Contact us"} sections={isAr ? ar : en} />;
+  return (
+    <LegalPage locale={locale} title={isAr ? "تواصل معنا" : "Contact us"} sections={isAr ? ar : en}>
+      <ContactForm />
+    </LegalPage>
+  );
 }

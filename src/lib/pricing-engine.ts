@@ -20,11 +20,24 @@ export type BundleRule = { id: string; subjectIds: string[]; percentOff: number 
 export type PricedCart = {
   currency: Currency;
   subtotal: number;
+  /// Bundles plus coupon.
   discount: number;
+  /// The coupon's part of `discount`.
+  couponDiscount: number;
   total: number;
-  lines: { skuId: string; price: number; discount: number }[];
+  lines: { skuId: string; price: number; discount: number; couponDiscount: number }[];
   applied: { ruleId: string; skuIds: string[]; amount: number }[];
 };
+
+/** A SKU's normal price with its optional temporary price. Kept structural so pages can pass Prisma rows. */
+export type Priceable = {
+  price: number;
+  discountPrice?: number | null;
+  discountFrom?: Date | null;
+  discountTo?: Date | null;
+};
+
+export type CouponLike = { percentOff: number | null; amountOff: number | null; currency: Currency | null };
 
 export class PricingError extends Error {}
 
@@ -98,8 +111,78 @@ export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedC
     currency,
     subtotal,
     discount: plan.amount,
+    couponDiscount: 0,
     total: subtotal - plan.amount,
-    lines: cart.map((l, i) => ({ skuId: l.skuId, price: l.price, discount: discounts.get(i) ?? 0 })),
+    lines: cart.map((l, i) => ({ skuId: l.skuId, price: l.price, discount: discounts.get(i) ?? 0, couponDiscount: 0 })),
     applied: plan.applications.map((a) => ({ ruleId: a.ruleId, skuIds: a.lines.map((i) => cart[i].skuId), amount: a.amount })),
+  };
+}
+
+/** The price charged today: the temporary price inside [discountFrom, discountTo), otherwise the normal price. */
+export function effectivePrice(s: Priceable, now: Date): number {
+  if (s.discountPrice == null || s.discountPrice >= s.price) return s.price;
+  if (s.discountFrom && now < s.discountFrom) return s.price;
+  if (s.discountTo && now >= s.discountTo) return s.price;
+  return s.discountPrice;
+}
+
+/** The percent shown on a badge, or null when the temporary price is not active. */
+export function discountPercent(s: Priceable, now: Date): number | null {
+  const p = effectivePrice(s, now);
+  if (p >= s.price || s.price <= 0) return null;
+  const pct = Math.round((1 - p / s.price) * 100);
+  return pct > 0 ? pct : null;
+}
+
+/** The SKU a card should advertise: the lowest effective price today. */
+export function cheapestSku<T extends Priceable>(skus: readonly T[], now: Date): T | undefined {
+  let best: T | undefined;
+  for (const s of skus) if (!best || effectivePrice(s, now) < effectivePrice(best, now)) best = s;
+  return best;
+}
+
+/**
+ * Applies a coupon after bundles, to what is left to pay. The amount is spread across lines so every
+ * per-line charge stays on the currency's step and the lines still add up to `total` (the gateways verify it).
+ */
+export function applyCoupon(cart: PricedCart, coupon: CouponLike): PricedCart {
+  if (cart.total <= 0) return cart;
+  const step = minorPerUnit(cart.currency) / 100;
+  const round = (n: number) => Math.round(n / step) * step;
+
+  let amount: number;
+  if (coupon.percentOff) {
+    amount = round((cart.total * coupon.percentOff) / 100);
+  } else if (coupon.amountOff) {
+    if (coupon.currency && coupon.currency !== cart.currency) throw new PricingError("coupon_currency");
+    amount = coupon.amountOff;
+  } else return cart;
+  amount = Math.min(Math.max(0, amount), cart.total);
+  if (amount === 0) return cart;
+
+  const net = cart.lines.map((l) => l.price - l.discount);
+  const order = net.map((_, i) => i).sort((a, b) => net[b] - net[a]);
+  const shares = net.map(() => 0);
+  let left = amount;
+  for (const i of order) {
+    if (!left) break;
+    const share = Math.min(net[i], round((amount * net[i]) / cart.total), left);
+    shares[i] = share;
+    left -= share;
+  }
+  // Rounding can leave a multiple of the step; the largest remaining line absorbs it.
+  for (const i of order) {
+    if (!left) break;
+    const extra = Math.min(net[i] - shares[i], left);
+    shares[i] += extra;
+    left -= extra;
+  }
+
+  return {
+    ...cart,
+    discount: cart.discount + amount,
+    couponDiscount: amount,
+    total: cart.total - amount,
+    lines: cart.lines.map((l, i) => ({ ...l, couponDiscount: shares[i] })),
   };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
+import { applyCoupon, cheapestSku, discountPercent, effectivePrice, price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
 
 const now = new Date("2026-05-01T12:00:00Z");
 
@@ -94,5 +94,77 @@ describe("price", () => {
     expect(() => price([], [], now)).toThrow(new PricingError("empty_cart"));
     expect(() => price([line("math", 100), line("physics", 100, { currency: "AED" })], [], now)).toThrow(new PricingError("mixed_currency"));
     expect(() => price([line("math", 100), line("math", 100)], [], now)).toThrow(new PricingError("duplicate_sku"));
+  });
+});
+
+describe("sale prices", () => {
+  const sku = {
+    price: 50000,
+    discountPrice: 40000,
+    discountFrom: new Date("2026-05-01T00:00:00Z"),
+    discountTo: new Date("2026-05-10T00:00:00Z"),
+  };
+
+  it("uses the temporary price inside [from, to)", () => {
+    expect(effectivePrice(sku, new Date("2026-05-01T00:00:00Z"))).toBe(40000);
+    expect(effectivePrice(sku, new Date("2026-05-09T23:59:59Z"))).toBe(40000);
+  });
+
+  it("uses the normal price outside the window", () => {
+    expect(effectivePrice(sku, new Date("2026-04-30T23:59:59Z"))).toBe(50000);
+    expect(effectivePrice(sku, new Date("2026-05-10T00:00:00Z"))).toBe(50000);
+  });
+
+  it("ignores a temporary price that is not lower", () => {
+    expect(effectivePrice({ price: 100, discountPrice: 120 }, now)).toBe(100);
+  });
+
+  it("reports the percent off only while the sale runs", () => {
+    expect(discountPercent(sku, new Date("2026-05-02T00:00:00Z"))).toBe(20);
+    expect(discountPercent(sku, new Date("2026-06-01T00:00:00Z"))).toBeNull();
+  });
+
+  it("picks the cheapest SKU by effective price", () => {
+    const a = { id: "a", price: 50000 };
+    const b = { id: "b", price: 60000, discountPrice: 30000, discountFrom: sku.discountFrom, discountTo: sku.discountTo };
+    expect(cheapestSku([a, b], now)?.id).toBe("b");
+    expect(cheapestSku([a, b], new Date("2026-07-01T00:00:00Z"))?.id).toBe("a");
+  });
+});
+
+describe("applyCoupon", () => {
+  // 50000 + 40000 with a 15% bundle = 76500 to pay.
+  const cart = price([line("math", 50000), line("physics", 40000)], [rule("mp", ["math", "physics"], 15)], now);
+  const netOf = (r: typeof cart) => r.lines.reduce((sum, l) => sum + l.price - l.discount - l.couponDiscount, 0);
+
+  it("takes a percent after the bundle and keeps the lines adding up", () => {
+    const r = applyCoupon(cart, { percentOff: 10, amountOff: null, currency: null });
+    expect(r.couponDiscount).toBe(7650);
+    expect(r.discount).toBe(21150);
+    expect(r.total).toBe(68850);
+    expect(netOf(r)).toBe(r.total);
+  });
+
+  it("caps a fixed coupon at what is left", () => {
+    const r = applyCoupon(cart, { percentOff: null, amountOff: 1_000_000, currency: "EGP" });
+    expect(r.couponDiscount).toBe(76500);
+    expect(r.total).toBe(0);
+    expect(netOf(r)).toBe(0);
+  });
+
+  it("rejects a fixed coupon in another currency", () => {
+    expect(() => applyCoupon(cart, { percentOff: null, amountOff: 100, currency: "AED" })).toThrow(new PricingError("coupon_currency"));
+  });
+
+  it("keeps 3-decimal currencies on 10-fil steps", () => {
+    const kwd = price([line("math", 3000, { currency: "KWD" }), line("physics", 3000, { currency: "KWD" })], [], now);
+    const r = applyCoupon(kwd, { percentOff: 33, amountOff: null, currency: null });
+    expect(r.total % 10).toBe(0);
+    for (const l of r.lines) expect(l.couponDiscount % 10).toBe(0);
+    expect(netOf(r)).toBe(r.total);
+  });
+
+  it("returns the cart untouched without a coupon", () => {
+    expect(applyCoupon(cart, { percentOff: null, amountOff: null, currency: null })).toBe(cart);
   });
 });

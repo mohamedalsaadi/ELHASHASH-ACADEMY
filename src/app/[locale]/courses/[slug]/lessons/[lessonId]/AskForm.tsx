@@ -17,8 +17,9 @@ export function AskForm({ lessonId }: { lessonId: string }) {
         <textarea name="body" dir="auto" required minLength={3} maxLength={1500} rows={4} className={`${field} py-2`} />
       </label>
       <p className="text-label text-ink-muted">{t("askHint")}</p>
+      <p className="text-label text-ink-muted">{t("contactRule")}</p>
       {state && (
-        <p role="status" className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
+        <p role="status" className={`text-small ${state === "ok" ? "text-up" : state === "masked" ? "text-ink-muted" : "text-down"}`}>
           {t(`result.${state}`)}
         </p>
       )}

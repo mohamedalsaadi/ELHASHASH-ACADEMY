@@ -3,28 +3,38 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { priceSkus } from "@/lib/checkout";
+import { resolveCoupon } from "@/lib/coupon-resolve";
 import { activeGateway } from "@/lib/gateway";
 import { formatMoney } from "@/lib/format";
-import { PricingError } from "@/lib/pricing-engine";
+import { applyCoupon, PricingError } from "@/lib/pricing-engine";
 import { PayForm } from "./PayForm";
+
+type CouponError = "invalid" | "not_started" | "expired" | "used_up" | "used_by_you" | "currency";
+
+const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
+const applyButton =
+  "min-h-11 rounded-sm border-[1.5px] border-ink px-4 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
 
 export default async function CheckoutPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ sku?: string | string[] }>;
+  searchParams: Promise<{ sku?: string | string[]; coupon?: string }>;
 }) {
   const { locale } = await params;
-  const { sku } = await searchParams;
+  const { sku, coupon } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("checkout");
   const skuIds = [sku ?? []].flat();
 
   const session = await auth();
-  if (!session?.user) {
-    const back = `/${locale}/checkout?${skuIds.map((s) => `sku=${encodeURIComponent(s)}`).join("&")}`;
-    redirect(`/${locale}/signin?next=${encodeURIComponent(back)}`);
+  const user = session?.user;
+  if (!user) {
+    const query = new URLSearchParams();
+    for (const id of skuIds) query.append("sku", id);
+    if (coupon) query.set("coupon", coupon);
+    redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/checkout?${query.toString()}`)}`);
   }
 
   let result;
@@ -42,8 +52,27 @@ export default async function CheckoutPage({
     );
   }
 
-  const { priced, skus } = result;
+  // Re-resolve the code on every render; the API resolves it again before charging.
+  let priced = result.priced;
+  let appliedCode: string | null = null;
+  let couponError: CouponError | null = null;
+  if (coupon) {
+    const resolved = await resolveCoupon(coupon, user.id);
+    if (!resolved.ok) couponError = resolved.reason;
+    else {
+      try {
+        priced = applyCoupon(priced, resolved.coupon);
+        appliedCode = resolved.coupon.code;
+      } catch (e) {
+        if (e instanceof PricingError && e.message === "coupon_currency") couponError = "currency";
+        else throw e;
+      }
+    }
+  }
+
+  const { skus } = result;
   const money = (n: number) => formatMoney(n, priced.currency, locale);
+  const bundle = priced.discount - priced.couponDiscount;
   const title = (id: string) => {
     const s = skus.get(id)!;
     const name = s.liveSession ?? s.lesson ?? s.course;
@@ -65,17 +94,44 @@ export default async function CheckoutPage({
         <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-t border-hairline pt-3">
           <dt className="text-ink-muted">{t("subtotal")}</dt>
           <dd className="num">{money(priced.subtotal)}</dd>
-          {priced.discount > 0 && (
+          {bundle > 0 && (
             <>
               <dt className="text-up">{t("bundle")}</dt>
-              <dd className="num text-up">−{money(priced.discount)}</dd>
+              <dd className="num text-up">−{money(bundle)}</dd>
+            </>
+          )}
+          {priced.couponDiscount > 0 && appliedCode && (
+            <>
+              <dt className="text-up">{t("couponRow", { code: appliedCode })}</dt>
+              <dd className="num text-up">−{money(priced.couponDiscount)}</dd>
             </>
           )}
           <dt className="font-display font-semibold">{t("total")}</dt>
           <dd className="num font-semibold">{money(priced.total)}</dd>
         </dl>
+
+        <form method="get" className="flex flex-wrap items-end gap-2 border-t border-hairline pt-4">
+          {skuIds.map((id) => (
+            <input key={id} type="hidden" name="sku" value={id} />
+          ))}
+          <label className="grid min-w-40 flex-1 gap-1 text-label text-ink-muted">
+            {t("coupon")}
+            <input name="coupon" defaultValue={coupon ?? ""} dir="ltr" autoComplete="off" maxLength={40} className={field} />
+          </label>
+          <button className={applyButton}>{t("apply")}</button>
+        </form>
+        {couponError && (
+          <p role="alert" className="text-small text-down">
+            {t(`couponErrors.${couponError}`)}
+          </p>
+        )}
+        {appliedCode && (
+          <p role="status" className="text-small text-up">
+            {t("couponApplied", { code: appliedCode })}
+          </p>
+        )}
       </section>
-      <PayForm skuIds={skuIds} locale={locale} {...activeGateway(priced.currency)} />
+      <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} {...activeGateway(priced.currency)} />
       <p className="text-small text-ink-muted">
         {t.rich("agree", {
           terms: (c) => <Link href="/terms" className="text-pen underline">{c}</Link>,

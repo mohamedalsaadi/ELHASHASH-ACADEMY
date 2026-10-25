@@ -7,7 +7,7 @@ import { IntroStage } from "./IntroStage";
 // the fade ends, so client-side navigation back to the home page never replays it.
 const guard = `try{var d=document.documentElement;if(!sessionStorage.getItem("as-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches){sessionStorage.setItem("as-intro","1");window.__asIntroT0=performance.now();d.dataset.intro="play";var s=function(){if(d.dataset.intro==="play")d.dataset.intro="skip"};addEventListener("pointerdown",s,{once:true});addEventListener("keydown",s,{once:true});addEventListener("animationend",function e(v){if(v.animationName==="as-intro-out"){delete d.dataset.intro;removeEventListener("animationend",e)}})}}catch(e){}`;
 
-/** 2 s brand intro over the already-rendered home page: two books land as A A, then the name. Fixed position: no layout shift. */
+/** ~2.9 s brand intro (2 s × --intro-k) over the already-rendered home page: two books land as A A, then the name. Fixed position: no layout shift. */
 export function Intro() {
   return (
     <>

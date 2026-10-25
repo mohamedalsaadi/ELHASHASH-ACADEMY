@@ -1,7 +1,11 @@
 import { z } from "zod";
 
-// Egyptian mobile (01xxxxxxxxx) or UAE mobile (05xxxxxxxx), stored as typed.
-export const phoneSchema = z.string().trim().regex(/^(01[0125]\d{8}|05\d{8})$/, "invalid_phone");
+// Local mobile formats of the seven catalog countries, stored as typed:
+// Egypt 01[0125]+8; Saudi/UAE 05+8; Kuwait [569]+7; Qatar [3567]+7; Bahrain [36]+7; Oman [79]+7.
+export const phoneSchema = z
+  .string()
+  .trim()
+  .regex(/^(01[0125]\d{8}|05\d{8}|[569]\d{7}|[3567]\d{7}|[36]\d{7}|[79]\d{7})$/, "invalid_phone");
 
 const passwordSchema = z.string().min(8, "password_too_short").max(128);
 
@@ -12,6 +16,7 @@ export const signInSchema = z.object({
 });
 
 export const signUpSchema = z.object({
+  email: z.email().trim().toLowerCase(),
   phone: phoneSchema,
   password: passwordSchema,
   name: z.string().trim().min(2).max(80),

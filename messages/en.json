@@ -50,6 +50,7 @@
       "lede": "Courses outside the school curriculum, such as IELTS, at one price for a set number of days.",
       "all": "All courses"
     },
+    "promotions": "Offers",
     "trust": {
       "free": "Unit 1 of every subject is free",
       "device": "One device per account, to protect lessons",
@@ -72,6 +73,10 @@
     "subtotal": "Subtotal",
     "bundle": "Bundle discount",
     "total": "Total to pay",
+    "coupon": "Discount code",
+    "apply": "Apply",
+    "couponRow": "Code {code}",
+    "couponApplied": "Code {code} applied.",
     "method": "Payment method",
     "pay": "Pay now",
     "redirecting": "Opening the payment page…",
@@ -112,6 +117,14 @@
       "generic": "Something went wrong. Try again.",
       "method_unavailable": "That payment method isn’t available right now. Pick another one."
     },
+    "couponErrors": {
+      "invalid": "That code isn't valid.",
+      "not_started": "This code isn't active yet.",
+      "expired": "This code has expired.",
+      "used_up": "This code has reached its limit.",
+      "used_by_you": "You have already used this code.",
+      "currency": "This code can't be used with this currency."
+    },
     "result": {
       "status": {
         "PAID": "Paid. Your access is active",
@@ -136,6 +149,7 @@
     "empty": "No courses are published yet.",
     "freeUnit": "Unit 1 is free",
     "from": "From",
+    "percentOff": "{pct}% off",
     "owned": "You're subscribed to this course",
     "startFree": "Start the free unit",
     "units": "Units",
@@ -241,6 +255,12 @@
     "accessEndsAt": "Access ends on",
     "saleFrom": "Sale starts on",
     "saleTo": "Sale ends on",
+    "startsAt": "Starts on",
+    "endsAt": "Ends on",
+    "discountPrice": "Discount price ({currency})",
+    "discountFrom": "Discount starts on",
+    "discountTo": "Discount ends on",
+    "discountHint": "A temporary price shown struck through during the discount window. This is separate from the sale window above, which controls when the package can be bought.",
     "activeHint": "Active (can be bought)",
     "packageType": "Package type",
     "addPackage": "+ Add package",
@@ -294,13 +314,41 @@
     "noMonth": "No month",
     "perLecture": "{count, plural, one {# lecture} other {# lectures}} · {price} a lecture",
     "saveVsSingles": "{pct}% cheaper than single lectures",
-    "dearerThanSingles": "dearer than buying single lectures; lower the price"
+    "dearerThanSingles": "dearer than buying single lectures; lower the price",
+    "promotionsTitle": "Promotions",
+    "promotionsHint": "A bar shows under the header; cards show in the home page scroll. Inactive or out-of-window promos are hidden automatically.",
+    "addPromotion": "Add promotion",
+    "promoBodyAr": "Body (Arabic)",
+    "promoBodyEn": "Body (English)",
+    "promoPlacement": "Placement",
+    "promoPlacements": {
+      "BAR": "Top bar",
+      "CARD": "Home card"
+    },
+    "promoHref": "Link (optional)",
+    "promoOrder": "Order",
+    "promoActive": "Active",
+    "confirmDeletePromo": "Delete this promotion?",
+    "couponsTitle": "Discount codes",
+    "couponsHint": "Exactly one of a percent or a fixed amount. The fixed amount is in the selected currency. Codes are uppercased.",
+    "addCoupon": "Add discount code",
+    "couponCode": "Code",
+    "couponPercent": "Percent off",
+    "couponAmount": "Fixed amount",
+    "couponCurrency": "Currency",
+    "couponMax": "Max uses",
+    "couponPerUser": "Uses per student",
+    "couponActive": "Active",
+    "couponUsed": "{count, plural, one {# paid use} other {# paid uses}}",
+    "confirmDeleteCoupon": "Delete this discount code?"
   },
   "signup": {
     "title": "Create a student account",
     "name": "Full name",
+    "email": "Email",
+    "emailHint": "Receipts and lesson updates go here.",
     "phone": "Mobile number",
-    "phoneHint": "Egypt: 01xxxxxxxxx · UAE: 05xxxxxxxx",
+    "phoneHint": "Egypt: 01xxxxxxxxx · Gulf: 05xxxxxxxx or 8 digits",
     "grade": "Grade",
     "gradePick": "Choose your grade",
     "password": "Password",
@@ -311,7 +359,9 @@
     "signIn": "Sign in",
     "errors": {
       "invalid_name": "Enter your full name (at least 2 letters).",
-      "invalid_phone": "That mobile number isn't valid. Egypt: 11 digits starting 01. UAE: 10 digits starting 05.",
+      "invalid_email": "Enter a valid email address.",
+      "email_taken": "This email already has an account. Sign in instead.",
+      "invalid_phone": "That mobile number isn't valid. Use your local mobile format (Egypt 01xxxxxxxxx, Gulf 05xxxxxxxx or 8 digits).",
       "password_too_short": "The password is too short. Use at least 8 characters.",
       "invalid_grade": "Choose your grade.",
       "phone_taken": "This number already has an account. Sign in instead.",
@@ -390,6 +440,7 @@
     "isCancelled": "This live lecture was cancelled.",
     "ended": "This live lecture has ended.",
     "signIn": "Sign in to join this live lecture.",
+    "contactRule": "Keep contact inside the academy: phone numbers, links and handles are hidden in questions and chat.",
     "noSeat": "This live lecture is for course subscribers and seat holders.",
     "buySeat": "Buy a seat · {price}",
     "subscribe": "See subscriptions",
@@ -401,6 +452,7 @@
     "title": "Questions",
     "ask": "Ask your teacher about this lecture",
     "askHint": "Up to 5 questions a day. Your teacher answers here and on your dashboard.",
+    "contactRule": "For everyone's safety, phone numbers, links and social handles are hidden. Contact the academy through the official channels.",
     "send": "Send",
     "update": "Update answer",
     "answer": "Your answer",
@@ -413,6 +465,7 @@
     "recent": "Recently answered",
     "result": {
       "ok": "Sent. Your teacher will answer here.",
+      "masked": "Sent. We hid the contact details; please use the official channels.",
       "limited": "You've asked 5 questions today. Try again tomorrow.",
       "invalid": "Write your question (3 to 1500 characters)."
     }
@@ -426,7 +479,8 @@
       "catalog": "Catalog",
       "orders": "Orders",
       "live": "Live",
-      "questions": "Questions"
+      "questions": "Questions",
+      "marketing": "Marketing"
     },
     "revenue": "Revenue this month",
     "orders": "{count, plural, one {# order} other {# orders}}",

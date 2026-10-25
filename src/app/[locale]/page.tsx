@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Intro } from "@/components/brand/Intro";
 import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
+import { PromoBand } from "@/components/PromoBand";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -15,17 +16,30 @@ const button =
 
 function getHome() {
   const published = { published: true };
+  const now = new Date();
   return Promise.all([
     db.country.findMany({ orderBy: { order: "asc" } }),
-    db.course.findMany({ where: { kind: "SKILL", ...published }, orderBy: { createdAt: "desc" }, take: 3, include: cardInclude(new Date()) }),
+    db.course.findMany({ where: { kind: "SKILL", ...published }, orderBy: { createdAt: "desc" }, take: 3, include: cardInclude(now) }),
+    db.promotion.findMany({
+      where: {
+        active: true,
+        AND: [
+          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+        ],
+      },
+      orderBy: { order: "asc" },
+    }),
   ]);
 }
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [t, [countries, skills]] = await Promise.all([getTranslations("home"), getHome()]);
+  const [t, [countries, skills, promos]] = await Promise.all([getTranslations("home"), getHome()]);
   const ar = locale === "ar";
+  const bar = promos.filter((p) => p.placement === "BAR");
+  const cards = promos.filter((p) => p.placement === "CARD");
 
   const ways = [
     { key: "subscribe", Icon: BookOpenCheck, soon: false },
@@ -42,6 +56,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <main>
       <Intro />
+      <PromoBand promos={bar} locale={locale} variant="BAR" label={t("promotions")} />
 
       <section className="border-b border-hairline">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 md:grid-cols-[1.35fr_1fr] md:py-24">
@@ -78,6 +93,8 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </div>
         </div>
       </section>
+
+      <PromoBand promos={cards} locale={locale} variant="CARD" label={t("promotions")} />
 
       <div className="mx-auto grid max-w-6xl gap-20 px-4 py-16">
         <section className="grid gap-6">

@@ -1,4 +1,5 @@
-export const CONTACT_EMAIL = "chemical.mohammed@gmail.com";
+import { CONTACT_EMAIL } from "@/lib/site";
+
 const UPDATED = new Date("2026-10-24T00:00:00Z");
 
 export type Section = { h: string; body: React.ReactNode };

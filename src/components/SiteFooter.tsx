@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Wordmark } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 export async function SiteFooter() {
   const [t, locale] = await Promise.all([getTranslations("footer"), getLocale()]);
@@ -19,6 +20,9 @@ export async function SiteFooter() {
               {t(k)}
             </Link>
           ))}
+          <a href={`mailto:${CONTACT_EMAIL}`} dir="ltr" className="hover:text-ink">
+            {CONTACT_EMAIL}
+          </a>
         </nav>
         <span className="basis-full">© {new Date().getFullYear()} {t("rights")}</span>
       </div>

@@ -11,6 +11,7 @@ const TABS = [
   ["orders", "/admin/orders"],
   ["live", "/admin/live"],
   ["questions", "/admin/questions"],
+  ["marketing", "/admin/marketing"],
 ] as const;
 
 export type AdminTab = (typeof TABS)[number][0];

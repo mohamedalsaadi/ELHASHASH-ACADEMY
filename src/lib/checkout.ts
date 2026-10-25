@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { price } from "@/lib/pricing-engine";
+import { effectivePrice, price } from "@/lib/pricing-engine";
 
 /** Loads purchasable SKUs and active bundle rules, then prices them. Throws PricingError on an invalid cart. */
 export async function priceSkus(skuIds: string[], now = new Date()) {
@@ -14,7 +14,7 @@ export async function priceSkus(skuIds: string[], now = new Date()) {
       courseId: s.courseId,
       subjectId: s.course.subjectId,
       accessType: s.accessType,
-      price: s.price,
+      price: effectivePrice(s, now),
       currency: s.currency,
       saleFrom: s.saleFrom,
       saleTo: s.saleTo,

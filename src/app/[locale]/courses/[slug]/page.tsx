@@ -7,6 +7,7 @@ import { grantsFor, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatMoney, formatWhen } from "@/lib/format";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
+import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ function Tick({ on }: { on: boolean }) {
 }
 
 type Line = { on: boolean; text: string };
-type Offer = { id: string | null; label?: string; price: string; notes: { text: string; good?: boolean }[] };
+type Offer = { id: string | null; label?: string; price: string; was?: string; notes: { text: string; good?: boolean }[] };
 
 /** One plan as a card: what it includes, then each way to buy it with its price per lecture and saving. */
 function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }: { name: string; lines: Line[]; offers: Offer[]; best?: boolean; bestLabel: string; cta: string; className?: string }) {
@@ -56,7 +57,10 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
       {offers.map((o) => (
         <div key={o.id ?? "pick"} className="grid gap-1.5 border-t border-dashed border-rule pt-3">
           {o.id && o.label && <span className="text-small font-semibold">{o.label}</span>}
-          <span className="num font-display text-h2 font-extrabold">{o.price}</span>
+          <span className="flex flex-wrap items-baseline gap-2">
+            <span className="num font-display text-h2 font-extrabold">{o.price}</span>
+            {o.was && <s className="num text-small text-ink-muted">{o.was}</s>}
+          </span>
           {o.notes.map((n) => (
             <span key={n.text} className={`text-small ${n.good ? "font-semibold text-up" : "text-ink-muted"}`}>
               {n.text}
@@ -112,15 +116,19 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
 
   // The three plans. The cheapest lecture rental is the single-lecture price every plan is compared with.
   const tp = await getTranslations("catalog.plans");
-  const single = course.units.flatMap((u) => u.lessons.flatMap((l) => l.skus)).sort((a, b) => a.price - b.price)[0];
+  const single = cheapestSku(course.units.flatMap((u) => u.lessons.flatMap((l) => l.skus)), now);
+  const singlePrice = single ? effectivePrice(single, now) : null;
   const months = course.skus.filter((s) => s.accessType === "MONTHLY").sort((a, b) => (a.month ?? 0) - (b.month ?? 0));
   const terms = course.skus.filter((s) => s.accessType === "SEMESTER").sort((a, b) => (a.term ?? 0) - (b.term ?? 0));
   const others = course.skus.filter((s) => s.accessType !== "MONTHLY" && s.accessType !== "SEMESTER");
   const offer = (s: (typeof course.skus)[number], label?: string): Offer => {
-    const v = planValue(s.price, lecturesIn(course.units, s), single?.price ?? null);
+    const price = effectivePrice(s, now);
+    const v = planValue(price, lecturesIn(course.units, s), singlePrice);
     const notes: Offer["notes"] = v ? [{ text: tp("perLecture", { price: formatMoney(v.perLecture, s.currency, locale) }) }] : [];
     if (v?.savePct && v.savePct > 0) notes.push({ text: tp("save", { pct: v.savePct }), good: true });
-    return { id: s.id, label, price: formatMoney(s.price, s.currency, locale), notes };
+    const pct = discountPercent(s, now);
+    if (pct !== null) notes.push({ text: t("percentOff", { pct }), good: true });
+    return { id: s.id, label, price: formatMoney(price, s.currency, locale), was: pct !== null ? formatMoney(s.price, s.currency, locale) : undefined, notes };
   };
   const firstFree = course.units.find((u) => u.isFree)?.lessons[0];
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
@@ -197,7 +205,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                               href={{ pathname: "/checkout", query: { sku: rent.id } }}
                               className="shrink-0 rounded-sm border-[1.5px] border-ink px-3 py-1.5 text-small font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
                             >
-                              {t("rent")} · <span className="num">{formatMoney(rent.price, rent.currency, locale)}</span> · {t("rentFor", { days: rent.accessDays ?? 0 })}
+                              {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span> · {t("rentFor", { days: rent.accessDays ?? 0 })}
                             </Link>
                           ) : (
                             <span className="text-label">{t(`kind.${l.kind}`)}</span>
@@ -234,7 +242,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                         <span className="text-up">{t("liveIncluded")}</span>
                       ) : seat ? (
                         <>
-                          {t("liveSeat")} · <span className="num">{formatMoney(seat.price, seat.currency, locale)}</span>
+                          {t("liveSeat")} · <span className="num">{formatMoney(effectivePrice(seat, now), seat.currency, locale)}</span>
                         </>
                       ) : (
                         <span className="text-ink-muted">{t("liveSubscribers")}</span>
@@ -261,7 +269,15 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                   { on: false, text: tp("liveNo") },
                   { on: false, text: tp("askNo") },
                 ]}
-                offers={[{ id: null, label: tp("pickLecture"), price: formatMoney(single.price, single.currency, locale), notes: [] }]}
+                offers={[
+                  {
+                    id: null,
+                    label: tp("pickLecture"),
+                    price: singlePrice != null ? formatMoney(singlePrice, single.currency, locale) : "",
+                    was: discountPercent(single, now) !== null ? formatMoney(single.price, single.currency, locale) : undefined,
+                    notes: [],
+                  },
+                ]}
                 bestLabel={tp("bestValue")}
                 cta={t("subscribe")}
               />
@@ -311,7 +327,10 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="num text-h3 font-semibold">{formatMoney(s.price, s.currency, locale)}</span>
+                  <span className="flex items-baseline gap-2">
+                    {discountPercent(s, now) !== null && <s className="num text-small text-ink-muted">{formatMoney(s.price, s.currency, locale)}</s>}
+                    <span className="num text-h3 font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
+                  </span>
                   <Link
                     href={{ pathname: "/checkout", query: { sku: s.id } }}
                     className="rounded-sm border border-ink-muted px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"

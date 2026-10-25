@@ -48,6 +48,16 @@ const ar: Section[] = [
     ),
   },
   {
+    h: "التواصل داخل المنصة",
+    body: (
+      <p>
+        الأسئلة والإجابات وأسماء الحسابات والدردشة داخل الحصص المباشرة للتواصل التعليمي فقط. لا تشارك أرقام الهواتف أو روابط
+        واتساب أو تيليجرام أو حسابات التواصل الاجتماعي. قد نخفي هذه البيانات تلقائيًا، والقنوات الرسمية للتواصل هي المذكورة في
+        صفحة <Link href="/contact">تواصل معنا</Link>.
+      </p>
+    ),
+  },
+  {
     h: "المحتوى والخدمة",
     body: (
       <p>
@@ -110,6 +120,16 @@ const en: Section[] = [
         You get a personal, non-transferable right to watch the content for your own study. Recording, downloading,
         copying, selling or publishing the videos, or sharing your account, is not allowed. Videos carry a watermark with
         your name, and we may suspend any account that breaks these rules without a refund.
+      </p>
+    ),
+  },
+  {
+    h: "Contact inside the platform",
+    body: (
+      <p>
+        Questions, answers, account names and chat inside live lectures are for learning only. Do not share phone numbers,
+        WhatsApp or Telegram links, or social handles. We may hide such details automatically; the official channels are
+        the ones listed on the <Link href="/contact">contact page</Link>.
       </p>
     ),
   },

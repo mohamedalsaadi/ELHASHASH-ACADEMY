@@ -278,7 +278,28 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                   {t("saleTo")}
                   <input name="saleTo" type="date" defaultValue={toDayInput(s.saleTo)} className={field} />
                 </label>
+                <label className={label}>
+                  {t("discountPrice", { currency: s.currency })}
+                  <input
+                    name="discountPrice"
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    defaultValue={s.discountPrice != null ? s.discountPrice / minorPerUnit(s.currency) : ""}
+                    dir="ltr"
+                    className={`${field} num`}
+                  />
+                </label>
+                <label className={label}>
+                  {t("discountFrom")}
+                  <input name="discountFrom" type="date" defaultValue={toDayInput(s.discountFrom)} className={field} />
+                </label>
+                <label className={label}>
+                  {t("discountTo")}
+                  <input name="discountTo" type="date" defaultValue={toDayInput(s.discountTo)} className={field} />
+                </label>
               </div>
+              <p className="text-label text-ink-muted">{t("discountHint")}</p>
               <label className={check}>
                 <input type="checkbox" name="active" defaultChecked={s.active} className="size-4" />
                 {t("activeHint")}

@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { randomUUID } from "node:crypto";
 import { accessEnd, schoolYearEnd } from "@/lib/access";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
+import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
 import { toMinor } from "@/lib/format";
 import { phoneSchema } from "@/lib/schemas/auth";
@@ -21,6 +22,8 @@ const checkbox = z.literal("on").optional().transform(Boolean);
 const term = z.coerce.number().int().min(1).max(2);
 /** Month of the school year; "" clears it. */
 const month = z.string().transform((s) => (s ? Number(s) : null)).pipe(z.number().int().min(1).max(12).nullable());
+/** Optional money field in major units; "" clears it. */
+const optionalMoney = z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().min(0).max(1_000_000).nullable());
 
 const unitCourse = async (id: string) =>
   (await db.unit.findUniqueOrThrow({ where: { id }, select: { courseId: true } })).courseId;
@@ -134,6 +137,9 @@ export async function updateSku(form: FormData) {
       accessDays: z.coerce.number().int().min(1).max(3650).optional(),
       saleFrom: z.string(),
       saleTo: z.string(),
+      discountPrice: optionalMoney,
+      discountFrom: z.string().default(""),
+      discountTo: z.string().default(""),
       term: term.optional(),
       month: z.coerce.number().int().min(1).max(12).optional(),
     })
@@ -148,6 +154,9 @@ export async function updateSku(form: FormData) {
       accessDays: d.accessDays,
       saleFrom: cairoDay(d.saleFrom, "start"),
       saleTo: cairoDay(d.saleTo, "end"),
+      discountPrice: d.discountPrice === null ? null : toMinor(d.discountPrice, currency),
+      discountFrom: cairoDay(d.discountFrom, "start"),
+      discountTo: cairoDay(d.discountTo, "end"),
       term: d.term,
       month: d.month,
     },
@@ -187,6 +196,96 @@ export async function addRental(form: FormData) {
       data: { courseId: lesson.unit.courseId, lessonId, accessType: "RENTAL", price: 0, currency: await courseCurrency(lesson.unit.courseId), active: false, accessDays: 7 },
     });
   }
+  done();
+}
+
+const promoInput = z.object({
+  id: z.string().optional(),
+  placement: z.enum(["BAR", "CARD"]),
+  titleAr: z.string().trim().min(1).max(120),
+  titleEn: z.string().trim().min(1).max(120),
+  bodyAr: z.string().trim().max(400).default(""),
+  bodyEn: z.string().trim().max(400).default(""),
+  href: z
+    .string()
+    .trim()
+    .max(500)
+    .default("")
+    .refine((h) => !h || h.startsWith("/") || h.startsWith("https://"), "bad_href"),
+  startsAt: z.string().default(""),
+  endsAt: z.string().default(""),
+  order: z.coerce.number().int().min(0).max(999).default(0),
+  active: checkbox,
+});
+
+/** Creates a promotion when `id` is empty, updates it otherwise. */
+export async function savePromotion(form: FormData) {
+  await requireAdmin();
+  const d = promoInput.parse(Object.fromEntries(form));
+  const data = {
+    placement: d.placement,
+    titleAr: d.titleAr,
+    titleEn: d.titleEn,
+    bodyAr: d.bodyAr || null,
+    bodyEn: d.bodyEn || null,
+    href: d.href || null,
+    startsAt: cairoDay(d.startsAt, "start"),
+    endsAt: cairoDay(d.endsAt, "end"),
+    order: d.order,
+    active: d.active,
+  };
+  if (d.id) await db.promotion.update({ where: { id: d.id }, data });
+  else await db.promotion.create({ data });
+  done();
+  revalidatePath("/[locale]", "page");
+}
+
+export async function deletePromotion(form: FormData) {
+  await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  await db.promotion.delete({ where: { id } });
+  done();
+  revalidatePath("/[locale]", "page");
+}
+
+const couponInput = z.object({
+  id: z.string().optional(),
+  code: z.string().trim().toUpperCase().regex(CODE_RE),
+  percentOff: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().int().min(1).max(100).nullable()),
+  amountOff: optionalMoney,
+  currency: z.enum(["EGP", "SAR", "AED", "KWD", "QAR", "BHD", "OMR"]).default("EGP"),
+  startsAt: z.string().default(""),
+  endsAt: z.string().default(""),
+  maxRedemptions: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().int().min(1).max(100_000).nullable()),
+  perUser: z.coerce.number().int().min(1).max(100).default(1),
+  active: checkbox,
+});
+
+/** Exactly one of percentOff / amountOff must be set; the amount is stored in the chosen currency's minor units. */
+export async function saveCoupon(form: FormData) {
+  await requireAdmin();
+  const d = couponInput.parse(Object.fromEntries(form));
+  if ((d.percentOff === null) === (d.amountOff === null)) throw new Error("coupon_needs_one_discount");
+  const data = {
+    code: d.code,
+    percentOff: d.percentOff,
+    amountOff: d.amountOff === null ? null : toMinor(d.amountOff, d.currency),
+    currency: d.amountOff === null ? null : d.currency,
+    startsAt: cairoDay(d.startsAt, "start"),
+    endsAt: cairoDay(d.endsAt, "end"),
+    maxRedemptions: d.maxRedemptions,
+    perUser: d.perUser,
+    active: d.active,
+  };
+  if (d.id) await db.coupon.update({ where: { id: d.id }, data });
+  else await db.coupon.create({ data });
+  done();
+}
+
+export async function deleteCoupon(form: FormData) {
+  await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  await db.coupon.delete({ where: { id } });
   done();
 }
 

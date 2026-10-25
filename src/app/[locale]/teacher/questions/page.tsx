@@ -44,6 +44,7 @@ export default async function TeacherQuestionsPage({ params }: { params: Promise
       <form action={answerQuestion} className="grid gap-2">
         <input type="hidden" name="id" value={q.id} />
         <textarea name="answer" defaultValue={q.answer ?? ""} required maxLength={4000} rows={3} aria-label={t("answer")} placeholder={t("answer")} dir="auto" className={`${field} py-2`} />
+        <span className="text-label text-ink-muted">{t("contactRule")}</span>
         {q.answeredBy && <span className="text-label text-ink-muted">{t("answeredBy", { name: q.answeredBy.name })}</span>}
         <div>
           <SaveButton>{q.answer ? t("update") : t("send")}</SaveButton>

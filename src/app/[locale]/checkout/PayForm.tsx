@@ -5,7 +5,7 @@ import { useState } from "react";
 
 type Method = "CARD" | "WALLET" | "KIOSK" | "VALU";
 
-export function PayForm({ skuIds, locale, methods, gateway }: { skuIds: string[]; locale: string; methods: Method[]; gateway: "PAYMOB" | "STRIPE" }) {
+export function PayForm({ skuIds, locale, methods, gateway, coupon }: { skuIds: string[]; locale: string; methods: Method[]; gateway: "PAYMOB" | "STRIPE"; coupon?: string }) {
   const t = useTranslations("checkout");
   const [method, setMethod] = useState<Method>(methods[0]);
   const [busy, setBusy] = useState(false);
@@ -18,7 +18,7 @@ export function PayForm({ skuIds, locale, methods, gateway }: { skuIds: string[]
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ skuIds, method, locale }),
+      body: JSON.stringify({ skuIds, method, locale, coupon }),
     });
     const data = (await res.json().catch(() => ({}))) as { checkoutUrl?: string; error?: string };
     if (data.checkoutUrl) {

@@ -35,6 +35,11 @@ export function SignUpForm({ groups, locale, next }: { groups: { label: string; 
         <input name="name" autoComplete="name" required minLength={2} maxLength={80} defaultValue={v?.name} className={field} />
       </label>
       <label className={label}>
+        {t("email")}
+        <input name="email" type="email" autoComplete="email" dir="ltr" required defaultValue={v?.email} className={field} />
+        <span className="text-label">{t("emailHint")}</span>
+      </label>
+      <label className={label}>
         {t("phone")}
         <input name="phone" type="tel" inputMode="numeric" autoComplete="tel" dir="ltr" required defaultValue={v?.phone} className={field} />
         <span className="text-label">{t("phoneHint")}</span>

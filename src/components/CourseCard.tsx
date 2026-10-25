@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { cardInclude } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
+import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
 import type { Prisma } from "@/generated/prisma/client";
 
 export type CardCourse = Prisma.CourseGetPayload<{ include: ReturnType<typeof cardInclude> }>;
@@ -10,7 +11,9 @@ export type CardCourse = Prisma.CourseGetPayload<{ include: ReturnType<typeof ca
 export function CourseCard({ course: c, locale }: { course: CardCourse; locale: string }) {
   const t = useTranslations("catalog");
   const ar = locale === "ar";
-  const from = c.skus[0];
+  const now = new Date();
+  const from = cheapestSku(c.skus, now);
+  const off = from ? discountPercent(from, now) : null;
   return (
     <Link
       href={`/courses/${c.slug}`}
@@ -29,7 +32,13 @@ export function CourseCard({ course: c, locale }: { course: CardCourse; locale: 
             <span className="text-small text-ink-muted">
               {from.accessDays ? t("access.FIXED_DAYS", { days: from.accessDays }) : t("from")}
             </span>
-            <span className="num font-display text-h3 font-bold">{formatMoney(from.price, from.currency, locale)}</span>
+            <span className="flex flex-wrap items-baseline gap-2">
+              {off !== null && <s className="num text-small text-ink-muted">{formatMoney(from.price, from.currency, locale)}</s>}
+              <span className="num font-display text-h3 font-bold">{formatMoney(effectivePrice(from, now), from.currency, locale)}</span>
+              {off !== null && (
+                <span className="rounded-full bg-marker px-2 py-0.5 text-label font-semibold text-ink">{t("percentOff", { pct: off })}</span>
+              )}
+            </span>
           </span>
         )}
       </span>

@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
+import { cheapestSku, effectivePrice } from "@/lib/pricing-engine";
 import { STAGES } from "@/lib/stages";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
   const level = Number(raw);
   if (!(code in STAGES) || !Number.isInteger(level) || level < 1 || level > 12) notFound();
   const ar = locale === "ar";
+  const now = new Date();
 
   const [t, grade] = await Promise.all([
     getTranslations("catalog"),
@@ -37,7 +39,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
   const tiles = [...listed, ...extra.filter((s, i) => extra.findIndex((x) => x.id === s.id) === i)].map((subject) => {
     const courses = grade.courses.filter((c) => c.subjectId === subject.id);
     // ponytail: two courses of one subject link to the oldest; a chooser page if teachers ever split a subject.
-    const from = courses.flatMap((c) => c.skus).sort((a, b) => a.price - b.price)[0];
+    const from = cheapestSku(courses.flatMap((c) => c.skus), now);
     return { subject, course: courses[0], from };
   });
   const live = tiles.filter((x) => x.course).length;
@@ -84,7 +86,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
                     {from ? (
                       <>
                         <span className="text-ink-muted">{t("from")}</span>
-                        <span className="num font-semibold">{formatMoney(from.price, from.currency, locale)}</span>
+                        <span className="num font-semibold">{formatMoney(effectivePrice(from, now), from.currency, locale)}</span>
                       </>
                     ) : (
                       <span className="text-pen">{t("freeUnit")}</span>

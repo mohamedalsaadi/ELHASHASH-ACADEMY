@@ -52,10 +52,10 @@ export async function liveRole(
   return (await grantsFor(user.id, session.courseId, now)).some((g) => opensLive(g, session.id, now)) ? "student" : null;
 }
 
-/** What a course card needs: the cheapest package on sale, whether a free unit exists, and the grade. */
+/** What a course card needs: the whole-course packages (the card picks the cheapest effective price), a free unit, the grade. */
 export function cardInclude(now: Date) {
   return {
-    skus: { where: { ...onSale(now), ...wholeCourse }, orderBy: { price: "asc" as const }, take: 1 },
+    skus: { where: { ...onSale(now), ...wholeCourse }, orderBy: { price: "asc" as const }, take: 10 },
     units: { where: { isFree: true }, select: { id: true }, take: 1 },
     grade: true,
   };

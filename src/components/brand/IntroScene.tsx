@@ -110,9 +110,11 @@ export default function IntroScene() {
     addEventListener("resize", size);
 
     const t0 = (window as { __asIntroT0?: number }).__asIntroT0 ?? performance.now();
+    // Same multiplier the CSS timeline uses; the scene's authored seconds stay unchanged.
+    const k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--intro-k")) || 1;
     let raf = 0;
     const tick = () => {
-      const t = (performance.now() - t0) / 1000;
+      const t = (performance.now() - t0) / 1000 / k;
       frame(Math.min(t, END));
       if (t < END) raf = requestAnimationFrame(tick);
     };

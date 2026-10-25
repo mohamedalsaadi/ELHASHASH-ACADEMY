@@ -8,6 +8,7 @@ import { liveRole } from "@/lib/catalog";
 import { createRoom, meetingToken } from "@/lib/daily";
 import { db } from "@/lib/db";
 import { courseZone, formatMoney, formatWhen } from "@/lib/format";
+import { effectivePrice } from "@/lib/pricing-engine";
 import { Countdown } from "./Countdown";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
           <div className="flex flex-wrap justify-center gap-3">
             {seat && (
               <Link href={{ pathname: "/checkout", query: { sku: seat.id } }} className={primaryButton}>
-                {t("buySeat", { price: formatMoney(seat.price, seat.currency, locale) })}
+                {t("buySeat", { price: formatMoney(effectivePrice(seat, now), seat.currency, locale) })}
               </Link>
             )}
             <Link href={`/courses/${s!.course.slug}#packages`} className={secondaryButton}>
@@ -88,7 +89,7 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
       const device = await oneDevice(session.user.id, path);
       if ("block" in device) return device.block;
     }
-    const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { name: true, phone: true } });
+    const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { name: true } });
     try {
       let roomUrl = s!.roomUrl;
       if (!roomUrl) {
@@ -98,7 +99,8 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
       const token = await meetingToken({
         sessionId: s!.id,
         userId: session.user.id,
-        userName: role === "host" ? user.name : [user.name, user.phone].filter(Boolean).join(" · "),
+        // The phone never enters the room: every participant would see it in the tile and chat.
+        userName: user.name,
         startsAt: s!.startsAt,
         endsAt,
         owner: role === "host",
@@ -130,6 +132,7 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
           {formatWhen(s.startsAt, courseZone(s.course), locale)} · {t("minutes", { count: s.durationMin })}
         </p>
       </div>
+      <p className="rounded-sm border border-hairline bg-raised px-3 py-2 text-small text-ink-muted">{t("contactRule")}</p>
       <div className="aspect-[3/4] overflow-hidden rounded-md border border-hairline bg-surface sm:aspect-video">{await stage()}</div>
     </main>
   );

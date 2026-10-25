@@ -1,6 +1,25 @@
 import { setRequestLocale } from "next-intl/server";
 import { LegalPage, Mail, type Section } from "@/components/LegalPage";
 import { Link } from "@/i18n/navigation";
+import { SUPPORT_PHONE, SUPPORT_WHATSAPP } from "@/lib/site";
+
+function Channels() {
+  return (
+    <div className="grid gap-2">
+      <p>
+        <Mail />
+      </p>
+      {SUPPORT_PHONE && <p dir="ltr">{SUPPORT_PHONE}</p>}
+      {SUPPORT_WHATSAPP && (
+        <p>
+          <a href={`https://wa.me/${SUPPORT_WHATSAPP.replace(/\D/g, "")}`} dir="ltr">
+            WhatsApp · {SUPPORT_WHATSAPP}
+          </a>
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return params.then(({ locale }) => ({ title: locale === "ar" ? "تواصل معنا" : "Contact us" }));
@@ -8,13 +27,12 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
 
 const ar: Section[] = [
   {
-    h: "البريد الإلكتروني",
+    h: "القنوات الرسمية",
     body: (
-      <p>
-        <Mail />
-        <br />
-        نرد خلال يومي عمل.
-      </p>
+      <>
+        <Channels />
+        <p>نرد خلال يومي عمل. هذه هي القنوات الرسمية الوحيدة.</p>
+      </>
     ),
   },
   {
@@ -40,13 +58,12 @@ const ar: Section[] = [
 
 const en: Section[] = [
   {
-    h: "Email",
+    h: "Official channels",
     body: (
-      <p>
-        <Mail />
-        <br />
-        We reply within two business days.
-      </p>
+      <>
+        <Channels />
+        <p>We reply within two business days. These are the only official channels.</p>
+      </>
     ),
   },
   {

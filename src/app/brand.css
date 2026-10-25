@@ -1,8 +1,9 @@
 /* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay and the route loader. */
 
-/* Intro, 2.0 s, once per tab session. The 3D books (IntroScene) fall and land as A A 0–0.9 s, the gold ribbon
-   threads through 0.95–1.33 s, the scene fades 1.40–1.85 s while the wordmark rises 1.45–1.95 s, and the overlay
-   fades 1.76–2.00 s. The overlay is pure CSS, so the wordmark still plays if WebGL or the scene chunk never arrives. */
+/* Intro, 2.0 s × --intro-k (2.9 s), once per tab session. The 3D books (IntroScene) fall and land as A A 0–0.9 s,
+   the gold ribbon threads through 0.95–1.33 s, the scene fades 1.40–1.85 s while the wordmark rises 1.45–1.95 s,
+   and the overlay fades 1.76–2.00 s. The overlay is pure CSS, so the wordmark still plays if WebGL or the scene
+   chunk never arrives. --intro-k is applied here and to the scene clock in IntroScene.tsx, so they stay aligned. */
 .as-intro { display: none; }
 html[data-intro] .as-intro {
   position: fixed; inset: 0; z-index: 50;
@@ -10,15 +11,15 @@ html[data-intro] .as-intro {
   background: radial-gradient(120% 90% at 50% 0%, #1A2290 0%, var(--color-night) 55%, #060828 100%);
   color: var(--color-ground);
   cursor: pointer;
-  animation: as-intro-out var(--dur-base) var(--ease-out) 1760ms forwards;
+  animation: as-intro-out calc(var(--dur-base) * var(--intro-k)) var(--ease-out) calc(1760ms * var(--intro-k)) forwards;
 }
 html[data-intro="skip"] .as-intro { animation-delay: 0ms; }
 .as-intro-scene { position: absolute; inset: 0; }
-html[data-intro] .as-intro-scene { animation: as-fade-out 450ms var(--ease-out) 1400ms forwards; }
-html[data-intro] .as-intro-word { opacity: 0; animation: as-rise 500ms var(--ease-out) 1450ms forwards; }
+html[data-intro] .as-intro-scene { animation: as-fade-out calc(450ms * var(--intro-k)) var(--ease-out) calc(1400ms * var(--intro-k)) forwards; }
+html[data-intro] .as-intro-word { opacity: 0; animation: as-rise calc(500ms * var(--intro-k)) var(--ease-out) calc(1450ms * var(--intro-k)) forwards; }
 /* The page stays hidden under the overlay until it fades, so the web-font swap behind it is not a layout shift. */
 html[data-intro] body > :not(main),
-html[data-intro] main > :not(.as-intro) { animation: as-reveal 0s 1760ms both; }
+html[data-intro] main > :not(.as-intro) { animation: as-reveal 0s calc(1760ms * var(--intro-k)) both; }
 html[data-intro="skip"] body > :not(main),
 html[data-intro="skip"] main > :not(.as-intro) { animation-delay: 0ms; }
 

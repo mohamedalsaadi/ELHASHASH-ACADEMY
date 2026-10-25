@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { priceSkus } from "@/lib/checkout";
+import { resolveCoupon } from "@/lib/coupon-resolve";
 import { db } from "@/lib/db";
-import { activeGateway, stripeUnitAmount } from "@/lib/gateway";
+import { activeGateway, stripeUnitAmount, type Method } from "@/lib/gateway";
 import { createIntention } from "@/lib/paymob";
-import { PricingError } from "@/lib/pricing-engine";
+import { applyPaymentOutcome } from "@/lib/payments";
+import { applyCoupon, PricingError } from "@/lib/pricing-engine";
 import { checkoutSchema } from "@/lib/schemas/checkout";
 import { stripe } from "@/lib/stripe";
 
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
 
   const parsed = checkoutSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
-  const { skuIds, method, locale } = parsed.data;
+  const { skuIds, method, locale, coupon } = parsed.data;
 
   let result;
   try {
@@ -28,33 +30,63 @@ export async function POST(req: Request) {
     if (e instanceof PricingError) return NextResponse.json({ error: e.message }, { status: 400 });
     throw e;
   }
-  const { priced, skus, missing } = result;
+  const { skus, missing } = result;
   if (missing) return NextResponse.json({ error: "sku_unavailable" }, { status: 400 });
-  const { gateway, methods } = activeGateway(priced.currency);
-  if (!methods.includes(method)) return NextResponse.json({ error: "method_unavailable" }, { status: 400 });
+
+  // The coupon is resolved again here, never trusted from the browser.
+  let priced = result.priced;
+  let couponId: string | null = null;
+  if (coupon) {
+    const resolved = await resolveCoupon(coupon, session.user.id);
+    if (!resolved.ok) return NextResponse.json({ error: `coupon_${resolved.reason}` }, { status: 400 });
+    try {
+      priced = applyCoupon(priced, resolved.coupon);
+    } catch (e) {
+      if (e instanceof PricingError) return NextResponse.json({ error: "coupon_currency" }, { status: 400 });
+      throw e;
+    }
+    couponId = resolved.coupon.id;
+  }
+
+  // A 100% code leaves nothing for a gateway to charge; such an order is completed below without one.
+  const free = priced.total === 0;
+  const { gateway, methods } = free ? { gateway: "MANUAL" as const, methods: [] as Method[] } : activeGateway(priced.currency);
+  if (!free && !methods.includes(method)) return NextResponse.json({ error: "method_unavailable" }, { status: 400 });
 
   const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id } });
+  const net = (l: (typeof priced.lines)[number]) => l.price - l.discount - l.couponDiscount;
   const order = await db.order.create({
     data: {
       userId: user.id,
       gateway,
-      method,
+      method: free ? null : method,
       currency: priced.currency,
       subtotal: priced.subtotal,
       discount: priced.discount,
       total: priced.total,
-      expiresAt: new Date(Date.now() + (gateway === "STRIPE" ? STRIPE_TTL_S * 1000 : PENDING_TTL_MS)),
-      items: { create: priced.lines.map((l) => ({ skuId: l.skuId, price: l.price - l.discount })) },
+      couponId,
+      expiresAt: free ? null : new Date(Date.now() + (gateway === "STRIPE" ? STRIPE_TTL_S * 1000 : PENDING_TTL_MS)),
+      items: { create: priced.lines.map((l) => ({ skuId: l.skuId, price: net(l) })) },
     },
   });
 
   const origin = process.env.APP_URL || new URL(req.url).origin;
   const resultUrl = `${origin}/${locale}/checkout/result?order=${order.id}`;
-  const items = priced.lines.map((l) => {
-    const sku = skus.get(l.skuId)!;
-    const name = sku.liveSession ?? sku.lesson ?? sku.course;
-    return { name: `${locale === "ar" ? name.titleAr : name.titleEn} (${sku.accessType})`, amountCents: l.price - l.discount };
-  });
+
+  if (free) {
+    // Record the zero payment through the same path as a webhook, so entitlements are granted exactly once.
+    await applyPaymentOutcome(order.id, `free:${order.id}`, { kind: "paid", amount: 0, currency: priced.currency }, { free: true, couponId });
+    return NextResponse.json({ orderId: order.id, checkoutUrl: resultUrl });
+  }
+
+  // Zero-value lines are dropped: Stripe rejects a zero unit amount, and the sum is still the order total.
+  const items = priced.lines
+    .map((l) => {
+      const sku = skus.get(l.skuId)!;
+      const name = sku.liveSession ?? sku.lesson ?? sku.course;
+      return { name: `${locale === "ar" ? name.titleAr : name.titleEn} (${sku.accessType})`, amountCents: net(l) };
+    })
+    .filter((i) => i.amountCents > 0);
 
   try {
     let checkoutUrl: string;

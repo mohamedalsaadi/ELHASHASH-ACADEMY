@@ -258,7 +258,8 @@ model VideoAsset {
 }
 
 /// Prices are integers in minor units (piastres / fils).
-/// saleFrom/saleTo bound when a SKU can be bought (REVISION packs open weeks before exams).
+/// saleFrom/saleTo bound when a SKU can be bought (REVISION packs open weeks before exams); they are not a discount.
+/// discountPrice is a temporary price shown struck-through next to `price` during [discountFrom, discountTo).
 /// accessEndsAt is when bought access stops; accessDays counts days from payment instead. Both null means perpetual.
 model Sku {
   id            String     @id @default(cuid())
@@ -268,6 +269,9 @@ model Sku {
   currency      Currency
   saleFrom      DateTime?
   saleTo        DateTime?
+  discountPrice Int?
+  discountFrom  DateTime?
+  discountTo    DateTime?
   accessEndsAt  DateTime?
   accessDays    Int?
   /// Set only on RENTAL SKUs: the one lesson this SKU rents.
@@ -298,6 +302,51 @@ model BundleRule {
   subjects   Subject[]
 }
 
+enum PromoPlacement {
+  BAR
+  CARD
+}
+
+/// A storefront message the owner manages: a slim bar under the header or an offer card in the home scroll.
+/// Text only in v1; there is no image uploader yet.
+model Promotion {
+  id        String         @id @default(cuid())
+  placement PromoPlacement @default(BAR)
+  titleAr   String
+  titleEn   String
+  bodyAr    String?
+  bodyEn    String?
+  /// Site path or https URL; empty means no link.
+  href      String?
+  startsAt  DateTime?
+  endsAt    DateTime?
+  active    Boolean        @default(true)
+  order     Int            @default(0)
+  createdAt DateTime       @default(now())
+
+  @@index([active, order])
+}
+
+/// A checkout code. Redemptions are counted from paid orders, so no separate redemption table is needed.
+model Coupon {
+  id             String    @id @default(cuid())
+  /// Stored uppercase.
+  code           String    @unique
+  /// Exactly one of percentOff / amountOff.
+  percentOff     Int?
+  amountOff      Int?
+  /// Required with amountOff.
+  currency       Currency?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  maxRedemptions Int?
+  perUser        Int       @default(1)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  orders Order[]
+}
+
 model Order {
   id             String         @id @default(cuid())
   userId         String
@@ -308,6 +357,8 @@ model Order {
   subtotal       Int
   discount       Int
   total          Int
+  /// Set when a coupon took part in `discount`.
+  couponId       String?
   /// Kiosk reference the student pays in cash; the order stays PENDING until the gateway webhook arrives.
   kioskRef       String?
   /// Paymob intention id or Stripe Checkout Session id
@@ -317,6 +368,7 @@ model Order {
   createdAt      DateTime       @default(now())
 
   user         User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  coupon       Coupon?        @relation(fields: [couponId], references: [id], onDelete: SetNull)
   items        OrderItem[]
   events       PaymentEvent[]
   entitlements Entitlement[]

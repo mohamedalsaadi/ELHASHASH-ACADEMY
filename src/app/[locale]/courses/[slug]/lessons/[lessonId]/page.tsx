@@ -8,6 +8,7 @@ import { canAsk, hasLessonAccess, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
 import { AskForm } from "./AskForm";
+import { markLessonComplete } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -63,12 +64,20 @@ export default async function LessonPage({
   const session = await auth();
   const userId = session?.user?.id;
   if (!unit.isFree && !(await hasLessonAccess(userId, course.id, lessonScope(lesson)))) redirect(`/${locale}/courses/${slug}#packages`);
-  const [mayAsk, mine, tq] = await Promise.all([
+  if (userId) {
+    await db.lessonView.upsert({
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
+      create: { userId, lessonId: lesson.id },
+      update: { lastSeenAt: new Date() },
+    });
+  }
+  const [mayAsk, mine, tq, view] = await Promise.all([
     canAsk(userId, course.id, lessonScope(lesson)),
     userId
       ? db.question.findMany({ where: { lessonId: lesson.id, userId }, orderBy: { createdAt: "desc" }, include: { answeredBy: { select: { name: true } } } })
       : [],
     getTranslations("questions"),
+    userId ? db.lessonView.findUnique({ where: { userId_lessonId: { userId, lessonId: lesson.id } }, select: { completedAt: true } }) : null,
   ]);
 
   const video = lesson.video;
@@ -99,6 +108,19 @@ export default async function LessonPage({
           <Notice>{t("videoSoon")}</Notice>
         )}
       </div>
+
+      {userId && (
+        <form action={markLessonComplete} className="flex flex-wrap items-center gap-3">
+          <input type="hidden" name="lessonId" value={lesson.id} />
+          {view?.completedAt ? (
+            <span className="w-fit rounded-full border border-up px-3 py-1 text-label text-up">{t("completed")}</span>
+          ) : (
+            <button className="w-fit rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
+              {t("markComplete")}
+            </button>
+          )}
+        </form>
+      )}
 
       {userId && (mayAsk || mine.length > 0) && (
         <section className="grid gap-4 border-t border-hairline pt-6">

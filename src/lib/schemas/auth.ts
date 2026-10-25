@@ -15,13 +15,17 @@ export const signInSchema = z.object({
   password: passwordSchema,
 });
 
-export const signUpSchema = z.object({
-  email: z.email().trim().toLowerCase(),
-  phone: phoneSchema,
-  password: passwordSchema,
-  name: z.string().trim().min(2).max(80),
-  gradeId: z.string().min(1),
-});
+export const signUpSchema = z
+  .object({
+    type: z.enum(["STUDENT", "PARENT"]).default("STUDENT"),
+    email: z.email().trim().toLowerCase(),
+    phone: phoneSchema,
+    password: passwordSchema,
+    name: z.string().trim().min(2).max(80),
+    /// Required for a student, absent for a parent.
+    gradeId: z.string().optional(),
+  })
+  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" });
 
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;

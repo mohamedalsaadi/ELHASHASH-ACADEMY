@@ -4,7 +4,9 @@ import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
+import { markOrderPaid, refundOrder } from "../../actions";
 import { AdminNav, panel, table } from "../../AdminNav";
+import { SaveButton } from "../../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +92,30 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
           <p className="text-small text-ink-muted">{t("extension")}</p>
         )}
       </section>
+
+      {(o.status === "PENDING" || o.status === "PAID") && (
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("actions")}</h2>
+          {o.status === "PENDING" && (
+            <form action={markOrderPaid} className="grid gap-2">
+              <input type="hidden" name="id" value={o.id} />
+              <p className="text-small text-ink-muted">{t("markPaidHint")}</p>
+              <div>
+                <SaveButton>{t("markPaid")}</SaveButton>
+              </div>
+            </form>
+          )}
+          {o.status === "PAID" && (
+            <form action={refundOrder} className="grid gap-2">
+              <input type="hidden" name="id" value={o.id} />
+              <p className="text-small text-ink-muted">{o.gateway === "PAYMOB" ? t("refundPaymobHint") : t("refundHint")}</p>
+              <div>
+                <SaveButton danger>{t("refund")}</SaveButton>
+              </div>
+            </form>
+          )}
+        </section>
+      )}
 
       <section className={panel}>
         <h2 className="font-display text-h3 font-semibold">{t("events")}</h2>

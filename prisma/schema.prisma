@@ -11,6 +11,8 @@ enum Role {
   STUDENT
   INSTRUCTOR
   ADMIN
+  /// A parent account: can only see the children it has linked, never edit content.
+  PARENT
 }
 
 enum CountryCode {
@@ -96,31 +98,39 @@ enum OrderStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  phone        String?  @unique
-  email        String?  @unique
-  passwordHash String
-  role         Role     @default(STUDENT)
-  locale       String   @default("ar")
-  gradeId      String?
+  id              String    @id @default(cuid())
+  name            String
+  phone           String?   @unique
+  email           String?   @unique
+  /// Null until the address is confirmed through a verification token.
+  emailVerifiedAt DateTime?
+  passwordHash    String
+  role            Role      @default(STUDENT)
+  locale          String    @default("ar")
+  gradeId         String?
   /// Teacher profile, shown on the public teacher page.
-  photoUrl     String?
-  bioAr        String?
-  bioEn        String?
-  createdAt    DateTime @default(now())
+  photoUrl        String?
+  bioAr           String?
+  bioEn           String?
+  createdAt       DateTime  @default(now())
 
-  grade        Grade?           @relation(fields: [gradeId], references: [id], onDelete: SetNull)
-  courses      Course[]         @relation("Instructor")
-  orders       Order[]
-  entitlements Entitlement[]
-  device       DeviceSession?
-  progress     StudentProgress?
-  attempts     QuizAttempt[]
-  views        LessonView[]
-  recorded     Lesson[]         @relation("LessonInstructor")
-  questions    Question[]       @relation("Asker")
-  answers      Question[]       @relation("Answerer")
+  grade         Grade?           @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  courses       Course[]         @relation("Instructor")
+  orders        Order[]
+  entitlements  Entitlement[]
+  device        DeviceSession?
+  progress      StudentProgress?
+  attempts      QuizAttempt[]
+  views         LessonView[]
+  recorded      Lesson[]         @relation("LessonInstructor")
+  questions     Question[]       @relation("Asker")
+  answers       Question[]       @relation("Answerer")
+  tokens        Token[]
+  notifications Notification[]
+  parentCode    ParentCode?
+  parentLinks   ParentLink[]     @relation("Parent")
+  childLinks    ParentLink[]     @relation("Student")
+  attendance    LiveAttendance[]
 }
 
 model Country {
@@ -398,7 +408,7 @@ model PaymentEvent {
 }
 
 model Entitlement {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   userId        String
   courseId      String
   orderId       String?
@@ -410,7 +420,7 @@ model Entitlement {
   accessType    AccessType?
   term          Int?
   month         Int?
-  startsAt      DateTime  @default(now())
+  startsAt      DateTime    @default(now())
   /// null means perpetual access
   endsAt        DateTime?
 
@@ -436,11 +446,97 @@ model LiveSession {
   cancelledAt DateTime?
   createdAt   DateTime  @default(now())
 
-  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course       Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   sku          Sku?
   entitlements Entitlement[]
+  attendance   LiveAttendance[]
 
   @@index([courseId, startsAt])
+}
+
+/// One row per student per session, written when the room token is minted.
+model LiveAttendance {
+  userId        String
+  liveSessionId String
+  joinedAt      DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  liveSession LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, liveSessionId])
+}
+
+enum TokenKind {
+  RESET
+  VERIFY
+}
+
+/// A single-use email token. Only the SHA-256 hash is stored.
+model Token {
+  id        String    @id @default(cuid())
+  userId    String
+  kind      TokenKind
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind])
+}
+
+enum NotificationKind {
+  ANSWER
+  ORDER_PAID
+  EXPIRING
+  LIVE_SOON
+  SYSTEM
+}
+
+/// In-app notice; `dedupeKey` stops a reminder from firing twice, and `emailedAt` records the email.
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  kind      NotificationKind
+  titleAr   String
+  titleEn   String
+  bodyAr    String?
+  bodyEn    String?
+  href      String?
+  dedupeKey String?          @unique
+  readAt    DateTime?
+  emailedAt DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/// A short code a student shows a parent; the code is hashed and single use.
+model ParentCode {
+  studentId String   @id
+  codeHash  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+/// A verified parent-child link. Either side can remove it.
+model ParentLink {
+  id         String   @id @default(cuid())
+  parentId   String
+  studentId  String
+  verifiedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  parent  User @relation("Parent", fields: [parentId], references: [id], onDelete: Cascade)
+  student User @relation("Student", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@index([studentId])
 }
 
 /// One row per user: signing in on a new device replaces it, which revokes playback on the old one.
@@ -497,6 +593,8 @@ model LessonView {
   lessonId    String
   watchedSec  Int       @default(0)
   completedAt DateTime?
+  /// Last time the lesson was opened; drives "continue learning".
+  lastSeenAt  DateTime  @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)

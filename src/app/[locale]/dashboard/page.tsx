@@ -14,6 +14,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const session = await auth();
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/dashboard`)}`);
   if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
+  if (session.user.role === "PARENT") redirect(`/${locale}/parent`);
   const t = await getTranslations("dashboard");
   const tc = await getTranslations("catalog");
   const ar = locale === "ar";
@@ -45,6 +46,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     include: { answeredBy: { select: { name: true } }, lesson: { include: { unit: { include: { course: { select: { slug: true } } } } } } },
   });
   const tq = await getTranslations("questions");
+  const lastView = await db.lessonView.findFirst({
+    where: { userId: session.user.id, completedAt: null },
+    orderBy: { lastSeenAt: "desc" },
+    include: { lesson: { include: { unit: { include: { course: { select: { slug: true, titleAr: true, titleEn: true } } } } } } },
+  });
   const seats = entitlements.filter((e) => e.liveSessionId && isActive(e, now)).map((e) => e.liveSessionId!);
   const live = (
     await db.liveSession.findMany({
@@ -57,6 +63,21 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
       <h1 className="font-display text-h1 font-semibold">{t("hello", { name: session.user.name ?? "" })}</h1>
+      {lastView && (
+        <section className="grid gap-3">
+          <h2 className="font-display text-h2 font-semibold">{t("continue")}</h2>
+          <Link
+            href={`/courses/${lastView.lesson.unit.course.slug}/lessons/${lastView.lesson.id}`}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-pen bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+          >
+            <span className="grid gap-1">
+              <span className="font-display font-semibold">{ar ? lastView.lesson.titleAr : lastView.lesson.titleEn}</span>
+              <span className="text-small text-ink-muted">{ar ? lastView.lesson.unit.course.titleAr : lastView.lesson.unit.course.titleEn}</span>
+            </span>
+            <span className="text-small text-pen">{t("resume")}</span>
+          </Link>
+        </section>
+      )}
       {answers.length > 0 && (
         <section className="grid gap-3">
           <h2 className="font-display text-h2 font-semibold">{tq("newAnswers")}</h2>

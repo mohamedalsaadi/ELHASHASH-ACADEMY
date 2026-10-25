@@ -12,7 +12,10 @@
     "signIn": "Sign in",
     "teacher": "Teacher dashboard",
     "signUp": "Sign up",
-    "teachers": "Teachers"
+    "teachers": "Teachers",
+    "parent": "Parent dashboard",
+    "notifications": "Notifications",
+    "account": "My account"
   },
   "home": {
     "eyebrow": "Grades 1 to 12 · Egypt and the Gulf",
@@ -65,7 +68,10 @@
     "submit": "Sign in",
     "error": "Wrong mobile number, email or password. After 10 wrong tries, sign-in pauses for 15 minutes.",
     "noAccount": "No account yet?",
-    "signUp": "Create one"
+    "signUp": "Create one",
+    "forgot": "Forgot your password?",
+    "verified": "Your email is confirmed. Sign in.",
+    "resetDone": "Your password was changed. Sign in."
   },
   "checkout": {
     "title": "Complete your purchase",
@@ -140,7 +146,8 @@
         "EXPIRED": "The reference number expired. Start a new order.",
         "REFUNDED": "The amount went back to your original payment method."
       },
-      "kioskRef": "Reference number:"
+      "kioskRef": "Reference number:",
+      "receipt": "View the receipt"
     },
     "agree": "By paying you agree to the <terms>terms of use</terms> and the <refund>refund policy</refund>. All sales are final."
   },
@@ -150,6 +157,7 @@
     "freeUnit": "Unit 1 is free",
     "from": "From",
     "percentOff": "{pct}% off",
+    "progress": "{pct}% complete · {done} of {total} lessons",
     "owned": "You're subscribed to this course",
     "startFree": "Start the free unit",
     "units": "Units",
@@ -224,7 +232,9 @@
     "reload": "Refresh the page to play the video.",
     "otherDevice": "Your account is open on another device. Only one device is allowed per account, and the other device won't be able to play lessons after this.",
     "watchHere": "Watch on this device",
-    "unavailable": "The video can't play right now. Refresh the page in a minute."
+    "unavailable": "The video can't play right now. Refresh the page in a minute.",
+    "markComplete": "Mark as complete",
+    "completed": "Completed"
   },
   "admin": {
     "title": "Admin",
@@ -347,6 +357,10 @@
     "name": "Full name",
     "email": "Email",
     "emailHint": "Receipts and lesson updates go here.",
+    "type": "Account type",
+    "typeStudent": "Student",
+    "typeParent": "Parent",
+    "parentHint": "A parent account follows your children after you link them with a code from the student's account.",
     "phone": "Mobile number",
     "phoneHint": "Egypt: 01xxxxxxxxx · Gulf: 05xxxxxxxx or 8 digits",
     "grade": "Grade",
@@ -377,7 +391,9 @@
     "forever": "Open with no end date",
     "expired": "Subscription ended, renew it",
     "myRentals": "Rented lectures",
-    "myLive": "My live lectures"
+    "myLive": "My live lectures",
+    "continue": "Continue where you left off",
+    "resume": "Continue"
   },
   "footer": {
     "terms": "Terms of use",
@@ -532,6 +548,12 @@
     "items": "Items",
     "amount": "Amount",
     "extension": "Manual change, no items",
+    "actions": "Actions",
+    "markPaid": "Confirm payment",
+    "markPaidHint": "Use after cash or a transfer arrives. It grants access and records the operation.",
+    "refund": "Refund",
+    "refundHint": "Refunds the amount through Stripe and ends the access it granted.",
+    "refundPaymobHint": "For Paymob, refund in the Paymob dashboard first, then press the button to end access and record it.",
     "orderStatus": {
       "PENDING": "Pending",
       "PAID": "Paid",
@@ -571,5 +593,109 @@
     "hours": "{n} h",
     "days": "{n, plural, one {# day} other {# days}}",
     "noQuestions": "No questions yet."
+  },
+  "account": {
+    "title": "My account",
+    "profileTitle": "Profile",
+    "name": "Full name",
+    "email": "Email",
+    "save": "Save",
+    "profile": {
+      "ok": "Saved.",
+      "invalid_name": "Enter a valid name.",
+      "invalid_email": "Enter a valid email address.",
+      "email_taken": "This email is already used."
+    },
+    "verified": "Email confirmed",
+    "unverified": "Email not confirmed",
+    "verifiedNow": "Your email is confirmed.",
+    "sendVerification": "Send confirmation link",
+    "passwordTitle": "Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password (at least 8 characters)",
+    "changePassword": "Change password",
+    "password": {
+      "ok": "Password changed.",
+      "wrong": "The current password is wrong.",
+      "short": "The new password is too short."
+    },
+    "parentTitle": "Parent access",
+    "parentCodeHint": "Generate a six-digit code and give it to your parent within 15 minutes.",
+    "generateCode": "Generate code",
+    "newCode": "New code",
+    "noParents": "No parent is linked yet.",
+    "unlink": "Unlink",
+    "childrenTitle": "My children",
+    "noChildren": "No children are linked yet.",
+    "openParent": "Open the parent dashboard",
+    "openStaff": "Open the staff dashboard"
+  },
+  "forgot": {
+    "title": "Forgot your password?",
+    "lede": "Enter your email and we will send a reset link if it is registered.",
+    "email": "Email",
+    "submit": "Send the link",
+    "sent": "If the email is registered, a reset link is on its way.",
+    "back": "Back to sign in"
+  },
+  "reset": {
+    "title": "New password",
+    "password": "New password",
+    "hint": "At least 8 characters",
+    "submit": "Save",
+    "errors": {
+      "invalid": "This link is invalid or has expired.",
+      "short": "The password is too short."
+    }
+  },
+  "verify": {
+    "title": "Confirm your email",
+    "lede": "Press the button to confirm your address.",
+    "submit": "Confirm",
+    "invalid": "This link is invalid or has expired."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAll": "Mark all as read",
+    "empty": "No notifications yet."
+  },
+  "receipt": {
+    "title": "Receipt",
+    "back": "Back",
+    "print": "Print",
+    "student": "Student",
+    "date": "Date",
+    "gateway": "Payment gateway",
+    "reference": "Reference",
+    "item": "Item",
+    "amount": "Amount",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "total": "Paid",
+    "thanks": "Thank you. This receipt is valid without a stamp."
+  },
+  "parent": {
+    "title": "Parent dashboard",
+    "lede": "Follow your children's progress and payments.",
+    "linkTitle": "Link a student",
+    "linkHint": "Ask the student for a code from their account, then enter their mobile number and the code.",
+    "phone": "Mobile number",
+    "code": "Code",
+    "link": "Link",
+    "errors": {
+      "ok": "Linked.",
+      "not_found": "No student has that number.",
+      "bad_code": "The code is wrong or has expired.",
+      "already": "This student is already linked."
+    },
+    "unlink": "Unlink",
+    "courses": "Active courses",
+    "completedWeek": "Lessons completed this week",
+    "attendedMonth": "Live sessions this month",
+    "nextExpiry": "Next expiry",
+    "noExpiry": "None",
+    "lastPayment": "Last payment",
+    "noPayment": "None",
+    "noChildren": "You have not linked a student yet."
   }
 }

@@ -109,6 +109,11 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
 
   const session = await auth();
   const grants = await grantsFor(session?.user?.id, course.id, now);
+  const lessonIds = course.units.flatMap((u) => u.lessons.map((l) => l.id));
+  const completed = session?.user
+    ? await db.lessonView.count({ where: { userId: session.user.id, lessonId: { in: lessonIds }, completedAt: { not: null } } })
+    : 0;
+  const progressPct = lessonIds.length ? Math.round((completed / lessonIds.length) * 100) : 0;
   const opens = (l: { id: string; month: number | null }, term: number) => grants.some((g) => opensLesson(g, { id: l.id, month: l.month, term }, now));
   const paid = course.units.filter((u) => !u.isFree).flatMap((u) => u.lessons.map((l) => ({ l, term: u.term })));
   const owned = paid.length > 0 && paid.every(({ l, term }) => opens(l, term));
@@ -141,6 +146,9 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
         <p className="text-small text-ink-muted">{course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}</p>
         <h1 className="font-display text-h1 font-semibold text-balance">{ar ? course.titleAr : course.titleEn}</h1>
         {(ar ? course.descAr : course.descEn) && <p className="max-w-[65ch] text-ink-muted">{ar ? course.descAr : course.descEn}</p>}
+        {session?.user && progressPct > 0 && (
+          <p className="text-small text-ink-muted">{t("progress", { pct: progressPct, done: completed, total: lessonIds.length })}</p>
+        )}
         {owned ? (
           <p className="w-fit rounded-full border border-up px-3 py-1 text-label text-up">{t("owned")}</p>
         ) : (

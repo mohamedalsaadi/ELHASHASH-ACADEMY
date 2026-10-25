@@ -11,8 +11,10 @@ import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
 import { toMinor } from "@/lib/format";
+import { applyPaymentOutcome } from "@/lib/payments";
 import { phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
+import { stripe } from "@/lib/stripe";
 
 // Every action re-checks the role: server actions are public endpoints, whatever page renders them.
 
@@ -287,6 +289,46 @@ export async function deleteCoupon(form: FormData) {
   const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
   await db.coupon.delete({ where: { id } });
   done();
+}
+
+/** Completes a pending order (kiosk cash received, bank transfer, …) through the same path as a webhook. */
+export async function markOrderPaid(form: FormData) {
+  const me = await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  const order = await db.order.findUniqueOrThrow({ where: { id }, select: { id: true, status: true, total: true, currency: true } });
+  if (order.status === "PAID") return;
+  await applyPaymentOutcome(order.id, `manual:${randomUUID()}`, { kind: "paid", amount: order.total, currency: order.currency }, { admin: me.id });
+  done();
+  revalidatePath("/[locale]/admin/orders", "layout");
+  revalidatePath("/[locale]/dashboard", "page");
+}
+
+/**
+ * Refunds a paid order and revokes the access it granted. Stripe is refunded through its API;
+ * for Paymob the money is refunded in the Paymob dashboard and this records it and closes access.
+ */
+export async function refundOrder(form: FormData) {
+  const me = await requireAdmin();
+  const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
+  const order = await db.order.findUniqueOrThrow({ where: { id }, select: { id: true, status: true, gateway: true, gatewayOrderId: true } });
+  if (order.status !== "PAID") return;
+
+  if (order.gateway === "STRIPE" && order.gatewayOrderId) {
+    const session = await stripe().checkout.sessions.retrieve(order.gatewayOrderId);
+    const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+    if (paymentIntent) await stripe().refunds.create({ payment_intent: paymentIntent });
+  }
+
+  await db.$transaction([
+    db.order.update({ where: { id }, data: { status: "REFUNDED" } }),
+    db.entitlement.updateMany({ where: { orderId: id }, data: { endsAt: new Date() } }),
+    db.paymentEvent.create({
+      data: { orderId: id, gatewayEventId: `refund:${id}:${randomUUID()}`, payload: { admin: me.id, gateway: order.gateway } },
+    }),
+  ]);
+  done();
+  revalidatePath("/[locale]/admin/orders", "layout");
+  revalidatePath("/[locale]/dashboard", "page");
 }
 
 export async function changePassword(_: unknown, form: FormData): Promise<"ok" | "wrong" | "short"> {

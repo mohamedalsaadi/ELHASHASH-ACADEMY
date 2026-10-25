@@ -10,10 +10,10 @@ export default async function SignInPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; verified?: string; reset?: string }>;
 }) {
   const { locale } = await params;
-  const { error, next } = await searchParams;
+  const { error, next, verified, reset } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("signin");
   const target = safeNext(next, `/${locale}/dashboard`);
@@ -58,10 +58,25 @@ export default async function SignInPage({
             {t("error")}
           </p>
         )}
+        {verified && (
+          <p role="status" className="text-small text-up">
+            {t("verified")}
+          </p>
+        )}
+        {reset && (
+          <p role="status" className="text-small text-up">
+            {t("resetDone")}
+          </p>
+        )}
         <button className="rounded-sm bg-primary px-[18px] py-3 font-display font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]">
           {t("submit")}
         </button>
       </form>
+      <p className="text-small text-ink-muted">
+        <Link href="/forgot" className="text-ink underline underline-offset-4">
+          {t("forgot")}
+        </Link>
+      </p>
       <p className="text-small text-ink-muted">
         {t("noAccount")}{" "}
         <Link href={{ pathname: "/signup", query: next ? { next } : {} }} className="text-ink underline underline-offset-4">

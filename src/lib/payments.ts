@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { accessEnd } from "@/lib/access";
 import { db } from "@/lib/db";
+import { notifyOrderPaid } from "@/lib/notify";
 
 export type PaymentOutcome =
   | { kind: "paid"; amount: number; currency: string }
@@ -15,6 +16,7 @@ export type PaymentOutcome =
  * Returns false when the event was already recorded.
  */
 export async function applyPaymentOutcome(orderId: string, eventId: string, outcome: PaymentOutcome, payload: unknown): Promise<boolean> {
+  let granted = false;
   try {
     await db.$transaction(async (trx) => {
       await trx.paymentEvent.create({ data: { orderId, gatewayEventId: eventId, payload: payload as Prisma.InputJsonValue } });
@@ -44,6 +46,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
                 endsAt: accessEnd(i.sku, paidAt),
               })),
             });
+            granted = true;
           }
           break;
         }
@@ -59,6 +62,14 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
           break;
       }
     });
+    // The receipt is sent after the commit; a mail failure must not undo the payment.
+    if (granted) {
+      try {
+        await notifyOrderPaid(orderId);
+      } catch (e) {
+        console.error("[notify] order paid failed", orderId, e);
+      }
+    }
     return true;
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return false;

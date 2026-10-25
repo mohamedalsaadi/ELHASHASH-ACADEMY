@@ -27,4 +27,10 @@ describe("signUpSchema", () => {
     expect(signUpSchema.safeParse(base).success).toBe(false);
     expect(signUpSchema.safeParse({ ...base, email: "not-an-email" }).success).toBe(false);
   });
+
+  it("requires a grade for a student but not for a parent", () => {
+    const parent = { type: "PARENT" as const, name: "ولي", email: "parent@example.com", phone: "01012345678", password: "password123" };
+    expect(signUpSchema.safeParse(parent).success).toBe(true);
+    expect(signUpSchema.safeParse({ ...parent, type: "STUDENT" as const }).success).toBe(false);
+  });
 });

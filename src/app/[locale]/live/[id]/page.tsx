@@ -90,6 +90,13 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
       if ("block" in device) return device.block;
     }
     const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { name: true } });
+    if (role === "student") {
+      await db.liveAttendance.upsert({
+        where: { userId_liveSessionId: { userId: session.user.id, liveSessionId: s!.id } },
+        create: { userId: session.user.id, liveSessionId: s!.id },
+        update: {},
+      });
+    }
     try {
       let roomUrl = s!.roomUrl;
       if (!roomUrl) {

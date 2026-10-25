@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { stripe, syncCheckoutSession } from "@/lib/stripe";
@@ -45,6 +46,16 @@ export default async function ResultPage({
       <p className="num text-small text-ink-muted">
         {formatMoney(order.total, order.currency, locale)} · {order.id}
       </p>
+      {(order.status === "PAID" || order.status === "REFUNDED") && (
+        <p>
+          <Link
+            href={`/orders/${order.id}`}
+            className="w-fit rounded-sm border-[1.5px] border-ink px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
+          >
+            {t("receipt")}
+          </Link>
+        </p>
+      )}
     </main>
   );
 }

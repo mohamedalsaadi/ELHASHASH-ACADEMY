@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { canAsk, lessonScope } from "@/lib/catalog";
+import { canAsk, hasLessonAccess, lessonScope } from "@/lib/catalog";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -28,4 +28,22 @@ export async function askQuestion(_: unknown, form: FormData): Promise<"ok" | "m
   revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
   revalidatePath("/[locale]/teacher/questions", "page");
   return scan.masked ? "masked" : "ok";
+}
+
+/** Marks a lesson the student can open as completed; used by the button under the player. */
+export async function markLessonComplete(form: FormData) {
+  const session = await auth();
+  if (!session?.user) notFound();
+  const { lessonId } = z.object({ lessonId: z.string() }).parse(Object.fromEntries(form));
+  const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { unit: true } });
+  if (!lesson) notFound();
+  if (!lesson.unit.isFree && !(await hasLessonAccess(session.user.id, lesson.unit.courseId, lessonScope(lesson)))) notFound();
+
+  await db.lessonView.upsert({
+    where: { userId_lessonId: { userId: session.user.id, lessonId } },
+    create: { userId: session.user.id, lessonId, completedAt: new Date() },
+    update: { completedAt: new Date(), lastSeenAt: new Date() },
+  });
+  revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
+  revalidatePath("/[locale]/dashboard", "page");
 }

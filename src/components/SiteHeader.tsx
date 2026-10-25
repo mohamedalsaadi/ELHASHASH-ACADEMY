@@ -3,6 +3,7 @@ import { auth, signOut } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitch } from "@/components/LocaleSwitch";
 import { Wordmark } from "@/components/brand/Mark";
+import { db } from "@/lib/db";
 
 const navItem =
   "rounded-sm px-3 py-2 font-display text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
@@ -14,6 +15,7 @@ export async function SiteHeader() {
     auth(),
   ]);
   const role = session?.user?.role;
+  const unread = session?.user ? await db.notification.count({ where: { userId: session.user.id, readAt: null } }) : 0;
 
   async function signOutAction() {
     "use server";
@@ -32,9 +34,14 @@ export async function SiteHeader() {
           </Link>
           {session?.user ? (
             <>
-              {role !== "INSTRUCTOR" && (
+              {role !== "INSTRUCTOR" && role !== "PARENT" && (
                 <Link href="/dashboard" className={navItem}>
                   {t("dashboard")}
+                </Link>
+              )}
+              {role === "PARENT" && (
+                <Link href="/parent" className={navItem}>
+                  {t("parent")}
                 </Link>
               )}
               {role === "ADMIN" && (
@@ -47,6 +54,15 @@ export async function SiteHeader() {
                   {t("teacher")}
                 </Link>
               )}
+              <Link href="/notifications" className={navItem}>
+                {t("notifications")}
+                {unread > 0 && (
+                  <span className="ms-1 rounded-full bg-down px-1.5 py-0.5 text-label font-semibold text-on-primary">{unread}</span>
+                )}
+              </Link>
+              <Link href="/account" className={navItem}>
+                {t("account")}
+              </Link>
               <form action={signOutAction}>
                 <button className={`${navItem} text-ink-muted`}>
                   {t("signOut")}

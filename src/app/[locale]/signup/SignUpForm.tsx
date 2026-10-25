@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { signUp } from "./actions";
 
@@ -25,11 +25,19 @@ export function SignUpForm({ groups, locale, next }: { groups: { label: string; 
   const t = useTranslations("signup");
   const [state, action] = useActionState(signUp, null);
   const v = state?.values;
+  const [type, setType] = useState<"STUDENT" | "PARENT">(v?.type === "PARENT" ? "PARENT" : "STUDENT");
   return (
     // React resets the form after each submit; the key remounts it with what the student typed.
     <form key={JSON.stringify(state)} action={action} className="grid gap-4">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="next" value={next} />
+      <label className={label}>
+        {t("type")}
+        <select name="type" value={type} onChange={(e) => setType(e.target.value as "STUDENT" | "PARENT")} className={field}>
+          <option value="STUDENT">{t("typeStudent")}</option>
+          <option value="PARENT">{t("typeParent")}</option>
+        </select>
+      </label>
       <label className={label}>
         {t("name")}
         <input name="name" autoComplete="name" required minLength={2} maxLength={80} defaultValue={v?.name} className={field} />
@@ -44,23 +52,27 @@ export function SignUpForm({ groups, locale, next }: { groups: { label: string; 
         <input name="phone" type="tel" inputMode="numeric" autoComplete="tel" dir="ltr" required defaultValue={v?.phone} className={field} />
         <span className="text-label">{t("phoneHint")}</span>
       </label>
-      <label className={label}>
-        {t("grade")}
-        <select name="gradeId" required defaultValue={v?.gradeId ?? ""} className={field}>
-          <option value="" disabled>
-            {t("gradePick")}
-          </option>
-          {groups.map((c) => (
-            <optgroup key={c.label} label={c.label}>
-              {c.grades.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
+      {type === "STUDENT" ? (
+        <label className={label}>
+          {t("grade")}
+          <select name="gradeId" required defaultValue={v?.gradeId ?? ""} className={field}>
+            <option value="" disabled>
+              {t("gradePick")}
+            </option>
+            {groups.map((c) => (
+              <optgroup key={c.label} label={c.label}>
+                {c.grades.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <p className="text-small text-ink-muted">{t("parentHint")}</p>
+      )}
       <label className={label}>
         {t("password")}
         <input name="password" type="password" autoComplete="new-password" required minLength={8} className={field} />

@@ -11,8 +11,9 @@ const APPLY = process.argv.includes("--apply");
 const ACTIVATE_MONTHLY = process.argv.includes("--activate-monthly");
 const SLUG = "ae-12-adv-math";
 
-/** Minor units, AED. 60 per lecture over a 32-lecture year: single 60, monthly 8 lectures 440, semester 16 800, year 32 1440. */
-const PRICES = { SEMESTER: 80000, YEARLY: 144000, MONTHLY: 44000, RENTAL: 6000 } as const;
+/** Minor units, AED. 10-15% under Hamad Academy's 550/month per subject:
+    32-lecture year: single 65, monthly (8) 495, semester (16) 990, year (32) 1870. */
+const PRICES = { SEMESTER: 99000, YEARLY: 187000, MONTHLY: 49500, RENTAL: 6500 } as const;
 const BUNDLE_SUBJECTS = ["math", "physics", "chemistry"];
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });

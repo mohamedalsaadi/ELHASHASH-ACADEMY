@@ -105,25 +105,31 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             </div>
           </div>
 
-          {/* A sample result card on night: the brand's promise that every page counts, as a number. */}
-          <div aria-hidden="true" className="fold mx-auto grid w-full max-w-[420px] gap-5 bg-night p-7 text-on-primary shadow-paper [--cut:34px]">
-            <span className="flex items-center justify-between gap-2 text-small text-night-text">
-              {t("paper.label")}
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-label text-night-text">{t("paper.sample")}</span>
-            </span>
-            <span className="font-display text-h3 font-semibold">{t("paper.q")}</span>
-            <span className="flex items-end justify-between gap-3">
-              <span className="num text-[3.4rem] leading-none font-semibold">
-                48<span className="text-h3 font-normal text-night-muted"> / 50</span>
+          {/* A sample result card on night: the brand's promise that every lesson ends with a mark, as a number.
+              The folded corner and its gold ribbon sit on the wrapper, because .fold's clip-path would cut them. */}
+          <div
+            aria-hidden="true"
+            className="page-corner mx-auto w-full max-w-[420px] [--cut:34px] [--page-corner-back:color-mix(in_oklab,var(--color-night)_78%,var(--color-ground))]"
+          >
+            <div className="fold grid gap-5 bg-night p-7 text-on-primary shadow-paper">
+              <span className="flex items-center justify-between gap-2 text-small text-night-text">
+                {t("paper.label")}
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-label text-night-text">{t("paper.sample")}</span>
               </span>
-              <span className="rounded-sm bg-marker px-2.5 py-1 text-label font-semibold text-ink">{t("paper.score")}</span>
-            </span>
-            <span className="h-1.5 bg-white/15"><span className="block h-full w-[96%] bg-marker" /></span>
-            <span className="flex gap-1">
-              {Array.from({ length: 10 }, (_, i) => (
-                <i key={i} className={`h-5 w-4 [clip-path:polygon(50%_0,100%_100%,0_100%)] ${i < 6 ? "bg-primary" : i === 6 ? "bg-marker" : "bg-white/20"}`} />
-              ))}
-            </span>
+              <span className="font-display text-h3 font-semibold">{t("paper.q")}</span>
+              <span className="flex items-end justify-between gap-3">
+                <span className="num text-[3.4rem] leading-none font-semibold">
+                  48<span className="text-h3 font-normal text-night-muted"> / 50</span>
+                </span>
+                <span className="rounded-sm bg-marker px-2.5 py-1 text-label font-semibold text-ink">{t("paper.score")}</span>
+              </span>
+              <span className="h-1.5 bg-white/15"><span className="block h-full w-[96%] bg-marker" /></span>
+              <span className="flex gap-1">
+                {Array.from({ length: 10 }, (_, i) => (
+                  <i key={i} className={`h-5 w-4 [clip-path:polygon(50%_0,100%_100%,0_100%)] ${i < 6 ? "bg-primary" : i === 6 ? "bg-marker" : "bg-white/20"}`} />
+                ))}
+              </span>
+            </div>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 /* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay and the route loader. */
 
-/* Intro, 2.0 s × --intro-k (3.65 s), once per tab session. The 3D books (IntroScene) fall and land as A A 0–0.9 s,
+/* Intro, 2.0 s × --intro-k (5.48 s), once per tab session. The 3D books (IntroScene) fall and land as A A 0–0.9 s,
    the gold ribbon threads through 0.95–1.33 s, the scene fades 1.40–1.85 s while the wordmark rises 1.45–1.95 s,
    and the overlay fades 1.76–2.00 s. The overlay is pure CSS, so the wordmark still plays if WebGL or the scene
    chunk never arrives. --intro-k is applied here and to the scene clock in IntroScene.tsx, so they stay aligned. */

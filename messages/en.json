@@ -80,13 +80,13 @@
   },
   "home": {
     "eyebrow": "Grades 1 to 12 · Egypt and the Gulf",
-    "headline": "Know your <m>real</m> score in every lesson, before the exam",
-    "lede": "Curriculum lessons, exam structure and past ministry questions, with your teacher. Unit 1 of every subject is free.",
+    "headline": "Every lesson ends with a <m>mark</m> you can see",
+    "lede": "Your teacher explains, a quiz follows, and the score stays in your account. Unit 1 of every subject is free.",
     "ctaFree": "Start the free unit",
     "ctaGrade": "Choose your country",
     "skipIntro": "Skip intro",
     "paper": {
-      "label": "Practice exam · Mathematics",
+      "label": "Lesson result · Mathematics",
       "q": "Q1: Find the limit as x → 2",
       "a": "Solution: substitute directly…",
       "score": "Score 48 out of 50",
@@ -281,7 +281,7 @@
     "kind": {
       "VIDEO": "Video",
       "EXAM_STRUCTURE": "Exam structure",
-      "PAST_QUESTIONS": "Past ministry questions",
+      "PAST_QUESTIONS": "Practice questions",
       "PDF": "PDF"
     },
     "videoSoon": "This lesson's video is coming soon.",

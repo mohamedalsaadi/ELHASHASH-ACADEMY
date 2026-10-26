@@ -91,7 +91,7 @@ async function main() {
     const lessons = [
       { order: 1, kind: "VIDEO", titleAr: "شرح الوحدة", titleEn: "Unit walkthrough" },
       { order: 2, kind: "EXAM_STRUCTURE", titleAr: "شرح الهيكل", titleEn: "Exam structure" },
-      { order: 3, kind: "PAST_QUESTIONS", titleAr: "أسئلة الوزارة السابقة", titleEn: "Past ministry questions" },
+      { order: 3, kind: "PAST_QUESTIONS", titleAr: "أسئلة تدريبية على الوحدة", titleEn: "Practice questions for the unit" },
     ] as const;
     for (const unit of await db.unit.findMany({ where: { courseId: course.id } })) {
       for (const l of lessons) {

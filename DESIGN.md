@@ -22,7 +22,7 @@ Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE,
 
 **Interaction.** Quick and dry: 160ms for hover, 240ms for state changes, one 700ms draw when a mark first appears, all on one ease-out `cubic-bezier(.2,.7,.2,1)`. Hover shifts tone or lifts a card 2px. Forbidden: bounce, elastic, looping glows or pulses, confetti, autoplay carousels, smooth-scroll libraries.
 
-**Marketing vs app.** The home page may move: a 3.65s three.js intro once per tab session (the one WebGL scene on the site, loaded only when it plays). App pages stay calm: no scroll effects, no parallax, no intro.
+**Marketing vs app.** The home page may move: a 5.5s three.js intro once per tab session (the one WebGL scene on the site, loaded only when it plays). App pages stay calm: no scroll effects, no parallax, no intro.
 
 **Allowed patterns:** tabular numbers, the gold ribbon underline, the fold cut, A-shaped progress marks, the pen circle on catalog highlights, the session-once intro, a gold ribbon loader only while a route is loading, example figures only when labelled.
 
@@ -36,7 +36,7 @@ Genjitsu means "the actual facts". Every screen answers: where does this student
 2. **One source per figure.** Every number on screen comes from stored data (attempts, attendance, payments). If we cannot compute it, we do not show it. No invented social proof, no "10,000+ students" until it is true.
 3. **Summary first, detail on demand.** Dashboard order: streak · average · rank → weakest concept → next lesson. Drill-down is a click, never a scroll through decoration.
 4. **State in form, not only colour.** Up/down uses ▲/▼ plus colour. The exam tier is a labelled chip. Colour-blind students must read the same facts.
-5. **Exam-native vocabulary.** Use the Ministry's terms: الدرجة من ١٠٠, ممتاز, جيد جدًا, نظام الامتحان, أسئلة الوزارة. Not invented gamer words.
+5. **Exam-native vocabulary.** Use the Ministry's terms: الدرجة من ١٠٠, ممتاز, جيد جدًا, نظام الامتحان, أسئلة تدريبية. Never claim ministry authorship of a question set. Not invented gamer words.
 6. **Energy lives in the data.** The pen, the highlighter, count-ups and rank changes are reserved for real achievements. Surfaces stay calm.
 7. **No decoration that carries nothing.** No blobs, glass, gradient text, stock-photo heroes, emoji icons, or illustrations behind data.
 
@@ -123,7 +123,7 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 
 - Animate only `transform`, `opacity`, `background-color`, `border-color`, `color`.
 - Every unmount has an exit (opacity + 4px translate, `--dur-base`).
-- **Intro** (home, `src/components/brand/Intro.tsx`, `IntroScene.tsx` + `src/app/brand.css`), fixed night overlay over the rendered page, 3.65s (2.0s authored × 1.825): 0–0.9s two lapis books (three.js) fall with pages fluttering and land face down as A A · 0.95–1.33s the gold ribbon threads through both · 1.40–1.85s the scene fades while the wordmark rises 12px (1.45–1.95s) · 1.76–2.00s overlay fades. The overlay and wordmark are CSS, so they play without WebGL. three.js loads only when the intro plays. Click, tap or any key skips. Once per tab session (`sessionStorage`), never under reduced motion.
+- **Intro** (home, `src/components/brand/Intro.tsx`, `IntroScene.tsx` + `src/app/brand.css`), fixed night overlay over the rendered page, 5.48s (2.0s authored × 2.7375): 0–0.9s two lapis books (three.js) fall with pages fluttering and land face down as A A · 0.95–1.33s the gold ribbon threads through both · 1.40–1.85s the scene fades while the wordmark rises 12px (1.45–1.95s) · 1.76–2.00s overlay fades. The overlay and wordmark are CSS, so they play without WebGL. three.js loads only when the intro plays. Click, tap, any key or a scroll gesture skips. Once per tab session (`sessionStorage`), never under reduced motion.
 - Nothing else reacts to scroll.
 - `prefers-reduced-motion` or the in-app toggle: durations become 0, count-ups show the final value, colour still changes.
 

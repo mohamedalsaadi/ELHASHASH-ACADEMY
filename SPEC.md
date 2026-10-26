@@ -12,7 +12,7 @@ Next.js 15 (App Router, TS strict) · Tailwind v4 · next-intl (ar default/RTL, 
    - Egypt: Primary 1–6, Prep 1–3, Secondary 1–3 (Sec 3 = Thanawya Amma). Calendar Sep–Jun, mid-year Jan, finals Jun/Jul.
    - UAE: Cycle 1 (G1–6), Cycle 2 (G7–9), Cycle 3 (G10–12); curriculum tag MOE / British / American / IB.
 2. **Freemium funnel** — Unit 1 of every course free; guests (no account) may preview free units of Grade 12 / Sec 3.
-3. **Lesson types** — video, exam-structure walkthrough (شرح الهيكل), past ministerial questions, PDF.
+3. **Lesson types** — video, exam-structure walkthrough (شرح الهيكل), practice question sets, PDF.
 4. **Pricing** — SKUs per course: `SEMESTER`, `YEARLY`, `REVISION` (sale window before exams). Bundle rules: a set of subjects → % discount (e.g. Math + Physics = 15%). Entitlements are time-boxed or perpetual.
 5. **Checkout** — Paymob: card, mobile wallet, kiosk cash reference, valU. Cash orders stay `PENDING` until webhook; webhook HMAC-verified and idempotent.
 6. **Secure video** — VdoCipher OTP issued only server-side after entitlement check; watermark = name + phone + IP. One active device per account: a new device revokes the old one. Free/marketing videos may be YouTube embeds.

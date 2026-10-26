@@ -62,8 +62,8 @@
 :root {
   color-scheme: light;
   --fold: 2.904; /* tan 71°: the slope of the A's legs, the brand's only diagonal */
-  /* Intro time multiplier, read by brand.css and IntroScene. 2.0 s × 1.825 ≈ 3.65 s. */
-  --intro-k: 1.825;
+  /* Intro time multiplier, read by brand.css and IntroScene. 2.0 s × 2.7375 ≈ 5.48 s. */
+  --intro-k: 2.7375;
 }
 
 body {
@@ -77,9 +77,9 @@ body {
 
 /* The gold ribbon under one key word per heading at most. */
 .marker { background: linear-gradient(transparent 80%, var(--color-marker) 80% 93%, transparent 93%); padding-inline: .04em; }
-/* The fold: a card corner cut at the A's slope. Set --cut to change its size. */
-.fold { --cut: 28px; clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% calc(var(--cut) * var(--fold)), 100% 100%, 0 100%); }
-[dir="rtl"] .fold { clip-path: polygon(var(--cut) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--cut) * var(--fold))); }
+/* The fold: a card corner cut at the A's slope. Set --cut on the element, or on a wrapper it will inherit from. */
+.fold { clip-path: polygon(0 0, calc(100% - var(--cut, 28px)) 0, 100% calc(var(--cut, 28px) * var(--fold)), 100% 100%, 0 100%); }
+[dir="rtl"] .fold { clip-path: polygon(var(--cut, 28px) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--cut, 28px) * var(--fold))); }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-count: 0ms; --dur-press: 0ms; --stagger: 0ms; }

@@ -114,6 +114,51 @@ textarea:focus-visible {
   box-shadow: var(--shadow-paper);
 }
 
+/* A dog-eared page corner with the gold ribbon hanging from it. Put .page-corner on a wrapper and
+   .fold on the child card: .fold's clip-path would clip these pseudo-elements away. One feature
+   card per view, per DESIGN.md. Static, so reduced motion needs nothing here. */
+.page-corner {
+  --ear: var(--cut, 28px);
+  --ribbon-w: 10px;
+  --ribbon-inset: 8px;
+  --page-corner-back: var(--color-raised);
+  --page-corner-crease: color-mix(in oklab, var(--color-ink) 16%, transparent);
+  position: relative;
+  isolation: isolate;
+}
+
+/* The flap covers the triangle .fold removes: --ear wide, --ear * --fold tall. */
+.page-corner::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: var(--ear);
+  height: calc(var(--ear) * var(--fold));
+  background: linear-gradient(135deg, color-mix(in oklab, var(--page-corner-back) 72%, var(--page-corner-crease)), var(--page-corner-back) 70%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+[dir="rtl"] .page-corner::before {
+  background: linear-gradient(45deg, color-mix(in oklab, var(--page-corner-back) 72%, var(--page-corner-crease)), var(--page-corner-back) 70%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+/* The ribbon slips out from under the flap and ends in a notched tail. */
+.page-corner::after {
+  content: "";
+  position: absolute;
+  inset-block-start: calc(var(--ear) * 0.9);
+  inset-inline-end: var(--ribbon-inset);
+  width: var(--ribbon-w);
+  height: calc(var(--ear) * (var(--fold) - 0.9));
+  background: var(--color-marker);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 74%, 0 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

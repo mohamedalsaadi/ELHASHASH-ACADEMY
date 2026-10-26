@@ -85,7 +85,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     <main>
       <JsonLd data={jsonLd} />
       <Intro skipLabel={t("skipIntro")} />
-      <PromoBand promos={bar} locale={locale} variant="BAR" label={t("promotions")} />
+      <PromoBand
+        promos={bar}
+        locale={locale}
+        variant="BAR"
+        label={t("promotions")}
+        fallback={{ text: t("announce"), cta: t("announceCta") }}
+      />
 
       <section className="border-b border-hairline">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 md:grid-cols-[1.35fr_1fr] md:py-24">

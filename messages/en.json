@@ -80,8 +80,8 @@
   },
   "home": {
     "eyebrow": "Grades 1 to 12 · Egypt and the Gulf",
-    "headline": "Every lesson ends with a <m>mark</m> you can see",
-    "lede": "Your teacher explains, a quiz follows, and the score stays in your account. Unit 1 of every subject is free.",
+    "headline": "<m>Confidence</m> that grows with every lesson",
+    "lede": "Clear teaching from your teacher, practice after every lesson, and progress you can see in your account. Unit 1 of every subject is free.",
     "ctaFree": "Start the free unit",
     "ctaGrade": "Choose your country",
     "skipIntro": "Skip intro",
@@ -122,6 +122,8 @@
       "all": "All courses"
     },
     "promotions": "Offers",
+    "announce": "Welcome to AAcademy. Unit 1 of every subject is free.",
+    "announceCta": "Start now",
     "noCountries": "Countries are being prepared. Check back soon.",
     "trust": {
       "free": "Unit 1 of every subject is free",
@@ -568,7 +570,7 @@
     "legalNav": "Help and legal",
     "contact": "Contact us",
     "rights": "AAcademy, United Arab Emirates",
-    "tagline": "Every page counts."
+    "tagline": "Every lesson builds confidence."
   },
   "teacher": {
     "hello": "Hello, {name}",

@@ -22,10 +22,36 @@ function wrap(href: string | null, className: string, children: React.ReactNode)
   );
 }
 
-/** Static owner-managed promos: a slim bar under the header, or offer cards in the home scroll. No autoplay. */
-export function PromoBand({ promos, locale, variant, label }: { promos: Promo[]; locale: string; variant: "BAR" | "CARD"; label: string }) {
-  if (!promos.length) return null;
+/** Static owner-managed promos: a slim bar under the header, or offer cards in the home scroll. No autoplay.
+    When nothing is published the bar falls back to one standing announcement, so the slot is never empty. */
+export function PromoBand({
+  promos,
+  locale,
+  variant,
+  label,
+  fallback,
+}: {
+  promos: Promo[];
+  locale: string;
+  variant: "BAR" | "CARD";
+  label: string;
+  fallback?: { text: string; cta: string };
+}) {
   const ar = locale === "ar";
+
+  if (!promos.length) {
+    if (variant !== "BAR" || !fallback) return null;
+    return (
+      <aside aria-label={label} className="border-b border-hairline bg-night text-on-primary">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-3 text-small">
+          <span className="text-night-text">{fallback.text}</span>
+          <Link href="/courses" className="font-semibold underline decoration-marker decoration-2 underline-offset-4">
+            {fallback.cta}
+          </Link>
+        </div>
+      </aside>
+    );
+  }
 
   if (variant === "BAR") {
     return (

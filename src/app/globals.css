@@ -121,13 +121,14 @@ textarea:focus-visible {
   --ear: var(--cut, 28px);
   --ribbon-w: 10px;
   --ribbon-inset: 8px;
-  --page-corner-back: var(--color-raised);
   --page-corner-crease: color-mix(in oklab, var(--color-ink) 16%, transparent);
   position: relative;
   isolation: isolate;
 }
 
-/* The flap covers the triangle .fold removes: --ear wide, --ear * --fold tall. */
+/* The flap covers the triangle .fold removes: --ear wide, --ear * --fold tall.
+   --page-corner-back is read with a fallback, never declared here: this file is unlayered CSS and would
+   outrank the Tailwind arbitrary-property utility that sets it per instance. */
 .page-corner::before {
   content: "";
   position: absolute;
@@ -135,13 +136,13 @@ textarea:focus-visible {
   inset-inline-end: 0;
   width: var(--ear);
   height: calc(var(--ear) * var(--fold));
-  background: linear-gradient(135deg, color-mix(in oklab, var(--page-corner-back) 72%, var(--page-corner-crease)), var(--page-corner-back) 70%);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--page-corner-back, var(--color-raised)) 72%, var(--page-corner-crease)), var(--page-corner-back, var(--color-raised)) 70%);
   clip-path: polygon(0 0, 100% 0, 100% 100%);
   z-index: 2;
   pointer-events: none;
 }
 [dir="rtl"] .page-corner::before {
-  background: linear-gradient(45deg, color-mix(in oklab, var(--page-corner-back) 72%, var(--page-corner-crease)), var(--page-corner-back) 70%);
+  background: linear-gradient(45deg, color-mix(in oklab, var(--page-corner-back, var(--color-raised)) 72%, var(--page-corner-crease)), var(--page-corner-back, var(--color-raised)) 70%);
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 

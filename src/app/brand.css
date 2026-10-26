@@ -12,6 +12,9 @@ html[data-intro] .as-intro {
   background: radial-gradient(120% 90% at 50% 0%, #1A2290 0%, var(--color-night) 55%, #060828 100%);
   color: var(--color-ground);
   cursor: pointer;
+  /* The overlay lives inside #main-content, which the intro hides. visibility inherits, so without this
+     the overlay is hidden for the whole intro and only shows while it fades out. */
+  visibility: visible;
   animation: as-intro-out calc(var(--dur-base) * var(--intro-k)) var(--ease-out) calc(1760ms * var(--intro-k)) forwards;
 }
 html[data-intro="skip"] .as-intro { animation-delay: 0ms; animation-duration: var(--dur-fast); }

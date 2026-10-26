@@ -15,14 +15,29 @@ export function onSale(now: Date) {
 /** SKUs that sell the whole course or a plan of it: not a rented lesson, not a live seat. */
 const wholeCourse = { lessonId: null, liveSessionId: null };
 
-/** The user's entitlements in a course that haven't ended; the rules in plans.ts decide what each one opens. */
-export async function grantsFor(userId: string | undefined, courseId: string, now = new Date()): Promise<Grant[]> {
+/** The user's entitlements in a course that haven't ended; the rules in plans.ts decide what each one opens.
+    `includeEnded` lets a page tell a lapsed subscriber apart from a stranger. */
+export async function grantsFor(
+  userId: string | undefined,
+  courseId: string,
+  now = new Date(),
+  opts: { includeEnded?: boolean } = {},
+): Promise<Grant[]> {
   if (!userId) return [];
   return db.entitlement.findMany({
-    where: { userId, courseId, OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+    where: {
+      userId,
+      courseId,
+      ...(opts.includeEnded ? {} : { OR: [{ endsAt: null }, { endsAt: { gt: now } }] }),
+    },
     orderBy: { endsAt: "asc" },
     select: { accessType: true, lessonId: true, liveSessionId: true, term: true, month: true, startsAt: true, endsAt: true },
   });
+}
+
+/** Admins and the course's own teacher see a course the way its owner does. One rule for every screen. */
+export function isCourseStaff(user: { id: string; role: string } | undefined, course: { instructorId: string }): boolean {
+  return !!user && (user.role === "ADMIN" || course.instructorId === user.id);
 }
 
 /** A lesson as the plan rules see it. */
@@ -48,7 +63,7 @@ export async function liveRole(
   now = new Date(),
 ): Promise<"host" | "student" | null> {
   if (!user) return null;
-  if (user.role === "ADMIN" || session.course.instructorId === user.id) return "host";
+  if (isCourseStaff(user, session.course)) return "host";
   return (await grantsFor(user.id, session.courseId, now)).some((g) => opensLive(g, session.id, now)) ? "student" : null;
 }
 

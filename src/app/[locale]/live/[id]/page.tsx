@@ -2,23 +2,21 @@ import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
-import { Mark } from "@/components/brand/Mark";
 import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { Link } from "@/i18n/navigation";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { liveRole } from "@/lib/catalog";
 import { createRoom, meetingToken } from "@/lib/daily";
 import { db } from "@/lib/db";
 import { courseZone, formatMoney, formatWhen } from "@/lib/format";
+import { LIVE_LEAD_MIN, livePhase, roomOpensAt } from "@/lib/learning";
 import { effectivePrice } from "@/lib/pricing-engine";
 import { Countdown } from "./Countdown";
 
 export const dynamic = "force-dynamic";
 
-const primaryButton =
-  "btn btn-primary";
-
-/** Students may enter this long before the start; the teacher 30 minutes. Matches the token windows in lib/daily.ts. */
-const LEAD_MIN = { student: 10, host: 30 };
+const primaryButton = "btn btn-primary";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/live", "live", { key: "title", noindex: true });
@@ -46,8 +44,30 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
   const title = ar ? s.titleAr : s.titleEn;
 
   async function stage(): Promise<React.ReactNode> {
-    if (s!.cancelledAt) return <Notice>{t("isCancelled")}</Notice>;
-    if (now >= endsAt) return <Notice>{t("ended")}</Notice>;
+    const exits = (
+      <div className="flex flex-wrap justify-center gap-3">
+        <Link href={`/courses/${s!.course.slug}#units`} className={secondaryButton}>
+          {t("backToCourse")}
+        </Link>
+        <Link href="/dashboard" className={secondaryButton}>
+          {t("backToDashboard")}
+        </Link>
+      </div>
+    );
+    if (s!.cancelledAt)
+      return (
+        <Notice>
+          <p>{t("isCancelled")}</p>
+          {exits}
+        </Notice>
+      );
+    if (now >= endsAt)
+      return (
+        <Notice>
+          <p>{t("ended")}</p>
+          {exits}
+        </Notice>
+      );
     if (!session?.user) {
       return (
         <Notice>
@@ -78,23 +98,23 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
       );
     }
 
-    const opensAt = new Date(s!.startsAt.getTime() - LEAD_MIN[role] * 60_000);
+    const opensAt = roomOpensAt(s!.startsAt, LIVE_LEAD_MIN[role]);
     if (now < opensAt) {
       return (
         <Notice>
           <p>{t("opensIn")}</p>
           <Countdown at={opensAt.toISOString()} locale={locale} />
-          <p className="text-small">{t("opensHint", { minutes: LEAD_MIN[role] })}</p>
+          <p className="text-small">{t("opensHint", { minutes: LIVE_LEAD_MIN[role] })}</p>
         </Notice>
       );
     }
 
     // One device per account, as for recorded lectures; the teacher may host from anywhere.
-    if (role === "student") {
-      const device = await oneDevice(session.user.id, path);
-      if ("block" in device) return device.block;
-    }
-    const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { name: true } });
+    const [device, user] = await Promise.all([
+      role === "student" ? oneDevice(session.user.id, path) : Promise.resolve(null),
+      db.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { name: true } }),
+    ]);
+    if (device && "block" in device) return device.block;
     if (role === "student") {
       await db.liveAttendance.upsert({
         where: { userId_liveSessionId: { userId: session.user.id, liveSessionId: s!.id } },
@@ -132,20 +152,32 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
     }
   }
 
+  const phase = livePhase(s.startsAt, s.durationMin, now);
+  const liveNow = phase === "now" && !!role;
+  const minutesToStart = Math.max(1, Math.round((s.startsAt.getTime() - now.getTime()) / 60_000));
+
   return (
     <main className="mx-auto grid max-w-5xl gap-6 px-4 py-12">
-      <Link href={`/courses/${s.course.slug}`} className="flex w-fit items-center gap-2 text-small text-ink-muted hover:text-ink">
-        <Mark size={16} />
-        {ar ? s.course.titleAr : s.course.titleEn}
-      </Link>
-      <div className="grid gap-1">
-        <h1 className="font-display text-h1 font-semibold">{title}</h1>
-        <p className="text-small text-ink-muted">
-          {formatWhen(s.startsAt, courseZone(s.course), locale)} · {t("minutes", { count: s.durationMin })}
-        </p>
-      </div>
+      <PageHeader
+        back={{ href: `/courses/${s.course.slug}`, label: ar ? s.course.titleAr : s.course.titleEn }}
+        title={title}
+        meta={`${formatWhen(s.startsAt, courseZone(s.course), locale)} · ${t("minutes", { count: s.durationMin })}`}
+        actions={
+          role ? (
+            liveNow ? (
+              <StatusChip tone="live">{t("liveNow")}</StatusChip>
+            ) : phase === "soon" ? (
+              <StatusChip tone="expiring">{t("startsSoon", { minutes: minutesToStart })}</StatusChip>
+            ) : null
+          ) : null
+        }
+      />
       <p className="rounded-sm border border-hairline bg-raised px-3 py-2 text-small text-ink-muted">{t("contactRule")}</p>
-      <div className="aspect-[3/4] overflow-hidden rounded-md border border-hairline bg-surface sm:aspect-video">{await stage()}</div>
+      <div
+        className={`aspect-[3/4] overflow-hidden rounded-md border bg-surface sm:aspect-video ${liveNow ? "border-pen" : "border-hairline"}`}
+      >
+        {await stage()}
+      </div>
     </main>
   );
 }

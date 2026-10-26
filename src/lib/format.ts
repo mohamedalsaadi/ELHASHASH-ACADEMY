@@ -37,3 +37,23 @@ export function formatWhen(d: Date, zone: string, locale: string): string {
     timeZoneName: "short",
   }).format(d);
 }
+
+/** A plain date in the zone that owns it. Never a hard-coded capital: the course country decides. */
+export function formatDate(d: Date, zone: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: zone }).format(d);
+}
+
+/** Orders carry a currency, not a course zone; the currency's home market gives the day the payer saw. */
+const CURRENCY_ZONE: Record<Currency, string> = {
+  EGP: "Africa/Cairo",
+  SAR: "Asia/Riyadh",
+  AED: "Asia/Dubai",
+  KWD: "Asia/Kuwait",
+  QAR: "Asia/Qatar",
+  BHD: "Asia/Bahrain",
+  OMR: "Asia/Muscat",
+};
+
+export function currencyZone(currency: Currency): string {
+  return CURRENCY_ZONE[currency];
+}

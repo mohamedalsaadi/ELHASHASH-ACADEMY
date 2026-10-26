@@ -35,7 +35,8 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "retry": "Try again",
-    "back": "Back"
+    "back": "Back",
+    "lessonProgress": "Lesson progress: {done} of {total}"
   },
   "contactForm": {
     "title": "Send us a message",
@@ -330,7 +331,38 @@
       "save": "Save {pct}% vs single lectures",
       "pickLecture": "Pick a lecture below",
       "other": "Other packages"
-    }
+    },
+    "planPanel": {
+      "yourPlan": "Your current plan",
+      "opens": "Opens {open} of {total} lessons",
+      "ends": "Ends {date}",
+      "noEnd": "No end date",
+      "expiring": "Ending soon",
+      "expired": "Your subscription ended on {date}",
+      "renew": "Renew subscription",
+      "rentalOnly": "Your access is lesson rentals only.",
+      "outside": "{count, plural, one {# lesson outside your plan} other {# lessons outside your plan}}"
+    },
+    "planKind": {
+      "MONTHLY": "Monthly plan",
+      "SEMESTER": "Term plan",
+      "YEARLY": "Yearly plan",
+      "REVISION": "Final revision",
+      "FIXED_DAYS": "Temporary access",
+      "RENTAL": "Lesson rental",
+      "LIVE": "Live-session seat"
+    },
+    "upgradeTitle": "Complete your plan",
+    "renewTitle": "Renew your subscription",
+    "upgrade": "Upgrade",
+    "outsidePlan": "Outside your current plan",
+    "continueCourse": "Continue to the next lesson",
+    "teacher": "Teacher: {name}",
+    "staffView": "Teacher view",
+    "adminView": "Admin view",
+    "allDone": "All available lessons completed.",
+    "unitCount": "{done} of {total, plural, one {# lesson} other {# lessons}}",
+    "progressLabel": "Your progress in this course"
   },
   "player": {
     "title": "Lesson",
@@ -341,7 +373,15 @@
     "watchHere": "Watch on this device",
     "unavailable": "The video can't play right now. Refresh the page in a minute.",
     "markComplete": "Mark as complete",
-    "completed": "Completed"
+    "completed": "Completed",
+    "nextLesson": "Next lesson",
+    "prevLesson": "Previous lesson",
+    "courseLessons": "Course lessons",
+    "backToCourse": "Back to course",
+    "locked": "Locked",
+    "pdfUnavailable": "This lesson file is not available to view yet. Contact support.",
+    "nextAfterComplete": "Go to the next lesson",
+    "lastLesson": "This is the last available lesson. Return to the course to review."
   },
   "admin": {
     "title": "Admin",
@@ -560,7 +600,42 @@
     "myRentals": "Rented lectures",
     "myLive": "My live lectures",
     "continue": "Continue where you left off",
-    "resume": "Continue"
+    "resume": "Continue",
+    "summary": {
+      "title": "Your summary",
+      "completedLessons": "Lessons completed",
+      "activeCourses": "Active courses",
+      "upcomingLive": "Upcoming live"
+    },
+    "nextAction": {
+      "eyebrow": "Next step",
+      "start": "Start the next lesson",
+      "review": "Review your lesson",
+      "openCourse": "Open the course"
+    },
+    "plan": {
+      "label": "Your plan",
+      "opens": "Opens {open} of {total} lessons",
+      "ends": "Ends {date}",
+      "expiring": "Ending soon",
+      "expired": "Ended",
+      "renew": "Renew subscription",
+      "rentalOnly": "You only have lesson rentals. Subscribe to the course to open all lessons.",
+      "seatOnly": "You only have a live-session seat.",
+      "allDone": "All available lessons completed."
+    },
+    "progressLabel": "Progress",
+    "payments": {
+      "title": "Payments",
+      "pendingTitle": "Pending payment",
+      "pendingHint": "Complete payment to activate access.",
+      "kioskRef": "Reference number",
+      "payBy": "Pay by {date}",
+      "checkout": "Continue payment",
+      "receipts": "Receipts",
+      "viewReceipt": "View receipt",
+      "noReceipts": "No receipts yet."
+    }
   },
   "footer": {
     "terms": "Terms of use",
@@ -634,7 +709,15 @@
     "opensIn": "The room opens in",
     "opensHint": "You can enter {minutes} minutes before the start. This page opens the room by itself.",
     "pastError": "That time has already passed. Pick a time in the future.",
-    "noCourses": "No courses are linked to you yet. Ask the admin to link one before scheduling a live lecture."
+    "noCourses": "No courses are linked to you yet. Ask the admin to link one before scheduling a live lecture.",
+    "liveNow": "Live now",
+    "joinNow": "Join now",
+    "startsSoon": "Starts in {minutes, plural, one {# minute} other {# minutes}}",
+    "roomOpensSoon": "The room opens in {minutes, plural, one {# minute} other {# minutes}}",
+    "later": "Later",
+    "details": "Details",
+    "backToCourse": "Back to course",
+    "backToDashboard": "Student dashboard"
   },
   "questions": {
     "title": "Questions",

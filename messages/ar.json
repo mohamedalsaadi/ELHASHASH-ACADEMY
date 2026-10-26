@@ -35,7 +35,8 @@
     "showPassword": "إظهار كلمة المرور",
     "hidePassword": "إخفاء كلمة المرور",
     "retry": "إعادة المحاولة",
-    "back": "رجوع"
+    "back": "رجوع",
+    "lessonProgress": "تقدّم الحصص: {done} من {total}"
   },
   "contactForm": {
     "title": "أرسل لنا رسالة",
@@ -330,7 +331,38 @@
       "save": "وفّر {pct}٪ مقارنة بالحصص المنفردة",
       "pickLecture": "اختر حصة من القائمة بالأسفل",
       "other": "باقات أخرى"
-    }
+    },
+    "planPanel": {
+      "yourPlan": "خطتك الحالية",
+      "opens": "تفتح {open} من {total} حصة",
+      "ends": "تنتهي في {date}",
+      "noEnd": "بلا تاريخ انتهاء",
+      "expiring": "تنتهي قريبًا",
+      "expired": "انتهى اشتراكك في {date}",
+      "renew": "جدّد الاشتراك",
+      "rentalOnly": "وصولك الحالي استئجار حصص فقط.",
+      "outside": "{count, plural, zero {لا حصص خارج خطتك} one {حصة واحدة خارج خطتك} two {حصتان خارج خطتك} few {# حصص خارج خطتك} many {# حصة خارج خطتك} other {# حصة خارج خطتك}}"
+    },
+    "planKind": {
+      "MONTHLY": "اشتراك شهري",
+      "SEMESTER": "اشتراك فصل دراسي",
+      "YEARLY": "اشتراك سنوي",
+      "REVISION": "مراجعة نهائية",
+      "FIXED_DAYS": "وصول مؤقت",
+      "RENTAL": "استئجار حصة",
+      "LIVE": "مقعد حصة مباشرة"
+    },
+    "upgradeTitle": "أكمل خطتك",
+    "renewTitle": "جدّد اشتراكك",
+    "upgrade": "ترقية",
+    "outsidePlan": "خارج خطتك الحالية",
+    "continueCourse": "أكمل الدرس التالي",
+    "teacher": "المدرّس: {name}",
+    "staffView": "عرض كمدرّس",
+    "adminView": "عرض الإدارة",
+    "allDone": "أكملت كل الحصص المتاحة.",
+    "unitCount": "{done} من {total, plural, zero {لا حصص} one {حصة واحدة} two {حصتين} few {# حصص} many {# حصة} other {# حصة}}",
+    "progressLabel": "تقدّمك في المادة"
   },
   "player": {
     "title": "الحصة",
@@ -341,7 +373,15 @@
     "watchHere": "شاهد على هذا الجهاز",
     "unavailable": "تعذّر تشغيل الفيديو الآن. حدّث الصفحة بعد دقيقة.",
     "markComplete": "تحديد كمكتمل",
-    "completed": "مكتمل"
+    "completed": "مكتمل",
+    "nextLesson": "الدرس التالي",
+    "prevLesson": "الدرس السابق",
+    "courseLessons": "حصص المادة",
+    "backToCourse": "العودة إلى المادة",
+    "locked": "مقفل",
+    "pdfUnavailable": "ملف هذا الدرس غير متاح للعرض بعد. تواصل مع الدعم.",
+    "nextAfterComplete": "انتقل إلى الدرس التالي",
+    "lastLesson": "هذا آخر درس متاح. عد إلى المادة لمراجعة الدروس."
   },
   "admin": {
     "title": "لوحة الإدارة",
@@ -560,7 +600,42 @@
     "myRentals": "الحصص المستأجرة",
     "myLive": "حصصي المباشرة",
     "continue": "أكمل من حيث توقفت",
-    "resume": "متابعة"
+    "resume": "متابعة",
+    "summary": {
+      "title": "ملخصك",
+      "completedLessons": "حصص أكملتها",
+      "activeCourses": "مواد نشطة",
+      "upcomingLive": "حصص مباشرة قادمة"
+    },
+    "nextAction": {
+      "eyebrow": "الخطوة التالية",
+      "start": "ابدأ الدرس التالي",
+      "review": "راجع درسك",
+      "openCourse": "افتح المادة"
+    },
+    "plan": {
+      "label": "خطتك",
+      "opens": "تفتح {open} من {total} حصة",
+      "ends": "تنتهي في {date}",
+      "expiring": "تنتهي قريبًا",
+      "expired": "انتهت",
+      "renew": "جدّد الاشتراك",
+      "rentalOnly": "لديك استئجار حصص فقط. اشترك في المادة لفتح جميع الحصص.",
+      "seatOnly": "لديك مقعد حصة مباشرة فقط.",
+      "allDone": "أكملت كل الحصص المتاحة."
+    },
+    "progressLabel": "التقدّم",
+    "payments": {
+      "title": "المدفوعات",
+      "pendingTitle": "دفعة معلّقة",
+      "pendingHint": "أكمل الدفع لتفعيل وصولك.",
+      "kioskRef": "الرقم المرجعي",
+      "payBy": "ادفع قبل {date}",
+      "checkout": "متابعة الدفع",
+      "receipts": "الإيصالات",
+      "viewReceipt": "عرض الإيصال",
+      "noReceipts": "لا توجد إيصالات بعد."
+    }
   },
   "footer": {
     "terms": "الشروط والأحكام",
@@ -634,7 +709,15 @@
     "opensIn": "تفتح الغرفة بعد",
     "opensHint": "يمكنك الدخول قبل البدء بـ {minutes, plural, zero {لا دقائق} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}. ستفتح هذه الصفحة الغرفة تلقائيًا.",
     "pastError": "هذا الوقت مضى بالفعل. اختر وقتًا قادمًا.",
-    "noCourses": "لا توجد كورسات مرتبطة بك بعد. اطلب من الإدارة ربط كورس قبل جدولة حصة مباشرة."
+    "noCourses": "لا توجد كورسات مرتبطة بك بعد. اطلب من الإدارة ربط كورس قبل جدولة حصة مباشرة.",
+    "liveNow": "مباشر الآن",
+    "joinNow": "ادخل الآن",
+    "startsSoon": "تبدأ خلال {minutes, plural, zero {أقل من دقيقة} one {دقيقة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
+    "roomOpensSoon": "تفتح الغرفة خلال {minutes, plural, zero {أقل من دقيقة} one {دقيقة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
+    "later": "قادمة",
+    "details": "التفاصيل",
+    "backToCourse": "العودة إلى المادة",
+    "backToDashboard": "لوحة الطالب"
   },
   "questions": {
     "title": "الأسئلة",

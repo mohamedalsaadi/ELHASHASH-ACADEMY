@@ -3,15 +3,25 @@ import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { EmptyState } from "@/components/brand/Mark";
+import { LiveRow } from "@/components/learning/LiveRow";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
-import { courseZone, formatWhen } from "@/lib/format";
+import { courseZone, currencyZone, formatDate, formatMoney, formatWhen } from "@/lib/format";
+import { courseProgress, groupLive, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
+import { opensLesson, type Grant } from "@/lib/plans";
+import { ProgressBar } from "@/components/ui/progress";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatTile } from "@/components/ui/StatTile";
+import { StatusChip } from "@/components/ui/StatusChip";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/dashboard", "dashboard", { key: "title", noindex: true });
 }
+
+const endValue = (g: Grant) => (g.endsAt ? g.endsAt.getTime() : Number.POSITIVE_INFINITY);
+const isLive = (g: Grant, now: Date) => !g.endsAt || g.endsAt > now;
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -20,69 +30,379 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/dashboard`)}`);
   if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
   if (session.user.role === "PARENT") redirect(`/${locale}/parent`);
-  const t = await getTranslations("dashboard");
-  const tc = await getTranslations("catalog");
+
+  const [t, tc, tq, tm, tl] = await Promise.all([
+    getTranslations("dashboard"),
+    getTranslations("catalog"),
+    getTranslations("questions"),
+    getTranslations("checkout"),
+    getTranslations("live"),
+  ]);
   const ar = locale === "ar";
   const now = new Date();
+  const userId = session.user.id;
 
-  const entitlements = await db.entitlement.findMany({
-    where: { userId: session.user.id, startsAt: { lte: now } },
-    include: { course: { include: { grade: true } }, lesson: true },
+  const [entitlements, completedViews, lastView, orders, answers] = await Promise.all([
+    db.entitlement.findMany({
+      where: { userId, startsAt: { lte: now }, course: { published: true } },
+      select: {
+        id: true,
+        courseId: true,
+        lessonId: true,
+        liveSessionId: true,
+        accessType: true,
+        term: true,
+        month: true,
+        startsAt: true,
+        endsAt: true,
+        course: {
+          select: {
+            slug: true,
+            titleAr: true,
+            titleEn: true,
+            grade: { select: { nameAr: true, nameEn: true, country: { select: { timeZone: true } } } },
+          },
+        },
+        lesson: { select: { id: true, titleAr: true, titleEn: true } },
+      },
+    }),
+    db.lessonView.findMany({ where: { userId, completedAt: { not: null } }, select: { lessonId: true } }),
+    db.lessonView.findFirst({
+      where: { userId, completedAt: null, lesson: { unit: { course: { published: true } } } },
+      orderBy: { lastSeenAt: "desc" },
+      select: {
+        lesson: {
+          select: {
+            id: true,
+            titleAr: true,
+            titleEn: true,
+            month: true,
+            unit: { select: { term: true, courseId: true, course: { select: { slug: true, titleAr: true, titleEn: true } } } },
+          },
+        },
+      },
+    }),
+    db.order.findMany({
+      where: { userId, status: { in: ["PENDING", "PAID", "REFUNDED"] } },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: { id: true, status: true, method: true, gateway: true, kioskRef: true, total: true, currency: true, expiresAt: true, paidAt: true },
+    }),
+    db.question.findMany({
+      where: { userId, answeredAt: { gt: new Date(now.getTime() - 14 * 86_400_000) } },
+      orderBy: { answeredAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        lessonId: true,
+        answer: true,
+        answeredBy: { select: { name: true } },
+        lesson: { select: { titleAr: true, titleEn: true, unit: { select: { course: { select: { slug: true } } } } } },
+      },
+    }),
+  ]);
+
+  const completed = new Set(completedViews.map((v) => v.lessonId));
+
+  const grantOf = (e: (typeof entitlements)[number]): Grant => ({
+    accessType: e.accessType,
+    lessonId: e.lessonId,
+    liveSessionId: e.liveSessionId,
+    term: e.term,
+    month: e.month,
+    startsAt: e.startsAt,
+    endsAt: e.endsAt,
   });
-  // One row per course, keeping the access that lasts longest (null = no end).
-  const byCourse = new Map<string, (typeof entitlements)[number]>();
+
+  const grantsByCourse = new Map<string, Grant[]>();
   for (const e of entitlements) {
-    if (e.lessonId || e.liveSessionId) continue;
-    const best = byCourse.get(e.courseId);
-    if (!best || (best.endsAt && (!e.endsAt || e.endsAt > best.endsAt))) byCourse.set(e.courseId, e);
+    const list = grantsByCourse.get(e.courseId) ?? [];
+    list.push(grantOf(e));
+    grantsByCourse.set(e.courseId, list);
   }
-  const rows = [...byCourse.values()].sort((a, b) => Number(isActive(b, now)) - Number(isActive(a, now)));
+  const activeGrants = (courseId: string) => (grantsByCourse.get(courseId) ?? []).filter((g) => isLive(g, now));
+
+  // One row per course the student has ever held, with its best active grant (or the last lapsed one).
+  const courseMeta = new Map<string, (typeof entitlements)[number]["course"]>();
+  for (const e of entitlements) if (!e.lessonId && !e.liveSessionId && e.course) courseMeta.set(e.courseId, e.course);
+
+  const courses = [...courseMeta.entries()].map(([courseId, course]) => {
+    const grants = grantsByCourse.get(courseId) ?? [];
+    const active = grants.filter((g) => isLive(g, now)).sort((a, b) => endValue(b) - endValue(a));
+    const lapsed = grants.filter((g) => g.endsAt && g.endsAt <= now).sort((a, b) => endValue(b) - endValue(a))[0];
+    return { courseId, course, active: active[0], grants, lapsed };
+  });
+  const liveCourses = courses.filter((c) => c.active);
+
   const rentals = entitlements
-    .filter((e) => e.lesson && isActive(e, now))
-    .sort((a, b) => (a.endsAt?.getTime() ?? Infinity) - (b.endsAt?.getTime() ?? Infinity));
-  const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
-  // Live lectures the student can join: every session of a course subscribed for a term or longer, plus bought seats.
-  const subscribed = entitlements.filter((e) => !e.lessonId && !e.liveSessionId && e.accessType !== "MONTHLY" && isActive(e, now)).map((e) => e.courseId);
-  // Answers from the last two weeks go to the top of the page.
-  const answers = await db.question.findMany({
-    where: { userId: session.user.id, answeredAt: { gt: new Date(now.getTime() - 14 * 86_400_000) } },
-    orderBy: { answeredAt: "desc" },
-    take: 5,
-    include: { answeredBy: { select: { name: true } }, lesson: { include: { unit: { include: { course: { select: { slug: true } } } } } } },
-  });
-  const tq = await getTranslations("questions");
-  const lastView = await db.lessonView.findFirst({
-    where: { userId: session.user.id, completedAt: null },
-    orderBy: { lastSeenAt: "desc" },
-    include: { lesson: { include: { unit: { include: { course: { select: { slug: true, titleAr: true, titleEn: true } } } } } } },
-  });
-  const seats = entitlements.filter((e) => e.liveSessionId && isActive(e, now)).map((e) => e.liveSessionId!);
-  const live = (
-    await db.liveSession.findMany({
-      where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) }, OR: [{ courseId: { in: subscribed } }, { id: { in: seats } }] },
+    .filter((e) => e.lessonId && isLive(grantOf(e), now))
+    .sort((a, b) => (a.endsAt?.getTime() ?? Number.POSITIVE_INFINITY) - (b.endsAt?.getTime() ?? Number.POSITIVE_INFINITY));
+  const seats = entitlements.filter((e) => e.liveSessionId && isLive(grantOf(e), now));
+
+  const [structures, liveAll] = await Promise.all([
+    db.course.findMany({
+      where: { id: { in: liveCourses.map((c) => c.courseId) } },
+      select: {
+        id: true,
+        units: {
+          orderBy: { order: "asc" },
+          select: {
+            order: true,
+            isFree: true,
+            term: true,
+            lessons: { orderBy: { order: "asc" }, select: { id: true, order: true, month: true, titleAr: true, titleEn: true } },
+          },
+        },
+      },
+    }),
+    db.liveSession.findMany({
+      where: {
+        cancelledAt: null,
+        startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) },
+        OR: [
+          { courseId: { in: liveCourses.filter((c) => c.active && c.active.accessType !== "MONTHLY").map((c) => c.courseId) } },
+          { id: { in: seats.map((s) => s.liveSessionId!) } },
+        ],
+      },
       orderBy: { startsAt: "asc" },
-      include: { course: { include: { grade: { include: { country: true } } } } },
-    })
-  ).filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime());
+      select: {
+        id: true,
+        courseId: true,
+        titleAr: true,
+        titleEn: true,
+        startsAt: true,
+        durationMin: true,
+        course: { select: { titleAr: true, titleEn: true, grade: { select: { country: { select: { timeZone: true } } } } } },
+      },
+    }),
+  ]);
+
+  const unitsByCourse = new Map(structures.map((s) => [s.id, s.units]));
+  const progressOf = (courseId: string) =>
+    courseProgress(lessonEntries(unitsByCourse.get(courseId) ?? []), activeGrants(courseId), completed, now);
+
+  const live = groupLive(liveAll, now);
+  const liveList = [...live.now, ...live.soon, ...live.later];
+  const nextLive = live.now[0] ?? live.soon[0];
+
+  // ---- next action: one primary on the page ------------------------------------------------
+  const pending = orders.find((o) => o.status === "PENDING");
+  const hasAccess = liveCourses.length > 0 || rentals.length > 0 || seats.length > 0;
+
+  const lastOpen =
+    lastView &&
+    activeGrants(lastView.lesson.unit.courseId).some((g) =>
+      opensLesson(g, { id: lastView.lesson.id, month: lastView.lesson.month, term: lastView.lesson.unit.term }, now),
+    );
+
+  const nextByCourse = liveCourses
+    .map((c) => ({
+      course: c,
+      entry: nextOpenLesson(lessonEntries(unitsByCourse.get(c.courseId) ?? []), activeGrants(c.courseId), completed, now),
+    }))
+    .find((x) => x.entry);
+
+  const next =
+    nextLive && roomOpensAt(nextLive.startsAt, LIVE_LEAD_MIN.student) <= now
+      ? {
+          href: `/live/${nextLive.id}`,
+          eyebrow: t("nextAction.eyebrow"),
+          title: ar ? nextLive.titleAr : nextLive.titleEn,
+          subtitle: ar ? nextLive.course.titleAr : nextLive.course.titleEn,
+          cta: tl("joinNow"),
+        }
+      : pending && !hasAccess
+        ? {
+            href: `/checkout/result?order=${pending.id}`,
+            eyebrow: t("nextAction.eyebrow"),
+            title: t("payments.pendingTitle"),
+            subtitle: t("payments.pendingHint"),
+            cta: t("payments.checkout"),
+          }
+        : lastView && lastOpen
+          ? {
+              href: `/courses/${lastView.lesson.unit.course.slug}/lessons/${lastView.lesson.id}`,
+              eyebrow: t("nextAction.eyebrow"),
+              title: ar ? lastView.lesson.titleAr : lastView.lesson.titleEn,
+              subtitle: ar ? lastView.lesson.unit.course.titleAr : lastView.lesson.unit.course.titleEn,
+              cta: t("resume"),
+            }
+          : nextByCourse?.entry
+            ? {
+                href: `/courses/${nextByCourse.course.course.slug}/lessons/${nextByCourse.entry.lesson.id}`,
+                eyebrow: t("nextAction.eyebrow"),
+                title: ar ? nextByCourse.entry.lesson.titleAr : nextByCourse.entry.lesson.titleEn,
+                subtitle: ar ? nextByCourse.course.course.titleAr : nextByCourse.course.course.titleEn,
+                cta: t("nextAction.start"),
+              }
+            : null;
+
+  const paid = orders.filter((o) => o.status === "PAID" || o.status === "REFUNDED").slice(0, 3);
 
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
-      <h1 className="font-display text-h1 font-semibold">{t("hello", { name: session.user.name ?? "" })}</h1>
-      {lastView && (
-        <section className="grid gap-3">
-          <h2 className="font-display text-h2 font-semibold">{t("continue")}</h2>
-          <Link
-            href={`/courses/${lastView.lesson.unit.course.slug}/lessons/${lastView.lesson.id}`}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-pen bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-          >
-            <span className="grid gap-1">
-              <span className="font-display font-semibold">{ar ? lastView.lesson.titleAr : lastView.lesson.titleEn}</span>
-              <span className="text-small text-ink-muted">{ar ? lastView.lesson.unit.course.titleAr : lastView.lesson.unit.course.titleEn}</span>
+      <PageHeader title={t("hello", { name: session.user.name ?? "" })} />
+
+      <section className="grid gap-2">
+        <h2 className="font-display text-h2 font-semibold">{t("summary.title")}</h2>
+        <div className="grid grid-cols-3 gap-2">
+          <StatTile label={t("summary.completedLessons")} value={completed.size} />
+          <StatTile label={t("summary.activeCourses")} value={liveCourses.length} />
+          <StatTile label={t("summary.upcomingLive")} value={liveList.length} />
+        </div>
+      </section>
+
+      {next ? (
+        <Link
+          href={next.href}
+          className="grid gap-1 rounded-md border border-pen bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+        >
+          <span className="text-label font-medium text-pen">{next.eyebrow}</span>
+          <span className="font-display font-semibold">{next.title}</span>
+          {next.subtitle && <span className="text-small text-ink-muted">{next.subtitle}</span>}
+          <span className="text-small text-pen">{next.cta}</span>
+        </Link>
+      ) : (
+        !hasAccess && (
+          <EmptyState>
+            <p className="text-ink-muted">{t("empty")}</p>
+            <Link href="/courses" className="btn btn-primary w-fit">
+              {t("browse")}
+            </Link>
+          </EmptyState>
+        )
+      )}
+
+      {pending && (
+        <section className="grid gap-2">
+          <h2 className="font-display text-h2 font-semibold">{t("payments.pendingTitle")}</h2>
+          <div className="grid gap-1 rounded-md border border-hairline bg-surface p-4 text-small">
+            <span className="num font-semibold">{formatMoney(pending.total, pending.currency, locale)}</span>
+            <span className="text-ink-muted">
+              {pending.method ? tm(`methods.${pending.method}.name`) : pending.gateway}
             </span>
-            <span className="text-small text-pen">{t("resume")}</span>
-          </Link>
+            {pending.kioskRef && (
+              <span className="text-ink-muted">
+                {t("payments.kioskRef")}: <span className="num" dir="ltr">{pending.kioskRef}</span>
+              </span>
+            )}
+            {pending.expiresAt && (
+              <span className="text-ink-muted">
+                {t("payments.payBy", { date: formatDate(pending.expiresAt, currencyZone(pending.currency), locale) })}
+              </span>
+            )}
+            <Link href={`/checkout/result?order=${pending.id}`} className="w-fit text-pen underline underline-offset-4">
+              {t("payments.checkout")}
+            </Link>
+          </div>
         </section>
       )}
+
+      {liveList.length > 0 && (
+        <section className="grid gap-3">
+          <h2 className="font-display text-h2 font-semibold">{t("myLive")}</h2>
+          <ul className="grid gap-3">
+            {liveList.map((l) => {
+              const phase = livePhase(l.startsAt, l.durationMin, now);
+              const opens = roomOpensAt(l.startsAt, LIVE_LEAD_MIN.student) <= now;
+              const minutes = Math.max(1, Math.round((l.startsAt.getTime() - now.getTime()) / 60_000));
+              return (
+                <li key={l.id}>
+                  <LiveRow
+                    href={`/live/${l.id}`}
+                    title={ar ? l.titleAr : l.titleEn}
+                    subtitle={ar ? l.course.titleAr : l.course.titleEn}
+                    when={formatWhen(l.startsAt, courseZone(l.course), locale)}
+                    phase={phase === "ended" ? "later" : phase}
+                    phaseLabel={phase === "now" ? tl("liveNow") : phase === "soon" ? tl("startsSoon", { minutes }) : tl("later")}
+                    action={
+                      opens ? (
+                        <span className="font-semibold text-pen">{tl("joinNow")}</span>
+                      ) : (
+                        <span className="text-ink-muted">{tl("details")}</span>
+                      )
+                    }
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {(liveCourses.length > 0 || courses.some((c) => c.lapsed)) && (
+        <section className="grid gap-4">
+          <h2 className="font-display text-h2 font-semibold">{t("myCourses")}</h2>
+          <ul className="grid gap-3">
+            {courses.map(({ courseId, course, active, lapsed }) => {
+              const progress = active ? progressOf(courseId) : null;
+              const expiring = !!active?.endsAt && active.endsAt.getTime() - now.getTime() <= 7 * 86_400_000;
+              return (
+                <li key={courseId}>
+                  <Link
+                    href={active ? `/courses/${course.slug}` : `/courses/${course.slug}#packages`}
+                    className="grid gap-2 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  >
+                    <span className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-display font-semibold">{ar ? course.titleAr : course.titleEn}</span>
+                      {active ? (
+                        <StatusChip tone={expiring ? "expiring" : "active"}>
+                          {active.accessType ? tc(`planKind.${active.accessType}`) : t("forever")}
+                        </StatusChip>
+                      ) : (
+                        <StatusChip tone="expired">{t("plan.renew")}</StatusChip>
+                      )}
+                    </span>
+                    <span className="text-small text-ink-muted">
+                      {course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : tc("skill")}
+                      {active?.endsAt
+                        ? ` · ${t("until", { date: formatDate(active.endsAt, courseZone(course), locale) })}`
+                        : lapsed?.endsAt
+                          ? ` · ${t("plan.expired")}`
+                          : ""}
+                    </span>
+                    {progress && progress.total > 0 && (
+                      <ProgressBar done={progress.done} total={progress.total} label={t("progressLabel")} />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {courses.length === 0 && rentals.length > 0 && (
+        <p className="text-small text-ink-muted">{t("plan.rentalOnly")}</p>
+      )}
+      {courses.length === 0 && rentals.length === 0 && seats.length > 0 && (
+        <p className="text-small text-ink-muted">{t("plan.seatOnly")}</p>
+      )}
+
+      {rentals.length > 0 && (
+        <section className="grid gap-3">
+          <h2 className="font-display text-h2 font-semibold">{t("myRentals")}</h2>
+          <ul className="grid gap-3">
+            {rentals.map((e) => (
+              <li key={e.id}>
+                <Link
+                  href={`/courses/${e.course?.slug}/lessons/${e.lesson!.id}`}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                >
+                  <span className="grid min-w-0 gap-1">
+                    <span className="font-display font-semibold">{ar ? e.lesson!.titleAr : e.lesson!.titleEn}</span>
+                    <span className="text-small text-ink-muted">{e.course ? (ar ? e.course.titleAr : e.course.titleEn) : ""}</span>
+                  </span>
+                  <span className="text-small text-up">
+                    {e.endsAt ? t("until", { date: formatDate(e.endsAt, courseZone(e.course), locale) }) : t("forever")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {answers.length > 0 && (
         <section className="grid gap-3">
           <h2 className="font-display text-h2 font-semibold">{tq("newAnswers")}</h2>
@@ -90,7 +410,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             {answers.map((q) => (
               <li key={q.id}>
                 <Link
-                  href={`/courses/${q.lesson.unit.course.slug}/lessons/${q.lessonId}`}
+                  href={`/courses/${q.lesson.unit.course.slug}/lessons/${q.lessonId}#questions`}
                   className="grid gap-1 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   <span className="text-small text-ink-muted">{ar ? q.lesson.titleAr : q.lesson.titleEn}</span>
@@ -102,78 +422,22 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           </ul>
         </section>
       )}
-      <section className="grid gap-4">
-        <h2 className="font-display text-h2 font-semibold">{t("myCourses")}</h2>
-        {rows.length === 0 ? (
-          <EmptyState>
-            <p className="text-ink-muted">{t("empty")}</p>
-            <Link
-              href="/courses"
-              className="btn btn-primary w-fit"
-            >
-              {t("browse")}
-            </Link>
-          </EmptyState>
-        ) : (
-          <ul className="grid gap-3">
-            {rows.map((e) => {
-              const active = isActive(e, now);
-              return (
-                <li key={e.courseId}>
-                  <Link
-                    href={active ? `/courses/${e.course.slug}` : `/courses/${e.course.slug}#packages`}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-                  >
-                    <span className="grid gap-1">
-                      <span className="font-display font-semibold">{ar ? e.course.titleAr : e.course.titleEn}</span>
-                      <span className="text-small text-ink-muted">{e.course.grade ? (ar ? e.course.grade.nameAr : e.course.grade.nameEn) : tc("skill")}</span>
-                    </span>
-                    <span className={`text-small ${active ? "text-up" : "text-down"}`}>
-                      {!active ? t("expired") : e.endsAt ? t("until", { date: date.format(e.endsAt) }) : t("forever")}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-      {live.length > 0 && (
-        <section className="grid gap-4">
-          <h2 className="font-display text-h2 font-semibold">{t("myLive")}</h2>
-          <ul className="grid gap-3">
-            {live.map((l) => (
-              <li key={l.id}>
+
+      {paid.length > 0 && (
+        <section className="grid gap-3">
+          <h2 className="font-display text-h2 font-semibold">{t("payments.receipts")}</h2>
+          <ul className="grid gap-2">
+            {paid.map((o) => (
+              <li key={o.id}>
                 <Link
-                  href={`/live/${l.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  href={`/orders/${o.id}`}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 text-small transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
-                  <span className="grid gap-1">
-                    <span className="font-display font-semibold">{ar ? l.titleAr : l.titleEn}</span>
-                    <span className="text-small text-ink-muted">{ar ? l.course.titleAr : l.course.titleEn}</span>
+                  <span className="num">{formatMoney(o.total, o.currency, locale)}</span>
+                  <span className="text-ink-muted">
+                    {o.paidAt ? formatDate(o.paidAt, currencyZone(o.currency), locale) : ""}
                   </span>
-                  <span className="text-small text-pen">{formatWhen(l.startsAt, courseZone(l.course), locale)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {rentals.length > 0 && (
-        <section className="grid gap-4">
-          <h2 className="font-display text-h2 font-semibold">{t("myRentals")}</h2>
-          <ul className="grid gap-3">
-            {rentals.map((e) => (
-              <li key={e.id}>
-                <Link
-                  href={`/courses/${e.course.slug}/lessons/${e.lesson!.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-                >
-                  <span className="grid gap-1">
-                    <span className="font-display font-semibold">{ar ? e.lesson!.titleAr : e.lesson!.titleEn}</span>
-                    <span className="text-small text-ink-muted">{ar ? e.course.titleAr : e.course.titleEn}</span>
-                  </span>
-                  <span className="text-small text-up">{e.endsAt ? t("until", { date: date.format(e.endsAt) }) : t("forever")}</span>
+                  <span className="text-pen underline underline-offset-4">{t("payments.viewReceipt")}</span>
                 </Link>
               </li>
             ))}
@@ -182,8 +446,4 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       )}
     </main>
   );
-}
-
-function isActive(e: { endsAt: Date | null }, now: Date) {
-  return !e.endsAt || e.endsAt > now;
 }

@@ -1,14 +1,19 @@
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { auth } from "@/auth";
-import { Mark } from "@/components/brand/Mark";
 import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
+import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
-import { canAsk, hasLessonAccess, lessonScope } from "@/lib/catalog";
+import { canAsk, grantsFor, isCourseStaff, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
+import { neighbours, nextOpenLesson, orderedLessons } from "@/lib/learning";
+import { opensLesson } from "@/lib/plans";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { AskForm } from "./AskForm";
 import { markLessonComplete } from "./actions";
 
@@ -48,107 +53,223 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/courses", "player", { key: "title", noindex: true });
 }
 
-export default async function LessonPage({
-  params,
-}: {
-  params: Promise<{ locale: string; slug: string; lessonId: string }>;
-}) {
+export default async function LessonPage({ params }: { params: Promise<{ locale: string; slug: string; lessonId: string }> }) {
   const { locale, slug, lessonId } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("catalog");
+  const [tc, tp, tq] = await Promise.all([getTranslations("catalog"), getTranslations("player"), getTranslations("questions")]);
   const ar = locale === "ar";
+  const now = new Date();
 
-  const lesson = await db.lesson.findFirst({
-    where: { id: lessonId, unit: { course: { slug, published: true } } },
-    include: { video: true, instructor: { select: { name: true } }, unit: { include: { course: { include: { instructor: { select: { name: true } } } } } } },
-  });
-  if (!lesson) notFound();
+  const [lesson, outline] = await Promise.all([
+    db.lesson.findFirst({
+      where: { id: lessonId, unit: { course: { slug, published: true } } },
+      include: {
+        video: true,
+        instructor: { select: { name: true } },
+        unit: { include: { course: { include: { instructor: { select: { name: true } } } } } },
+      },
+    }),
+    db.course.findUnique({
+      where: { slug, published: true },
+      select: {
+        id: true,
+        instructorId: true,
+        titleAr: true,
+        titleEn: true,
+        units: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            order: true,
+            isFree: true,
+            term: true,
+            titleAr: true,
+            titleEn: true,
+            lessons: { orderBy: { order: "asc" }, select: { id: true, order: true, month: true, titleAr: true, titleEn: true, kind: true } },
+          },
+        },
+      },
+    }),
+  ]);
+  if (!lesson || !outline) notFound();
   const { unit } = lesson;
   const course = unit.course;
 
-  // Unit 1 is open to everyone; every other lesson needs a plan that opens it or a rental of this lesson.
   const session = await auth();
   const userId = session?.user?.id;
-  if (!unit.isFree && !(await hasLessonAccess(userId, course.id, lessonScope(lesson)))) redirect(`/${locale}/courses/${slug}#packages`);
+  const staff = isCourseStaff(session?.user, { instructorId: outline.instructorId });
+  const grants = await grantsFor(userId, course.id, now, { includeEnded: true });
+  const active = grants.filter((g) => !g.endsAt || g.endsAt > now);
+
+  // Unit 1 is open to everyone; every other lesson needs a plan that opens it, a rental, or staff.
+  const scope = lessonScope(lesson);
+  const openable = (l: { id: string; month: number | null }, term: number, free: boolean) =>
+    staff || free || active.some((g) => opensLesson(g, { id: l.id, month: l.month, term }, now));
+  if (!openable(lesson, unit.term, unit.isFree)) redirect(`/${locale}/courses/${slug}#packages`);
+
   if (userId) {
     await db.lessonView.upsert({
       where: { userId_lessonId: { userId, lessonId: lesson.id } },
       create: { userId, lessonId: lesson.id },
-      update: { lastSeenAt: new Date() },
+      update: { lastSeenAt: now },
     });
   }
-  const [mayAsk, mine, tq, view] = await Promise.all([
-    canAsk(userId, course.id, lessonScope(lesson)),
+
+  const outlineLessonIds = outline.units.flatMap((u) => u.lessons.map((l) => l.id));
+  const [mayAsk, mine, view, completedRows] = await Promise.all([
+    canAsk(userId, course.id, scope),
     userId
       ? db.question.findMany({ where: { lessonId: lesson.id, userId }, orderBy: { createdAt: "desc" }, include: { answeredBy: { select: { name: true } } } })
       : [],
-    getTranslations("questions"),
     userId ? db.lessonView.findUnique({ where: { userId_lessonId: { userId, lessonId: lesson.id } }, select: { completedAt: true } }) : null,
+    userId
+      ? db.lessonView.findMany({ where: { userId, lessonId: { in: outlineLessonIds }, completedAt: { not: null } }, select: { lessonId: true } })
+      : [],
   ]);
+  const completed = new Set(completedRows.map((v) => v.lessonId));
+
+  const entries = outline.units.flatMap((u) =>
+    u.lessons.map((l) => ({ lesson: l, term: u.term, isFree: u.isFree })),
+  );
+  const ordered = orderedLessons(outline.units);
+  const { prev, next } = neighbours(ordered, lesson.id);
+  const termOf = (id: string) => outline.units.find((u) => u.lessons.some((l) => l.id === id))!;
+  const isOpen = (id: string) => {
+    const u = termOf(id);
+    const l = u.lessons.find((x) => x.id === id)!;
+    return openable(l, u.term, u.isFree);
+  };
+  const onward = nextOpenLesson(entries, active, completed, now, lesson.id);
 
   const video = lesson.video;
   const title = ar ? lesson.titleAr : lesson.titleEn;
+  const courseTitle = ar ? outline.titleAr : outline.titleEn;
+  const courseHref = `/courses/${slug}`;
+  const lessonHref = (id: string) => `/courses/${slug}/lessons/${id}`;
+
   return (
-    <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
-      <Link href={`/courses/${slug}`} className="flex w-fit items-center gap-2 text-small text-ink-muted hover:text-ink">
-        <Mark size={16} />
-        {ar ? course.titleAr : course.titleEn} · {ar ? unit.titleAr : unit.titleEn}
-      </Link>
-      <div className="grid gap-1">
-        <h1 className="font-display text-h1 font-semibold">{title}</h1>
-        <p className="text-small text-ink-muted">
-          {t(`kind.${lesson.kind}`)} · {t("recordedBy", { name: (lesson.instructor ?? course.instructor).name })}
-        </p>
-      </div>
-      <div className="aspect-video overflow-hidden rounded-md border border-hairline bg-surface">
-        {video?.provider === "YOUTUBE" ? (
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.externalId)}?rel=0`}
-            title={title}
-            allow="encrypted-media; picture-in-picture; fullscreen"
-            className="size-full"
-          />
-        ) : video?.provider === "VDOCIPHER" ? (
-          <SecurePlayer videoId={video.externalId} title={title} path={`/${locale}/courses/${slug}/lessons/${lesson.id}`} />
-        ) : (
-          <Notice>{t("videoSoon")}</Notice>
+    <main className="mx-auto grid max-w-5xl gap-6 px-4 py-12 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <div className="grid gap-6">
+        <PageHeader
+          back={{ href: courseHref, label: `${courseTitle} · ${ar ? unit.titleAr : unit.titleEn}` }}
+          title={title}
+          meta={`${tc(`kind.${lesson.kind}`)} · ${tc("recordedBy", { name: (lesson.instructor ?? course.instructor).name })}`}
+        />
+
+        <div className="aspect-video overflow-hidden rounded-md border border-hairline bg-surface">
+          {lesson.kind === "PDF" ? (
+            <Notice>{tp("pdfUnavailable")}</Notice>
+          ) : video?.provider === "YOUTUBE" ? (
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.externalId)}?rel=0`}
+              title={title}
+              allow="encrypted-media; picture-in-picture; fullscreen"
+              className="size-full"
+            />
+          ) : video?.provider === "VDOCIPHER" ? (
+            <SecurePlayer videoId={video.externalId} title={title} path={`/${locale}/courses/${slug}/lessons/${lesson.id}`} />
+          ) : (
+            <Notice>{tc("videoSoon")}</Notice>
+          )}
+        </div>
+
+        {userId && (
+          <form action={markLessonComplete} className="flex flex-wrap items-center gap-3">
+            <input type="hidden" name="lessonId" value={lesson.id} />
+            {view?.completedAt ? (
+              <>
+                <StatusChip tone="active">{tp("completed")}</StatusChip>
+                {onward ? (
+                  <Link href={lessonHref(onward.lesson.id)} className="btn btn-outline px-4 py-2 text-small">
+                    {tp("nextAfterComplete")}
+                  </Link>
+                ) : (
+                  <span className="text-small text-ink-muted">{tp("lastLesson")}</span>
+                )}
+              </>
+            ) : (
+              <SubmitButton className="btn btn-outline w-fit px-4 py-2 text-small">{tp("markComplete")}</SubmitButton>
+            )}
+          </form>
+        )}
+
+        <nav className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
+          {prev ? (
+            isOpen(prev.id) ? (
+              <Link href={lessonHref(prev.id)} className="flex items-center gap-1 text-small font-semibold text-pen">
+                <ChevronLeft aria-hidden="true" className="size-4 rtl:-scale-x-100" />
+                {tp("prevLesson")}
+              </Link>
+            ) : (
+              <span className="flex items-center gap-1 text-small text-ink-muted">
+                <ChevronLeft aria-hidden="true" className="size-4 rtl:-scale-x-100" />
+                {tp("locked")}
+              </span>
+            )
+          ) : (
+            <span />
+          )}
+          {next &&
+            (isOpen(next.id) ? (
+              <Link href={lessonHref(next.id)} className="flex items-center gap-1 text-small font-semibold text-pen">
+                {tp("nextLesson")}
+                <ChevronRight aria-hidden="true" className="size-4 rtl:-scale-x-100" />
+              </Link>
+            ) : (
+              <span className="flex items-center gap-1 text-small text-ink-muted">
+                {tp("locked")}
+                <ChevronRight aria-hidden="true" className="size-4 rtl:-scale-x-100" />
+              </span>
+            ))}
+        </nav>
+
+        {userId && (mayAsk || mine.length > 0) && (
+          <section id="questions" className="grid scroll-mt-6 gap-4 border-t border-hairline pt-6">
+            <h2 className="font-display text-h2 font-semibold">{tq("title")}</h2>
+            {mayAsk ? <AskForm lessonId={lesson.id} /> : <p className="text-small text-ink-muted">{tq("plansOnly")}</p>}
+            <ul className="grid gap-3">
+              {mine.map((q) => (
+                <li key={q.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+                  <p dir="auto" className="break-words whitespace-pre-line">{q.body}</p>
+                  {q.answer ? (
+                    <div className="grid gap-1 border-s-2 border-pen ps-3">
+                      <p className="text-label font-semibold text-pen">{tq("answeredBy", { name: q.answeredBy?.name ?? "" })}</p>
+                      <p dir="auto" className="break-words whitespace-pre-line">{q.answer}</p>
+                    </div>
+                  ) : (
+                    <p className="text-label text-ink-muted">{tq("waiting")}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
 
-      {userId && (
-        <form action={markLessonComplete} className="flex flex-wrap items-center gap-3">
-          <input type="hidden" name="lessonId" value={lesson.id} />
-          {view?.completedAt ? (
-            <span className="w-fit rounded-full border border-up px-3 py-1 text-label text-up">{t("completed")}</span>
-          ) : (
-            <SubmitButton className="w-fit rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
-              {t("markComplete")}
-            </SubmitButton>
-          )}
-        </form>
-      )}
-
-      {userId && (mayAsk || mine.length > 0) && (
-        <section className="grid gap-4 border-t border-hairline pt-6">
-          <h2 className="font-display text-h2 font-semibold">{tq("title")}</h2>
-          {mayAsk ? <AskForm lessonId={lesson.id} /> : <p className="text-small text-ink-muted">{tq("plansOnly")}</p>}
-          <ul className="grid gap-3">
-            {mine.map((q) => (
-              <li key={q.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
-                <p dir="auto" className="whitespace-pre-line">{q.body}</p>
-                {q.answer ? (
-                  <div className="grid gap-1 border-s-2 border-pen ps-3">
-                    <p className="text-label font-semibold text-pen">{tq("answeredBy", { name: q.answeredBy?.name ?? "" })}</p>
-                    <p dir="auto" className="whitespace-pre-line">{q.answer}</p>
-                  </div>
-                ) : (
-                  <p className="text-label text-ink-muted">{tq("waiting")}</p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <aside className="grid gap-3 rounded-md border border-hairline bg-surface p-4 lg:sticky lg:top-6">
+        <h2 className="font-display text-h3 font-semibold">{tp("courseLessons")}</h2>
+        {outline.units.map((u) => (
+          <details key={u.id} open={u.id === unit.id}>
+            <summary className="cursor-pointer py-1 font-semibold">{ar ? u.titleAr : u.titleEn}</summary>
+            <ul className="grid">
+              {u.lessons.map((l) => {
+                const open = openable(l, u.term, u.isFree);
+                const done = completed.has(l.id);
+                return (
+                  <li key={l.id}>
+                    <LessonRow
+                      href={open ? lessonHref(l.id) : undefined}
+                      title={ar ? l.titleAr : l.titleEn}
+                      state={l.id === lesson.id ? "current" : done ? "done" : open ? "open" : "locked"}
+                      active={l.id === lesson.id}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </details>
+        ))}
+      </aside>
     </main>
   );
 }

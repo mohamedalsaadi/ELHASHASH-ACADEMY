@@ -4,13 +4,19 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { CIRCLE_PATH, EmptyState } from "@/components/brand/Mark";
 import { JsonLd } from "@/components/JsonLd";
+import { LiveRow } from "@/components/learning/LiveRow";
+import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
-import { grantsFor, onSale } from "@/lib/catalog";
+import { grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
-import { courseZone, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
+import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
+import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
 import { alternates, siteUrl } from "@/lib/seo";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { ProgressBar } from "@/components/ui/progress";
+import { StatusChip } from "@/components/ui/StatusChip";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +35,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     alternates: alternates(locale, `/courses/${slug}`),
     openGraph: { title, description, type: "article" },
   };
-}
-
-function LockIcon() {
-  return (
-    <svg aria-hidden viewBox="0 0 16 16" className="size-4 shrink-0 fill-none stroke-current" strokeWidth="1.5">
-      <rect x="3" y="7" width="10" height="7" rx="1.5" />
-      <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
-    </svg>
-  );
 }
 
 function Tick({ on }: { on: boolean }) {
@@ -108,6 +105,8 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const { locale, slug } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("catalog");
+  const tp = await getTranslations("catalog.plans");
+  const tl = await getTranslations("live");
   const ar = locale === "ar";
   const now = new Date();
 
@@ -115,12 +114,11 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     where: { slug, published: true },
     include: {
       grade: { include: { country: true } },
-      // Upcoming sessions; ones that started up to 5 hours ago are checked against their end below.
       liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
       instructor: { select: { name: true } },
       units: {
         orderBy: { order: "asc" },
-        include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now), take: 1 }, instructor: { select: { name: true } } } } },
+        include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now) } } } },
       },
       skus: { where: { ...onSale(now), lessonId: null, liveSessionId: null }, orderBy: { price: "asc" } },
     },
@@ -128,19 +126,41 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   if (!course) notFound();
 
   const session = await auth();
-  const grants = await grantsFor(session?.user?.id, course.id, now);
-  const lessonIds = course.units.flatMap((u) => u.lessons.map((l) => l.id));
-  const completed = session?.user
-    ? await db.lessonView.count({ where: { userId: session.user.id, lessonId: { in: lessonIds }, completedAt: { not: null } } })
-    : 0;
-  const progressPct = lessonIds.length ? Math.round((completed / lessonIds.length) * 100) : 0;
-  const opens = (l: { id: string; month: number | null }, term: number) => grants.some((g) => opensLesson(g, { id: l.id, month: l.month, term }, now));
-  const paid = course.units.filter((u) => !u.isFree).flatMap((u) => u.lessons.map((l) => ({ l, term: u.term })));
-  const owned = paid.length > 0 && paid.every(({ l, term }) => opens(l, term));
-  const rentalOf = (id: string) => grants.find((g) => g.lessonId === id && g.startsAt <= now);
+  const staff = isCourseStaff(session?.user, course);
+  const allGrants = await grantsFor(session?.user?.id, course.id, now, { includeEnded: true });
+  const active = allGrants.filter((g) => !g.endsAt || g.endsAt > now);
 
-  // The three plans. The cheapest lecture rental is the single-lecture price every plan is compared with.
-  const tp = await getTranslations("catalog.plans");
+  const lessonIds = course.units.flatMap((u) => u.lessons.map((l) => l.id));
+  const [completedRows, currentView] = session?.user
+    ? await Promise.all([
+        db.lessonView.findMany({ where: { userId: session.user.id, lessonId: { in: lessonIds }, completedAt: { not: null } }, select: { lessonId: true } }),
+        db.lessonView.findFirst({
+          where: { userId: session.user.id, completedAt: null, lesson: { unit: { courseId: course.id } } },
+          orderBy: { lastSeenAt: "desc" },
+          select: { lessonId: true },
+        }),
+      ])
+    : [[], null];
+  const completed = new Set(completedRows.map((v) => v.lessonId));
+
+  const entries = lessonEntries(course.units);
+  const scopeOf = (e: (typeof entries)[number]) => ({ id: e.lesson.id, month: e.lesson.month, term: e.term });
+  const opens = (e: (typeof entries)[number]) => staff || e.isFree || active.some((g) => opensLesson(g, scopeOf(e), now));
+
+  const paidEntries = entries.filter((e) => !e.isFree);
+  const openPaid = paidEntries.filter(opens).length;
+  const level: "full" | "partial" | "none" =
+    staff || paidEntries.length === 0 || openPaid === paidEntries.length ? "full" : openPaid > 0 ? "partial" : "none";
+  const lapsed =
+    !staff && level === "none"
+      ? allGrants.filter((g) => g.endsAt && g.endsAt <= now).sort((a, b) => (b.endsAt!.getTime() - a.endsAt!.getTime()))[0]
+      : undefined;
+
+  const plans = active.filter((g) => !g.lessonId && !g.liveSessionId);
+  const bestPlan = plans.sort((a, b) => (b.endsAt?.getTime() ?? Number.POSITIVE_INFINITY) - (a.endsAt?.getTime() ?? Number.POSITIVE_INFINITY))[0];
+  const progress = courseProgress(entries, active, completed, now);
+  const next = nextOpenLesson(entries, active, completed, now);
+
   const single = cheapestSku(course.units.flatMap((u) => u.lessons.flatMap((l) => l.skus)), now);
   const singlePrice = single ? effectivePrice(single, now) : null;
   const months = course.skus.filter((s) => s.accessType === "MONTHLY").sort((a, b) => (a.month ?? 0) - (b.month ?? 0));
@@ -156,7 +176,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     return { id: s.id, label, price: formatMoney(price, s.currency, locale), was: pct !== null ? formatMoney(s.price, s.currency, locale) : undefined, notes };
   };
   const firstFree = course.units.find((u) => u.isFree)?.lessons[0];
-  const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeZone: "Africa/Cairo" });
+  const zone = courseZone(course);
   const lessonHref = (id: string) => `/courses/${course.slug}/lessons/${id}`;
   const live = course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime());
   const courseTitle = ar ? course.titleAr : course.titleEn;
@@ -177,29 +197,90 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     })),
   };
 
+  // Partial subscribers only see the plans that would actually open more of this course.
+  const upgrades = level === "partial" ? course.skus.filter((s) => lecturesIn(course.units, s) > openPaid) : [];
+  const showPlans = level === "none" || (level === "partial" && upgrades.length === 0);
+
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
       <JsonLd data={jsonLd} />
-      <section className="grid gap-3">
-        <p className="text-small text-ink-muted">{course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}</p>
-        <h1 className="font-display text-h1 font-semibold text-balance">{ar ? course.titleAr : course.titleEn}</h1>
-        {(ar ? course.descAr : course.descEn) && <p className="max-w-[65ch] text-ink-muted">{ar ? course.descAr : course.descEn}</p>}
-        {session?.user && progressPct > 0 && (
-          <p className="text-small text-ink-muted">{t("progress", { pct: progressPct, done: completed, total: lessonIds.length })}</p>
-        )}
-        {owned ? (
-          <p className="w-fit rounded-full border border-up px-3 py-1 text-label text-up">{t("owned")}</p>
-        ) : (
-          firstFree && (
-            <Link
-              href={lessonHref(firstFree.id)}
-              className="btn btn-primary w-fit"
-            >
-              {t("startFree")}
-            </Link>
-          )
-        )}
-      </section>
+
+      <PageHeader
+        back={{ href: "/courses", label: t("title") }}
+        eyebrow={course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}
+        title={courseTitle}
+        meta={
+          <>
+            {(ar ? course.descAr : course.descEn) && <p className="max-w-[65ch]">{ar ? course.descAr : course.descEn}</p>}
+            <p className="mt-1">{t("teacher", { name: course.instructor.name })}</p>
+          </>
+        }
+        actions={
+          <>
+            {staff ? (
+              <StatusChip tone="neutral">{session?.user?.role === "ADMIN" ? t("adminView") : t("staffView")}</StatusChip>
+            ) : level === "full" ? (
+              <StatusChip tone="active">{t("owned")}</StatusChip>
+            ) : (
+              bestPlan && (
+                <StatusChip tone={bestPlan.endsAt && bestPlan.endsAt.getTime() - now.getTime() <= 7 * 86_400_000 ? "expiring" : "active"}>
+                  {bestPlan.accessType ? t(`planKind.${bestPlan.accessType}`) : t("owned")}
+                </StatusChip>
+              )
+            )}
+            {level !== "none" && !staff && next ? (
+              <Link href={lessonHref(next.lesson.id)} className="btn btn-primary">
+                {t("continueCourse")}
+              </Link>
+            ) : lapsed ? (
+              <Link href="#packages" className="btn btn-primary">
+                {t("planPanel.renew")}
+              </Link>
+            ) : (
+              firstFree && (
+                <Link href={lessonHref(firstFree.id)} className="btn btn-primary">
+                  {t("startFree")}
+                </Link>
+              )
+            )}
+          </>
+        }
+      />
+
+      {(bestPlan || lapsed || staff) && (
+        <section className="grid gap-2 rounded-md bg-raised p-4 text-small">
+          <span className="font-display font-semibold">{t("planPanel.yourPlan")}</span>
+          {staff ? (
+            <span className="text-ink-muted">{t("staffView")}</span>
+          ) : bestPlan ? (
+            <>
+              <span>
+                {bestPlan.accessType ? t(`planKind.${bestPlan.accessType}`) : t("owned")} ·{" "}
+                {t("planPanel.opens", { open: openPaid, total: paidEntries.length })}
+              </span>
+              <span className="text-ink-muted">
+                {bestPlan.endsAt ? t("planPanel.ends", { date: formatDate(bestPlan.endsAt, zone, locale) }) : t("planPanel.noEnd")}
+              </span>
+            </>
+          ) : (
+            <>
+              <StatusChip tone="expired">
+                {t("planPanel.expired", { date: formatDate(lapsed!.endsAt!, zone, locale) })}
+              </StatusChip>
+              <Link href="#packages" className="w-fit text-pen underline underline-offset-4">
+                {t("planPanel.renew")}
+              </Link>
+            </>
+          )}
+          {level === "partial" && openPaid < paidEntries.length && (
+            <span className="text-ink-muted">{t("planPanel.outside", { count: paidEntries.length - openPaid })}</span>
+          )}
+        </section>
+      )}
+
+      {session?.user && !staff && level !== "none" && progress.total > 0 && (
+        <ProgressBar done={progress.done} total={progress.total} label={t("progressLabel")} />
+      )}
 
       <section id="units" className="grid scroll-mt-6 gap-4">
         <h2 className="font-display text-h2 font-semibold">{t("units")}</h2>
@@ -209,65 +290,49 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
           </EmptyState>
         )}
         {course.units.map((u) => {
+          const unitEntries = u.lessons.map((l) => ({ lesson: l, term: u.term, isFree: u.isFree }));
+          const done = u.lessons.filter((l) => completed.has(l.id)).length;
+          const hasCurrent = u.lessons.some((l) => l.id === currentView?.lessonId);
           return (
-            <div key={u.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-display text-h3 font-semibold">{ar ? u.titleAr : u.titleEn}</h3>
-                {u.isFree && !owned && <span className="rounded-full border border-up px-3 py-1 text-label text-up">{t("free")}</span>}
-              </div>
-              <ul className="grid">
+            <details key={u.id} open={hasCurrent || (u === course.units[0] && !currentView)} className="rounded-md border border-hairline bg-surface">
+              <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
+                <span className="flex items-center gap-2">
+                  <span className="font-display text-h3 font-semibold">{ar ? u.titleAr : u.titleEn}</span>
+                  {u.isFree && <StatusChip tone="neutral">{t("free")}</StatusChip>}
+                </span>
+                <span className="num text-label text-ink-muted">{t("unitCount", { done, total: u.lessons.length })}</span>
+              </summary>
+              <ul className="px-2 pb-2">
                 {u.lessons.map((l) => {
-                  const open = u.isFree || opens(l, u.term);
-                  const rental = rentalOf(l.id);
-                  const rented = !!rental;
-                  const until = rental?.endsAt;
-                  const rent = l.skus[0];
-                  const label = (
-                    <>
-                      <span className="grid">
-                        <span>{ar ? l.titleAr : l.titleEn}</span>
-                        <span className="text-label text-ink-muted">{(l.instructor ?? course.instructor).name}</span>
-                      </span>
-                      <span className={`text-label ${rented ? "text-up" : "text-ink-muted"}`}>
-                        {rented && until ? t("rented", { date: date.format(until) }) : t(`kind.${l.kind}`)}
-                      </span>
-                    </>
-                  );
+                  const entry = unitEntries.find((e) => e.lesson.id === l.id)!;
+                  const open = opens(entry);
+                  const done = completed.has(l.id);
+                  const rent = cheapestSku(l.skus, now);
+                  const state = done ? "done" : currentView?.lessonId === l.id ? "current" : open ? "open" : level !== "none" ? "lockedPlan" : "locked";
                   return (
-                    <li key={l.id} className="border-t border-hairline first:border-t-0">
-                      {open ? (
-                        <Link
-                          href={lessonHref(l.id)}
-                          className="flex items-center justify-between gap-3 rounded-sm px-2 py-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-                        >
-                          {label}
-                        </Link>
-                      ) : (
-                        <div className="flex items-center justify-between gap-3 px-2 py-3 text-ink-muted">
-                          <span className="flex items-center gap-2">
-                            <LockIcon />
-                            <span className="grid">
-                              <span>{ar ? l.titleAr : l.titleEn}</span>
-                              <span className="text-label">{(l.instructor ?? course.instructor).name}</span>
-                            </span>
-                          </span>
-                          {rent ? (
-                            <Link
-                              href={{ pathname: "/checkout", query: { sku: rent.id } }}
-                              className="btn btn-outline shrink-0 px-3 py-1.5 text-small"
-                            >
-                              {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span> · {t("rentFor", { days: rent.accessDays ?? 0 })}
+                    <li key={l.id}>
+                      <LessonRow
+                        href={open ? lessonHref(l.id) : undefined}
+                        title={ar ? l.titleAr : l.titleEn}
+                        subtitle={t(`kind.${l.kind}`)}
+                        state={state}
+                        trailing={
+                          open ? null : level !== "none" ? (
+                            <span className="text-label text-ink-muted">{t("outsidePlan")}</span>
+                          ) : rent ? (
+                            <Link href={{ pathname: "/checkout", query: { sku: rent.id } }} className="btn btn-outline px-3 py-1.5 text-small">
+                              {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span>
                             </Link>
                           ) : (
-                            <span className="text-label">{t(`kind.${l.kind}`)}</span>
-                          )}
-                        </div>
-                      )}
+                            <span className="text-label">{t("liveSubscribers")}</span>
+                          )
+                        }
+                      />
                     </li>
                   );
                 })}
               </ul>
-            </div>
+            </details>
           );
         })}
       </section>
@@ -278,28 +343,34 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
           <ul className="grid gap-3">
             {live.map((l) => {
               const seat = l.sku?.active && (!l.sku.saleTo || l.sku.saleTo > now) ? l.sku : null;
+              const canJoin = staff || active.some((g) => opensLive(g, l.id, now));
+              const phase = livePhase(l.startsAt, l.durationMin, now);
+              const opensNow = canJoin && roomOpensAt(l.startsAt, LIVE_LEAD_MIN.student) <= now;
+              const minutes = Math.max(1, Math.round((l.startsAt.getTime() - now.getTime()) / 60_000));
               return (
                 <li key={l.id}>
-                  <Link
-                    href={`/live/${l.id}`}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-                  >
-                    <span className="grid gap-1">
-                      <span className="font-display font-semibold">{ar ? l.titleAr : l.titleEn}</span>
-                      <span className="text-small text-ink-muted">{formatWhen(l.startsAt, courseZone(course), locale)}</span>
-                    </span>
-                    <span className="text-small font-semibold">
-                      {grants.some((g) => opensLive(g, l.id, now)) ? (
+                  <LiveRow
+                    href={canJoin ? `/live/${l.id}` : undefined}
+                    title={ar ? l.titleAr : l.titleEn}
+                    when={formatWhen(l.startsAt, zone, locale)}
+                    phase={phase === "ended" ? "later" : phase}
+                    phaseLabel={phase === "now" ? tl("liveNow") : phase === "soon" ? tl("startsSoon", { minutes }) : tl("later")}
+                    action={
+                      opensNow ? (
+                        <Link href={`/live/${l.id}`} className="btn btn-outline px-3 py-1.5 text-small">
+                          {tl("joinNow")}
+                        </Link>
+                      ) : canJoin ? (
                         <span className="text-up">{t("liveIncluded")}</span>
                       ) : seat ? (
-                        <>
+                        <Link href={{ pathname: "/checkout", query: { sku: seat.id } }} className="btn btn-outline px-3 py-1.5 text-small">
                           {t("liveSeat")} · <span className="num">{formatMoney(effectivePrice(seat, now), seat.currency, locale)}</span>
-                        </>
+                        </Link>
                       ) : (
                         <span className="text-ink-muted">{t("liveSubscribers")}</span>
-                      )}
-                    </span>
-                  </Link>
+                      )
+                    }
+                  />
                 </li>
               );
             })}
@@ -307,10 +378,33 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
         </section>
       )}
 
-      {!owned && (single || months.length > 0 || terms.length > 0) && (
+      {level === "partial" && upgrades.length > 0 && (
         <section id="packages" className="grid scroll-mt-6 gap-4">
-          <h2 className="font-display text-h2 font-semibold">{tp("title")}</h2>
-          {/* Side by side from tablet width; on phones the semester comes first. */}
+          <h2 className="font-display text-h2 font-semibold">{t("upgradeTitle")}</h2>
+          <ul className="grid gap-3">
+            {upgrades.map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4">
+                <div className="grid gap-1">
+                  <span className="font-display font-semibold">{t(`planKind.${s.accessType}`)}</span>
+                  <span className="text-small text-ink-muted">
+                    {t("planPanel.opens", { open: lecturesIn(course.units, s), total: paidEntries.length })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="num font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
+                  <Link href={{ pathname: "/checkout", query: { sku: s.id } }} className="btn btn-outline px-3 py-1.5 text-small">
+                    {t("upgrade")}
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {showPlans && (single || months.length > 0 || terms.length > 0) && (
+        <section id="packages" className="grid scroll-mt-6 gap-4">
+          <h2 className="font-display text-h2 font-semibold">{lapsed ? t("renewTitle") : tp("title")}</h2>
           <ul className="grid gap-4 sm:grid-cols-3">
             {single && (
               <PlanCard
@@ -365,14 +459,14 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
         </section>
       )}
 
-      {!owned && !single && months.length === 0 && terms.length === 0 && (
+      {level === "none" && !lapsed && !single && months.length === 0 && terms.length === 0 && (
         <section className="grid gap-2">
           <h2 className="font-display text-h2 font-semibold">{tp("title")}</h2>
           <p className="text-ink-muted">{t("noPackages")}</p>
         </section>
       )}
 
-      {!owned && others.length > 0 && (
+      {level === "none" && others.length > 0 && (
         <section className="grid gap-4">
           <h2 className="font-display text-h2 font-semibold">{tp("other")}</h2>
           <ul className="grid gap-3">
@@ -380,9 +474,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-hairline bg-surface p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</span>
-                  {s.accessEndsAt && (
-                    <span className="text-small text-ink-muted">{t("until", { date: date.format(s.accessEndsAt) })}</span>
-                  )}
+                  {s.accessEndsAt && <span className="text-small text-ink-muted">{t("until", { date: formatDate(s.accessEndsAt, zone, locale) })}</span>}
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="flex items-baseline gap-2">
@@ -404,3 +496,4 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     </main>
   );
 }
+

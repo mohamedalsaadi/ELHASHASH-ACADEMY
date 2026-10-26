@@ -19,7 +19,7 @@ export async function priceSkus(skuIds: string[], now = new Date()) {
       saleFrom: s.saleFrom,
       saleTo: s.saleTo,
     })),
-    rules.map((r) => ({ id: r.id, percentOff: r.percentOff, subjectIds: r.subjects.map((s) => s.id) })),
+    rules.map((r) => ({ id: r.id, percentOff: r.percentOff, minSubjects: r.minSubjects, subjectIds: r.subjects.map((s) => s.id) })),
     now,
   );
   return { priced, skus: new Map(skus.map((s) => [s.id, s])), missing: skus.length !== unique.size };

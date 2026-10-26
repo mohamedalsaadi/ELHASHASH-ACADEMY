@@ -149,8 +149,14 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
 
   const paidEntries = entries.filter((e) => !e.isFree);
   const openPaid = paidEntries.filter(opens).length;
+  // A course with no paid lessons is not "owned" by everyone: only a real whole-course grant makes it full.
+  const holdsWholeCourse = active.some((g) => !g.lessonId && !g.liveSessionId);
   const level: "full" | "partial" | "none" =
-    staff || paidEntries.length === 0 || openPaid === paidEntries.length ? "full" : openPaid > 0 ? "partial" : "none";
+    staff || (openPaid === paidEntries.length && (paidEntries.length > 0 || holdsWholeCourse))
+      ? "full"
+      : openPaid > 0
+        ? "partial"
+        : "none";
   const lapsed =
     !staff && level === "none"
       ? allGrants.filter((g) => g.endsAt && g.endsAt <= now).sort((a, b) => (b.endsAt!.getTime() - a.endsAt!.getTime()))[0]
@@ -444,7 +450,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
               <PlanCard
                 name={tp("SEMESTER")}
                 lines={[
-                  { on: true, text: tp("semesterIncl", { count: lecturesIn(course.units, terms[0]) }) },
+                  { on: true, text: paidEntries.length === 0 ? tp("wholeCourseIncl") : tp("semesterIncl", { count: lecturesIn(course.units, terms[0]) }) },
                   { on: true, text: tp("liveYes") },
                   { on: true, text: tp("askYes") },
                 ]}

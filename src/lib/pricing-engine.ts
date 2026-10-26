@@ -15,7 +15,8 @@ export type CartLine = {
   saleTo?: Date | null;
 };
 
-export type BundleRule = { id: string; subjectIds: string[]; percentOff: number };
+/** `minSubjects` lets one rule express a tier ("any 2 of these subjects"); null means every subject in the rule. */
+export type BundleRule = { id: string; subjectIds: string[]; percentOff: number; minSubjects?: number | null };
 
 export type PricedCart = {
   currency: Currency;
@@ -55,8 +56,9 @@ const lineDiscount = (amount: number, percentOff: number, currency: Currency) =>
 
 /**
  * Prices a cart in integer minor units (piastres / fils).
- * Bundles: each rule discounts one line per subject in the rule; a line joins at most one bundle, rentals and live seats join none,
- * a rule may apply more than once, and the combination with the largest total saving wins.
+ * Bundles: each rule discounts one line per matching subject; a line joins at most one bundle, rentals and live seats join none,
+ * a rule may apply more than once, and the combination with the largest total saving wins. A rule needs at least
+ * `minSubjects` distinct subjects (default: all of them) to apply, and then discounts every one it matched.
  */
 export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedCart {
   if (cart.length === 0) throw new PricingError("empty_cart");
@@ -71,20 +73,24 @@ export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedC
   const order = cart.map((_, i) => i).sort((a, b) => cart[b].price - cart[a].price);
 
   const tryApply = (rule: BundleRule, used: Set<number>): Application | null => {
+    const need = rule.minSubjects ?? rule.subjectIds.length;
+    if (need <= 0) return null;
     const picked: number[] = [];
+    // One line per subject; a tier takes every subject it can and needs at least `need` of them.
     for (const subjectId of rule.subjectIds) {
       const i = order.find((j) => !used.has(j) && !picked.includes(j) && !SINGLES.has(cart[j].accessType) && cart[j].subjectId === subjectId);
-      if (i === undefined) return null;
-      picked.push(i);
+      if (i !== undefined) picked.push(i);
     }
+    if (picked.length < need) return null;
     const amount = picked.reduce((sum, i) => sum + lineDiscount(cart[i].price, rule.percentOff, currency), 0);
     return { ruleId: rule.id, lines: picked, amount };
   };
 
   // ponytail: exhaustive search over rule applications, fine for a cart of a few subjects; memoise on `used` if carts grow.
   // Per rule it picks the priciest free line per subject, so two rules competing for different lines of one subject can miss the optimum.
-  // An empty rule would apply forever, so it never takes part.
-  const usable = rules.filter((r) => r.subjectIds.length > 0);
+  // A tiered rule claims every subject it matches, which can miss an optimum when another rule wants one of those lines.
+  // A rule with no subjects, or a tier of zero, would apply forever, so it never takes part.
+  const usable = rules.filter((r) => r.subjectIds.length > 0 && (r.minSubjects ?? 1) > 0);
   const best = (used: Set<number>, ruleIndex: number): Plan => {
     if (ruleIndex === usable.length) return { amount: 0, applications: [] };
     let plan = best(used, ruleIndex + 1);

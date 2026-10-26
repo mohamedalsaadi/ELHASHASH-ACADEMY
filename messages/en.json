@@ -330,7 +330,8 @@
       "perLecture": "{price} a lecture",
       "save": "Save {pct}% vs single lectures",
       "pickLecture": "Pick a lecture below",
-      "other": "Other packages"
+      "other": "Other packages",
+      "wholeCourseIncl": "Every recorded lecture, including those added later"
     },
     "planPanel": {
       "yourPlan": "Your current plan",

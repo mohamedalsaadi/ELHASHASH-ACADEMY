@@ -321,12 +321,14 @@ model Sku {
 }
 
 /// Applies percentOff to the cart lines whose subjects cover every subject in the rule.
+/// Set minSubjects to make it a tier: any that many distinct subjects of `subjects` qualify (null = all of them).
 model BundleRule {
-  id         String    @id @default(cuid())
-  name       String
-  percentOff Int
-  active     Boolean   @default(true)
-  subjects   Subject[]
+  id          String    @id @default(cuid())
+  name        String
+  percentOff  Int
+  minSubjects Int?
+  active      Boolean   @default(true)
+  subjects    Subject[]
 }
 
 enum PromoPlacement {

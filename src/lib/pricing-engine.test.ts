@@ -13,7 +13,12 @@ const line = (subjectId: string, amount: number, extra: Partial<CartLine> = {}):
   ...extra,
 });
 
-const rule = (id: string, subjectIds: string[], percentOff: number): BundleRule => ({ id, subjectIds, percentOff });
+const rule = (id: string, subjectIds: string[], percentOff: number, minSubjects: number | null = null): BundleRule => ({
+  id,
+  subjectIds,
+  percentOff,
+  minSubjects,
+});
 
 describe("price", () => {
   it("charges a single line at its price", () => {
@@ -94,6 +99,64 @@ describe("price", () => {
     expect(() => price([], [], now)).toThrow(new PricingError("empty_cart"));
     expect(() => price([line("math", 100), line("physics", 100, { currency: "AED" })], [], now)).toThrow(new PricingError("mixed_currency"));
     expect(() => price([line("math", 100), line("math", 100)], [], now)).toThrow(new PricingError("duplicate_sku"));
+  });
+});
+
+describe("tiered bundles", () => {
+  const subjects = ["math", "physics", "chem"];
+
+  it("applies once the tier threshold is met, to every subject it matched", () => {
+    const r = price([line("math", 45000), line("physics", 30000)], [rule("two", subjects, 15, 2)], now);
+    expect(r.discount).toBe(11250);
+    expect(r.total).toBe(63750);
+    expect(r.applied).toEqual([{ ruleId: "two", skuIds: ["sku-math-SEMESTER-45000", "sku-physics-SEMESTER-30000"], amount: 11250 }]);
+  });
+
+  it("takes the higher tier when a third subject appears, never both", () => {
+    const cart = [line("math", 45000), line("physics", 45000), line("chem", 45000)];
+    const rules = [rule("two", subjects, 15, 2), rule("three", subjects, 20, 3)];
+    const r = price(cart, rules, now);
+    expect(r.applied.map((a) => a.ruleId)).toEqual(["three"]);
+    expect(r.discount).toBe(27000);
+    expect(r.total).toBe(108000);
+  });
+
+  it("falls back to the lower tier when the higher one cannot be met", () => {
+    const cart = [line("math", 45000), line("physics", 45000)];
+    const r = price(cart, [rule("two", subjects, 15, 2), rule("three", subjects, 20, 3)], now);
+    expect(r.applied.map((a) => a.ruleId)).toEqual(["two"]);
+    expect(r.discount).toBe(13500);
+    expect(r.total).toBe(76500);
+  });
+
+  it("counts subjects, not lines: two math courses do not make a pair", () => {
+    const cart = [line("math", 30000, { courseId: "math-a" }), line("math", 60000, { courseId: "math-b" }), line("physics", 40000)];
+    const r = price(cart, [rule("two", subjects, 15, 2)], now);
+    expect(r.discount).toBe(15000);
+    expect(r.applied[0].skuIds).toEqual(["sku-math-SEMESTER-60000", "sku-physics-SEMESTER-40000"]);
+    expect(r.lines.find((l) => l.skuId === "sku-math-SEMESTER-30000")?.discount).toBe(0);
+  });
+
+  it("does not let a rental or a live seat fill a tier slot", () => {
+    const r = price([line("math", 45000), line("physics", 5000, { accessType: "RENTAL" })], [rule("two", subjects, 15, 2)], now);
+    expect(r.discount).toBe(0);
+  });
+
+  it("ignores a zero tier and an empty subject set without looping", () => {
+    expect(price([line("math", 10000)], [rule("zero", subjects, 50, 0)], now).discount).toBe(0);
+    expect(price([line("math", 10000)], [rule("empty", [], 50, 2)], now).discount).toBe(0);
+  });
+
+  it("still takes a coupon after the tier", () => {
+    const cart = price(
+      [line("math", 45000), line("physics", 45000), line("chem", 45000)],
+      [rule("three", subjects, 20, 3)],
+      now,
+    );
+    const r = applyCoupon(cart, { percentOff: 10, amountOff: null, currency: null });
+    expect(r.couponDiscount).toBe(10800);
+    expect(r.total).toBe(97200);
+    expect(r.lines.reduce((sum, l) => sum + l.price - l.discount - l.couponDiscount, 0)).toBe(r.total);
   });
 });
 

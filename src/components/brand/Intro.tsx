@@ -10,7 +10,7 @@ import { IntroStage } from "./IntroStage";
 // that actually shows the page.
 const guard = `try{var d=document.documentElement;if(!sessionStorage.getItem("as-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches){sessionStorage.setItem("as-intro","1");window.__asIntroT0=performance.now();d.dataset.intro="play";var c=function(){delete d.dataset.intro};var s=function(){if(d.dataset.intro==="play"){d.dataset.intro="skip";setTimeout(c,400)}};addEventListener("pointerdown",s,{once:true});addEventListener("keydown",s,{once:true});addEventListener("click",s,{once:true});addEventListener("wheel",s,{once:true,passive:true});addEventListener("touchmove",s,{once:true,passive:true});var m=matchMedia("(prefers-reduced-motion: reduce)");if(m.addEventListener)m.addEventListener("change",function(e){if(e.matches)s()});var k=parseFloat(getComputedStyle(d).getPropertyValue("--intro-k"))||1;setTimeout(c,2000*k+600);addEventListener("animationend",function e(v){if(v.animationName==="as-intro-out"){c();removeEventListener("animationend",e)}})}}catch(e){}`;
 
-/** ~5.5 s brand intro (2 s × --intro-k) over the already-rendered home page: two books land as A A, then the name. Fixed position: no layout shift. */
+/** ~2 s brand intro (2 s × --intro-k) over the already-rendered home page: two books land as A A, then the name. Fixed position: no layout shift. */
 export function Intro({ skipLabel }: { skipLabel: string }) {
   return (
     <>

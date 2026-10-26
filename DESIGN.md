@@ -22,7 +22,7 @@ Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE,
 
 **Interaction.** Quick and dry: 160ms for hover, 240ms for state changes, one 700ms draw when a mark first appears, all on one ease-out `cubic-bezier(.2,.7,.2,1)`. Hover shifts tone or lifts a card 2px. Forbidden: bounce, elastic, looping glows or pulses, confetti, autoplay carousels, smooth-scroll libraries.
 
-**Marketing vs app.** The home page may move: a 5.5s three.js intro once per tab session (the one WebGL scene on the site, loaded only when it plays). App pages stay calm: no scroll effects, no parallax, no intro.
+**Marketing vs app.** The home page may move: a 2s three.js intro once per tab session (the one WebGL scene on the site, loaded only when it plays). App pages stay calm: no scroll effects, no parallax, no intro.
 
 **Allowed patterns:** tabular numbers, the gold ribbon underline, the fold cut, A-shaped progress marks, the pen circle on catalog highlights, the session-once intro, a gold ribbon loader only while a route is loading, example figures only when labelled.
 
@@ -123,7 +123,7 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 
 - Animate only `transform`, `opacity`, `background-color`, `border-color`, `color`.
 - Every unmount has an exit (opacity + 4px translate, `--dur-base`).
-- **Intro** (home, `src/components/brand/Intro.tsx`, `IntroScene.tsx` + `src/app/brand.css`), fixed night overlay over the rendered page, 5.48s (2.0s authored × 2.7375): 0–0.9s two lapis books (three.js) fall with pages fluttering and land face down as A A · 0.95–1.33s the gold ribbon threads through both · 1.40–1.85s the scene fades while the wordmark rises 12px (1.45–1.95s) · 1.76–2.00s overlay fades. The overlay and wordmark are CSS, so they play without WebGL. three.js loads only when the intro plays. Click, tap, any key or a scroll gesture skips. Once per tab session (`sessionStorage`), never under reduced motion.
+- **Intro** (home, `src/components/brand/Intro.tsx`, `IntroScene.tsx` + `src/app/brand.css`), fixed night overlay over the rendered page, 2s (2.0s authored × 1): 0–0.9s two lapis books (three.js) fall with pages fluttering and land face down as A A · 0.95–1.33s the gold ribbon threads through both · 1.40–1.85s the scene fades while the wordmark rises 12px (1.45–1.95s) · 1.76–2.00s overlay fades. The overlay and wordmark are CSS, so they play without WebGL. three.js loads only when the intro plays. Click, tap, any key or a scroll gesture skips. Once per tab session (`sessionStorage`), never under reduced motion.
 - Nothing else reacts to scroll.
 - `prefers-reduced-motion` or the in-app toggle: durations become 0, count-ups show the final value, colour still changes.
 

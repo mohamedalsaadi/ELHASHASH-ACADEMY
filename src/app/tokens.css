@@ -62,8 +62,8 @@
 :root {
   color-scheme: light;
   --fold: 2.904; /* tan 71°: the slope of the A's legs, the brand's only diagonal */
-  /* Intro time multiplier, read by brand.css and IntroScene. 2.0 s × 2.7375 ≈ 5.48 s. */
-  --intro-k: 2.7375;
+  /* Intro time multiplier, read by brand.css and IntroScene. 2.0 s × 1 = 2.0 s. */
+  --intro-k: 1;
 }
 
 body {

@@ -109,7 +109,14 @@ export default function IntroScene() {
     size();
     addEventListener("resize", size);
 
-    const t0 = (window as { __asIntroT0?: number }).__asIntroT0 ?? performance.now();
+    // The scene is alive: start the clock now, so the fall of the books is never missed because this chunk was slow.
+    const root = document.documentElement;
+    const clock = window as { __asIntroT0?: number };
+    if (root.dataset.intro === "ready") {
+      clock.__asIntroT0 = performance.now();
+      root.dataset.intro = "play";
+    }
+    const t0 = clock.__asIntroT0 ?? performance.now();
     // Same multiplier the CSS timeline uses; the scene's authored seconds stay unchanged.
     const k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--intro-k")) || 1;
     let raf = 0;

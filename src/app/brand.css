@@ -15,15 +15,17 @@ html[data-intro] .as-intro {
   /* The overlay lives inside #main-content, which the intro hides. visibility inherits, so without this
      the overlay is hidden for the whole intro and only shows while it fades out. */
   visibility: visible;
-  animation: as-intro-out calc(var(--dur-base) * var(--intro-k)) var(--ease-out) calc(1760ms * var(--intro-k)) forwards;
 }
+/* The timeline waits for IntroScene (see Intro.tsx): while the overlay is "ready" it shows the ground with no motion. */
+html[data-intro]:not([data-intro="ready"]) .as-intro { animation: as-intro-out calc(var(--dur-base) * var(--intro-k)) var(--ease-out) calc(1760ms * var(--intro-k)) forwards; }
 html[data-intro="skip"] .as-intro { animation-delay: 0ms; animation-duration: var(--dur-fast); }
 .as-intro-scene { position: absolute; inset: 0; }
-html[data-intro] .as-intro-scene { animation: as-fade-out calc(450ms * var(--intro-k)) var(--ease-out) calc(1400ms * var(--intro-k)) forwards; }
-html[data-intro] .as-intro-word { opacity: 0; animation: as-rise calc(500ms * var(--intro-k)) var(--ease-out) calc(1450ms * var(--intro-k)) forwards; }
+html[data-intro]:not([data-intro="ready"]) .as-intro-scene { animation: as-fade-out calc(450ms * var(--intro-k)) var(--ease-out) calc(1400ms * var(--intro-k)) forwards; }
+html[data-intro] .as-intro-word { opacity: 0; }
+html[data-intro]:not([data-intro="ready"]) .as-intro-word { animation: as-rise calc(500ms * var(--intro-k)) var(--ease-out) calc(1450ms * var(--intro-k)) forwards; }
 /* The page stays hidden under the overlay until it fades, so the web-font swap behind it is not a layout shift. */
-html[data-intro] body > :not(main),
-html[data-intro] main > :not(.as-intro) { animation: as-reveal 0s calc(1760ms * var(--intro-k)) both; }
+html[data-intro]:not([data-intro="ready"]) body > :not(main),
+html[data-intro]:not([data-intro="ready"]) main > :not(.as-intro) { animation: as-reveal 0s calc(1760ms * var(--intro-k)) both; }
 html[data-intro="skip"] body > :not(main),
 html[data-intro="skip"] main > :not(.as-intro) { animation-delay: 0ms; }
 
@@ -44,6 +46,6 @@ html[data-intro="skip"] main > :not(.as-intro) { animation-delay: 0ms; }
 @keyframes as-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-intro] .as-intro { display: none; }
+  html[data-intro]:not([data-intro="ready"]) .as-intro { display: none; }
   .as-loader::after { animation: none; transform: scaleX(.4); }
 }

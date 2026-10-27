@@ -8,6 +8,10 @@ const IntroScene = dynamic(() => import("./IntroScene"), { ssr: false });
 
 export function IntroStage() {
   const [play, setPlay] = useState(false);
-  useEffect(() => setPlay(document.documentElement.dataset.intro === "play"), []);
+  useEffect(() => {
+    const state = document.documentElement.dataset.intro;
+    // "ready" still mounts the scene: it promotes itself to "play" once it is on screen.
+    setPlay(state === "play" || state === "ready");
+  }, []);
   return play ? <IntroScene /> : null;
 }

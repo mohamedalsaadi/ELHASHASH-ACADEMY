@@ -108,6 +108,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const tp = await getTranslations("catalog.plans");
   const tl = await getTranslations("live");
   const th = await getTranslations("homework");
+  const te = await getTranslations("exam");
   const ar = locale === "ar";
   const now = new Date();
 
@@ -133,6 +134,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
 
   const lessonIds = course.units.flatMap((u) => u.lessons.map((l) => l.id));
   const homeworkCount = session?.user ? await db.assignment.count({ where: { courseId: course.id } }) : 0;
+  const examCount = session?.user ? await db.examPaper.count({ where: { courseId: course.id, published: true } }) : 0;
   const [completedRows, currentView] = session?.user
     ? await Promise.all([
         db.lessonView.findMany({ where: { userId: session.user.id, lessonId: { in: lessonIds }, completedAt: { not: null } }, select: { lessonId: true } }),
@@ -297,6 +299,18 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
             <span className="num text-ink-muted">{homeworkCount}</span>
             <Link href={`/courses/${slug}/assignments`} className="font-semibold text-pen underline underline-offset-4">
               {th("title")}
+            </Link>
+          </span>
+        </section>
+      )}
+
+      {examCount > 0 && (
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4">
+          <span className="font-display text-h3 font-semibold">{te("title")}</span>
+          <span className="flex items-center gap-3 text-small">
+            <span className="num text-ink-muted">{examCount}</span>
+            <Link href={`/courses/${slug}/exams`} className="font-semibold text-pen underline underline-offset-4">
+              {te("title")}
             </Link>
           </span>
         </section>

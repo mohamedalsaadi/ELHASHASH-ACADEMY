@@ -130,6 +130,9 @@ model User {
   authoredQuestions   QuestionItem[]        @relation("QuestionAuthor")
   practiceAttempts    PracticeAttempt[]
   reviewSchedules     ReviewSchedule[]
+  authoredExams       ExamPaper[]           @relation("ExamAuthor")
+  examAttempts        ExamAttempt[]
+  gradedExams         ExamAttempt[]         @relation("ExamGrader")
 }
 
 model Country {
@@ -238,6 +241,7 @@ model Course {
   liveSessions    LiveSession[]
   assignments     Assignment[]
   specialRequests SpecialRequest[]
+  examPapers      ExamPaper[]
 
   @@index([gradeId, subjectId])
 }
@@ -820,6 +824,8 @@ model SpecialRequestReply {
 enum QuestionKind {
   MCQ
   SHORT
+  /// Free response: nothing marks it, the teacher does.
+  WRITTEN
 }
 
 /// One practice question, attached to a lesson and optionally a concept. SHORT accepts one canonical answer.
@@ -838,11 +844,13 @@ model QuestionItem {
   active      Boolean      @default(true)
   createdAt   DateTime     @default(now())
 
-  lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  concept   Concept?         @relation(fields: [conceptId], references: [id], onDelete: SetNull)
-  createdBy User             @relation("QuestionAuthor", fields: [createdById], references: [id], onDelete: Restrict)
-  choices   QuestionChoice[]
-  answers   PracticeAnswer[]
+  lesson      Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  concept     Concept?         @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  createdBy   User             @relation("QuestionAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+  choices     QuestionChoice[]
+  answers     PracticeAnswer[]
+  examItems   ExamItem[]
+  examAnswers ExamAnswer[]
 
   @@index([lessonId, order])
   @@index([conceptId])
@@ -857,6 +865,7 @@ model QuestionChoice {
 
   item  QuestionItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
   picks PracticeAnswer[]
+  exams ExamAnswer[]
 
   @@index([itemId, order])
 }
@@ -914,4 +923,86 @@ model ReviewSchedule {
 
   @@unique([userId, lessonId])
   @@index([userId, dueAt])
+}
+
+// ---- Exam simulation --------------------------------------------------------
+
+enum ExamAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+/// A timed paper built from existing question-bank items. Written answers go to the teacher, the rest mark themselves.
+model ExamPaper {
+  id          String   @id @default(cuid())
+  courseId    String
+  createdById String
+  title       String   @db.VarChar(200)
+  description String?  @db.VarChar(4000)
+  durationMin Int      @default(60)
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course    Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy User          @relation("ExamAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+  items     ExamItem[]
+  attempts  ExamAttempt[]
+
+  @@index([courseId, published])
+}
+
+model ExamItem {
+  id      String @id @default(cuid())
+  paperId String
+  itemId  String
+  order   Int    @default(0)
+
+  paper ExamPaper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  item  QuestionItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([paperId, itemId])
+  @@index([paperId, order])
+}
+
+/// The clock is server-side: `expiresAt` is set when the attempt starts, and a late submit is still accepted
+/// but cannot run past the grace period in lib/exams.ts.
+model ExamAttempt {
+  id          String            @id @default(cuid())
+  paperId     String
+  userId      String
+  startedAt   DateTime          @default(now())
+  expiresAt   DateTime
+  submittedAt DateTime?
+  status      ExamAttemptStatus @default(IN_PROGRESS)
+  marks       Int?
+  maxMarks    Int
+  gradedById  String?
+  gradedAt    DateTime?
+
+  paper    ExamPaper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gradedBy User?        @relation("ExamGrader", fields: [gradedById], references: [id], onDelete: SetNull)
+  answers  ExamAnswer[]
+
+  @@index([paperId, userId])
+  @@index([status])
+}
+
+model ExamAnswer {
+  id        String   @id @default(cuid())
+  attemptId String
+  itemId    String
+  choiceId  String?
+  text      String?  @db.VarChar(2000)
+  /// Null until marked: objective items are marked on submit, written ones by the teacher.
+  correct   Boolean?
+  marks     Int?
+
+  attempt ExamAttempt     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  item    QuestionItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  choice  QuestionChoice? @relation(fields: [choiceId], references: [id], onDelete: SetNull)
+
+  @@unique([attemptId, itemId])
 }

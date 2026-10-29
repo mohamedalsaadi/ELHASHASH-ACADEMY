@@ -30,7 +30,7 @@ export async function submitReview(_prev: PracticeError, form: FormData): Promis
   if (ids.length === 0) return "invalid";
 
   const items = await db.questionItem.findMany({
-    where: { id: { in: ids }, active: true },
+    where: { id: { in: ids }, active: true, kind: { in: ["MCQ", "SHORT"] } },
     select: { id: true, lessonId: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } },
   });
   if (items.length === 0) return "invalid";

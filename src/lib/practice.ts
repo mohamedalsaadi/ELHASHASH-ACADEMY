@@ -3,7 +3,8 @@
 
 export type PracticeItem = {
   id: string;
-  kind: "MCQ" | "SHORT";
+  /** WRITTEN never appears in practice or review; it exists so exam answers share the type. */
+  kind: "MCQ" | "SHORT" | "WRITTEN";
   marks: number;
   /** SHORT only: the canonical accepted answer. */
   answer: string | null;
@@ -38,7 +39,7 @@ export function normalizeAnswer(input: string): string {
 
 /** One item, one reply. A short answer must match the canonical answer exactly after normalising. */
 export function gradeItem(item: PracticeItem, reply: PracticeReply | undefined): { correct: boolean; marks: number } {
-  if (!reply) return { correct: false, marks: 0 };
+  if (!reply || item.kind === "WRITTEN") return { correct: false, marks: 0 };
   if (item.kind === "MCQ") {
     const picked = item.choices.find((c) => c.id === reply.choiceId);
     const correct = !!picked?.correct;

@@ -31,7 +31,7 @@ export async function submitPractice(_prev: PracticeError, form: FormData): Prom
       month: true,
       unit: { select: { term: true, isFree: true, courseId: true, course: { select: { slug: true } } } },
       questionItems: {
-        where: { active: true },
+        where: { active: true, kind: { in: ["MCQ", "SHORT"] } },
         orderBy: { order: "asc" },
         select: { id: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } },
       },

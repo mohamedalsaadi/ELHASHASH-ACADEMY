@@ -109,7 +109,7 @@ export default async function ReviewPage({
   const due = dueNow(schedules, now, 5);
   const items = due.length
     ? await db.questionItem.findMany({
-        where: { lessonId: { in: due.map((d) => d.lessonId) }, active: true },
+        where: { lessonId: { in: due.map((d) => d.lessonId) }, active: true, kind: { in: ["MCQ", "SHORT"] } },
         orderBy: [{ lessonId: "asc" }, { order: "asc" }],
         take: 10,
         select: { id: true, kind: true, prompt: true, marks: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true } } },

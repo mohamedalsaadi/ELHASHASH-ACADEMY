@@ -43,7 +43,7 @@ export default async function PracticePage({
       titleEn: true,
       unit: { select: { term: true, isFree: true, courseId: true, course: { select: { slug: true, titleAr: true, titleEn: true } } } },
       questionItems: {
-        where: { active: true },
+        where: { active: true, kind: { in: ["MCQ", "SHORT"] } },
         orderBy: { order: "asc" },
         select: {
           id: true,

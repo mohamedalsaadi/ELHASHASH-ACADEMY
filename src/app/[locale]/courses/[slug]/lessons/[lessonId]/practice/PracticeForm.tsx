@@ -5,7 +5,7 @@ import { field } from "@/app/[locale]/admin/styles";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { PracticeError } from "@/lib/practice";
 
-export type FormItem = { id: string; kind: "MCQ" | "SHORT"; prompt: string; marks: number; choices: { id: string; label: string }[] };
+export type FormItem = { id: string; kind: "MCQ" | "SHORT" | "WRITTEN"; prompt: string; marks: number; choices: { id: string; label: string }[] };
 
 type Labels = Record<"submit" | "choose" | "yourAnswer" | "invalid" | "closed" | "limited", string>;
 

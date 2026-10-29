@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, homeworkPrefix } from "@/lib/blob";
-import { gradeWithClaude } from "@/lib/ai-grading";
+import { gradeWithAi as requestAiGrade } from "@/lib/ai-grading";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -255,7 +255,7 @@ export async function gradeWithAi(_prev: AiError, form: FormData): Promise<AiErr
   await assertCourse(me, submission.assignment.courseId);
   if (await isLimited(`ai-grade:${me.id}`, 100, 86_400_000)) return "limited";
 
-  const result = await gradeWithClaude({
+  const result = await requestAiGrade({
     title: submission.assignment.title,
     instructions: submission.assignment.instructions,
     maxScore: submission.assignment.maxScore,

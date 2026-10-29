@@ -30,6 +30,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
       id: true,
       title: true,
       durationMin: true,
+      maxAttempts: true,
       published: true,
       courseId: true,
       course: { select: { slug: true, instructorId: true, titleAr: true, titleEn: true } },
@@ -77,6 +78,10 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
           <label className="grid gap-1 text-label text-ink-muted">
             {t("duration")}
             <input name="durationMin" type="number" min={5} max={300} defaultValue={paper.durationMin} dir="ltr" className="num min-h-11 w-28 rounded-sm border border-field bg-surface px-3 text-body text-ink" />
+          </label>
+          <label className="grid gap-1 text-label text-ink-muted">
+            {t("attempts")}
+            <input name="maxAttempts" type="number" min={1} max={10} defaultValue={paper.maxAttempts} dir="ltr" className="num min-h-11 w-24 rounded-sm border border-field bg-surface px-3 text-body text-ink" />
           </label>
           <label className="flex min-h-11 items-center gap-2 text-label text-ink-muted">
             <input type="checkbox" name="published" defaultChecked={paper.published} className="size-4" />

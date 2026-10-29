@@ -29,6 +29,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
       id: true,
       title: true,
       durationMin: true,
+      maxAttempts: true,
       course: { select: { slug: true, titleAr: true, titleEn: true } },
       items: {
         orderBy: { order: "asc" },
@@ -51,6 +52,8 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
   });
   if (!paper || paper.course.slug !== slug) notFound();
 
+  const used = await db.examAttempt.count({ where: { paperId: paper.id, userId: session.user.id } });
+  const canRetake = used < paper.maxAttempts;
   const attempt = paper.attempts[0];
   const items = paper.items.map((i) => i.item);
 
@@ -102,14 +105,18 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
         title={<span dir="auto">{paper.title}</span>}
         meta={
           <span className="num">
-            {attempt.marks ?? "—"} / {attempt.maxMarks}
+            {attempt.marks ?? "—"} / {attempt.maxMarks} · {t("attemptsUsed", { used, max: paper.maxAttempts })}
           </span>
         }
         actions={
-          <form action={startExam}>
-            <input type="hidden" name="paperId" value={paper.id} />
-            <button className="btn btn-outline px-4 py-2 text-small">{t("takeAgain")}</button>
-          </form>
+          canRetake ? (
+            <form action={startExam}>
+              <input type="hidden" name="paperId" value={paper.id} />
+              <button className="btn btn-outline px-4 py-2 text-small">{t("takeAgain")}</button>
+            </form>
+          ) : (
+            <span className="text-small text-ink-muted">{t("noAttempts")}</span>
+          )
         }
       />
 

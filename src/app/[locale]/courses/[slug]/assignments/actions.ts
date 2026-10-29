@@ -71,7 +71,9 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   });
 
   if (existing) {
-    const canRedo = assignment.allowResubmit && (existing.status === "GRADED" || existing.status === "RETURNED");
+    // Returning the work is the instructor asking for a redo, so it always reopens once. The switch only
+    // covers the other case: resubmitting after a grade the teacher did not ask to see again.
+    const canRedo = existing.status === "RETURNED" || (assignment.allowResubmit && existing.status === "GRADED");
     if (!canRedo) return "already";
     await db.$transaction([
       db.submissionFile.deleteMany({ where: { submissionId: existing.id } }),

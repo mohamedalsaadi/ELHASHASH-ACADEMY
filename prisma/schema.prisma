@@ -941,6 +941,8 @@ model ExamPaper {
   title       String   @db.VarChar(200)
   description String?  @db.VarChar(4000)
   durationMin Int      @default(60)
+  /// How many attempts one student gets. One by default; the teacher raises it per paper.
+  maxAttempts Int      @default(1)
   published   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

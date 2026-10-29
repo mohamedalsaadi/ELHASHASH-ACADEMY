@@ -1157,6 +1157,8 @@
     "timeUp": "Time is up — submitting…",
     "noAccess": "This exam is not open to you.",
     "edit": "Edit",
-    "takeAgain": "Try again"
+    "takeAgain": "Try again",
+    "noAttempts": "No attempts left for this exam.",
+    "attemptsUsed": "Attempts: {used} of {max}"
   }
 }

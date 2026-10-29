@@ -36,7 +36,8 @@ export default async function CourseExamsPage({ params }: { params: Promise<{ lo
           id: true,
           title: true,
           durationMin: true,
-          _count: { select: { items: true } },
+          maxAttempts: true,
+          _count: { select: { items: true, attempts: { where: { userId: session.user.id } } } },
           attempts: {
             where: { userId: session.user.id },
             orderBy: { startedAt: "desc" },
@@ -76,11 +77,15 @@ export default async function CourseExamsPage({ params }: { params: Promise<{ lo
                 <span className="text-small text-ink-muted">
                   <span className="num">{p._count.items}</span> {t("questions")} · <span className="num">{p.durationMin}</span>
                 </span>
-                <div className="flex flex-wrap gap-2">
-                  <form action={startExam}>
-                    <input type="hidden" name="paperId" value={p.id} />
-                    <button className="btn btn-primary px-4 py-2 text-small">{last?.status === "IN_PROGRESS" ? t("resume") : t("start")}</button>
-                  </form>
+                <div className="flex flex-wrap items-center gap-2">
+                  {last?.status === "IN_PROGRESS" || p._count.attempts < p.maxAttempts ? (
+                    <form action={startExam}>
+                      <input type="hidden" name="paperId" value={p.id} />
+                      <button className="btn btn-primary px-4 py-2 text-small">{last?.status === "IN_PROGRESS" ? t("resume") : t("start")}</button>
+                    </form>
+                  ) : (
+                    <span className="text-small text-ink-muted">{t("noAttempts")}</span>
+                  )}
                   <Link href={`/courses/${slug}/exams/${p.id}`} className="btn btn-outline px-4 py-2 text-small">
                     {t("result")}
                   </Link>

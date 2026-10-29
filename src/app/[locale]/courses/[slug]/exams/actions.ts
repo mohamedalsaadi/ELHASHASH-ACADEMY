@@ -19,16 +19,17 @@ export async function startExam(form: FormData) {
 
   const paper = await db.examPaper.findUnique({
     where: { id: d.paperId, published: true },
-    select: { id: true, durationMin: true, courseId: true, course: { select: { slug: true } }, items: { select: { item: { select: { marks: true } } } } },
+    select: { id: true, durationMin: true, maxAttempts: true, courseId: true, course: { select: { slug: true } }, items: { select: { item: { select: { marks: true } } } } },
   });
   if (!paper) notFound();
   if (paper.items.length === 0) notFound();
 
-  const existing = await db.examAttempt.findFirst({
-    where: { paperId: paper.id, userId: session.user.id, status: "IN_PROGRESS" },
-    select: { id: true },
-  });
-  if (!existing) {
+  const [existing, used] = await Promise.all([
+    db.examAttempt.findFirst({ where: { paperId: paper.id, userId: session.user.id, status: "IN_PROGRESS" }, select: { id: true } }),
+    db.examAttempt.count({ where: { paperId: paper.id, userId: session.user.id } }),
+  ]);
+  // A fresh attempt only while the student has one left, and never while one is already open.
+  if (!existing && used < paper.maxAttempts) {
     const maxMarks = paper.items.reduce((sum, i) => sum + i.item.marks, 0);
     await db.examAttempt.create({
       data: {

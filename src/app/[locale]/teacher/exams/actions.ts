@@ -35,6 +35,7 @@ export async function updateExam(form: FormData) {
       id: z.string().min(1),
       title: z.string().trim().min(3).max(200),
       durationMin: z.coerce.number().int().min(5).max(300),
+      maxAttempts: z.coerce.number().int().min(1).max(10).default(1),
       published: z.string().optional(),
     })
     .parse(Object.fromEntries(form));
@@ -42,7 +43,7 @@ export async function updateExam(form: FormData) {
   await assertCourse(me, exam.courseId);
   await db.examPaper.update({
     where: { id: d.id },
-    data: { title: d.title, durationMin: d.durationMin, published: d.published === "on" },
+    data: { title: d.title, durationMin: d.durationMin, maxAttempts: d.maxAttempts, published: d.published === "on" },
   });
   revalidatePath("/[locale]/teacher/exams/[id]", "page");
   revalidatePath("/[locale]/courses/[slug]/exams", "page");

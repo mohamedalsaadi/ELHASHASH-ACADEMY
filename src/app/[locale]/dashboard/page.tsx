@@ -7,6 +7,8 @@ import { LiveRow } from "@/components/learning/LiveRow";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { courseZone, currencyZone, formatDate, formatMoney, formatWhen } from "@/lib/format";
+import { opensAssignment } from "@/lib/assignments";
+import { average } from "@/lib/grades";
 import { courseProgress, groupLive, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
 import { opensLesson, type Grant } from "@/lib/plans";
 import { ProgressBar } from "@/components/ui/progress";
@@ -31,12 +33,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
   if (session.user.role === "PARENT") redirect(`/${locale}/parent`);
 
-  const [t, tc, tq, tm, tl] = await Promise.all([
+  const [t, tc, tq, tm, tl, th] = await Promise.all([
     getTranslations("dashboard"),
     getTranslations("catalog"),
     getTranslations("questions"),
     getTranslations("checkout"),
     getTranslations("live"),
+    getTranslations("homework"),
   ]);
   const ar = locale === "ar";
   const now = new Date();
@@ -185,6 +188,45 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const liveList = [...live.now, ...live.soon, ...live.later];
   const nextLive = live.now[0] ?? live.soon[0];
 
+  const [homeworkAll, gradedRows] = await Promise.all([
+    db.assignment.findMany({
+      where: { courseId: { in: liveCourses.map((c) => c.courseId) } },
+      orderBy: [{ dueAt: "asc" }],
+      take: 50,
+      select: {
+        id: true,
+        title: true,
+        dueAt: true,
+        courseId: true,
+        lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } },
+        course: { select: { slug: true, grade: { select: { country: { select: { timeZone: true } } } } } },
+        submissions: { where: { studentId: userId }, select: { id: true, status: true } },
+      },
+    }),
+    db.submission.findMany({
+      where: { studentId: userId, status: "GRADED", score: { not: null } },
+      select: { score: true, assignment: { select: { maxScore: true } } },
+    }),
+  ]);
+  const weekAhead = new Date(now.getTime() + 7 * 86_400_000);
+  const homework = homeworkAll
+    .filter((a) => opensAssignment({ courseId: a.courseId, lesson: a.lesson }, activeGrants(a.courseId), now))
+    .map((a) => {
+      const sub = a.submissions[0];
+      const open = !sub;
+      return {
+        ...a,
+        submitted: !!sub,
+        overdue: open && !!a.dueAt && a.dueAt < now,
+        soon: open && !!a.dueAt && a.dueAt >= now && a.dueAt <= weekAhead,
+      };
+    });
+  const dueSoon = homework.filter((a) => a.soon).length;
+  const overdueCount = homework.filter((a) => a.overdue).length;
+  const homeworkAvg = average(gradedRows.filter((r) => r.score !== null).map((r) => ({ value: r.score!, max: r.assignment.maxScore })));
+  const nextHomework = homework.filter((a) => !a.submitted && a.dueAt && a.dueAt <= weekAhead).slice(0, 3);
+
+
   // ---- next action: one primary on the page ------------------------------------------------
   const pending = orders.find((o) => o.status === "PENDING");
   const hasAccess = liveCourses.length > 0 || rentals.length > 0 || seats.length > 0;
@@ -250,6 +292,32 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           <StatTile label={t("summary.activeCourses")} value={liveCourses.length} />
           <StatTile label={t("summary.upcomingLive")} value={liveList.length} />
         </div>
+      </section>
+
+      <section className="grid gap-2">
+        <h2 className="font-display text-h2 font-semibold">{th("title")}</h2>
+        <div className="grid grid-cols-3 gap-2">
+          <StatTile label={th("dueSoon")} value={dueSoon} />
+          <StatTile label={th("overdue")} value={overdueCount} />
+          <StatTile label={th("homeworkAverage")} value={homeworkAvg ? `${homeworkAvg.avg}%` : "—"} hint={homeworkAvg ? th("sample", { n: homeworkAvg.n }) : undefined} />
+        </div>
+        {nextHomework.length > 0 && (
+          <ul className="grid gap-1">
+            {nextHomework.map((a) => (
+              <li key={a.id}>
+                <Link
+                  href={`/courses/${a.course.slug}/assignments/${a.id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-hairline bg-surface px-3 py-2 text-small transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                >
+                  <span className="min-w-0 truncate" dir="auto">{a.title}</span>
+                  <span className="num text-label text-ink-muted">
+                    {a.dueAt ? formatDate(a.dueAt, courseZone(a.course), locale) : th("noDue")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {next ? (

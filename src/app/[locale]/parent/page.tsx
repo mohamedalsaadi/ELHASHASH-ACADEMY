@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
+import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { courseZone, formatMoney } from "@/lib/format";
+import { average } from "@/lib/grades";
 import { unlinkParent } from "../account/actions";
 import { LinkChildForm } from "./LinkChildForm";
 
@@ -30,6 +32,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
   }
 
   const t = await getTranslations("parent");
+  const th = await getTranslations("homework");
   const ar = locale === "ar";
   const now = new Date();
   const weekStart = new Date(now.getTime() - 7 * DAY);
@@ -45,7 +48,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
 
   const children = await Promise.all(
     links.map(async (link) => {
-      const [courses, nextExpiry, done, attended, lastOrder] = await Promise.all([
+      const [courses, nextExpiry, done, attended, lastOrder, graded, overdue] = await Promise.all([
         db.entitlement.findMany({
           where: {
             userId: link.student.id,
@@ -70,6 +73,18 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
           orderBy: { paidAt: "desc" },
           select: { total: true, currency: true, paidAt: true },
         }),
+        db.submission.findMany({
+          where: { studentId: link.student.id, status: "GRADED", score: { not: null } },
+          select: { score: true, assignment: { select: { maxScore: true } } },
+          take: 200,
+        }),
+        db.assignment.count({
+          where: {
+            dueAt: { lt: now },
+            course: { entitlements: { some: { userId: link.student.id, OR: [{ endsAt: null }, { endsAt: { gt: now } }] } } },
+            submissions: { none: { studentId: link.student.id } },
+          },
+        }),
       ]);
       return {
         link,
@@ -79,6 +94,8 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
         done,
         attended,
         lastOrder,
+        homeworkAverage: average(graded.filter((s) => s.score !== null).map((s) => ({ value: s.score!, max: s.assignment.maxScore }))),
+        overdue,
       };
     }),
   );
@@ -100,7 +117,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
         <p className={small}>{t("noChildren")}</p>
       ) : (
         <ul className="grid gap-4">
-          {children.map(({ link, courses, nextExpiry, nextZone, done, attended, lastOrder }) => (
+          {children.map(({ link, courses, nextExpiry, nextZone, done, attended, lastOrder, homeworkAverage, overdue }) => (
             <li key={link.id} className={panel}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-display text-h3 font-semibold">{link.student.name}</h2>
@@ -124,9 +141,21 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
                 <dd className="num">{attended}</dd>
                 <dt>{t("nextExpiry")}</dt>
                 <dd>{nextExpiry ? dateIn(nextZone).format(nextExpiry) : t("noExpiry")}</dd>
+                <dt>{th("homeworkAverage")}</dt>
+                <dd className="num">{homeworkAverage ? `${homeworkAverage.avg}%` : "—"}</dd>
+                <dt>{th("overdue")}</dt>
+                <dd className="num">{overdue}</dd>
                 <dt>{t("lastPayment")}</dt>
                 <dd>{lastOrder?.paidAt ? `${formatMoney(lastOrder.total, lastOrder.currency, locale)} · ${date.format(lastOrder.paidAt)}` : t("noPayment")}</dd>
               </dl>
+              <div className="flex flex-wrap gap-4 text-small">
+                <Link href={`/parent/children/${link.student.id}`} className="text-pen underline underline-offset-4">
+                  {th("viewChild")}
+                </Link>
+                <Link href="/parent/requests" className="text-pen underline underline-offset-4">
+                  {th("requests")}
+                </Link>
+              </div>
             </li>
           ))}
         </ul>

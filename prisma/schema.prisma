@@ -104,23 +104,29 @@ model User {
   bioEn           String?
   createdAt       DateTime  @default(now())
 
-  grade         Grade?           @relation(fields: [gradeId], references: [id], onDelete: SetNull)
-  courses       Course[]         @relation("Instructor")
-  orders        Order[]
-  entitlements  Entitlement[]
-  device        DeviceSession?
-  progress      StudentProgress?
-  attempts      QuizAttempt[]
-  views         LessonView[]
-  recorded      Lesson[]         @relation("LessonInstructor")
-  questions     Question[]       @relation("Asker")
-  answers       Question[]       @relation("Answerer")
-  tokens        Token[]
-  notifications Notification[]
-  parentCode    ParentCode?
-  parentLinks   ParentLink[]     @relation("Parent")
-  childLinks    ParentLink[]     @relation("Student")
-  attendance    LiveAttendance[]
+  grade               Grade?                @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  courses             Course[]              @relation("Instructor")
+  orders              Order[]
+  entitlements        Entitlement[]
+  device              DeviceSession?
+  progress            StudentProgress?
+  attempts            QuizAttempt[]
+  views               LessonView[]
+  recorded            Lesson[]              @relation("LessonInstructor")
+  questions           Question[]            @relation("Asker")
+  answers             Question[]            @relation("Answerer")
+  tokens              Token[]
+  notifications       Notification[]
+  parentCode          ParentCode?
+  parentLinks         ParentLink[]          @relation("Parent")
+  childLinks          ParentLink[]          @relation("Student")
+  attendance          LiveAttendance[]
+  authoredAssignments Assignment[]          @relation("AssignmentAuthor")
+  submissions         Submission[]          @relation("Submitter")
+  gradedSubmissions   Submission[]          @relation("Grader")
+  specialRequests     SpecialRequest[]      @relation("Requester")
+  requestsAboutMe     SpecialRequest[]      @relation("RequestStudent")
+  requestReplies      SpecialRequestReply[] @relation("RequestReplier")
 }
 
 model Country {
@@ -218,13 +224,15 @@ model Course {
   published    Boolean    @default(false)
   createdAt    DateTime   @default(now())
 
-  grade        Grade?        @relation(fields: [gradeId], references: [id], onDelete: Restrict)
-  subject      Subject?      @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  instructor   User          @relation("Instructor", fields: [instructorId], references: [id], onDelete: Restrict)
-  units        Unit[]
-  skus         Sku[]
-  entitlements Entitlement[]
-  liveSessions LiveSession[]
+  grade           Grade?           @relation(fields: [gradeId], references: [id], onDelete: Restrict)
+  subject         Subject?         @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  instructor      User             @relation("Instructor", fields: [instructorId], references: [id], onDelete: Restrict)
+  units           Unit[]
+  skus            Sku[]
+  entitlements    Entitlement[]
+  liveSessions    LiveSession[]
+  assignments     Assignment[]
+  specialRequests SpecialRequest[]
 
   @@index([gradeId, subjectId])
 }
@@ -268,6 +276,7 @@ model Lesson {
   skus         Sku[]
   entitlements Entitlement[]
   questions    Question[]
+  assignments  Assignment[]
 
   @@unique([unitId, order])
 }
@@ -511,6 +520,11 @@ enum NotificationKind {
   EXPIRING
   LIVE_SOON
   SYSTEM
+  ASSIGNMENT_NEW
+  SUBMISSION_RECEIVED
+  SUBMISSION_GRADED
+  REQUEST_NEW
+  REQUEST_REPLY
 }
 
 /// In-app notice; `dedupeKey` stops a reminder from firing twice, and `emailedAt` records the email.
@@ -647,4 +661,146 @@ model Question {
 
   @@index([lessonId])
   @@index([userId])
+}
+
+// ---- Homework, submissions, grades and special requests --------------------
+
+enum AssignmentKind {
+  HOMEWORK
+}
+
+/// No DRAFT: the browser form is the draft, so a row exists only once the student submits.
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+  /// The teacher asked for a redo; no score is recorded.
+  RETURNED
+}
+
+enum RequestStatus {
+  OPEN
+  ANSWERED
+  CLOSED
+}
+
+/// Homework set for a course or one lesson. Titles and instructions are single fields: teacher-authored
+/// class content, not bilingual catalog copy, and rendered with dir="auto".
+model Assignment {
+  id            String         @id @default(cuid())
+  courseId      String
+  lessonId      String?
+  createdById   String
+  kind          AssignmentKind @default(HOMEWORK)
+  title         String         @db.VarChar(200)
+  instructions  String?        @db.VarChar(8000)
+  /// Null means open-ended: never overdue, never late.
+  dueAt         DateTime?
+  maxScore      Int            @default(100)
+  allowResubmit Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdBy   User             @relation("AssignmentAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+  files       AssignmentFile[]
+  submissions Submission[]
+
+  @@index([courseId, dueAt])
+  @@index([lessonId])
+}
+
+/// A private Vercel Blob object. The URL is never stored or shown; downloads go through /api/files.
+model AssignmentFile {
+  id           String   @id @default(cuid())
+  assignmentId String
+  pathname     String
+  downloadName String   @db.VarChar(255)
+  contentType  String   @db.VarChar(120)
+  size         Int
+  createdAt    DateTime @default(now())
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+}
+
+/// One row per student per assignment; resubmission updates it in place and clears the previous grade.
+model Submission {
+  id           String           @id @default(cuid())
+  assignmentId String
+  studentId    String
+  status       SubmissionStatus @default(SUBMITTED)
+  /// Typed answer; null when the student only uploaded files.
+  text         String?          @db.VarChar(10000)
+  submittedAt  DateTime         @default(now())
+  revision     Int              @default(1)
+  /// 0..assignment.maxScore, enforced by the grading action.
+  score        Int?
+  feedback     String?          @db.VarChar(4000)
+  gradedAt     DateTime?
+  gradedById   String?
+  /// Reserved for AI-assisted grading. Nothing writes these yet.
+  aiScore      Int?
+  aiFeedback   String?          @db.VarChar(4000)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  assignment Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    User             @relation("Submitter", fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy   User?            @relation("Grader", fields: [gradedById], references: [id], onDelete: SetNull)
+  files      SubmissionFile[]
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId, status])
+  @@index([assignmentId, status])
+}
+
+model SubmissionFile {
+  id           String   @id @default(cuid())
+  submissionId String
+  pathname     String
+  downloadName String   @db.VarChar(255)
+  contentType  String   @db.VarChar(120)
+  size         Int
+  createdAt    DateTime @default(now())
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+/// A parent's request to management and optionally the course teacher. courseId null means management only.
+model SpecialRequest {
+  id        String        @id @default(cuid())
+  authorId  String
+  studentId String
+  courseId  String?
+  subject   String        @db.VarChar(160)
+  body      String        @db.VarChar(4000)
+  status    RequestStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  author  User                  @relation("Requester", fields: [authorId], references: [id], onDelete: Cascade)
+  student User                  @relation("RequestStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course?               @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  replies SpecialRequestReply[]
+
+  @@index([authorId, createdAt])
+  @@index([courseId, status])
+  @@index([status, createdAt])
+}
+
+model SpecialRequestReply {
+  id        String   @id @default(cuid())
+  requestId String
+  authorId  String
+  body      String   @db.VarChar(4000)
+  createdAt DateTime @default(now())
+
+  request SpecialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author  User           @relation("RequestReplier", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, createdAt])
 }

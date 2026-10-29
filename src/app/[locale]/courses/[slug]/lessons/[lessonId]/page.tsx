@@ -8,6 +8,7 @@ import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
 import { canAsk, grantsFor, isCourseStaff, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { courseZone, formatDate } from "@/lib/format";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
 import { neighbours, nextOpenLesson, orderedLessons } from "@/lib/learning";
 import { opensLesson } from "@/lib/plans";
@@ -57,6 +58,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const { locale, slug, lessonId } = await params;
   setRequestLocale(locale);
   const [tc, tp, tq] = await Promise.all([getTranslations("catalog"), getTranslations("player"), getTranslations("questions")]);
+  const th = await getTranslations("homework");
   const ar = locale === "ar";
   const now = new Date();
 
@@ -66,7 +68,16 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
       include: {
         video: true,
         instructor: { select: { name: true } },
-        unit: { include: { course: { include: { instructor: { select: { name: true } } } } } },
+        unit: {
+          include: {
+            course: {
+              include: {
+                instructor: { select: { name: true } },
+                grade: { select: { country: { select: { timeZone: true } } } },
+              },
+            },
+          },
+        },
       },
     }),
     db.course.findUnique({
@@ -116,7 +127,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   }
 
   const outlineLessonIds = outline.units.flatMap((u) => u.lessons.map((l) => l.id));
-  const [mayAsk, mine, view, completedRows] = await Promise.all([
+  const [mayAsk, mine, view, completedRows, homework] = await Promise.all([
     canAsk(userId, course.id, scope),
     userId
       ? db.question.findMany({ where: { lessonId: lesson.id, userId }, orderBy: { createdAt: "desc" }, include: { answeredBy: { select: { name: true } } } })
@@ -124,6 +135,13 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
     userId ? db.lessonView.findUnique({ where: { userId_lessonId: { userId, lessonId: lesson.id } }, select: { completedAt: true } }) : null,
     userId
       ? db.lessonView.findMany({ where: { userId, lessonId: { in: outlineLessonIds }, completedAt: { not: null } }, select: { lessonId: true } })
+      : [],
+    userId
+      ? db.assignment.findMany({
+          where: { lessonId: lesson.id },
+          orderBy: { dueAt: "asc" },
+          select: { id: true, title: true, dueAt: true },
+        })
       : [],
   ]);
   const completed = new Set(completedRows.map((v) => v.lessonId));
@@ -222,6 +240,24 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
               </span>
             ))}
         </nav>
+
+        {homework.length > 0 && (
+          <section className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+            <h2 className="font-display text-h3 font-semibold">{th("title")}</h2>
+            <ul className="grid gap-1 text-small">
+              {homework.map((a) => (
+                <li key={a.id}>
+                  <Link href={`/courses/${slug}/assignments/${a.id}`} className="flex flex-wrap items-center justify-between gap-2 underline-offset-4 hover:underline">
+                    <span className="min-w-0 truncate" dir="auto">{a.title}</span>
+                    <span className="num text-label text-ink-muted">
+                      {a.dueAt ? formatDate(a.dueAt, courseZone(course), locale) : th("noDue")}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {userId && (mayAsk || mine.length > 0) && (
           <section id="questions" className="grid scroll-mt-6 gap-4 border-t border-hairline pt-6">

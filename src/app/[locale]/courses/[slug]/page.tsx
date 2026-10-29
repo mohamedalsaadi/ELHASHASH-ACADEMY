@@ -107,6 +107,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const t = await getTranslations("catalog");
   const tp = await getTranslations("catalog.plans");
   const tl = await getTranslations("live");
+  const th = await getTranslations("homework");
   const ar = locale === "ar";
   const now = new Date();
 
@@ -131,6 +132,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const active = allGrants.filter((g) => !g.endsAt || g.endsAt > now);
 
   const lessonIds = course.units.flatMap((u) => u.lessons.map((l) => l.id));
+  const homeworkCount = session?.user ? await db.assignment.count({ where: { courseId: course.id } }) : 0;
   const [completedRows, currentView] = session?.user
     ? await Promise.all([
         db.lessonView.findMany({ where: { userId: session.user.id, lessonId: { in: lessonIds }, completedAt: { not: null } }, select: { lessonId: true } }),
@@ -286,6 +288,18 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
 
       {session?.user && !staff && level !== "none" && progress.total > 0 && (
         <ProgressBar done={progress.done} total={progress.total} label={t("progressLabel")} />
+      )}
+
+      {homeworkCount > 0 && (
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4">
+          <span className="font-display text-h3 font-semibold">{th("title")}</span>
+          <span className="flex items-center gap-3 text-small">
+            <span className="num text-ink-muted">{homeworkCount}</span>
+            <Link href={`/courses/${slug}/assignments`} className="font-semibold text-pen underline underline-offset-4">
+              {th("title")}
+            </Link>
+          </span>
+        </section>
       )}
 
       <section id="units" className="grid scroll-mt-6 gap-4">

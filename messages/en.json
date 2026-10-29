@@ -672,7 +672,11 @@
     "navRequests": "Requests",
     "navAnalytics": "Analytics",
     "navBank": "Question bank",
-    "navExams": "Exams"
+    "navExams": "Exams",
+    "earlyWarning": "Students to check on",
+    "earlyWarningHint": "No lesson opened in seven days. Reach out before it becomes a gap.",
+    "lastSeen": "Last activity: {date}",
+    "never": "No activity recorded"
   },
   "live": {
     "title": "Live lectures",
@@ -1067,7 +1071,13 @@
       "good": "Good",
       "pass": "Pass",
       "poor": "Poor"
-    }
+    },
+    "aiGrade": "Grade with AI",
+    "aiSuggestion": "Suggestion: {score} of {max}",
+    "aiUnavailable": "AI grading is not configured yet.",
+    "aiLimited": "Daily AI grading limit reached.",
+    "aiOk": "Suggestion received.",
+    "aiNone": "Could not grade it — review by hand."
   },
   "practice": {
     "title": "Practice",

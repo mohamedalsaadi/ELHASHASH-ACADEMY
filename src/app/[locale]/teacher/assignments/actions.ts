@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, homeworkPrefix } from "@/lib/blob";
+import { gradeWithClaude } from "@/lib/ai-grading";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
+import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
 type Uploaded = { pathname: string; downloadName: string };
@@ -229,5 +231,48 @@ export async function gradeSubmission(_prev: GradeError, form: FormData): Promis
   revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
   revalidatePath("/[locale]/dashboard", "page");
   revalidatePath("/[locale]/parent", "page");
+  return "ok";
+}
+
+export type AiError = "unavailable" | "limited" | "ok" | "invalid" | null;
+
+/** A suggestion, never a grade: it is written beside the teacher's box and the teacher still confirms. */
+export async function gradeWithAi(_prev: AiError, form: FormData): Promise<AiError> {
+  const me = await requireStaff();
+  const parsed = z.object({ id: z.string().min(1) }).safeParse(Object.fromEntries(form));
+  if (!parsed.success) return "invalid";
+
+  const submission = await db.submission.findUnique({
+    where: { id: parsed.data.id },
+    select: {
+      id: true,
+      text: true,
+      files: { select: { pathname: true, contentType: true } },
+      assignment: { select: { courseId: true, title: true, instructions: true, maxScore: true } },
+    },
+  });
+  if (!submission) return "invalid";
+  await assertCourse(me, submission.assignment.courseId);
+  if (await isLimited(`ai-grade:${me.id}`, 100, 86_400_000)) return "limited";
+
+  const result = await gradeWithClaude({
+    title: submission.assignment.title,
+    instructions: submission.assignment.instructions,
+    maxScore: submission.assignment.maxScore,
+    text: submission.text,
+    files: submission.files,
+  });
+  if (!result) return "unavailable";
+
+  await recordAttempt(`ai-grade:${me.id}`);
+  await db.submission.update({
+    where: { id: submission.id },
+    data: {
+      aiScore: result.score,
+      aiFeedback: [result.rationale, `confidence: ${result.confidence}`].filter(Boolean).join("\n").slice(0, 4000),
+    },
+  });
+
+  revalidatePath("/[locale]/teacher/assignments/[id]", "page");
   return "ok";
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { average } from "@/lib/grades";
 import { createNotification } from "@/lib/notify";
 
 const DAY = 86_400_000;
@@ -80,12 +81,24 @@ export async function GET(req: Request) {
       const ar: string[] = [];
       const en: string[] = [];
       for (const link of p.parentLinks) {
-        const [done, attended] = await Promise.all([
+        const [done, attended, graded, progress] = await Promise.all([
           db.lessonView.count({ where: { userId: link.student.id, completedAt: { gte: weekStart } } }),
           db.liveAttendance.count({ where: { userId: link.student.id, joinedAt: { gte: weekStart } } }),
+          db.submission.findMany({
+            where: { studentId: link.student.id, status: "GRADED", score: { not: null } },
+            select: { score: true, assignment: { select: { maxScore: true } } },
+            take: 200,
+          }),
+          db.studentProgress.findUnique({ where: { userId: link.student.id }, select: { xp: true, currentStreak: true } }),
         ]);
-        ar.push(`${link.student.name}: ${done} حصة مكتملة، ${attended} حصة مباشرة`);
-        en.push(`${link.student.name}: ${done} lessons completed, ${attended} live sessions`);
+        const avg = average(graded.filter((g) => g.score !== null).map((g) => ({ value: g.score!, max: g.assignment.maxScore })));
+        const streak = progress?.currentStreak ?? 0;
+        ar.push(
+          `${link.student.name}: ${done} حصة مكتملة، ${attended} حصة مباشرة، ${avg ? `متوسط الواجبات ${avg.avg}%` : "لا درجات واجبات بعد"}، ${streak} يوم متتالي`,
+        );
+        en.push(
+          `${link.student.name}: ${done} lessons completed, ${attended} live sessions, ${avg ? `homework average ${avg.avg}%` : "no graded homework yet"}, ${streak}-day streak`,
+        );
       }
       await createNotification({
         userId: p.id,

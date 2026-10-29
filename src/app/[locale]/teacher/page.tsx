@@ -51,6 +51,17 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
   const students = new Set(subs.map((s) => s.user.id)).size;
   const newThisWeek = new Set(subs.filter((s) => now.getTime() - s.startsAt.getTime() < 7 * DAY).map((s) => s.user.id)).size;
   const perCourse = (id: string) => new Set(subs.filter((s) => s.courseId === id).map((s) => s.user.id)).size;
+  const roster = await db.entitlement.findMany({
+    where: { courseId: { in: courseIds }, startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+    select: { userId: true, user: { select: { name: true, views: { orderBy: { lastSeenAt: "desc" }, take: 1, select: { lastSeenAt: true } } } } },
+  });
+  const idleCutoff = new Date(now.getTime() - 7 * DAY);
+  const seen = new Map<string, { id: string; name: string; lastSeen: Date | null }>();
+  for (const e of roster) {
+    if (seen.has(e.userId)) continue;
+    seen.set(e.userId, { id: e.userId, name: e.user.name, lastSeen: e.user.views[0]?.lastSeenAt ?? null });
+  }
+  const drifting = [...seen.values()].filter((x) => !x.lastSeen || x.lastSeen < idleCutoff).slice(0, 10);
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "Asia/Dubai" });
   const money = [...earnings].map(([cur, n]) => formatMoney(n, cur, locale)).join(" · ") || t("noSales");
 
@@ -138,6 +149,23 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
           </ul>
         )}
       </section>
+
+      {drifting.length > 0 && (
+        <section className="grid gap-3">
+          <h2 className="font-display text-h2 font-semibold">{t("earlyWarning")}</h2>
+          <p className="text-small text-ink-muted">{t("earlyWarningHint")}</p>
+          <ul className="grid gap-2">
+            {drifting.map((x) => (
+              <li key={x.id} className={card + " flex flex-wrap items-center justify-between gap-2 text-small"}>
+                <span className="font-semibold">{x.name}</span>
+                <span className="num text-ink-muted">
+                  {t("lastSeen", { date: x.lastSeen ? date.format(x.lastSeen) : t("never") })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

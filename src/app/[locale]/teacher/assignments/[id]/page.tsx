@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { TeacherNav } from "../../TeacherNav";
 import { AssignmentForm } from "../AssignmentForm";
+import { AiGradeForm } from "./AiGradeForm";
 import { GradeForm } from "./GradeForm";
 import { deleteAssignment, deleteAssignmentFile, updateAssignment } from "../actions";
 
@@ -56,6 +57,8 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
           revision: true,
           score: true,
           feedback: true,
+          aiScore: true,
+          aiFeedback: true,
           student: { select: { id: true, name: true } },
           files: { select: { id: true, downloadName: true, size: true } },
         },
@@ -167,10 +170,22 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
                   </p>
                 )}
                 <AttachmentList kind="submission" files={s.files} empty={t("noFiles")} />
+                {s.aiFeedback !== null && (
+                  <p className="text-small text-pen" dir="auto">
+                    {t("aiSuggestion", { score: s.aiScore ?? "—", max: assignment.maxScore })}
+                    {s.aiFeedback ? ` · ${s.aiFeedback}` : ""}
+                  </p>
+                )}
+                {(s.text || s.files.length > 0) && (
+                  <AiGradeForm
+                    id={s.id}
+                    labels={{ aiGrade: t("aiGrade"), unavailable: t("aiUnavailable"), limited: t("aiLimited"), ok: t("aiOk"), invalid: t("invalid") }}
+                  />
+                )}
                 <GradeForm
                   id={s.id}
                   maxScore={assignment.maxScore}
-                  score={s.score}
+                  score={s.score ?? s.aiScore}
                   feedback={s.feedback}
                   labels={{
                     invalid: t("invalid"),

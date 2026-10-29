@@ -7,11 +7,10 @@ import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
-import { scoreAttempt, type PracticeReply } from "@/lib/practice";
+import { scoreAttempt, type PracticeError, type PracticeReply } from "@/lib/practice";
 import { awardPractice } from "@/lib/progress-db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
-
-export type PracticeError = "invalid" | "closed" | "limited" | null;
+import { recordReview } from "@/lib/review-db";
 
 /**
  * Marks one practice run. Answers are marked here from the database, never from the client,
@@ -56,6 +55,7 @@ export async function submitPractice(_prev: PracticeError, form: FormData): Prom
 
   const score = scoreAttempt(lesson.questionItems, replies);
   const progress = await awardPractice(userId, score.correct, lesson.questionItems.length);
+  await recordReview(userId, lesson.id, score.correct, lesson.questionItems.length, now);
 
   const attempt = await db.practiceAttempt.create({
     data: {

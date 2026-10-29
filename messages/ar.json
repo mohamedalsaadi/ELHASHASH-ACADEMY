@@ -1111,6 +1111,10 @@
     "secure": "متقن",
     "developing": "قيد التقدم",
     "unseen": "لم يُجرَّب",
-    "questions": "أسئلة"
+    "questions": "أسئلة",
+    "reviewTitle": "المراجعة",
+    "reviewStart": "ابدأ المراجعة",
+    "reviewDue": "{count, plural, zero {لا شيء للمراجعة اليوم} one {درس واحد للمراجعة} two {درسان للمراجعة} few {# دروس للمراجعة} many {# درسًا للمراجعة} other {# درس للمراجعة}}",
+    "reviewNone": "لا شيء للمراجعة اليوم. وراجع غدًا."
   }
 }

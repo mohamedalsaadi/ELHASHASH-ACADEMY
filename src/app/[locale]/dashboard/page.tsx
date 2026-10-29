@@ -210,6 +210,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     }),
   ]);
   const progressRow = await db.studentProgress.findUnique({ where: { userId }, select: { xp: true, currentStreak: true } });
+  const dueReviews = await db.reviewSchedule.findMany({ where: { userId, dueAt: { lte: now } }, take: 5, select: { id: true } });
   const weekAhead = new Date(now.getTime() + 7 * 86_400_000);
   const homework = homeworkAll
     .filter((a) => opensAssignment({ courseId: a.courseId, lesson: a.lesson }, activeGrants(a.courseId), now))
@@ -300,6 +301,17 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
         <StatTile label={tpr("xpEarned")} value={progressRow?.xp ?? 0} />
         <StatTile label={tpr("streak")} value={progressRow?.currentStreak ?? 0} />
       </div>
+
+      {dueReviews.length > 0 && (
+        <Link
+          href="/review"
+          className="grid gap-1 rounded-md border border-pen bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+        >
+          <span className="text-label font-medium text-pen">{tpr("reviewTitle")}</span>
+          <span className="font-display font-semibold">{tpr("reviewDue", { count: dueReviews.length })}</span>
+          <span className="text-small text-pen">{tpr("reviewStart")}</span>
+        </Link>
+      )}
 
       <section className="grid gap-2">
         <h2 className="font-display text-h2 font-semibold">{th("title")}</h2>

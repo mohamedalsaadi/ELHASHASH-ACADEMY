@@ -74,3 +74,6 @@ export function masteryOf(recent: boolean[]): Mastery {
   if (last.length >= 2 && right >= 2 && right === last.length) return "secure";
   return "developing";
 }
+
+/** What a practice or review submission can come back with. */
+export type PracticeError = "invalid" | "closed" | "limited" | null;

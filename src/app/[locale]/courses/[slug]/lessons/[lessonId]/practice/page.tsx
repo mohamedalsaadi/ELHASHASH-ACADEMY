@@ -9,6 +9,7 @@ import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
 import { PracticeForm } from "./PracticeForm";
+import { submitPractice } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -143,6 +144,7 @@ export default async function PracticePage({
         <p className="text-small text-ink-muted">{t("none")}</p>
       ) : (
         <PracticeForm
+          action={submitPractice}
           lessonId={lesson.id}
           items={lesson.questionItems.map((q) => ({ id: q.id, kind: q.kind, prompt: q.prompt, marks: q.marks, choices: q.choices }))}
           labels={{ submit: t("submit"), choose: t("choose"), yourAnswer: t("yourAnswer"), invalid: t("invalid"), closed: t("noAccess"), limited: t("limited") }}

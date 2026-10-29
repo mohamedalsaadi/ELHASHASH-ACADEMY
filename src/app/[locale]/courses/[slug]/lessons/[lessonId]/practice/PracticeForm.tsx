@@ -3,23 +3,28 @@
 import { useActionState } from "react";
 import { field } from "@/app/[locale]/admin/styles";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { submitPractice, type PracticeError } from "./actions";
+import type { PracticeError } from "@/lib/practice";
 
 export type FormItem = { id: string; kind: "MCQ" | "SHORT"; prompt: string; marks: number; choices: { id: string; label: string }[] };
 
+type Labels = Record<"submit" | "choose" | "yourAnswer" | "invalid" | "closed" | "limited", string>;
+
+/** One form for both a lesson's own practice and a mixed review set: the caller supplies the action. */
 export function PracticeForm({
+  action,
   lessonId,
   items,
   labels,
 }: {
-  lessonId: string;
+  action: (prev: PracticeError, form: FormData) => Promise<PracticeError>;
+  lessonId?: string;
   items: FormItem[];
-  labels: Record<"submit" | "choose" | "yourAnswer" | "invalid" | "closed" | "limited", string>;
+  labels: Labels;
 }) {
-  const [state, action] = useActionState(submitPractice, null);
+  const [state, formAction] = useActionState(action, null);
   return (
-    <form action={action} className="grid gap-5">
-      <input type="hidden" name="lessonId" value={lessonId} />
+    <form action={formAction} className="grid gap-5">
+      {lessonId && <input type="hidden" name="lessonId" value={lessonId} />}
 
       {items.map((item, i) => (
         <fieldset key={item.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
@@ -43,9 +48,7 @@ export function PracticeForm({
         </fieldset>
       ))}
 
-      {state && state !== null && (
-        <p role="alert" className="text-small text-down">{labels[state]}</p>
-      )}
+      {state && <p role="alert" className="text-small text-down">{labels[state]}</p>}
 
       <SubmitButton className="btn btn-primary w-fit">{labels.submit}</SubmitButton>
     </form>

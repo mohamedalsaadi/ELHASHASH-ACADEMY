@@ -59,6 +59,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   setRequestLocale(locale);
   const [tc, tp, tq] = await Promise.all([getTranslations("catalog"), getTranslations("player"), getTranslations("questions")]);
   const th = await getTranslations("homework");
+  const tpr = await getTranslations("practice");
   const ar = locale === "ar";
   const now = new Date();
 
@@ -68,6 +69,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
       include: {
         video: true,
         instructor: { select: { name: true } },
+        _count: { select: { questionItems: { where: { active: true } } } },
         unit: {
           include: {
             course: {
@@ -172,6 +174,13 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
           back={{ href: courseHref, label: `${courseTitle} · ${ar ? unit.titleAr : unit.titleEn}` }}
           title={title}
           meta={`${tc(`kind.${lesson.kind}`)} · ${tc("recordedBy", { name: (lesson.instructor ?? course.instructor).name })}`}
+          actions={
+            lesson._count.questionItems > 0 ? (
+              <Link href={`/courses/${slug}/lessons/${lesson.id}/practice`} className="btn btn-outline px-4 py-2 text-small">
+                {tpr("practice")}
+              </Link>
+            ) : null
+          }
         />
 
         <div className="aspect-video overflow-hidden rounded-md border border-hairline bg-surface">

@@ -33,13 +33,14 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
   if (session.user.role === "PARENT") redirect(`/${locale}/parent`);
 
-  const [t, tc, tq, tm, tl, th] = await Promise.all([
+  const [t, tc, tq, tm, tl, th, tpr] = await Promise.all([
     getTranslations("dashboard"),
     getTranslations("catalog"),
     getTranslations("questions"),
     getTranslations("checkout"),
     getTranslations("live"),
     getTranslations("homework"),
+    getTranslations("practice"),
   ]);
   const ar = locale === "ar";
   const now = new Date();
@@ -208,6 +209,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       select: { score: true, assignment: { select: { maxScore: true } } },
     }),
   ]);
+  const progressRow = await db.studentProgress.findUnique({ where: { userId }, select: { xp: true, currentStreak: true } });
   const weekAhead = new Date(now.getTime() + 7 * 86_400_000);
   const homework = homeworkAll
     .filter((a) => opensAssignment({ courseId: a.courseId, lesson: a.lesson }, activeGrants(a.courseId), now))
@@ -293,6 +295,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           <StatTile label={t("summary.upcomingLive")} value={liveList.length} />
         </div>
       </section>
+
+      <div className="grid grid-cols-2 gap-2">
+        <StatTile label={tpr("xpEarned")} value={progressRow?.xp ?? 0} />
+        <StatTile label={tpr("streak")} value={progressRow?.currentStreak ?? 0} />
+      </div>
 
       <section className="grid gap-2">
         <h2 className="font-display text-h2 font-semibold">{th("title")}</h2>

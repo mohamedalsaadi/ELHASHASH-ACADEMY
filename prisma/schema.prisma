@@ -127,6 +127,8 @@ model User {
   specialRequests     SpecialRequest[]      @relation("Requester")
   requestsAboutMe     SpecialRequest[]      @relation("RequestStudent")
   requestReplies      SpecialRequestReply[] @relation("RequestReplier")
+  authoredQuestions   QuestionItem[]        @relation("QuestionAuthor")
+  practiceAttempts    PracticeAttempt[]
 }
 
 model Country {
@@ -222,6 +224,8 @@ model Course {
   descAr       String?
   descEn       String?
   published    Boolean    @default(false)
+  /// When on, the course shows a weekly XP leaderboard to its own students.
+  leaderboard  Boolean    @default(false)
   createdAt    DateTime   @default(now())
 
   grade           Grade?           @relation(fields: [gradeId], references: [id], onDelete: Restrict)
@@ -268,15 +272,17 @@ model Lesson {
   /// Month of the school year (1 = first month) the lecture belongs to; a MONTHLY plan opens its month's lectures.
   month        Int?
 
-  unit         Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  video        VideoAsset?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
-  instructor   User?         @relation("LessonInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
-  attempts     QuizAttempt[]
-  views        LessonView[]
-  skus         Sku[]
-  entitlements Entitlement[]
-  questions    Question[]
-  assignments  Assignment[]
+  unit             Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  video            VideoAsset?       @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  instructor       User?             @relation("LessonInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
+  attempts         QuizAttempt[]
+  views            LessonView[]
+  skus             Sku[]
+  entitlements     Entitlement[]
+  questions        Question[]
+  assignments      Assignment[]
+  questionItems    QuestionItem[]
+  practiceAttempts PracticeAttempt[]
 
   @@unique([unitId, order])
 }
@@ -600,8 +606,9 @@ model Concept {
   nameAr    String
   nameEn    String
 
-  subject  Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject  Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   attempts QuizAttempt[]
+  items    QuestionItem[]
 }
 
 /// score is 0–100, mapped to the Egyptian tiers in DESIGN.md.
@@ -667,6 +674,7 @@ model Question {
 
 enum AssignmentKind {
   HOMEWORK
+  QUIZ
 }
 
 /// No DRAFT: the browser form is the draft, so a row exists only once the student submits.
@@ -803,4 +811,84 @@ model SpecialRequestReply {
   author  User           @relation("RequestReplier", fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([requestId, createdAt])
+}
+
+// ---- Practice: the question bank, attempts and XP ---------------------------
+
+enum QuestionKind {
+  MCQ
+  SHORT
+}
+
+/// One practice question, attached to a lesson and optionally a concept. SHORT accepts one canonical answer.
+model QuestionItem {
+  id          String       @id @default(cuid())
+  lessonId    String
+  conceptId   String?
+  createdById String
+  kind        QuestionKind
+  prompt      String       @db.VarChar(2000)
+  /// SHORT only: the accepted answer, compared after normalising Arabic and spacing.
+  answer      String?      @db.VarChar(1000)
+  explanation String?      @db.VarChar(4000)
+  marks       Int          @default(1)
+  order       Int          @default(0)
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+
+  lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  concept   Concept?         @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  createdBy User             @relation("QuestionAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+  choices   QuestionChoice[]
+  answers   PracticeAnswer[]
+
+  @@index([lessonId, order])
+  @@index([conceptId])
+}
+
+model QuestionChoice {
+  id      String  @id @default(cuid())
+  itemId  String
+  label   String  @db.VarChar(500)
+  correct Boolean @default(false)
+  order   Int     @default(0)
+
+  item  QuestionItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  picks PracticeAnswer[]
+
+  @@index([itemId, order])
+}
+
+/// One run through a lesson's questions. Kept even when the same student practises again: mastery needs history.
+model PracticeAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  marks     Int
+  maxMarks  Int
+  /// XP awarded for this attempt; the weekly leaderboard sums it.
+  xp        Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson  Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  answers PracticeAnswer[]
+
+  @@index([userId, createdAt])
+  @@index([lessonId])
+}
+
+model PracticeAnswer {
+  id        String  @id @default(cuid())
+  attemptId String
+  itemId    String
+  choiceId  String?
+  text      String? @db.VarChar(1000)
+  correct   Boolean
+
+  attempt PracticeAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  item    QuestionItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  choice  QuestionChoice? @relation(fields: [choiceId], references: [id], onDelete: SetNull)
+
+  @@unique([attemptId, itemId])
 }

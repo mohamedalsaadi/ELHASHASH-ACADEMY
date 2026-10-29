@@ -6,12 +6,13 @@ const tab = "rounded-sm px-3 py-2 font-display text-label transition-colors dura
 export async function TeacherNav({
   current,
 }: {
-  current: "home" | "live" | "assignments" | "requests" | "analytics" | "questions" | "profile";
+  current: "home" | "live" | "assignments" | "bank" | "requests" | "analytics" | "questions" | "profile";
 }) {
   const t = await getTranslations("teacher");
   const items = [
     { key: "home", href: "/teacher", label: t("navHome") },
     { key: "assignments", href: "/teacher/assignments", label: t("navHomework") },
+    { key: "bank", href: "/teacher/bank", label: t("navBank") },
     { key: "analytics", href: "/teacher/analytics", label: t("navAnalytics") },
     { key: "live", href: "/teacher/live", label: t("navLive") },
     { key: "questions", href: "/teacher/questions", label: t("navQuestions") },

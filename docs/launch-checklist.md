@@ -1,92 +1,141 @@
 # AAcademy launch checklist
 
-Last updated: 2026-10-25 · release commit `89c6eec` (Phases 1–3).
+Last updated: 2026-10-30 · live commit `22d5f76`.
 
 This is the single place for: **what has not been verified**, **what only the owner can do**, and **every external service the app or its build uses**.
 
 ---
 
-## 1. Not verified
+## 0. Where things stand
+
+- **Live** at `alsaadi-academy.vercel.app` — practice, spaced review, exams, homework, AI grading, parent digest and the teacher check-on list all deployed.
+- **Database migrated** with every batch: catalog, homework (`Assignment`/`Submission`/`SpecialRequest`), practice (`QuestionItem`/`PracticeAttempt`), review (`ReviewSchedule`), exams (`ExamPaper`/`ExamAttempt`), and `ExamPaper.maxAttempts`.
+- **UAE prices in the database**: semester 990, year 1,870, monthly 495 (inactive until a paid lecture carries a month).
+- **Seeded dev accounts are locked** — `01000000000` and `01000000001` do not accept the dev password. The only admin is `0556926246`.
+- **Security headers added**: `poweredByHeader: false`, `X-Frame-Options: DENY`, COOP/CORP `same-origin`, HSTS in production, on top of the existing `nosniff`, `Referrer-Policy`, `Permissions-Policy` and `frame-ancestors`.
+- **Sessions expire after 7 days.** A session cannot be revoked server-side while valid — the role and id ride in the JWT — so a demoted account keeps access until the cookie expires. Real revocation is a separate security batch.
+
+---
+
+## 1. The order to go live on a real domain
+
+**Gate 0 — prove the database is the same one.**
+- [ ] Vercel → Settings → Environment Variables → `DATABASE_URL`. The host must be `ep-twilight-feather-b97jpk23-pooler.c-7.eu-central-1.aws.neon.tech`. If it is a different database, run `npx prisma migrate deploy` against it and re-run `npx tsx prisma/seed-uae-prices.ts --apply` first. Without this, every signed-in screen errors on missing tables.
+
+**Then, in this order**
+1. [ ] Add the domain in Vercel → Domains; `A 76.76.21.21` for the apex, `CNAME cname.vercel-dns.com` for `www`; 308 `www` → apex. Wait for *Valid Configuration*.
+2. [ ] Set `APP_URL=https://<domain>` and a fresh `AUTH_SECRET`; clear `SITE_PASSWORD` (while set, the whole site is behind basic auth).
+3. [ ] Point the Stripe and Paymob webhooks at the new domain (they embed the old one).
+4. [ ] Verify the Resend sending domain and set `MAIL_FROM`.
+5. [ ] Replace the legal entity and support address with real ones (§4).
+6. [ ] Take a Neon branch snapshot before opening sign-ups.
+
+---
+
+## 2. Not verified
 
 Each line says what was checked instead, and how to close it.
 
-- [ ] **Admin catalog CRUD with a real admin login.** Pages, actions, validation and delete guards typecheck and build; the route is protected, but no country/grade/subject was created through the UI because there is no admin password in this session. Verify: sign in as the owner → `/ar/admin/catalog` → create a test country, stage, grade and subject → check `/courses`, the country page and signup → delete or deactivate the test rows.
-- [ ] **Contact form delivery.** The form, rate limit, honeypot and fallback are in place; no message was sent because `RESEND_API_KEY` is not set locally. Verify with a real key: send one message and confirm it arrives at the support inbox and `reply_to` is the sender.
-- [ ] **All transactional email.** Password reset, email verification, paid receipt, answer notification, expiry/live reminders and the parent weekly summary use the same mail path; none was delivered end to end. Verify after Resend is configured.
-- [ ] **PWA install and offline page.** Manifest, 192/512/maskable icons, service worker and `/ar/offline` are built and the icons return 200. Install needs HTTPS and a supported browser, so localhost is not a valid test. Verify on a Vercel preview/production URL in Chrome.
-- [ ] **Intro duration and feel.** `--intro-k: 1` (2 s) and the `calc()` timeline are present in the built CSS; verify in a fresh tab in both locales, and that a click, key or scroll gesture skips it.
-- [ ] **Arabic headings across every page.** The Kufi override is gone and Readex applies, but a visual pass over all screens was not possible here. Verify ar pages at phone and desktop widths.
-- [ ] **Stripe refund.** The action calls the Stripe refund API and revokes access; it was not exercised against a paid test order. Verify with a test card and the live webhook.
-- [ ] **Paymob card / wallet / kiosk / valU.** Existing integration; not exercised in this release. Paymob refunds are not automatic — refund in the Paymob dashboard, then use “Mark refunded” in the admin order page.
-- [ ] **Daily live sessions and attendance.** Existing feature; room creation, token minting and attendance writes were not re-tested. Verify one live session with a student and a teacher.
-- [ ] **VdoCipher and YouTube playback.** Existing feature; not re-tested in this release.
-- [ ] **Parent linking with two real accounts.** Code generation, linking, dashboard and unlink were not exercised with two accounts.
-- [ ] **New-country visuals and time zones.** The new-country path is built with a code badge, null landmark and per-country IANA zone; no new country was created. Verify with a test country after the admin check above.
-- [ ] **Sitemap, canonical, OG and sitemap URLs in production.** Locally `APP_URL` is empty, so links resolve to `http://localhost:3000`. Set `APP_URL` and re-check `/sitemap.xml`, a course `<head>` and a share card.
-- [ ] **Course OG image.** It renders and returns PNG. It deliberately uses the **English** course title because Satori’s default font has no Arabic shaping; the Arabic share image is not localized. Verify how it looks when shared.
-- [ ] **CRON reminders.** `/api/cron/reminders` returns 401 without `CRON_SECRET`; it was not run with the secret because it would send real emails. Verify on a preview with a test user.
-- [ ] **Brand in delivered emails.** Subjects, header and CTA now say AAcademy; no email was delivered to see the rendering.
-- [ ] **Live site with the new code.** The connected Neon database is already migrated and the **current (old) deployment** still returns 200 on home, courses and the EG country page. The new code is committed but not pushed, so the new catalog/admin/Phase 3 UI is not live yet.
-- [ ] **Currencies beyond the seven.** EGP, SAR, AED, KWD, QAR, BHD and OMR are supported; any other currency is a separate pricing/gateway change.
-- [ ] **Privacy policy legal review.** The Arabic and English draft is complete but must be reviewed before launch.
-- [ ] **Search at scale.** `contains` works on the current catalog; no trigram index exists. Add one only if the catalog grows or search feels slow.
+### New this batch
+
+- [ ] **Signed-in flows end to end.** Every feature below is typechecked, unit-tested and built, but the seeded accounts are locked, so no authenticated screen was clicked.
+- [ ] **Homework files.** Needs a private Vercel Blob store and `BLOB_READ_WRITE_TOKEN`. Verify: teacher attaches a 10 MB PDF → it uploads browser-to-Blob → student downloads it through `/api/files`.
+- [ ] **AI grading.** Needs `GEMINI_API_KEY`. Without it the button reports "not configured". Verify on a photographed answer: a clear photo returns a score with a reason; a blank or unreadable one returns *needs review*, not a number.
+- [ ] **Practice, review and the leaderboard.** Author questions in `/teacher/bank`, practise a lesson, then check XP, streak, mastery and the course leaderboard after enabling it.
+- [ ] **Spaced review.** A finished practice run schedules its lesson for tomorrow; the next day `/review` offers it and the dashboard shows the card.
+- [ ] **Exams.** Teacher builds a paper from the bank, publishes it, a student sits it. Verify the countdown auto-submits at zero, objective items mark instantly, written answers wait for the teacher, and the attempt limit blocks a second attempt.
+- [ ] **Assignment resubmission.** Return a submission — the student must be able to resubmit. With the switch off and no return, they must be blocked.
+- [ ] **Parent digest and the teacher check-on list.** Run `/api/cron/reminders` on a preview with a test parent; check the digest carries lessons, live, homework average and streak.
+
+### Carried over
+
+- [ ] **Admin catalog CRUD with a real admin login.** Verify: sign in as the owner → `/ar/admin/catalog` → create a test country, stage, grade and subject → check `/courses`, the country page and signup → delete or deactivate the test rows.
+- [ ] **Contact form delivery.** No message was sent because `RESEND_API_KEY` is not set locally.
+- [ ] **All transactional email.** Password reset, verification, paid receipt, answer notification, reminders and the digest share one mail path; none was delivered end to end.
+- [ ] **PWA install and offline page.** Needs HTTPS; verify on the Vercel URL in Chrome.
+- [ ] **Arabic headings across every page.** A visual pass at phone and desktop widths.
+- [ ] **Stripe refund.** Not exercised against a paid test order.
+- [ ] **Paymob card / wallet / kiosk / valU.** Not exercised in this release. Refunds are manual: refund in the Paymob dashboard, then "Mark refunded" in the admin order page.
+- [ ] **Daily live sessions and attendance.** Room creation, token minting and attendance writes not re-tested.
+- [ ] **VdoCipher and YouTube playback.** Not re-tested.
+- [ ] **Parent linking with two real accounts.** Code generation, linking, dashboard and unlink not exercised.
+- [ ] **New-country visuals and time zones.** The path is built; no new country was created.
+- [ ] **Sitemap, canonical and OG in production.** Set `APP_URL`, then re-check `/sitemap.xml`, a course `<head>` and a share card.
+- [ ] **Course OG image.** Deliberately English-titled: Satori's default font has no Arabic shaping.
+- [ ] **CRON reminders.** Returns 401 without `CRON_SECRET`; not run with it because it sends real email.
+- [ ] **Currencies beyond the seven.** EGP, SAR, AED, KWD, QAR, BHD and OMR only.
+- [ ] **Privacy policy legal review.** Draft complete; needs the owner's advisor.
+- [ ] **Search at scale.** `contains` only; add a trigram index if the catalog grows.
+- [ ] **Content for the practice engine.** The engine is empty until questions are written — target ~20 per lesson, per subject.
 
 ---
 
-## 2. Owner actions
+## 3. Owner actions
 
 ### Payments and email
 
-- [ ] **Stripe webhook for the live domain.** In the Stripe dashboard (test mode), add `https://<domain>/api/webhooks/stripe`, copy its signing secret into Vercel as `STRIPE_WEBHOOK_SECRET`. Without it, paid orders stay PENDING and coupons/receipts cannot be proven.
-- [ ] **Resend account and sender domain.** Verify the sending domain (SPF, DKIM, DMARC) and set `RESEND_API_KEY` and `MAIL_FROM` in Vercel. Without them, email is skipped and the contact form shows the direct address.
-- [ ] **WhatsApp channel.** The owner said they will set this up. Once ready, set `SUPPORT_WHATSAPP` (and `SUPPORT_PHONE`) in Vercel so the official number appears and survives contact masking.
-- [ ] **Paymob refunds.** Refunds are executed in the Paymob dashboard, then recorded with “Mark refunded” in the admin order page.
+- [ ] **Stripe webhook for the live domain.** Test mode only, per the standing rule: add `https://<domain>/api/webhooks/stripe`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`. Live keys stay off until the owner has the paperwork.
+- [ ] **Paymob.** Callback and response URLs to `https://<domain>/api/webhooks/paymob`; `PAYMOB_HMAC_SECRET` and the four `PAYMOB_INTEGRATION_*` ids from the dashboard. EGP only.
+- [ ] **Resend.** Verify the sending domain (SPF, DKIM, DMARC); set `RESEND_API_KEY` and `MAIL_FROM`.
+- [ ] **Support channels.** `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` — the only contacts contact masking lets through.
+- [ ] **One test purchase end-to-end** after DNS, because `APP_URL` changes the callbacks.
 
-### Deployment and domain
+### Deployment and environment
 
-- [ ] **Push/deploy approval.** The release is committed locally only. A push to `main` triggers the Vercel production deploy.
-- [ ] **Custom domain and DNS.** Point the domain in Vercel (A record `76.76.21.21` for `@`, CNAME `cname.vercel-dns.com` for `www`, or Vercel nameservers), then set `APP_URL` to the final `https://` origin and move the Stripe/Paymob webhooks if the domain changes.
-- [ ] **Vercel environment variables.** `DATABASE_URL`, `AUTH_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYMOB_*`, `VDOCIPHER_API_SECRET`, `DAILY_API_KEY`, `RESEND_API_KEY`, `MAIL_FROM`, `CRON_SECRET`, `APP_URL`, optional `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS`, `SITE_PASSWORD`.
-- [ ] **Reminder schedule.** Vercel Hobby runs crons daily; the one-hour live reminder is only exact if the job runs hourly (Pro or an external scheduler).
-- [ ] **Database migration.** `20261025120000_catalog_admin` is already applied to the connected Neon database. If Vercel uses a different database, run `npx prisma migrate deploy` against it before deploying. Keep a Neon branch/backup for future schema changes.
-- [ ] **Renames.** Vercel team/project (`elhashash-academy`), GitHub repo (`ELHASHASH-ACADEMY`), and the local folder can be renamed by the owner; package/repo/internal identifiers in code were intentionally left unchanged.
+Complete set the app reads, for Vercel **Production and Preview**:
+
+| Var | Required | Purpose |
+|---|---|---|
+| `APP_URL` | yes | canonical, sitemap, OG, email links, Paymob callback |
+| `AUTH_SECRET` | yes | session signing; generate per environment |
+| `DATABASE_URL` | yes | Neon; see gate 0 |
+| `SITE_PASSWORD` | set empty | non-empty puts the whole site behind basic auth |
+| `CRON_SECRET` | yes | `/api/cron/reminders` rejects calls without it |
+| `RESEND_API_KEY`, `MAIL_FROM` | yes | all transactional email |
+| `BLOB_READ_WRITE_TOKEN` | yes | homework and exam file uploads |
+| `VDOCIPHER_API_SECRET` | yes | paid video playback |
+| `DAILY_API_KEY` | yes | live lectures |
+| `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_{CARD,WALLET,KIOSK,VALU}` | for Egypt | without them EGP checkout falls back to Stripe |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | yes | test keys |
+| `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` | recommended | support identity and masking allow-list |
+| `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
+
+- [ ] **Vercel Blob store** — create it as **private**, then confirm `BLOB_READ_WRITE_TOKEN` in Production and Preview.
+- [ ] **Reminder schedule.** `vercel.json` runs the cron daily at 05:00; the one-hour live reminder needs an hourly job (Pro or an external scheduler).
+- [ ] **Renames.** Vercel project, GitHub repo and the local folder can be renamed by the owner; code identifiers were left alone.
 
 ### Product and legal
 
-- [ ] **Privacy review.** Have the drafted `/privacy` page reviewed by the owner’s legal advisor; add the correct legal entity and contact if different.
-- [ ] **Support address.** `chemical.mohammed@gmail.com` is hardcoded in `src/lib/site.ts`; consider a branded support address when the domain is live.
-- [ ] **New-country art.** New countries get a code badge and no landmark until flag/landmark art is provided.
-- [ ] **Catalog regions.** Add countries/grades/subjects only when tutor agreements are ready; inactive rows stay hidden, active empty rows show “coming soon”.
-- [ ] **Later batch decisions.** Homework, quizzes and optional handouts need storage. Reviews, referral, analytics/Sentry, teacher profiles/payouts, gamification, live recording and operations are deferred. **Certificates are removed for now.**
+- [ ] **Legal entity and address** in `/terms`, `/privacy`, `/refund` — they still read "AAcademy, UAE".
+- [ ] **Privacy review** by the owner's advisor.
+- [ ] **Branded support address** — `SUPPORT_EMAIL` falls back to `chemical.mohammed@gmail.com`.
+- [ ] **New-country art.** New countries get a code badge until flag/landmark art exists.
+- [ ] **Catalog regions.** Add countries, grades and subjects only when tutor agreements are ready.
 
 ---
 
-## 3. External services and sub-websites used in the build
-
-Runtime and build-time services only. Agent tooling (Runpod, viznoir MCP) is not part of the application.
+## 4. External services used at runtime or build time
 
 | Service | Used for | Endpoint / domain | Environment | Code or config |
 |---|---|---|---|---|
-| **Vercel** | Hosting, production builds, image generation, cron trigger | `alsaadi-academy.vercel.app`; Vercel dashboard | `APP_URL` | `.vercel/`, `vercel.json`, `src/app/opengraph-image.tsx`, `src/app/pwa-icon-*.png/route.tsx` |
+| **Vercel** | Hosting, builds, image generation, cron | `alsaadi-academy.vercel.app` | `APP_URL` | `.vercel/`, `vercel.json`, OG and icon routes |
 | **Neon Postgres** | Primary database | `*.neon.tech` | `DATABASE_URL` | `prisma/schema.prisma`, `src/lib/db.ts` |
-| **Stripe** | Card payments, Checkout, refunds, webhook | `api.stripe.com`, Stripe dashboard | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | `src/lib/stripe.ts`, `src/app/api/checkout/route.ts`, `src/app/api/webhooks/stripe/route.ts` |
-| **Paymob** | EGP card, mobile wallet, kiosk cash, valU; webhook | `accept.paymob.com` (`/v1/intention/`, `/unifiedcheckout/`), Paymob dashboard | `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_*` | `src/lib/paymob.ts`, `src/app/api/webhooks/paymob/route.ts` |
-| **VdoCipher** | DRM video OTP and player | `dev.vdocipher.com/api/videos/.../otp`, `player.vdocipher.com` | `VDOCIPHER_API_SECRET` | `src/lib/vdocipher.ts`, `next.config.ts` frame-src |
-| **Daily.co** | Live rooms, prejoin, chat, meeting tokens | `api.daily.co/v1`, `*.daily.co` | `DAILY_API_KEY` | `src/lib/daily.ts`, `src/app/[locale]/live/[id]/page.tsx`, CSP/Permissions-Policy |
+| **Vercel Blob** | Private homework and exam files | `*.private.blob.vercel-storage.com` | `BLOB_READ_WRITE_TOKEN` | `src/lib/blob.ts`, `/api/blob/upload`, `/api/files/[kind]/[id]` |
+| **Google Gemini** | AI-assisted grading | `generativelanguage.googleapis.com` | `GEMINI_API_KEY` | `src/lib/ai-grading.ts` |
+| **Stripe** | Card payments, Checkout, refunds, webhook | `api.stripe.com` | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | `src/lib/stripe.ts`, `/api/checkout`, `/api/webhooks/stripe` |
+| **Paymob** | EGP card, wallet, kiosk cash, valU | `accept.paymob.com` | `PAYMOB_*` | `src/lib/paymob.ts`, `/api/webhooks/paymob` |
+| **VdoCipher** | DRM video OTP and player | `dev.vdocipher.com`, `player.vdocipher.com` | `VDOCIPHER_API_SECRET` | `src/lib/vdocipher.ts`, CSP `frame-src` |
+| **Daily.co** | Live rooms and tokens | `api.daily.co`, `*.daily.co` | `DAILY_API_KEY` | `src/lib/daily.ts`, CSP and Permissions-Policy |
 | **Resend** | Transactional email | `api.resend.com/emails` | `RESEND_API_KEY`, `MAIL_FROM` | `src/lib/mail.ts`, `src/lib/notify.ts` |
-| **Google Fonts** | Readex Pro, fetched at build by `next/font/google` | `fonts.googleapis.com`, `fonts.gstatic.com` | none | `src/app/[locale]/layout.tsx` |
-| **YouTube (nocookie)** | Free/marketing lesson embeds | `www.youtube-nocookie.com` | none | lesson player, CSP frame-src |
-| **GitHub** | Source repository and Vercel integration | `github.com/mohamedalsaadi/ELHASHASH-ACADEMY` | none | owner rename pending |
-| **npm registry** | Dependencies at install/build | `registry.npmjs.org` | none | `package.json`, `package-lock.json` |
-| **WhatsApp** | Optional support link only; no API integration yet | `wa.me` link when set | `SUPPORT_WHATSAPP` | `src/lib/site.ts`, contact page/footer |
-| **Support mailbox** | Support address shown to users | Google/Gmail mailbox | none | `CONTACT_EMAIL` in `src/lib/site.ts` |
-| **Custom domain / DNS** | Final public origin | registrar + Vercel DNS | `APP_URL` | owner action; `alsaadi.academy` appears only as a Paymob fallback email/comment |
-| **Vercel Cron** | Calls `/api/cron/reminders` | internal to Vercel | `CRON_SECRET` | `vercel.json`, `src/app/api/cron/reminders/route.ts` |
-| **Vercel Analytics / Sentry** | Not installed (deferred) | — | — | later batch |
-| **WhatsApp Cloud API** | Not integrated (deferred; owner setup) | — | `SUPPORT_WHATSAPP` only links | later batch |
+| **Google Fonts** | Readex Pro at build | `fonts.googleapis.com` | none | `layout.tsx`, `next/font` |
+| **YouTube (nocookie)** | Free lesson embeds | `www.youtube-nocookie.com` | none | lesson player, CSP `frame-src` |
+| **GitHub** | Source and Vercel integration | `github.com/mohamedalsaadi/ELHASHASH-ACADEMY` | none | owner rename pending |
+| **npm registry** | Dependencies | `registry.npmjs.org` | none | `package.json`, `package-lock.json` |
+| **Vercel Cron** | `/api/cron/reminders` | internal | `CRON_SECRET` | `vercel.json` |
+| **Analytics / Sentry** | Not installed | — | — | deferred |
 
 ### Build notes
 
-- `npm run build` needs network access to Google Fonts. A transient font fetch failure was observed; retry the build if `next/font` fails.
-- The production build writes generated route types; removing a page can leave a stale `.next/types` entry until the next build. `npm run build` regenerates it.
-- Migrations are additive. The catalog migration converts `Country.code` from the `CountryCode` enum to text and backfills 21 stages; keep a branch/backup for future production migrations.
+- `npm run build` needs network access to Google Fonts. A transient fetch failure has been observed twice; retry the build if `next/font` fails.
+- Migrations are additive; take a Neon branch snapshot before a launch-day migration.
+- Settings the site no longer uses: nothing here.

@@ -16,8 +16,13 @@ declare module "next-auth" {
 }
 
 // Credentials sign-in requires the JWT strategy; the token lives in an HttpOnly, SameSite=Lax cookie (Auth.js default).
+// A session cannot be revoked server-side while it is valid: the role and id ride in the token, so a demoted or
+// deleted account keeps its access until the cookie expires. Seven days bounds that window. Real revocation needs
+// a sessionVersion check against the database on every request — a separate security batch.
+const SEVEN_DAYS = 7 * 24 * 60 * 60;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: SEVEN_DAYS },
   pages: { signIn: "/signin" },
   providers: [
     Credentials({

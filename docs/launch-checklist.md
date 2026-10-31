@@ -62,7 +62,7 @@ Each line says what was checked instead, and how to close it.
 - [ ] **New-country visuals and time zones.** The path is built; no new country was created.
 - [ ] **Sitemap, canonical and OG in production.** Set `APP_URL`, then re-check `/sitemap.xml`, a course `<head>` and a share card.
 - [ ] **Course OG image.** Deliberately English-titled: Satori's default font has no Arabic shaping.
-- [ ] **CRON reminders.** Returns 401 without `CRON_SECRET`; not run with it because it sends real email.
+- [ ] **CRON reminders.** `CRON_SECRET` is now set, so Vercel's daily run authenticates; it still has not been watched send real email.
 - [ ] **Currencies beyond the seven.** EGP, SAR, AED, KWD, QAR, BHD and OMR only.
 - [ ] **Privacy policy legal review.** Draft complete; needs the owner's advisor.
 - [ ] **Search at scale.** `contains` only; add a trigram index if the catalog grows.
@@ -100,7 +100,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` | recommended | support identity and masking allow-list |
 | `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
 
-- [ ] **Vercel Blob store** — create it as **private**, then confirm `BLOB_READ_WRITE_TOKEN` in Production and Preview.
+- [x] **Vercel Blob store** — created private in `cdg1`; `BLOB_READ_WRITE_TOKEN` is set for Production and Preview. The upload and download paths still need a teacher-session test.
 - [ ] **Reminder schedule.** The 15-minute live reminder needs a job that runs every 10 minutes, which Vercel Hobby cannot do. Create a free external scheduler (cron-job.org, GitHub Actions, or similar) calling `GET https://<domain>/api/cron/reminders` every 10 minutes with `Authorization: Bearer <CRON_SECRET>`. Leave `vercel.json` as it is: its daily 05:00 run is harmless and the external calls supply the cadence. The route returns 401 without the secret, and repeated runs inside a window collapse on the notification's dedupe key.
 - [ ] **Renames.** Vercel project, GitHub repo and the local folder can be renamed by the owner; code identifiers were left alone.
 

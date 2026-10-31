@@ -77,6 +77,8 @@ Each line says what was checked instead, and how to close it.
 - [ ] **Stripe webhook for the live domain.** Test mode only, per the standing rule: add `https://<domain>/api/webhooks/stripe`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`. Live keys stay off until the owner has the paperwork.
 - [ ] **Paymob.** Callback and response URLs to `https://<domain>/api/webhooks/paymob`; `PAYMOB_HMAC_SECRET` and the four `PAYMOB_INTEGRATION_*` ids from the dashboard. EGP only.
 - [ ] **Resend.** Verify the sending domain (SPF, DKIM, DMARC); set `RESEND_API_KEY` and `MAIL_FROM`.
+- [ ] **Bank transfer is a temporary bridge**, removed once Stripe live is enabled. The why, the flow and the removal steps are in `docs/payment-bridge.md`.
+- [ ] **Bank-alert inbox (optional).** Enable receiving on `inbound.<domain>` in Resend, add its MX records, and point the `email.received` webhook at `/api/webhooks/bank-email`. Set `RESEND_WEBHOOK_SECRET`, `BANK_INBOUND_ADDRESS`, `BANK_SENDER_ALLOWLIST`, and leave `BANK_AUTO_APPROVE=0` until one real alert parses and matches an order correctly. If the bank only emails the registered address, forwarding breaks SPF/DKIM: keep auto-approval off and use the review queue. The bank cannot be read directly; the alert email is the only signal.
 - [ ] **Support channels.** `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` — the only contacts contact masking lets through.
 - [ ] **One test purchase end-to-end** after DNS, because `APP_URL` changes the callbacks.
 
@@ -126,7 +128,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | **Paymob** | EGP card, wallet, kiosk cash, valU | `accept.paymob.com` | `PAYMOB_*` | `src/lib/paymob.ts`, `/api/webhooks/paymob` |
 | **VdoCipher** | DRM video OTP and player | `dev.vdocipher.com`, `player.vdocipher.com` | `VDOCIPHER_API_SECRET` | `src/lib/vdocipher.ts`, CSP `frame-src` |
 | **Daily.co** | Live rooms and tokens | `api.daily.co`, `*.daily.co` | `DAILY_API_KEY` | `src/lib/daily.ts`, CSP and Permissions-Policy |
-| **Resend** | Transactional email | `api.resend.com/emails` | `RESEND_API_KEY`, `MAIL_FROM` | `src/lib/mail.ts`, `src/lib/notify.ts` |
+| **Resend** | Transactional email, and receiving bank alerts on a subdomain | `api.resend.com/emails`, `/emails/receiving` | `RESEND_API_KEY`, `MAIL_FROM`, `RESEND_WEBHOOK_SECRET` | `src/lib/mail.ts`, `src/lib/notify.ts`, `src/lib/bank-email-server.ts` |
 | **Google Fonts** | Readex Pro at build | `fonts.googleapis.com` | none | `layout.tsx`, `next/font` |
 | **YouTube (nocookie)** | Free lesson embeds | `www.youtube-nocookie.com` | none | lesson player, CSP `frame-src` |
 | **GitHub** | Source and Vercel integration | `<owner>/<repo>` | none | owner rename pending |

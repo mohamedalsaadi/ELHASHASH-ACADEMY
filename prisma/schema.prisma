@@ -431,6 +431,11 @@ model Order {
   kioskRef       String?
   /// Paymob intention id or Stripe Checkout Session id
   gatewayOrderId String?        @unique
+  /// Proof of a bank transfer, uploaded by the student. Private Blob pathname, served via /api/files.
+  receiptKey     String?
+  receiptName    String?
+  receiptType    String?
+  receiptSize    Int?
   expiresAt      DateTime?
   paidAt         DateTime?
   createdAt      DateTime       @default(now())
@@ -441,6 +446,7 @@ model Order {
   events       PaymentEvent[]
   entitlements Entitlement[]
   ledger       LedgerEntry[]
+  bankEmails   BankEmail[]
 
   @@index([userId, status])
 }
@@ -1139,6 +1145,14 @@ model PlatformSetting {
   vatTrn          String?
   /// Basis points: 3000 = 30.00%.
   platformShareBp Int      @default(3000)
+  /// Bank details shown to a student paying by transfer. No IBAN means transfer is not offered.
+  bankName            String?
+  bankAccountName     String?
+  bankIban            String?
+  bankInstructionsAr  String?
+  bankInstructionsEn  String?
+  /// When on, an authenticated bank alert that matches an order exactly approves it without the owner.
+  bankAutoApprove     Boolean  @default(false)
   updatedAt       DateTime @updatedAt
   updatedById     String?
 }
@@ -1161,4 +1175,61 @@ model AnalyticsEvent {
   @@index([userId, createdAt])
   @@index([sessionId, createdAt])
   @@index([courseId, createdAt])
+}
+
+// ---- Bank transfer alerts received by email --------------------------------
+
+enum BankEmailStatus {
+  /// Stored, not yet processed.
+  RECEIVED
+  /// Matched exactly and the order was settled without the owner.
+  AUTO_APPROVED
+  /// Parsed but needs a human, with a `reason` code.
+  NEEDS_REVIEW
+  /// The owner matched it to an order by hand.
+  MATCHED
+  /// Failed authentication or dismissed by the owner.
+  REJECTED
+  /// The order it names was already settled.
+  DUPLICATE
+  /// Transient processing error; the provider may retry.
+  FAILED
+}
+
+/// One row per inbound bank alert. `messageId` makes reprocessing idempotent, and the parsed
+/// fields are only ever compared against an order — never written as money.
+model BankEmail {
+  id                String          @id @default(cuid())
+  /// Provider Message-ID; the idempotency key and the settlement event suffix.
+  messageId         String          @unique
+  provider          String
+  fromAddress       String
+  toAddress         String
+  subject           String?
+  receivedAt        DateTime
+  /// The provider's authentication verdicts, when it exposes them.
+  auth              Json?
+  parsed            Json?
+  amount            Int?
+  currency          Currency?
+  senderName        String?
+  reference         String?
+  /// A repeat of the same bank transaction is a duplicate alert. Nulls are allowed.
+  bankTransactionId String?         @unique
+  valueDate         DateTime?       @db.Date
+  status            BankEmailStatus @default(RECEIVED)
+  /// Machine code such as no_reference, amount_mismatch, not_authenticated.
+  reason            String?
+  orderId           String?
+  matchedById       String?
+  matchedAt         DateTime?
+  /// Bounded plain text so the owner can read an alert whose parse failed.
+  bodyText          String?         @db.VarChar(20000)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([orderId])
 }

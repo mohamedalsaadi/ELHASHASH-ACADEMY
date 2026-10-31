@@ -3,15 +3,29 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
 import { opensAssignment } from "@/lib/assignments";
-import { ALLOWED_CONTENT_TYPES, COVER_CONTENT_TYPES, MAX_FILE_BYTES, MAX_IMAGE_BYTES, avatarPrefix, coverPrefix, homeworkPrefix, submissionPrefix } from "@/lib/blob";
+import {
+  ALLOWED_CONTENT_TYPES,
+  COVER_CONTENT_TYPES,
+  MAX_FILE_BYTES,
+  MAX_IMAGE_BYTES,
+  MAX_RECEIPT_BYTES,
+  RECEIPT_CONTENT_TYPES,
+  avatarPrefix,
+  coverPrefix,
+  homeworkPrefix,
+  receiptPrefix,
+  submissionPrefix,
+} from "@/lib/blob";
 import { db } from "@/lib/db";
 import { isCourseStaffDb } from "@/lib/staff";
+import { receiptForOrder } from "@/lib/transfer";
 
 const Purpose = z.union([
   z.object({ purpose: z.literal("assignment"), courseId: z.string().min(1) }),
   z.object({ purpose: z.literal("submission"), assignmentId: z.string().min(1) }),
   z.object({ purpose: z.literal("cover"), courseId: z.string().min(1) }),
   z.object({ purpose: z.literal("avatar"), userId: z.string().min(1) }),
+  z.object({ purpose: z.literal("receipt"), orderId: z.string().min(1) }),
 ]);
 
 /** Mints a short-lived token so the browser can upload straight to Blob. Never receives file bytes. */
@@ -48,6 +62,12 @@ export async function POST(request: Request) {
           if (!pathname.startsWith(coverPrefix(payload.courseId))) throw new Error("Unexpected path");
           allowedContentTypes = COVER_CONTENT_TYPES;
           maximumSizeInBytes = MAX_IMAGE_BYTES;
+        } else if (payload.purpose === "receipt") {
+          // Only the student who created the pending transfer may attach its proof.
+          if (!(await receiptForOrder(payload.orderId, session.user.id))) throw new Error("Not your order");
+          if (!pathname.startsWith(receiptPrefix(payload.orderId))) throw new Error("Unexpected path");
+          allowedContentTypes = RECEIPT_CONTENT_TYPES;
+          maximumSizeInBytes = MAX_RECEIPT_BYTES;
         } else {
           if (session.user.id !== payload.userId) throw new Error("Not your profile");
           if (!pathname.startsWith(avatarPrefix(payload.userId))) throw new Error("Unexpected path");

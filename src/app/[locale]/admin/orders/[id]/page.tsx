@@ -110,6 +110,25 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
         )}
       </section>
 
+      {o.receiptKey && (
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("transferReceipt")}</h2>
+          <p className="text-small text-ink-muted">{t("transferReceiptHint")}</p>
+          {o.receiptType?.startsWith("image/") && (
+            // The proof of transfer, streamed from the private store to the owner only.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/api/files/receipt/${o.id}?inline=1`}
+              alt=""
+              className="max-h-96 w-full rounded-sm border border-hairline bg-raised object-contain"
+            />
+          )}
+          <a href={`/api/files/receipt/${o.id}`} className="w-fit text-small text-pen underline underline-offset-4">
+            {o.receiptName ?? t("downloadReceipt")}
+          </a>
+        </section>
+      )}
+
       {(o.status === "PENDING" || o.status === "PAID") && (
         <section className={panel}>
           <h2 className="font-display text-h3 font-semibold">{t("actions")}</h2>

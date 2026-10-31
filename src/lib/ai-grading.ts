@@ -1,12 +1,14 @@
-// AI-assisted marking on Gemini 2.5 Flash: roughly half a fils per submission (an image is about $0.0009,
-// plus a few hundred prompt and output tokens), one call per submission, only when a teacher asks, capped
-// per teacher per day. The model never decides a grade on its own — its suggestion sits beside the
-// teacher's box and the teacher confirms or overrides.
+// AI-assisted marking on Gemini Flash: well under a fils per submission, one call per submission, only
+// when a teacher asks, capped per teacher per day. The model never decides a grade on its own — its
+// suggestion sits beside the teacher's box and the teacher confirms or overrides.
 import { get } from "@vercel/blob";
 import { z } from "zod";
 
-/** One constant to change if handwriting ever needs a stronger reader. */
-export const AI_MODEL = "gemini-2.5-flash";
+/**
+ * One constant to change if handwriting ever needs a stronger reader. 2.5 Flash is closed to new
+ * Google API keys, so this tracks the current Flash generation.
+ */
+export const AI_MODEL = "gemini-3.6-flash";
 
 const MAX_FILES = 3;
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -75,19 +77,24 @@ export async function gradeWithAi(input: {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: `${SYSTEM}\n\nAssignment: ${input.title}\n${input.instructions ?? ""}`.trim() }] },
         contents: [{ role: "user", parts }],
-        generationConfig: { temperature: 0, maxOutputTokens: 1024, responseMimeType: "application/json" },
+        // 3.x models reason before answering, and those tokens count against the budget.
+        generationConfig: { temperature: 0, maxOutputTokens: 2048, responseMimeType: "application/json" },
       }),
     },
   );
   if (!response.ok) return null;
 
   const data = (await response.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[];
+    candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
     usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
   };
 
   const usage = { input: data.usageMetadata?.promptTokenCount ?? 0, output: data.usageMetadata?.candidatesTokenCount ?? 0 };
-  const text = (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? "").join("");
+  // Thinking parts carry the model's reasoning; only the answer part is JSON.
+  const text = (data.candidates?.[0]?.content?.parts ?? [])
+    .filter((p) => p.thought !== true)
+    .map((p) => p.text ?? "")
+    .join("");
   if (!text) return { score: null, confidence: "low", rationale: "", needsReview: true, usage, model: AI_MODEL };
 
   let parsedJson: unknown = null;

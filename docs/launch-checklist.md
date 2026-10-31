@@ -8,7 +8,7 @@ This is the single place for: **what has not been verified**, **what only the ow
 
 ## 0. Where things stand
 
-- **Live** at `alsaadi-academy.vercel.app` — practice, spaced review, exams, homework, AI grading, parent digest and the teacher check-on list all deployed.
+- **Live** at the Vercel production URL (`APP_URL`) — practice, spaced review, exams, homework, AI grading, parent digest and the teacher check-on list all deployed.
 - **Database migrated** with every batch: catalog, homework (`Assignment`/`Submission`/`SpecialRequest`), practice (`QuestionItem`/`PracticeAttempt`), review (`ReviewSchedule`), exams (`ExamPaper`/`ExamAttempt`), and `ExamPaper.maxAttempts`.
 - **UAE prices in the database**: semester 990, year 1,870, monthly 495 (inactive until a paid lecture carries a month).
 - **Seeded dev accounts are locked** — `01000000000` and `01000000001` do not accept the dev password. The only admin is `0556926246`.
@@ -118,7 +118,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 
 | Service | Used for | Endpoint / domain | Environment | Code or config |
 |---|---|---|---|---|
-| **Vercel** | Hosting, builds, image generation, cron | `alsaadi-academy.vercel.app` | `APP_URL` | `.vercel/`, `vercel.json`, OG and icon routes |
+| **Vercel** | Hosting, builds, image generation, cron | `<domain>` | `APP_URL` | `.vercel/`, `vercel.json`, OG and icon routes |
 | **Neon Postgres** | Primary database | `*.neon.tech` | `DATABASE_URL` | `prisma/schema.prisma`, `src/lib/db.ts` |
 | **Vercel Blob** | Private homework and exam files | `*.private.blob.vercel-storage.com` | `BLOB_READ_WRITE_TOKEN` | `src/lib/blob.ts`, `/api/blob/upload`, `/api/files/[kind]/[id]` |
 | **Google Gemini** | AI-assisted grading | `generativelanguage.googleapis.com` | `GEMINI_API_KEY` | `src/lib/ai-grading.ts` |
@@ -129,7 +129,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | **Resend** | Transactional email | `api.resend.com/emails` | `RESEND_API_KEY`, `MAIL_FROM` | `src/lib/mail.ts`, `src/lib/notify.ts` |
 | **Google Fonts** | Readex Pro at build | `fonts.googleapis.com` | none | `layout.tsx`, `next/font` |
 | **YouTube (nocookie)** | Free lesson embeds | `www.youtube-nocookie.com` | none | lesson player, CSP `frame-src` |
-| **GitHub** | Source and Vercel integration | `github.com/mohamedalsaadi/ELHASHASH-ACADEMY` | none | owner rename pending |
+| **GitHub** | Source and Vercel integration | `<owner>/<repo>` | none | owner rename pending |
 | **npm registry** | Dependencies | `registry.npmjs.org` | none | `package.json`, `package-lock.json` |
 | **Vercel Cron** | `/api/cron/reminders` | internal | `CRON_SECRET` | `vercel.json` |
 | **Analytics / Sentry** | Not installed | — | — | deferred |

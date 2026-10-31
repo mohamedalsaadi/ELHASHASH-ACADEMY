@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { headers } from "next/headers";
 import { signIn } from "@/auth";
+import { logEvent } from "@/lib/analytics";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
@@ -83,6 +84,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     throw e;
   }
   await recordAttempt(key);
+  await logEvent({ name: "signup_completed", userId, props: { role: isParent ? "PARENT" : "STUDENT" } });
 
   const token = await issueToken(userId, "VERIFY", VERIFY_TTL);
   const ar = locale === "ar";

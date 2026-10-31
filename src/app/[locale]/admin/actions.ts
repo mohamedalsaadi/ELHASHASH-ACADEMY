@@ -2,19 +2,25 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { randomUUID } from "node:crypto";
 import { accessEnd, schoolYearEnd } from "@/lib/access";
+import { logEvent } from "@/lib/analytics";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
+import { blobInfo, coverPrefix } from "@/lib/blob";
+import type { FinanceConfig } from "@/lib/finance";
+import { saveFinanceConfig } from "@/lib/platform-settings";
 import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
 import { toMinor } from "@/lib/format";
+import { issueInvite } from "@/lib/invites";
+import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { countryInput, gradeInput, rangesOverlap, stageInput, subjectInput } from "@/lib/schemas/catalog-admin";
 import { phoneSchema } from "@/lib/schemas/auth";
-import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
+import { assertCourse, assertSlot, requireAdmin, requireStaff } from "@/lib/staff";
 import { stripe } from "@/lib/stripe";
 
 // Every action re-checks the role: server actions are public endpoints, whatever page renders them.
@@ -49,11 +55,33 @@ function catalogError(form: FormData, error: string): never {
 export async function updateCourse(form: FormData) {
   const me = await requireStaff();
   const d = z
-    .object({ id: z.string(), titleAr: text, titleEn: text, descAr: optionalText, descEn: optionalText, published: checkbox })
+    .object({
+      id: z.string(),
+      titleAr: text,
+      titleEn: text,
+      headlineAr: optionalText,
+      headlineEn: optionalText,
+      descAr: optionalText,
+      descEn: optionalText,
+      published: checkbox,
+      coverKey: z.string().trim().max(500).default(""),
+    })
     .parse(Object.fromEntries(form));
-  const { id, ...data } = d;
-  await assertCourse(me, id);
-  await db.course.update({ where: { id }, data });
+  await assertCourse(me, d.id);
+  const { id, coverKey, ...data } = d;
+  const wasHidden = (await db.course.count({ where: { id, published: false } })) === 1;
+
+  // The cover must be this course's own object, and its type is read from Blob, not the form.
+  let cover: { coverKey: string | null; coverType: string | null } = { coverKey: null, coverType: null };
+  if (coverKey) {
+    if (!coverKey.startsWith(coverPrefix(id))) return;
+    const info = await blobInfo(coverKey);
+    if (!info) return;
+    cover = { coverKey, coverType: info.contentType };
+  }
+
+  await db.course.update({ where: { id }, data: { ...data, ...cover } });
+  if (data.published && wasHidden) await logEvent({ name: "course_published", userId: me.id, courseId: id });
   done();
 }
 
@@ -143,7 +171,7 @@ async function courseLocation(courseId: string) {
 }
 
 export async function updateSku(form: FormData) {
-  await requireAdmin();
+  const me = await requireStaff();
   const d = z
     .object({
       id: z.string(),
@@ -161,6 +189,8 @@ export async function updateSku(form: FormData) {
     })
     .parse(Object.fromEntries(form));
   const sku = await db.sku.findUniqueOrThrow({ where: { id: d.id }, select: { currency: true, courseId: true } });
+  // A teacher sets the price of their own course; the owner sets any.
+  await assertCourse(me, sku.courseId);
   const { currency } = sku;
   const { timeZone } = await courseLocation(sku.courseId);
   await db.sku.update({
@@ -183,10 +213,11 @@ export async function updateSku(form: FormData) {
 }
 
 export async function addSku(form: FormData) {
-  await requireAdmin();
+  const me = await requireStaff();
   const d = z
     .object({ courseId: z.string(), accessType: z.enum(["SEMESTER", "MONTHLY", "YEARLY", "REVISION", "FIXED_DAYS"]) })
     .parse(Object.fromEntries(form));
+  await assertCourse(me, d.courseId);
   // New packages start hidden so a half-filled price never goes on sale.
   // A full year ends with the school year; a month runs 30 days; a fixed-days package starts at 90. The owner can change each.
   const loc = await courseLocation(d.courseId);
@@ -207,9 +238,10 @@ export async function addSku(form: FormData) {
 
 /** Adds a rental package for one lesson: hidden, 7 days, until the owner sets a price. One per lesson. */
 export async function addRental(form: FormData) {
-  await requireAdmin();
+  const me = await requireStaff();
   const { lessonId } = z.object({ lessonId: z.string() }).parse(Object.fromEntries(form));
   const lesson = await db.lesson.findUniqueOrThrow({ where: { id: lessonId }, select: { unit: { select: { courseId: true } } } });
+  await assertCourse(me, lesson.unit.courseId);
   if (!(await db.sku.count({ where: { lessonId } }))) {
     await db.sku.create({
       data: { courseId: lesson.unit.courseId, lessonId, accessType: "RENTAL", price: 0, currency: (await courseLocation(lesson.unit.courseId)).currency, active: false, accessDays: 7 },
@@ -312,9 +344,10 @@ export async function deleteCoupon(form: FormData) {
 export async function markOrderPaid(form: FormData) {
   const me = await requireAdmin();
   const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
-  const order = await db.order.findUniqueOrThrow({ where: { id }, select: { id: true, status: true, total: true, currency: true } });
+  const order = await db.order.findUniqueOrThrow({ where: { id }, select: { id: true, status: true, total: true, vat: true, currency: true } });
   if (order.status === "PAID") return;
-  await applyPaymentOutcome(order.id, `manual:${randomUUID()}`, { kind: "paid", amount: order.total, currency: order.currency }, { admin: me.id });
+  // The gateway charges the net total plus VAT, so a manual settlement must match it.
+  await applyPaymentOutcome(order.id, `manual:${randomUUID()}`, { kind: "paid", amount: order.total + order.vat, currency: order.currency }, { admin: me.id });
   done();
   revalidatePath("/[locale]/admin/orders", "layout");
   revalidatePath("/[locale]/dashboard", "page");
@@ -336,16 +369,65 @@ export async function refundOrder(form: FormData) {
     if (paymentIntent) await stripe().refunds.create({ payment_intent: paymentIntent });
   }
 
-  await db.$transaction([
-    db.order.update({ where: { id }, data: { status: "REFUNDED" } }),
-    db.entitlement.updateMany({ where: { orderId: id }, data: { endsAt: new Date() } }),
-    db.paymentEvent.create({
-      data: { orderId: id, gatewayEventId: `refund:${id}:${randomUUID()}`, payload: { admin: me.id, gateway: order.gateway } },
-    }),
-  ]);
+  await db.$transaction(async (trx) => {
+    const sales = await trx.ledgerEntry.findMany({ where: { orderId: id, kind: "SALE" } });
+    await trx.order.update({ where: { id }, data: { status: "REFUNDED" } });
+    await trx.entitlement.updateMany({ where: { orderId: id }, data: { endsAt: new Date() } });
+    // A fixed key: a racing second refund fails here instead of recording (and issuing) two.
+    await trx.paymentEvent.create({ data: { orderId: id, gatewayEventId: `refund:${id}`, payload: { admin: me.id, gateway: order.gateway } } });
+    if (sales.length) {
+      // A refund is a new negative row with the original rates; the sale row is never touched.
+      await trx.ledgerEntry.createMany({
+        data: sales.map((s) => ({
+          kind: "REFUND" as const,
+          orderId: id,
+          orderItemId: s.orderItemId,
+          instructorId: s.instructorId,
+          courseId: s.courseId,
+          subjectId: s.subjectId,
+          gradeId: s.gradeId,
+          currency: s.currency,
+          gross: -s.gross,
+          vat: -s.vat,
+          net: -s.net,
+          platformFee: -s.platformFee,
+          instructorNet: -s.instructorNet,
+          vatRateBp: s.vatRateBp,
+          platformShareBp: s.platformShareBp,
+          reversalOfId: s.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
+  });
   done();
   revalidatePath("/[locale]/admin/orders", "layout");
   revalidatePath("/[locale]/dashboard", "page");
+}
+
+/**
+ * The platform fee and VAT live in one settings row. A change applies to future orders only:
+ * every ledger row keeps the rates it was written with.
+ */
+export async function saveFinanceSettings(form: FormData) {
+  const me = await requireAdmin();
+  const d = z
+    .object({
+      vatEnabled: checkbox,
+      vatRate: z.coerce.number().min(0).max(50),
+      vatTrn: z.string().trim().max(40).default(""),
+      platformShare: z.coerce.number().min(0).max(100),
+    })
+    .parse(Object.fromEntries(form));
+
+  const cfg: FinanceConfig = {
+    vatEnabled: d.vatEnabled,
+    vatRateBp: Math.round(d.vatRate * 100),
+    vatTrn: d.vatTrn || null,
+    platformShareBp: Math.round(d.platformShare * 100),
+  };
+  await saveFinanceConfig(cfg, me.id);
+  revalidatePath("/[locale]/admin", "layout");
 }
 
 export async function changePassword(_: unknown, form: FormData): Promise<"ok" | "wrong" | "short"> {
@@ -382,6 +464,88 @@ export async function addTeacher(_: unknown, form: FormData): Promise<"ok" | "ta
   return "ok";
 }
 
+export type InviteState = { ok: true; link: string } | { error: "invalid" | "contact" | "slot" | "email_taken" } | null;
+
+/**
+ * Invites a teacher to several (grade, subject) slots at once. The link is returned so the
+ * owner can copy it when no email is configured; with an address, the same link is emailed.
+ */
+export async function inviteTeacher(_: InviteState, form: FormData): Promise<InviteState> {
+  const me = await requireAdmin();
+  const base = z
+    .object({ name: z.string().trim().min(2).max(80), email: z.string().trim().max(200), phone: z.string().trim().max(30) })
+    .safeParse({ name: form.get("name"), email: form.get("email") ?? "", phone: form.get("phone") ?? "" });
+  if (!base.success) return { error: "invalid" };
+  const email = base.data.email.toLowerCase() || null;
+  const phone = base.data.phone || null;
+  if (!email && !phone) return { error: "contact" };
+  if (email && !z.email().safeParse(email).success) return { error: "contact" };
+  if (phone && !phoneSchema.safeParse(phone).success) return { error: "contact" };
+
+  const keys = form.getAll("slot").map(String).filter(Boolean);
+  if (keys.length === 0) return { error: "slot" };
+  const slots = keys.map((k) => {
+    const [gradeId, subjectId] = k.split(":");
+    return { gradeId: gradeId ?? "", subjectId: subjectId ?? "" };
+  });
+  if (slots.some((s) => !s.gradeId || !s.subjectId)) return { error: "slot" };
+  // A slot must be a subject the grade actually teaches.
+  const known = await db.gradeSubject.findMany({
+    where: { gradeId: { in: slots.map((s) => s.gradeId) } },
+    select: { gradeId: true, subjectId: true },
+  });
+  const valid = new Set(known.map((g) => `${g.gradeId}:${g.subjectId}`));
+  if (slots.some((s) => !valid.has(`${s.gradeId}:${s.subjectId}`))) return { error: "slot" };
+
+  const locale = form.get("locale") === "en" ? "en" : "ar";
+  const { raw } = await issueInvite({ name: base.data.name, email, phone, slots, createdById: me.id });
+  const link = `${appUrl()}/${locale}/invite/${raw}`;
+
+  if (email) {
+    const ar = locale === "ar";
+    await sendMail({
+      to: email,
+      subject: ar ? "دعوة للتدريس في AAcademy" : "An invitation to teach at AAcademy",
+      html: emailLayout(
+        ar ? "دعوة للتدريس في AAcademy" : "An invitation to teach at AAcademy",
+        [
+          ar
+            ? `مرحبًا ${base.data.name}، تمت دعوتك للانضمام إلى AAcademy كمدرّس. الرابط صالح لسبعة أيام ولمرة واحدة.`
+            : `Hello ${base.data.name}, you have been invited to teach at AAcademy. The link is valid for seven days and works once.`,
+        ],
+        { href: link, label: ar ? "قبول الدعوة" : "Accept the invitation" },
+        locale,
+      ),
+    });
+  }
+
+  done();
+  return { ok: true, link };
+}
+
+export async function cancelInvite(form: FormData) {
+  await requireAdmin();
+  await db.teacherInvite.delete({ where: { id: String(form.get("id")) } });
+  done();
+}
+
+export async function addTeacherSlot(form: FormData) {
+  await requireAdmin();
+  const d = z.object({ userId: z.string(), slot: z.string() }).parse(Object.fromEntries(form));
+  const [gradeId, subjectId] = d.slot.split(":");
+  if (!gradeId || !subjectId) return;
+  // Only subjects the grade actually teaches.
+  if (!(await db.gradeSubject.count({ where: { gradeId, subjectId } }))) return;
+  await db.teacherSlot.createMany({ data: [{ userId: d.userId, gradeId, subjectId }], skipDuplicates: true });
+  done();
+}
+
+export async function removeTeacherSlot(form: FormData) {
+  await requireAdmin();
+  await db.teacherSlot.delete({ where: { id: String(form.get("id")) } });
+  done();
+}
+
 const teacherId = z.string().refine(async (id) => !!(await db.user.count({ where: { id, role: { in: ["INSTRUCTOR", "ADMIN"] } } })));
 
 /** "Physics, Grade 12" -> "physics-grade-12", plus a suffix when taken. */
@@ -391,7 +555,35 @@ async function freeSlug(base: string) {
 }
 
 export async function createCourse(form: FormData) {
-  await requireAdmin();
+  const me = await requireStaff();
+  const locale = form.get("locale") === "en" ? "en" : "ar";
+
+  // A teacher creates school courses only, and only inside a slot the owner granted.
+  if (me.role !== "ADMIN") {
+    const { slot } = z.object({ slot: z.string() }).parse(Object.fromEntries(form));
+    const [gradeId, subjectId] = slot.split(":");
+    if (!gradeId || !subjectId) notFound();
+    await assertSlot(me, gradeId, subjectId);
+    const [grade, subject] = await Promise.all([
+      db.grade.findUniqueOrThrow({ where: { id: gradeId }, include: { country: true } }),
+      db.subject.findUniqueOrThrow({ where: { id: subjectId } }),
+    ]);
+    const owned = await db.course.create({
+      data: {
+        instructorId: me.id,
+        kind: "SCHOOL",
+        gradeId,
+        subjectId,
+        slug: await freeSlug(`${grade.country.code}-${grade.level}-${subject.slug}`),
+        titleAr: `${subject.nameAr}، ${grade.nameAr}`,
+        titleEn: `${subject.nameEn}, ${grade.nameEn}`,
+      },
+    });
+    await logEvent({ name: "course_created", userId: me.id, courseId: owned.id });
+    done();
+    redirect(`/${locale}/admin/courses/${owned.id}`);
+  }
+
   const d = await z
     .discriminatedUnion("kind", [
       z.object({ kind: z.literal("SCHOOL"), gradeId: z.string(), subjectId: z.string(), instructorId: teacherId }),
@@ -414,10 +606,29 @@ export async function createCourse(form: FormData) {
   } else {
     data = { ...d, slug: await freeSlug(d.titleEn) };
   }
-  // Starts hidden, like a new package, until the owner fills it in and publishes it.
+  // Starts hidden, like a new package, until it is filled in and published.
   const course = await db.course.create({ data });
+  await logEvent({ name: "course_created", userId: me.id, courseId: course.id });
   done();
-  redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/courses/${course.id}`);
+  redirect(`/${locale}/admin/courses/${course.id}`);
+}
+
+/**
+ * Removes a course: unpublishes it when anything was sold or granted (the history stays),
+ * deletes it only when it never was.
+ */
+export async function deleteCourse(form: FormData) {
+  const me = await requireStaff();
+  const d = z.object({ id: z.string(), locale: z.string().optional() }).parse(Object.fromEntries(form));
+  await assertCourse(me, d.id);
+  const [sold, granted] = await Promise.all([
+    db.orderItem.count({ where: { sku: { courseId: d.id } } }),
+    db.entitlement.count({ where: { courseId: d.id } }),
+  ]);
+  if (sold || granted) await db.course.update({ where: { id: d.id }, data: { published: false } });
+  else await db.course.delete({ where: { id: d.id } });
+  done();
+  redirect(`/${d.locale === "en" ? "en" : "ar"}/${me.role === "ADMIN" ? "admin/courses" : "teacher"}`);
 }
 
 export async function setTeacher(form: FormData) {

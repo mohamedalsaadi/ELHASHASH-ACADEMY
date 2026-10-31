@@ -98,8 +98,9 @@ model User {
   role            Role      @default(STUDENT)
   locale          String    @default("ar")
   gradeId         String?
-  /// Teacher profile, shown on the public teacher page.
+  /// Teacher profile, shown on the public teacher page. photoUrl is a private Blob pathname.
   photoUrl        String?
+  photoType       String?
   bioAr           String?
   bioEn           String?
   createdAt       DateTime  @default(now())
@@ -133,6 +134,8 @@ model User {
   authoredExams       ExamPaper[]           @relation("ExamAuthor")
   examAttempts        ExamAttempt[]
   gradedExams         ExamAttempt[]         @relation("ExamGrader")
+  teacherSlots        TeacherSlot[]
+  ledger              LedgerEntry[]
 }
 
 model Country {
@@ -181,10 +184,12 @@ model Grade {
   active     Boolean    @default(true)
   order      Int        @default(0)
 
-  country  Country        @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  courses  Course[]
-  users    User[]
-  subjects GradeSubject[]
+  country      Country            @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  courses      Course[]
+  users        User[]
+  subjects     GradeSubject[]
+  teacherSlots TeacherSlot[]
+  inviteSlots  TeacherInviteSlot[]
 
   @@unique([countryId, curriculum, level])
 }
@@ -198,10 +203,12 @@ model Subject {
   icon     String         @default("book")
   /// Owner-controlled visibility; inactive subjects are hidden from students.
   active   Boolean        @default(true)
-  grades   GradeSubject[]
-  courses  Course[]
-  concepts Concept[]
-  bundles  BundleRule[]
+  grades       GradeSubject[]
+  courses      Course[]
+  concepts     Concept[]
+  bundles      BundleRule[]
+  teacherSlots TeacherSlot[]
+  inviteSlots  TeacherInviteSlot[]
 }
 
 /// Which subjects a grade teaches, shown as tiles even before a course exists. Edited by the owner.
@@ -225,8 +232,14 @@ model Course {
   instructorId String
   titleAr      String
   titleEn      String
+  /// Short promotional line shown above the description.
+  headlineAr   String?
+  headlineEn   String?
   descAr       String?
   descEn       String?
+  /// Private Blob pathname of the cover image; served through /api/covers/<id>.
+  coverKey     String?
+  coverType    String?
   published    Boolean    @default(false)
   /// When on, the course shows a weekly XP leaderboard to its own students.
   leaderboard  Boolean    @default(false)
@@ -406,7 +419,12 @@ model Order {
   currency       Currency
   subtotal       Int
   discount       Int
+  /// Net (ex-VAT) amount after discounts.
   total          Int
+  /// VAT added on top of `total` at checkout; zero while VAT is off.
+  vat            Int            @default(0)
+  /// Basis points in force when this order was created (500 = 5.00%).
+  vatRateBp      Int            @default(0)
   /// Set when a coupon took part in `discount`.
   couponId       String?
   /// Kiosk reference the student pays in cash; the order stays PENDING until the gateway webhook arrives.
@@ -422,6 +440,7 @@ model Order {
   items        OrderItem[]
   events       PaymentEvent[]
   entitlements Entitlement[]
+  ledger       LedgerEntry[]
 
   @@index([userId, status])
 }
@@ -432,8 +451,9 @@ model OrderItem {
   skuId   String
   price   Int
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  sku   Sku   @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  order  Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku    Sku          @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  ledger LedgerEntry[]
 }
 
 /// One row per gateway callback. The unique gatewayEventId makes webhook handling idempotent.
@@ -1007,4 +1027,138 @@ model ExamAnswer {
   choice  QuestionChoice? @relation(fields: [choiceId], references: [id], onDelete: SetNull)
 
   @@unique([attemptId, itemId])
+}
+
+// ---- Teacher invitations, slots and the marketplace -------------------------
+
+/// A single-use invitation to teach. Only the SHA-256 hash of the link token is stored.
+/// One invitation may carry several (grade, subject) slots.
+model TeacherInvite {
+  id          String    @id @default(cuid())
+  name        String
+  /// Stored lowercase; the invitee must control this address to receive the link.
+  email       String?
+  phone       String?
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  slots TeacherInviteSlot[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+/// One (grade, subject) pair an invitation authorises. Grade already implies the country.
+model TeacherInviteSlot {
+  id        String @id @default(cuid())
+  inviteId  String
+  gradeId   String
+  subjectId String
+
+  invite  TeacherInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  grade   Grade         @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  subject Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([inviteId, gradeId, subjectId])
+}
+
+/// What a teacher may create courses in. Survives an expired or deleted invitation, so access
+/// is only revoked deliberately.
+model TeacherSlot {
+  id        String   @id @default(cuid())
+  userId    String
+  gradeId   String
+  subjectId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grade   Grade   @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gradeId, subjectId])
+  @@index([gradeId, subjectId])
+}
+
+enum LedgerKind {
+  SALE
+  REFUND
+}
+
+/// One immutable row per paid order line. Every rate used is copied onto the row, so a later
+/// change to the platform share or VAT never rewrites history. Refunds are new negative rows.
+model LedgerEntry {
+  id           String     @id @default(cuid())
+  kind         LedgerKind @default(SALE)
+  orderId      String
+  orderItemId  String?
+  /// Who owned the course when the money arrived.
+  instructorId String?
+  courseId     String
+  subjectId    String?
+  gradeId      String?
+  currency     Currency
+
+  /// Buyer-paid amount for this line: net + vat.
+  gross         Int
+  vat           Int @default(0)
+  /// gross - vat
+  net           Int
+  /// round(net * platformShareBp / 10000)
+  platformFee   Int
+  /// net - platformFee
+  instructorNet Int
+
+  vatRateBp       Int @default(0)
+  platformShareBp Int @default(3000)
+
+  /// Set only on REFUND rows: the SALE row reversed. At most one reversal per sale.
+  reversalOfId String? @unique
+  createdAt    DateTime @default(now())
+
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderItem OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+  instructor User?     @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  @@unique([orderItemId, kind])
+  @@index([orderId])
+  @@index([instructorId, createdAt])
+  @@index([courseId, createdAt])
+  @@index([kind, createdAt])
+}
+
+/// Singleton row. A missing row means the defaults in lib/finance.ts: VAT off, 30% platform share.
+model PlatformSetting {
+  id              String   @id @default("singleton")
+  vatEnabled      Boolean  @default(false)
+  /// Basis points: 500 = 5.00%.
+  vatRateBp       Int      @default(500)
+  /// Tax registration number shown on receipts once VAT is live.
+  vatTrn          String?
+  /// Basis points: 3000 = 30.00%.
+  platformShareBp Int      @default(3000)
+  updatedAt       DateTime @updatedAt
+  updatedById     String?
+}
+
+/// A behaviour event. No foreign keys on purpose: inserts stay cheap and user deletion never blocks.
+/// `name` is one of the canonical names in src/lib/analytics.ts.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String?
+  /// Per-browser id reused from the device cookie, so anonymous funnels work.
+  sessionId String?
+  courseId  String?
+  props     Json?
+  /// Collapses repeats, e.g. evt:course_viewed:<actor>:<course>:<date>.
+  dedupeKey String?  @unique
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([courseId, createdAt])
 }

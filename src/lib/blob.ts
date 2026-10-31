@@ -1,5 +1,5 @@
 // Vercel Blob helpers shared by the upload token route, the download route and the server actions.
-import { head } from "@vercel/blob";
+import { get, head } from "@vercel/blob";
 
 /** What a homework handout or a student's answer may be. Anything else is refused at token time. */
 export const ALLOWED_CONTENT_TYPES = [
@@ -13,9 +13,15 @@ export const ALLOWED_CONTENT_TYPES = [
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
 export const MAX_FILES = 5;
 
+/** Course covers and teacher avatars are images only, and small. */
+export const COVER_CONTENT_TYPES = ["image/png", "image/jpeg", "image/webp"];
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
 /** Path prefixes: an assignment file lives under its course, a submission under its assignment and student. */
 export const homeworkPrefix = (courseId: string) => `homework/${courseId}/`;
 export const submissionPrefix = (assignmentId: string, studentId: string) => `submissions/${assignmentId}/${studentId}/`;
+export const coverPrefix = (courseId: string) => `covers/${courseId}/`;
+export const avatarPrefix = (userId: string) => `avatars/${userId}/`;
 
 /** The browser's filename is only a label. Strip anything that could break a header or escape the store. */
 export function safeDownloadName(name: string): string {
@@ -39,4 +45,17 @@ export async function blobInfo(pathname: string): Promise<{ size: number; conten
   } catch {
     return null;
   }
+}
+
+/** Streams a private image through a same-origin URL, so it is cacheable and needs no public store. */
+export async function streamBlob(pathname: string, contentType: string | null, cacheControl: string) {
+  const blob = await get(pathname, { access: "private" });
+  if (!blob || blob.statusCode !== 200) return new Response(null, { status: 404 });
+  return new Response(blob.stream, {
+    headers: {
+      "Content-Type": contentType ?? "application/octet-stream",
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": cacheControl,
+    },
+  });
 }

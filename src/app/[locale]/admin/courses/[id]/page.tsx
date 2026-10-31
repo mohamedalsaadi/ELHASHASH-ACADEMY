@@ -1,13 +1,14 @@
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { ImageUpload } from "@/components/ImageUpload";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { minorPerUnit } from "@/lib/format";
 import { lecturesIn } from "@/lib/plans";
 import { assertCourse, requireStaff } from "@/lib/staff";
-import { addLesson, addRental, addSku, addUnit, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
+import { addLesson, addRental, addSku, addUnit, deleteCourse, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
 import { field, label } from "../../styles";
 import { DeleteButton, PlanPrice, SaveButton } from "../../ui";
 
@@ -78,6 +79,14 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
             <input name="titleEn" defaultValue={course.titleEn} required dir="ltr" className={field} />
           </label>
           <label className={label}>
+            {t("headlineAr")}
+            <input name="headlineAr" defaultValue={course.headlineAr ?? ""} maxLength={200} dir="rtl" className={field} />
+          </label>
+          <label className={label}>
+            {t("headlineEn")}
+            <input name="headlineEn" defaultValue={course.headlineEn ?? ""} maxLength={200} dir="ltr" className={field} />
+          </label>
+          <label className={label}>
             {t("descAr")}
             <textarea name="descAr" defaultValue={course.descAr ?? ""} rows={3} dir="rtl" className={`${field} py-2`} />
           </label>
@@ -86,6 +95,16 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
             <textarea name="descEn" defaultValue={course.descEn ?? ""} rows={3} dir="ltr" className={`${field} py-2`} />
           </label>
         </div>
+        <ImageUpload
+          pathPrefix={`covers/${course.id}/`}
+          clientPayload={JSON.stringify({ purpose: "cover", courseId: course.id })}
+          name="coverKey"
+          defaultPath={course.coverKey}
+          currentSrc={course.coverKey ? `/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}` : null}
+          label={t("cover")}
+          failedLabel={t("coverFailed")}
+          removeLabel={t("coverRemove")}
+        />
         <label className={check}>
           <input type="checkbox" name="published" defaultChecked={course.published} className="size-4" />
           {t("publishedHint")}
@@ -225,10 +244,9 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
         </form>
       </section>
 
-      {isAdmin && (
-        <section className="grid gap-4">
-          <h2 className="font-display text-h2 font-semibold">{t("packages")}</h2>
-          <p className="max-w-[65ch] text-small text-ink-muted">{t("packagesHint")}</p>
+      <section className="grid gap-4">
+        <h2 className="font-display text-h2 font-semibold">{t("packages")}</h2>
+        <p className="max-w-[65ch] text-small text-ink-muted">{t("packagesHint")}</p>
           {packages.map((s) => (
             <form key={s.id} action={updateSku} className={card}>
               <input type="hidden" name="id" value={s.id} />
@@ -330,12 +348,10 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
             </label>
             <SaveButton>{t("addPackage")}</SaveButton>
           </form>
-        </section>
-      )}
+      </section>
 
-      {isAdmin && (
-        <section className="grid gap-4">
-          <h2 className="font-display text-h2 font-semibold">{t("rentals")}</h2>
+      <section className="grid gap-4">
+        <h2 className="font-display text-h2 font-semibold">{t("rentals")}</h2>
           <p className="max-w-[65ch] text-small text-ink-muted">{t("rentalsHint")}</p>
           {course.units
             .filter((u) => !u.isFree)
@@ -375,8 +391,21 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                 })}
               </div>
             ))}
-        </section>
-      )}
+      </section>
+
+      <section className={card}>
+        <h2 className="font-display text-h2 font-semibold">{t("deleteCourse")}</h2>
+        <p className="max-w-[65ch] text-small text-ink-muted">{t("deleteCourseHint")}</p>
+        <form>
+          <input type="hidden" name="id" value={course.id} />
+          <input type="hidden" name="locale" value={locale} />
+          <DeleteButton
+            action={deleteCourse}
+            label={t("deleteCourse")}
+            confirmText={t("confirmDeleteCourse", { title: locale === "ar" ? course.titleAr : course.titleEn })}
+          />
+        </form>
+      </section>
     </main>
   );
 }

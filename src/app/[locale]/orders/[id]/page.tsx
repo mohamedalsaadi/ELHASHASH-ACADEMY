@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
+import { getFinanceConfig } from "@/lib/platform-settings";
 import { PrintButton } from "./PrintButton";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
     },
   });
   if (!o || (o.userId !== session.user.id && session.user.role !== "ADMIN")) notFound();
+  const cfg = o.vat > 0 ? await getFinanceConfig() : null;
 
   const name = (x: { titleAr: string; titleEn: string }) => (ar ? x.titleAr : x.titleEn);
   const money = (n: number) => formatMoney(n, o.currency, locale);
@@ -126,9 +128,21 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
               <dd className="num text-up">−{money(o.discount)}</dd>
             </>
           )}
+          {o.vat > 0 && (
+            <>
+              <dt className="text-ink-muted">{t("vat", { pct: o.vatRateBp / 100 })}</dt>
+              <dd className="num">{money(o.vat)}</dd>
+            </>
+          )}
           <dt className="font-display font-semibold">{t("total")}</dt>
-          <dd className="num font-semibold">{money(o.total)}</dd>
+          <dd className="num font-semibold">{money(o.total + o.vat)}</dd>
         </dl>
+
+        {cfg?.vatTrn && (
+          <p className="num text-label text-ink-muted" dir="ltr">
+            {t("trn")}: {cfg.vatTrn}
+          </p>
+        )}
 
         <p className="text-small text-ink-muted">{t("thanks")}</p>
       </section>

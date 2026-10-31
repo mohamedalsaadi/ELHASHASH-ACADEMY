@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { logEventLater } from "@/lib/analytics";
 import { CIRCLE_PATH, EmptyState } from "@/components/brand/Mark";
 import { JsonLd } from "@/components/JsonLd";
 import { LiveRow } from "@/components/learning/LiveRow";
@@ -117,7 +118,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     include: {
       grade: { include: { country: true } },
       liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
-      instructor: { select: { name: true } },
+      instructor: { select: { id: true, name: true } },
       units: {
         orderBy: { order: "asc" },
         include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now) } } } },
@@ -128,6 +129,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   if (!course) notFound();
 
   const session = await auth();
+  void logEventLater({ name: "course_viewed", userId: session?.user?.id, courseId: course.id, dedupeScope: course.id });
   const staff = isCourseStaff(session?.user, course);
   const allGrants = await grantsFor(session?.user?.id, course.id, now, { includeEnded: true });
   const active = allGrants.filter((g) => !g.endsAt || g.endsAt > now);
@@ -215,14 +217,30 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
       <JsonLd data={jsonLd} />
 
+      {course.coverKey && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`}
+          alt=""
+          className="aspect-[16/9] w-full rounded-lg object-cover"
+        />
+      )}
+
       <PageHeader
         back={{ href: "/courses", label: t("title") }}
         eyebrow={course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}
         title={courseTitle}
         meta={
           <>
+            {(ar ? course.headlineAr : course.headlineEn) && (
+              <p className="max-w-[65ch] font-semibold">{ar ? course.headlineAr : course.headlineEn}</p>
+            )}
             {(ar ? course.descAr : course.descEn) && <p className="max-w-[65ch]">{ar ? course.descAr : course.descEn}</p>}
-            <p className="mt-1">{t("teacher", { name: course.instructor.name })}</p>
+            <p className="mt-1">
+              <Link href={`/teachers/${course.instructor.id}`} className="text-pen underline underline-offset-4">
+                {t("teacher", { name: course.instructor.name })}
+              </Link>
+            </p>
           </>
         }
         actions={

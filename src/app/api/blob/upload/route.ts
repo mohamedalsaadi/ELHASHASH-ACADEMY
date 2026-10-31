@@ -1,14 +1,17 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { grantsFor, isCourseStaff } from "@/lib/catalog";
+import { grantsFor } from "@/lib/catalog";
 import { opensAssignment } from "@/lib/assignments";
-import { ALLOWED_CONTENT_TYPES, MAX_FILE_BYTES, homeworkPrefix, submissionPrefix } from "@/lib/blob";
+import { ALLOWED_CONTENT_TYPES, COVER_CONTENT_TYPES, MAX_FILE_BYTES, MAX_IMAGE_BYTES, avatarPrefix, coverPrefix, homeworkPrefix, submissionPrefix } from "@/lib/blob";
 import { db } from "@/lib/db";
+import { isCourseStaffDb } from "@/lib/staff";
 
 const Purpose = z.union([
   z.object({ purpose: z.literal("assignment"), courseId: z.string().min(1) }),
   z.object({ purpose: z.literal("submission"), assignmentId: z.string().min(1) }),
+  z.object({ purpose: z.literal("cover"), courseId: z.string().min(1) }),
+  z.object({ purpose: z.literal("avatar"), userId: z.string().min(1) }),
 ]);
 
 /** Mints a short-lived token so the browser can upload straight to Blob. Never receives file bytes. */
@@ -24,11 +27,14 @@ export async function POST(request: Request) {
         const me = { id: session.user.id, role: session.user.role };
         const payload = Purpose.parse(JSON.parse(clientPayload ?? "{}"));
 
+        let allowedContentTypes = ALLOWED_CONTENT_TYPES;
+        let maximumSizeInBytes = MAX_FILE_BYTES;
+
         if (payload.purpose === "assignment") {
-          const course = await db.course.findUnique({ where: { id: payload.courseId }, select: { id: true, instructorId: true } });
-          if (!course || !isCourseStaff(me, course)) throw new Error("Not your course");
-          if (!pathname.startsWith(homeworkPrefix(course.id))) throw new Error("Unexpected path");
-        } else {
+          // Read the role from the database: the cookie outlives a demotion.
+          if (!(await isCourseStaffDb(session.user.id, payload.courseId))) throw new Error("Not your course");
+          if (!pathname.startsWith(homeworkPrefix(payload.courseId))) throw new Error("Unexpected path");
+        } else if (payload.purpose === "submission") {
           const assignment = await db.assignment.findUnique({
             where: { id: payload.assignmentId },
             select: { id: true, courseId: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
@@ -37,13 +43,19 @@ export async function POST(request: Request) {
           const grants = await grantsFor(me.id, assignment.courseId);
           if (!opensAssignment(assignment, grants, new Date())) throw new Error("This assignment is not open to you");
           if (!pathname.startsWith(submissionPrefix(assignment.id, me.id))) throw new Error("Unexpected path");
+        } else if (payload.purpose === "cover") {
+          if (!(await isCourseStaffDb(session.user.id, payload.courseId))) throw new Error("Not your course");
+          if (!pathname.startsWith(coverPrefix(payload.courseId))) throw new Error("Unexpected path");
+          allowedContentTypes = COVER_CONTENT_TYPES;
+          maximumSizeInBytes = MAX_IMAGE_BYTES;
+        } else {
+          if (session.user.id !== payload.userId) throw new Error("Not your profile");
+          if (!pathname.startsWith(avatarPrefix(payload.userId))) throw new Error("Unexpected path");
+          allowedContentTypes = COVER_CONTENT_TYPES;
+          maximumSizeInBytes = MAX_IMAGE_BYTES;
         }
 
-        return {
-          allowedContentTypes: ALLOWED_CONTENT_TYPES,
-          maximumSizeInBytes: MAX_FILE_BYTES,
-          addRandomSuffix: true,
-        };
+        return { allowedContentTypes, maximumSizeInBytes, addRandomSuffix: true };
       },
     });
     return Response.json(result);

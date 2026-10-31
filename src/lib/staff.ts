@@ -26,3 +26,20 @@ export async function assertCourse(me: Awaited<ReturnType<typeof requireStaff>>,
   if (me.role === "ADMIN") return;
   if (!(await db.course.count({ where: { id: courseId, instructorId: me.id } }))) notFound();
 }
+
+/** A teacher may only create courses inside a slot the owner granted. Admins are unrestricted. */
+export async function assertSlot(me: Awaited<ReturnType<typeof requireStaff>>, gradeId: string, subjectId: string) {
+  if (me.role === "ADMIN") return;
+  if (!(await db.teacherSlot.count({ where: { userId: me.id, gradeId, subjectId } }))) notFound();
+}
+
+/**
+ * The database-backed form of isCourseStaff, for route handlers where notFound() is wrong.
+ * A route must not trust the role in the session cookie: it survives a demotion.
+ */
+export async function isCourseStaffDb(userId: string, courseId: string) {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!user) return false;
+  if (user.role === "ADMIN") return true;
+  return (await db.course.count({ where: { id: courseId, instructorId: userId } })) > 0;
+}

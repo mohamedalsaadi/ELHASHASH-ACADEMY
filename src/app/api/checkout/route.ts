@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { logEvent } from "@/lib/analytics";
 import { priceSkus } from "@/lib/checkout";
 import { resolveCoupon } from "@/lib/coupon-resolve";
 import { db } from "@/lib/db";
+import { vatOn } from "@/lib/finance";
 import { activeGateway, stripeUnitAmount, type Method } from "@/lib/gateway";
 import { createIntention } from "@/lib/paymob";
+import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { applyCoupon, PricingError } from "@/lib/pricing-engine";
 import { checkoutSchema } from "@/lib/schemas/checkout";
@@ -48,8 +51,13 @@ export async function POST(req: Request) {
     couponId = resolved.coupon.id;
   }
 
+  // VAT is added on top of the net total. It is zero unless the owner has switched it on.
+  const cfg = await getFinanceConfig();
+  const vat = vatOn(priced.total, cfg);
+  const payable = priced.total + vat;
+
   // A 100% code leaves nothing for a gateway to charge; such an order is completed below without one.
-  const free = priced.total === 0;
+  const free = payable === 0;
   const { gateway, methods } = free ? { gateway: "MANUAL" as const, methods: [] as Method[] } : activeGateway(priced.currency);
   if (!free && !methods.includes(method)) return NextResponse.json({ error: "method_unavailable" }, { status: 400 });
 
@@ -64,10 +72,19 @@ export async function POST(req: Request) {
       subtotal: priced.subtotal,
       discount: priced.discount,
       total: priced.total,
+      vat,
+      vatRateBp: vat > 0 ? cfg.vatRateBp : 0,
       couponId,
       expiresAt: free ? null : new Date(Date.now() + (gateway === "STRIPE" ? STRIPE_TTL_S * 1000 : PENDING_TTL_MS)),
       items: { create: priced.lines.map((l) => ({ skuId: l.skuId, price: net(l) })) },
     },
+  });
+
+  await logEvent({
+    name: "checkout_started",
+    userId: user.id,
+    courseId: skus.get(priced.lines[0]?.skuId ?? "")?.courseId ?? null,
+    props: { gateway, currency: priced.currency, lines: priced.lines.length, amount: payable },
   });
 
   const origin = process.env.APP_URL || new URL(req.url).origin;
@@ -87,6 +104,7 @@ export async function POST(req: Request) {
       return { name: `${locale === "ar" ? name.titleAr : name.titleEn} (${sku.accessType})`, amountCents: net(l) };
     })
     .filter((i) => i.amountCents > 0);
+  if (vat > 0) items.push({ name: `VAT (${cfg.vatRateBp / 100}%)`, amountCents: vat });
 
   try {
     let checkoutUrl: string;
@@ -109,7 +127,7 @@ export async function POST(req: Request) {
       gatewayOrderId = cs.id;
     } else {
       const intention = await createIntention({
-        amountCents: priced.total,
+        amountCents: payable,
         currency: "EGP",
         method,
         specialReference: order.id,

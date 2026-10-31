@@ -1,6 +1,8 @@
 import { Prisma } from "@/generated/prisma/client";
 import { accessEnd } from "@/lib/access";
+import { logEvent } from "@/lib/analytics";
 import { db } from "@/lib/db";
+import { DEFAULT_FINANCE, splitLine, type FinanceConfig } from "@/lib/finance";
 import { notifyOrderPaid } from "@/lib/notify";
 
 export type PaymentOutcome =
@@ -16,15 +18,26 @@ export type PaymentOutcome =
  * Returns false when the event was already recorded.
  */
 export async function applyPaymentOutcome(orderId: string, eventId: string, outcome: PaymentOutcome, payload: unknown): Promise<boolean> {
-  let granted = false;
   try {
-    await db.$transaction(async (trx) => {
+    // Null unless this call is the one that flipped the order to PAID.
+    const paid = await db.$transaction(async (trx) => {
       await trx.paymentEvent.create({ data: { orderId, gatewayEventId: eventId, payload: payload as Prisma.InputJsonValue } });
-      const order = await trx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: { include: { sku: true } } } });
+      const order = await trx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          items: {
+            include: {
+              sku: { include: { course: { select: { instructorId: true, subjectId: true, gradeId: true } } } },
+            },
+          },
+        },
+      });
 
       switch (outcome.kind) {
         case "paid": {
-          if (outcome.amount !== order.total || outcome.currency.toUpperCase() !== order.currency) {
+          // VAT is charged on top of the net total, so the gateway amount is both.
+          const payable = order.total + order.vat;
+          if (outcome.amount !== payable || outcome.currency.toUpperCase() !== order.currency) {
             throw new Error(`Amount mismatch on order ${order.id}: got ${outcome.amount} ${outcome.currency}`);
           }
           const paidAt = new Date();
@@ -46,29 +59,65 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
                 endsAt: accessEnd(i.sku, paidAt),
               })),
             });
-            granted = true;
+
+            // One immutable money row per line. Rates are read once and copied onto the row.
+            const setting = await trx.platformSetting.findUnique({ where: { id: "singleton" } });
+            const cfg: FinanceConfig = setting
+              ? {
+                  vatEnabled: setting.vatEnabled,
+                  vatRateBp: setting.vatRateBp,
+                  vatTrn: setting.vatTrn,
+                  platformShareBp: setting.platformShareBp,
+                }
+              : { ...DEFAULT_FINANCE };
+            await trx.ledgerEntry.createMany({
+              data: order.items.map((i) => {
+                const split = splitLine(i.price, cfg);
+                return {
+                  kind: "SALE" as const,
+                  orderId: order.id,
+                  orderItemId: i.id,
+                  instructorId: i.sku.course.instructorId,
+                  courseId: i.sku.courseId,
+                  subjectId: i.sku.course.subjectId,
+                  gradeId: i.sku.course.gradeId,
+                  currency: order.currency,
+                  gross: split.gross,
+                  vat: split.vat,
+                  net: split.net,
+                  platformFee: split.platformFee,
+                  instructorNet: split.instructorNet,
+                  vatRateBp: split.vatRateBp,
+                  platformShareBp: split.platformShareBp,
+                };
+              }),
+              skipDuplicates: true,
+            });
+            return { userId: order.userId, amount: payable, currency: order.currency, gateway: order.gateway };
           }
-          break;
+          return null;
         }
         case "pending":
           if (outcome.kioskRef) await trx.order.update({ where: { id: order.id }, data: { kioskRef: outcome.kioskRef } });
-          break;
+          return null;
         case "failed":
         case "expired":
           await trx.order.updateMany({
             where: { id: order.id, status: "PENDING" },
             data: { status: outcome.kind === "failed" ? "FAILED" : "EXPIRED" },
           });
-          break;
+          return null;
       }
+      return null;
     });
     // The receipt is sent after the commit; a mail failure must not undo the payment.
-    if (granted) {
+    if (paid) {
       try {
         await notifyOrderPaid(orderId);
       } catch (e) {
         console.error("[notify] order paid failed", orderId, e);
       }
+      await logEvent({ name: "order_paid", userId: paid.userId, props: { ...paid } });
     }
     return true;
   } catch (e) {

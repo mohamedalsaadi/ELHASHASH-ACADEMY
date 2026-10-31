@@ -24,7 +24,14 @@ export function LiveRow({
     <div className="flex flex-wrap items-center justify-between gap-3">
       <span className="grid min-w-0 gap-0.5">
         <StatusChip tone={tone}>{phaseLabel}</StatusChip>
-        <span className="mt-1 truncate font-medium">{title}</span>
+        <span className="mt-1 flex min-w-0 items-center gap-2 font-medium">
+          {/* The red dot marks every live row; it pulses only while the room is open. */}
+          <span
+            aria-hidden="true"
+            className={`size-2 shrink-0 rounded-full bg-down ${phase === "now" ? "animate-pulse motion-reduce:animate-none" : ""}`}
+          />
+          <span className="truncate">{title}</span>
+        </span>
         <span className="num text-label text-ink-muted">{when}</span>
         {subtitle && <span className="truncate text-label text-ink-muted">{subtitle}</span>}
       </span>

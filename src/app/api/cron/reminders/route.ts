@@ -16,6 +16,11 @@ export async function GET(req: Request) {
   }
   const now = new Date();
 
+  // Housekeeping once an hour: forget behaviour events older than 180 days.
+  if (now.getUTCMinutes() < 10) {
+    await db.analyticsEvent.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 180 * DAY) } } });
+  }
+
   for (const days of [7, 3, 1]) {
     const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days));
     const to = new Date(from.getTime() + DAY);
@@ -37,9 +42,15 @@ export async function GET(req: Request) {
     }
   }
 
-  for (const hours of [24, 1]) {
-    const from = new Date(now.getTime() + (hours - 0.5) * 3_600_000);
-    const to = new Date(now.getTime() + (hours + 0.5) * 3_600_000);
+  // A day before and fifteen minutes before. The 15-minute window is 5–25 minutes out, so a
+  // 10-minute scheduler cannot step over it; an overlapping run is collapsed by the dedupe key.
+  const windows = [
+    { key: "24h", targetMin: 24 * 60, halfMin: 30 },
+    { key: "15m", targetMin: 15, halfMin: 10 },
+  ];
+  for (const w of windows) {
+    const from = new Date(now.getTime() + (w.targetMin - w.halfMin) * 60_000);
+    const to = new Date(now.getTime() + (w.targetMin + w.halfMin) * 60_000);
     const sessions = await db.liveSession.findMany({
       where: { cancelledAt: null, startsAt: { gte: from, lt: to } },
       select: { id: true, courseId: true, titleAr: true, titleEn: true },
@@ -63,14 +74,15 @@ export async function GET(req: Request) {
           bodyAr: s.titleAr,
           bodyEn: s.titleEn,
           href: `/live/${s.id}`,
-          dedupeKey: `live:${s.id}:${userId}:${hours}`,
+          dedupeKey: `live:${s.id}:${userId}:${w.key}`,
         });
       }
     }
   }
 
-  // Weekly parent summary, sent with the Sunday run.
-  if (now.getUTCDay() === 0) {
+  // Weekly parent summary. The hour guard matters when an external scheduler calls this every ten
+  // minutes: without it the block would run ~144 times each Sunday.
+  if (now.getUTCDay() === 0 && now.getUTCHours() === 5) {
     const parents = await db.user.findMany({
       where: { role: "PARENT", parentLinks: { some: {} } },
       select: { id: true, parentLinks: { select: { student: { select: { id: true, name: true } } } } },

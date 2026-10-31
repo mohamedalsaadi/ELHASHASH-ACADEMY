@@ -151,7 +151,7 @@ export default async function TeacherLivePage({
                     <DeleteButton action={cancelLive} label={t("cancel")} confirmText={t("confirmCancel")} />
                   </div>
                 </form>
-                {admin && s.sku && (
+                {s.sku && (
                   <form action={setSeatPrice} className="flex flex-wrap items-end gap-3 border-t border-hairline pt-4">
                     <input type="hidden" name="id" value={s.sku.id} />
                     <label className={label}>

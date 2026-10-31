@@ -4,8 +4,9 @@ import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
-import { earningsByCurrency } from "@/lib/earnings";
+import type { Currency } from "@/lib/pricing-engine";
 import { requireStaff } from "@/lib/staff";
+import { createCourse } from "../admin/actions";
 import { TeacherNav } from "./TeacherNav";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,11 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
   const courses = await db.course.findMany({ where: { instructorId: me.id }, orderBy: { slug: "asc" }, include: { grade: true } });
+  const slots = await db.teacherSlot.findMany({
+    where: { userId: me.id },
+    orderBy: { createdAt: "asc" },
+    select: { gradeId: true, subjectId: true, grade: { select: { nameAr: true, nameEn: true } }, subject: { select: { nameAr: true, nameEn: true } } },
+  });
   const courseIds = courses.map((c) => c.id);
 
   const [subs, sold] = await Promise.all([
@@ -41,13 +47,14 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
         order: { select: { items: { select: { sku: { select: { courseId: true, lessonId: true, liveSessionId: true, accessType: true, accessDays: true } } } } } },
       },
     }),
-    db.orderItem.findMany({
-      where: { sku: { courseId: { in: courseIds } }, order: { status: "PAID", paidAt: { gte: monthStart } } },
-      select: { price: true, order: { select: { subtotal: true, total: true, currency: true } } },
+    db.ledgerEntry.findMany({
+      where: { instructorId: me.id, createdAt: { gte: monthStart } },
+      select: { instructorNet: true, currency: true },
     }),
   ]);
 
-  const earnings = earningsByCurrency(sold);
+  const earnings = new Map<Currency, number>();
+  for (const e of sold) earnings.set(e.currency, (earnings.get(e.currency) ?? 0) + e.instructorNet);
   const students = new Set(subs.map((s) => s.user.id)).size;
   const newThisWeek = new Set(subs.filter((s) => now.getTime() - s.startsAt.getTime() < 7 * DAY).map((s) => s.user.id)).size;
   const perCourse = (id: string) => new Set(subs.filter((s) => s.courseId === id).map((s) => s.user.id)).size;
@@ -84,6 +91,30 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
           </div>
         ))}
       </section>
+
+      {me.role === "INSTRUCTOR" && (
+        <section className="grid gap-3">
+          <h2 className="font-display text-h2 font-semibold">{t("newCourse")}</h2>
+          {slots.length === 0 ? (
+            <p className="text-small text-ink-muted">{t("noSlots")}</p>
+          ) : (
+            <form action={createCourse} className={`${card} flex flex-wrap items-end gap-3`}>
+              <input type="hidden" name="locale" value={locale} />
+              <label className="grid gap-1 text-small">
+                {t("newCourseHint")}
+                <select name="slot" required className="min-w-56 rounded-sm border border-rule bg-surface px-3 py-2">
+                  {slots.map((s) => (
+                    <option key={`${s.gradeId}:${s.subjectId}`} value={`${s.gradeId}:${s.subjectId}`}>
+                      {ar ? s.subject.nameAr : s.subject.nameEn} · {ar ? s.grade.nameAr : s.grade.nameEn}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="btn btn-primary text-small">{t("createCourse")}</button>
+            </form>
+          )}
+        </section>
+      )}
 
       <section className="grid gap-3">
         <h2 className="font-display text-h2 font-semibold">{t("myCourses")}</h2>

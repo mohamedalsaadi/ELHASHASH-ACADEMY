@@ -28,7 +28,8 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
   const current = { startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] };
 
   const [revenue, subscribers, newStudents, rentals, live, kiosk] = await Promise.all([
-    db.order.groupBy({ by: ["currency"], where: { status: "PAID", gateway: { not: "MANUAL" }, paidAt: { gte: monthStart } }, _sum: { total: true }, _count: true }),
+    // SALE and REFUND rows together, so a refund reduces the month it reverses.
+    db.ledgerEntry.groupBy({ by: ["currency"], where: { createdAt: { gte: monthStart } }, _sum: { gross: true, platformFee: true }, _count: true }),
     db.entitlement.findMany({ where: { lessonId: null, liveSessionId: null, ...current }, distinct: ["userId"], select: { userId: true } }),
     db.user.count({ where: { role: "STUDENT", createdAt: { gt: new Date(now.getTime() - 7 * DAY) } } }),
     db.entitlement.count({ where: { lessonId: { not: null }, ...current } }),
@@ -58,8 +59,9 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {revenue.map((r) => (
               <li key={r.currency} className="grid gap-0.5 rounded-md bg-raised px-3 py-2">
-                <span className="num font-display text-h3 font-semibold">{formatMoney(r._sum.total ?? 0, r.currency, locale)}</span>
+                <span className="num font-display text-h3 font-semibold">{formatMoney(r._sum.gross ?? 0, r.currency, locale)}</span>
                 <span className="text-label text-ink-muted">{t("orders", { count: r._count })}</span>
+                <span className="num text-label text-ink-muted">{formatMoney(r._sum.platformFee ?? 0, r.currency, locale)}</span>
               </li>
             ))}
           </ul>

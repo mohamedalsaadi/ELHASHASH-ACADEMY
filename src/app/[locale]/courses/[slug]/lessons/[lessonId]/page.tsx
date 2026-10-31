@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
+import { logEventLater } from "@/lib/analytics";
 import { canAsk, grantsFor, isCourseStaff, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatDate } from "@/lib/format";
@@ -127,6 +128,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
       update: { lastSeenAt: now },
     });
   }
+  void logEventLater({ name: "lesson_opened", userId, courseId: course.id, dedupeScope: lesson.id });
 
   const outlineLessonIds = outline.units.flatMap((u) => u.lessons.map((l) => l.id));
   const [mayAsk, mine, view, completedRows, homework] = await Promise.all([

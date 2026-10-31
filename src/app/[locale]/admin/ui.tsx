@@ -4,11 +4,12 @@ import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 import type { Currency } from "@/lib/pricing-engine";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { formatMoney, toMinor } from "@/lib/format";
 import { planValue } from "@/lib/plans";
-import { addTeacher, changePassword, createCourse, resetPassword } from "./actions";
+import { addTeacher, changePassword, createCourse, inviteTeacher, resetPassword } from "./actions";
 import { field, label } from "./styles";
 
 const button =
@@ -83,6 +84,73 @@ export function TeacherForm() {
       )}
       <div>
         <SaveButton>{t("addTeacher")}</SaveButton>
+      </div>
+    </form>
+  );
+}
+
+export type SlotOption = { value: string; label: string; group: string };
+
+/** Invites a teacher to one or more (grade, subject) slots; the returned link is copyable. */
+export function InviteTeacherForm({ locale, slots }: { locale: string; slots: SlotOption[] }) {
+  const t = useTranslations("admin");
+  const [state, action] = useActionState(inviteTeacher, null);
+  const groups = [...new Set(slots.map((s) => s.group))];
+  return (
+    <form key={state && "ok" in state ? state.link : "form"} action={action} className="grid gap-3">
+      <input type="hidden" name="locale" value={locale} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className={label}>
+          {t("teacherName")}
+          <input name="name" required minLength={2} maxLength={80} className={field} />
+        </label>
+        <label className={label}>
+          {t("inviteEmail")}
+          <input name="email" type="email" dir="ltr" autoComplete="off" className={field} />
+        </label>
+        <label className={label}>
+          {t("invitePhone")}
+          <input name="phone" dir="ltr" inputMode="tel" autoComplete="off" className={field} />
+        </label>
+      </div>
+      <p className="text-small text-ink-muted">{t("inviteContactHint")}</p>
+
+      <fieldset className="grid gap-2 rounded-sm border border-rule p-3">
+        <legend className="px-1 text-label text-ink-muted">{t("inviteSlots")}</legend>
+        <div className="grid max-h-72 gap-3 overflow-y-auto sm:grid-cols-2">
+          {groups.map((g) => (
+            <div key={g} className="grid gap-1">
+              <p className="text-label font-semibold">{g}</p>
+              {slots
+                .filter((s) => s.group === g)
+                .map((s) => (
+                  <label key={s.value} className="flex items-center gap-2 text-small">
+                    <input type="checkbox" name="slot" value={s.value} className="size-4" />
+                    {s.label}
+                  </label>
+                ))}
+            </div>
+          ))}
+        </div>
+      </fieldset>
+
+      {state &&
+        ("ok" in state ? (
+          <div className="grid gap-2">
+            <p role="status" className="text-small text-up">{t("inviteCreated")}</p>
+            <div className="flex items-center gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-sm border border-rule px-2 py-1 text-label" dir="ltr">
+                {state.link}
+              </code>
+              <CopyButton value={state.link} />
+            </div>
+          </div>
+        ) : (
+          <p role="alert" className="text-small text-down">{t(`inviteErrors.${state.error}`)}</p>
+        ))}
+
+      <div>
+        <SaveButton>{t("sendInvite")}</SaveButton>
       </div>
     </form>
   );

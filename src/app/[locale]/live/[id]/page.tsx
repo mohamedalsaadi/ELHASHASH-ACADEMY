@@ -6,6 +6,7 @@ import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { Link } from "@/i18n/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { logEventLater } from "@/lib/analytics";
 import { liveRole } from "@/lib/catalog";
 import { createRoom, meetingToken } from "@/lib/daily";
 import { db } from "@/lib/db";
@@ -122,6 +123,7 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
         update: {},
       });
     }
+    void logEventLater({ name: "live_joined", userId: session.user.id, courseId: s!.courseId, props: { role } });
     try {
       let roomUrl = s!.roomUrl;
       if (!roomUrl) {

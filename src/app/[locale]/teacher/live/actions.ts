@@ -7,9 +7,9 @@ import { wallTime } from "@/lib/admin-input";
 import { deleteRoom } from "@/lib/daily";
 import { db } from "@/lib/db";
 import { courseZone, toMinor } from "@/lib/format";
-import { assertCourse, requireAdmin, requireStaff } from "@/lib/staff";
+import { assertCourse, requireStaff } from "@/lib/staff";
 
-// Teachers schedule sessions in their own courses; the seat price is the owner's, like every other price.
+// Teachers schedule sessions and set the seat price in their own courses.
 
 const fields = {
   titleAr: z.string().trim().min(1).max(200),
@@ -102,11 +102,12 @@ export async function cancelLive(form: FormData) {
 }
 
 export async function setSeatPrice(form: FormData) {
-  await requireAdmin();
+  const me = await requireStaff();
   const d = z
     .object({ id: z.string(), price: z.coerce.number().min(0).max(1_000_000), active: z.literal("on").optional().transform(Boolean) })
     .parse(Object.fromEntries(form));
-  const sku = await db.sku.findFirstOrThrow({ where: { id: d.id, accessType: "LIVE" }, select: { currency: true } });
+  const sku = await db.sku.findFirstOrThrow({ where: { id: d.id, accessType: "LIVE" }, select: { currency: true, courseId: true } });
+  await assertCourse(me, sku.courseId);
   await db.sku.updateMany({
     where: { id: d.id, accessType: "LIVE", liveSession: { cancelledAt: null } },
     data: { price: toMinor(d.price, sku.currency), active: d.active },

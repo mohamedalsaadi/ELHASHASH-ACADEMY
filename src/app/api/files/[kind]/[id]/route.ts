@@ -2,8 +2,9 @@ import { get } from "@vercel/blob";
 import { auth } from "@/auth";
 import { opensAssignment } from "@/lib/assignments";
 import { contentDisposition } from "@/lib/blob";
-import { grantsFor, isCourseStaff } from "@/lib/catalog";
+import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { isCourseStaffDb } from "@/lib/staff";
 
 const notFound = () => new Response(null, { status: 404 });
 
@@ -32,7 +33,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
         assignment: {
           select: {
             courseId: true,
-            course: { select: { instructorId: true } },
             lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } },
           },
         },
@@ -40,7 +40,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
     });
     if (!file) return notFound();
     const { assignment } = file;
-    const staff = isCourseStaff(me, assignment.course);
+    const staff = await isCourseStaffDb(me.id, assignment.courseId);
     const allowed = staff || opensAssignment(assignment, await grantsFor(me.id, assignment.courseId, now), now);
     if (!allowed) return notFound();
     ({ pathname, downloadName, contentType } = file);
@@ -54,14 +54,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
         submission: {
           select: {
             studentId: true,
-            assignment: { select: { courseId: true, course: { select: { instructorId: true } } } },
+            assignment: { select: { courseId: true } },
           },
         },
       },
     });
     if (!file) return notFound();
     const { submission } = file;
-    const staff = isCourseStaff(me, submission.assignment.course);
+    const staff = await isCourseStaffDb(me.id, submission.assignment.courseId);
     // A parent may read their own child's work; nobody else may.
     const linkedParent =
       me.role === "PARENT"

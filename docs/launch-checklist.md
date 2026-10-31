@@ -101,7 +101,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
 
 - [ ] **Vercel Blob store** — create it as **private**, then confirm `BLOB_READ_WRITE_TOKEN` in Production and Preview.
-- [ ] **Reminder schedule.** `vercel.json` runs the cron daily at 05:00; the one-hour live reminder needs an hourly job (Pro or an external scheduler).
+- [ ] **Reminder schedule.** The 15-minute live reminder needs a job that runs every 10 minutes, which Vercel Hobby cannot do. Create a free external scheduler (cron-job.org, GitHub Actions, or similar) calling `GET https://<domain>/api/cron/reminders` every 10 minutes with `Authorization: Bearer <CRON_SECRET>`. Leave `vercel.json` as it is: its daily 05:00 run is harmless and the external calls supply the cadence. The route returns 401 without the secret, and repeated runs inside a window collapse on the notification's dedupe key.
 - [ ] **Renames.** Vercel project, GitHub repo and the local folder can be renamed by the owner; code identifiers were left alone.
 
 ### Product and legal

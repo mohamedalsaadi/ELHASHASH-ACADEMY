@@ -6,9 +6,10 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { teacherStats } from "@/lib/teachers";
-import { disableTeacher } from "../../actions";
+import { addTeacherSlot, disableTeacher, removeTeacherSlot } from "../../actions";
 import { AdminNav, panel, stat } from "../../AdminNav";
-import { DeleteButton, ResetPasswordForm } from "../../ui";
+import { field, label } from "../../styles";
+import { DeleteButton, ResetPasswordForm, SaveButton } from "../../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +27,28 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
 
   const x = await db.user.findUnique({
     where: { id },
-    select: { id: true, name: true, phone: true, email: true, role: true, courses: { orderBy: { slug: "asc" }, select: { id: true, titleAr: true, titleEn: true, published: true } } },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      role: true,
+      courses: { orderBy: { slug: "asc" }, select: { id: true, titleAr: true, titleEn: true, published: true } },
+      teacherSlots: {
+        orderBy: { createdAt: "asc" },
+        select: { id: true, gradeId: true, subjectId: true, grade: { select: { nameAr: true, nameEn: true } }, subject: { select: { nameAr: true, nameEn: true } } },
+      },
+    },
   });
   if (!x || (x.role !== "INSTRUCTOR" && x.role !== "ADMIN")) notFound();
   const s = await teacherStats(x.id);
+
+  const gradeSubjects = await db.gradeSubject.findMany({
+    orderBy: [{ grade: { level: "asc" } }, { order: "asc" }],
+    select: { gradeId: true, subjectId: true, grade: { select: { nameAr: true, nameEn: true } }, subject: { select: { nameAr: true, nameEn: true } } },
+  });
+  const taken = new Set(x.teacherSlots.map((s) => `${s.gradeId}:${s.subjectId}`));
+  const freeSlots = gradeSubjects.filter((g) => !taken.has(`${g.gradeId}:${g.subjectId}`));
 
   return (
     <main className="mx-auto grid max-w-4xl gap-6 px-4 py-12">
@@ -62,6 +81,44 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
           </ul>
         ) : (
           <p className="text-small text-ink-muted">—</p>
+        )}
+      </section>
+
+      <section className={panel}>
+        <h2 className="font-display text-h3 font-semibold">{t("slots")}</h2>
+        <p className="text-small text-ink-muted">{t("slotsHint")}</p>
+        {x.teacherSlots.length ? (
+          <ul className="grid gap-1 text-small">
+            {x.teacherSlots.map((slot) => (
+              <li key={slot.id} className="flex items-center justify-between gap-3">
+                <span>
+                  {ar ? slot.subject.nameAr : slot.subject.nameEn} · {ar ? slot.grade.nameAr : slot.grade.nameEn}
+                </span>
+                <form>
+                  <input type="hidden" name="id" value={slot.id} />
+                  <DeleteButton action={removeTeacherSlot} label={t("removeSlot")} confirmText={t("confirmRemoveSlot")} />
+                </form>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-small text-ink-muted">{t("noSlots")}</p>
+        )}
+        {freeSlots.length > 0 && (
+          <form action={addTeacherSlot} className="flex flex-wrap items-end gap-2">
+            <input type="hidden" name="userId" value={x.id} />
+            <label className={label}>
+              {t("addSlot")}
+              <select name="slot" required className={field}>
+                {freeSlots.map((g) => (
+                  <option key={`${g.gradeId}:${g.subjectId}`} value={`${g.gradeId}:${g.subjectId}`}>
+                    {ar ? g.grade.nameAr : g.grade.nameEn} · {ar ? g.subject.nameAr : g.subject.nameEn}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <SaveButton>{t("addSlot")}</SaveButton>
+          </form>
         )}
       </section>
 

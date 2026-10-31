@@ -1,9 +1,8 @@
 import { auth } from "@/auth";
 import { toDayInput } from "@/lib/admin-input";
+import { csvResponse } from "@/lib/csv";
 import { db } from "@/lib/db";
 import { findSubscribers, isCurrent, type SubscriberFilter } from "@/lib/subscribers";
-
-const cell = (v: unknown) => `"${String(v ?? "").replaceAll('"', '""')}"`;
 
 /** The filtered subscriber list as CSV; the BOM lets Excel read the Arabic as UTF-8. */
 export async function GET(req: Request, { params }: { params: Promise<{ locale: string }> }) {
@@ -32,7 +31,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ locale: 
       ];
     }),
   ];
-  return new Response("﻿" + lines.map((l) => l.map(cell).join(",")).join("\r\n"), {
-    headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="subscribers-${now.toISOString().slice(0, 10)}.csv"` },
-  });
+  return csvResponse(lines, `subscribers-${now.toISOString().slice(0, 10)}.csv`);
 }

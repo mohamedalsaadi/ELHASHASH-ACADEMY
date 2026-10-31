@@ -58,16 +58,17 @@ export async function createNotification(input: NotificationInput) {
 export async function notifyOrderPaid(orderId: string) {
   const order = await db.order.findUnique({
     where: { id: orderId },
-    select: { id: true, userId: true, total: true, currency: true },
+    select: { id: true, userId: true, total: true, vat: true, currency: true },
   });
   if (!order) return;
+  const paid = order.total + order.vat;
   await createNotification({
     userId: order.userId,
     kind: "ORDER_PAID",
     titleAr: "تم استلام دفعتك",
     titleEn: "Payment received",
-    bodyAr: `تم تفعيل وصولك. المبلغ: ${formatMoney(order.total, order.currency, "ar")}. الإيصال جاهز في حسابك.`,
-    bodyEn: `Your access is active. Total: ${formatMoney(order.total, order.currency, "en")}. Your receipt is ready in your account.`,
+    bodyAr: `تم تفعيل وصولك. المبلغ: ${formatMoney(paid, order.currency, "ar")}. الإيصال جاهز في حسابك.`,
+    bodyEn: `Your access is active. Total: ${formatMoney(paid, order.currency, "en")}. Your receipt is ready in your account.`,
     href: `/orders/${order.id}`,
     dedupeKey: `order:${order.id}`,
   });

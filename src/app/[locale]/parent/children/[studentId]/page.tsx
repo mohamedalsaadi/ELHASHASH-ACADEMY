@@ -54,6 +54,22 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
     },
   });
 
+  // Exams the child sat and the live classes they joined, newest first.
+  const [exams, live] = await Promise.all([
+    db.examAttempt.findMany({
+      where: { userId: studentId, status: { in: ["SUBMITTED", "GRADED"] } },
+      orderBy: { submittedAt: "desc" },
+      take: 20,
+      select: { id: true, status: true, marks: true, maxMarks: true, submittedAt: true, paper: { select: { title: true, course: { select: { titleAr: true, titleEn: true } } } } },
+    }),
+    db.liveAttendance.findMany({
+      where: { userId: studentId },
+      orderBy: { joinedAt: "desc" },
+      take: 20,
+      select: { joinedAt: true, liveSession: { select: { id: true, titleAr: true, titleEn: true } } },
+    }),
+  ]);
+
   const scores: Score[] = submissions
     .filter((s) => s.status === "GRADED" && s.score !== null)
     .map((s) => ({ value: s.score!, max: s.assignment.maxScore, unitId: s.assignment.lesson?.unit.id ?? null }));
@@ -77,6 +93,51 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
           {t("strongest")}: {unitNames.get(shape.strongest.unitId)} · {t("weakest")}: {unitNames.get(shape.weakest.unitId)}
         </p>
       )}
+
+      <Block title={t("examsTitle")}>
+        {exams.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("noExams")}</p>
+        ) : (
+          <ul className="grid gap-3">
+            {exams.map((e) => (
+              <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-hairline p-3">
+                <span className="grid">
+                  <span className="font-semibold" dir="auto">{e.paper.title}</span>
+                  <span className="text-label text-ink-muted">
+                    {ar ? e.paper.course.titleAr : e.paper.course.titleEn}
+                    {e.submittedAt && (
+                      <>
+                        {" · "}
+                        <span className="num">{formatDate(e.submittedAt, "Asia/Dubai", locale)}</span>
+                      </>
+                    )}
+                  </span>
+                </span>
+                {e.status === "GRADED" && e.marks !== null ? (
+                  <StatusChip tone="active">{`${e.marks} / ${e.maxMarks} · ${Math.round((e.marks / Math.max(e.maxMarks, 1)) * 100)}%`}</StatusChip>
+                ) : (
+                  <StatusChip tone="neutral">{t("awaitingMark")}</StatusChip>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Block>
+
+      <Block title={t("liveTitle")}>
+        {live.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("noLive")}</p>
+        ) : (
+          <ul className="grid gap-2">
+            {live.map((l) => (
+              <li key={l.liveSession.id} className="flex flex-wrap justify-between gap-2 border-b border-hairline pb-2 last:border-0">
+                <span>{ar ? l.liveSession.titleAr : l.liveSession.titleEn}</span>
+                <span className="num text-small text-ink-muted">{formatDate(l.joinedAt, "Asia/Dubai", locale)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Block>
 
       <Block title={t("title")}>
         {submissions.length === 0 ? (

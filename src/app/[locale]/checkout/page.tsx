@@ -2,6 +2,7 @@ import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { Link } from "@/i18n/navigation";
 import { priceSkus } from "@/lib/checkout";
 import { resolveCoupon } from "@/lib/coupon-resolve";
@@ -14,7 +15,7 @@ type CouponError = "invalid" | "not_started" | "expired" | "used_up" | "used_by_
 
 const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
 const applyButton =
-  "min-h-11 rounded-sm border-strong border-ink px-4 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+  "min-h-11 rounded-sm border border-hairline bg-surface px-4 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/checkout", "checkout", { key: "title", noindex: true });
@@ -79,6 +80,23 @@ export default async function CheckoutPage({
     }
   }
 
+  // A parent pays for a linked child; with no child linked yet there is nobody to give the access to.
+  const children =
+    user.role === "PARENT"
+      ? (await db.parentLink.findMany({ where: { parentId: user.id }, select: { student: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } })).map((l) => l.student)
+      : null;
+  if (children && children.length === 0) {
+    return (
+      <main className="mx-auto grid max-w-xl gap-4 px-4 py-16">
+        <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
+        <p className="text-ink-muted">{t("noChildren")}</p>
+        <Link href="/parent" className="btn btn-primary w-fit">
+          {t("linkChild")}
+        </Link>
+      </main>
+    );
+  }
+
   const { skus } = result;
   const money = (n: number) => formatMoney(n, priced.currency, locale);
   const bundle = priced.discount - priced.couponDiscount;
@@ -91,7 +109,7 @@ export default async function CheckoutPage({
   return (
     <main className="mx-auto grid max-w-xl gap-6 px-4 py-12">
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-      <section className="grid gap-4 rounded-md border border-hairline bg-surface p-4">
+      <section className="card grid gap-4 p-6">
         <ul className="grid gap-2">
           {priced.lines.map((l) => (
             <li key={l.skuId} className="flex justify-between gap-4">
@@ -140,7 +158,7 @@ export default async function CheckoutPage({
           </p>
         )}
       </section>
-      <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} {...activeGateway(priced.currency)} />
+      <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} learners={children ?? undefined} {...activeGateway(priced.currency)} />
       <p className="text-small text-ink-muted">
         {t.rich("agree", {
           terms: (c) => <Link href="/terms" className="text-pen underline">{c}</Link>,

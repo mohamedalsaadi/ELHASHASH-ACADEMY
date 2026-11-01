@@ -16,10 +16,10 @@ export default async function SignUpPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; type?: string }>;
 }) {
   const { locale } = await params;
-  const { next } = await searchParams;
+  const { next, type } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("signup");
   const ar = locale === "ar";
@@ -35,7 +35,7 @@ export default async function SignUpPage({
   return (
     <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-      <SignUpForm groups={groups} locale={locale} next={next ?? ""} />
+      <SignUpForm groups={groups} locale={locale} next={next ?? ""} parent={type === "PARENT"} />
       <p className="text-small text-ink-muted">
         {t("haveAccount")}{" "}
         <Link href={{ pathname: "/signin", query: next ? { next } : {} }} className="text-ink underline underline-offset-4">

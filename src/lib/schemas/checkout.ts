@@ -5,6 +5,8 @@ export const checkoutSchema = z.object({
   method: z.enum(["CARD", "WALLET", "KIOSK", "VALU"]),
   locale: z.enum(["ar", "en"]).default("ar"),
   coupon: z.string().trim().max(40).optional(),
+  /** A parent buying for a linked child. Checked against ParentLink on the server. */
+  forStudentId: z.string().min(1).max(40).optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

@@ -13,3 +13,8 @@ export function schoolYearEnd(now: Date): string {
   const passed = now.getUTCMonth() > 6 || (now.getUTCMonth() === 6 && now.getUTCDate() > 15);
   return `${passed ? y + 1 : y}-07-15`;
 }
+
+/** Who gets the access an order buys: the linked child a parent paid for, otherwise the buyer. */
+export function learnerOf(order: { userId: string; beneficiaryId: string | null }): string {
+  return order.beneficiaryId ?? order.userId;
+}

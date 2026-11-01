@@ -62,7 +62,7 @@ export default async function ResultPage({
   const tone = { PAID: "text-up", PENDING: "text-ink", FAILED: "text-down", EXPIRED: "text-down", REFUNDED: "text-ink-muted" }[order.status];
   const retryPath = order.items.length ? `/checkout?${order.items.map((i) => `sku=${encodeURIComponent(i.skuId)}`).join("&")}` : "/courses";
   const primaryButton =
-    "w-fit rounded-sm border-strong border-ink px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+    "w-fit rounded-sm border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
 
   return (
     <main className="mx-auto grid max-w-xl gap-4 px-4 py-16">

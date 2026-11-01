@@ -110,8 +110,8 @@
       "pay": "Secure card payment",
       "lang": "In Arabic and English"
     },
-    "headline": "Your school year, one clear line",
-    "lede": "Pick your country, grade and subject, and see every course, its teacher, its sessions and its price before you sign up.",
+    "headline": "Your <a>A+</a> starts here.",
+    "lede": "Your country's best teachers in one place. Pick your grade and subject, and see every course, its sessions and price before you enrol.",
     "ctaStart": "Find your course",
     "ctaParent": "I’m a parent",
     "mapLabel": "Course map: one line per country, all meeting at A+",
@@ -128,9 +128,9 @@
       }
     },
     "lines": {
-      "title": "Find your line",
-      "lede": "Each country is a line in its own colour. Dashed lines are under construction and open when their first course is published.",
-      "soon": "Under construction"
+      "title": "Exactly your country's curriculum",
+      "lede": "Choose your country to see its grades, subjects and teachers' courses.",
+      "soon": "Coming soon"
     },
     "how": {
       "title": "How the trip works",
@@ -160,7 +160,34 @@
       "body": "The full price is shown before sign-up, in your country’s currency. Follow your child’s marks from a parent account.",
       "cta": "See courses and prices",
       "faq": "Questions and answers"
-    }
+    },
+    "eyebrow": "Egypt and the Gulf · Grades 1 to 12",
+    "roles": {
+      "title": "Everything students, parents and teachers need.",
+      "student": {
+        "k": "Students",
+        "t": "Your country's teachers, their sessions and prices.",
+        "b": "Watch, practise, review your mistakes and follow your progress day by day.",
+        "cta": "Start learning"
+      },
+      "parent": {
+        "k": "Parents",
+        "t": "Follow your child and pay for them.",
+        "b": "Lessons, homework, exams and attendance, with a weekly report by email.",
+        "cta": "Parent account"
+      },
+      "teacher": {
+        "k": "Teachers",
+        "t": "Your course, your price, your students.",
+        "b": "Publish your courses, set your prices, follow your students and earnings.",
+        "cta": "Teach with us"
+      }
+    },
+    "final": {
+      "title": "Ready for your A+?",
+      "body": "The first unit is free on many courses. Start now."
+    },
+    "statsLabel": "Real numbers from today's catalogue"
   },
   "signin": {
     "title": "Sign in",
@@ -234,7 +261,8 @@
       "coupon_used_by_you": "You have already used that discount code.",
       "coupon_currency": "That discount code can't be used with this currency.",
       "method_unavailable": "That payment method isn’t available right now. Pick another one.",
-      "cap_reached": "Card payments have reached this month's limit. Pay by bank transfer instead, or try again next month."
+      "cap_reached": "Card payments have reached this month's limit. Pay by bank transfer instead, or try again next month.",
+      "child_required": "Choose one of the children linked to your account."
     },
     "couponErrors": {
       "invalid": "That code isn't valid.",
@@ -282,7 +310,10 @@
       "dashboard": "Go to my dashboard",
       "contact": "Contact support"
     },
-    "agree": "By paying you agree to the <terms>terms of use</terms>, the <privacy>privacy policy</privacy> and the <refund>refund policy</refund>. All sales are final. See the <faq>FAQ</faq>."
+    "agree": "By paying you agree to the <terms>terms of use</terms>, the <privacy>privacy policy</privacy> and the <refund>refund policy</refund>. All sales are final. See the <faq>FAQ</faq>.",
+    "forChild": "Who is this course for?",
+    "noChildren": "Link your child's account first, then pay for them here. The course goes straight to their account.",
+    "linkChild": "Link my child"
   },
   "payment": {
     "gateways": {
@@ -773,7 +804,23 @@
     "lastSeen": "Last activity: {date}",
     "never": "No activity recorded",
     "ownCourses": "You run your own courses: pick any grade and subject in your country, then set the sessions, prices, discounts and cover picture yourself, and publish when you're ready.",
-    "navCourses": "My courses"
+    "navCourses": "My courses",
+    "navEarnings": "Earnings",
+    "earningsLede": "Your share of every sale, from the ledger, which never changes. Refunds are taken off in their own month.",
+    "byMonth": "By month",
+    "byCourse": "By course",
+    "month": "Month",
+    "sales": "Sales",
+    "gross": "Paid in total",
+    "yourShare": "Your share",
+    "exportCsv": "Download CSV",
+    "setupTitle": "Set up your page",
+    "setupHint": "Finish these steps so students see your course in full.",
+    "setupPhoto": "Add your photo and a short bio",
+    "setupCourse": "Create your first course",
+    "setupPrice": "Set a price on a course",
+    "setupPublish": "Publish a course",
+    "setupDone": "Done"
   },
   "live": {
     "title": "Live lectures",
@@ -1021,7 +1068,9 @@
     "oldestOpen": "Oldest waiting",
     "hours": "{n} h",
     "days": "{n, plural, one {# day} other {# days}}",
-    "noQuestions": "No questions yet."
+    "noQuestions": "No questions yet.",
+    "pendingTransfers": "Transfers to review",
+    "openRequests": "Open requests"
   },
   "account": {
     "title": "My account",
@@ -1151,7 +1200,11 @@
     "noExpiry": "None",
     "lastPayment": "Last payment",
     "noPayment": "None",
-    "noChildren": "You have not linked a student yet."
+    "noChildren": "You have not linked a student yet.",
+    "navChildren": "My children",
+    "navRequests": "Messages",
+    "navCourses": "Courses",
+    "buyFor": "Buy a course for {name}"
   },
   "homework": {
     "title": "Homework",
@@ -1256,7 +1309,12 @@
     "aiUnavailable": "AI grading is not configured yet.",
     "aiLimited": "Daily AI grading limit reached.",
     "aiOk": "Suggestion received.",
-    "aiNone": "Could not grade it — review by hand."
+    "aiNone": "Could not grade it — review by hand.",
+    "examsTitle": "Exams",
+    "noExams": "No exams taken yet.",
+    "awaitingMark": "Awaiting a mark",
+    "liveTitle": "Live class attendance",
+    "noLive": "No live classes attended yet."
   },
   "practice": {
     "title": "Practice",

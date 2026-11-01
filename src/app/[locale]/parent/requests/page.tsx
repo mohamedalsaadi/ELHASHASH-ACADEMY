@@ -6,6 +6,7 @@ import { ReplyForm } from "@/components/requests/ReplyForm";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { db } from "@/lib/db";
+import { ParentNav } from "../ParentNav";
 import { parentReply } from "@/lib/request-actions";
 import { RequestForm } from "./RequestForm";
 
@@ -58,6 +59,7 @@ export default async function ParentRequestsPage({ params }: { params: Promise<{
 
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
+      <ParentNav current="requests" />
       <PageHeader title={t("requests")} />
 
       <section className="grid gap-3 rounded-md border border-hairline bg-surface p-4">

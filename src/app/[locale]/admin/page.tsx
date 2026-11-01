@@ -27,7 +27,7 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const current = { startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] };
 
-  const [revenue, subscribers, newStudents, rentals, live, kiosk] = await Promise.all([
+  const [revenue, subscribers, newStudents, rentals, live, kiosk, transfers, bankQueue, requests] = await Promise.all([
     // SALE and REFUND rows together, so a refund reduces the month it reverses.
     db.ledgerEntry.groupBy({ by: ["currency"], where: { createdAt: { gte: monthStart } }, _sum: { gross: true, platformFee: true }, _count: true }),
     db.entitlement.findMany({ where: { lessonId: null, liveSessionId: null, ...current }, distinct: ["userId"], select: { userId: true } }),
@@ -40,13 +40,18 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
       include: { course: { include: { grade: { include: { country: true } } } }, _count: { select: { entitlements: true } } },
     }),
     db.order.findMany({ where: { status: "PENDING", method: "KIOSK" }, orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, name: true } } } }),
+    db.order.count({ where: { status: "PENDING", gateway: "MANUAL" } }),
+    db.bankEmail.count({ where: { status: "NEEDS_REVIEW" } }),
+    db.specialRequest.count({ where: { status: "OPEN" } }),
   ]);
 
-  const stats = [
-    { n: subscribers.length, l: t("activeSubscribers") },
+  const stats: { n: number; l: string; alert?: boolean; href?: string }[] = [
+    { n: subscribers.length, l: t("activeSubscribers"), href: "/admin/subscribers" },
     { n: newStudents, l: t("newStudents") },
     { n: rentals, l: t("activeRentals") },
     { n: kiosk.length, l: t("pendingKiosk"), alert: kiosk.length > 0 },
+    { n: transfers + bankQueue, l: t("pendingTransfers"), alert: transfers + bankQueue > 0, href: "/admin/transfers" },
+    { n: requests, l: t("openRequests"), alert: requests > 0, href: "/admin/requests" },
   ];
 
   return (
@@ -70,13 +75,26 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
         )}
       </section>
 
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map((s) => (
-          <li key={s.l} className={`${stat} ${s.alert ? "border-strong border-pen" : ""}`}>
-            <span className={`num font-display text-h2 font-semibold ${s.alert ? "text-pen" : ""}`}>{s.n}</span>
-            <span className="text-label text-ink-muted">{s.l}</span>
-          </li>
-        ))}
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {stats.map((s) => {
+          const body = (
+            <>
+              <span className={`num font-display text-h2 font-semibold ${s.alert ? "text-pen" : ""}`}>{s.n}</span>
+              <span className="text-label text-ink-muted">{s.l}</span>
+            </>
+          );
+          return (
+            <li key={s.l} className={`${stat} ${s.alert ? "ring-2 ring-pen" : ""}`}>
+              {s.href ? (
+                <Link href={s.href} className="grid gap-0.5 hover:text-pen">
+                  {body}
+                </Link>
+              ) : (
+                body
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">

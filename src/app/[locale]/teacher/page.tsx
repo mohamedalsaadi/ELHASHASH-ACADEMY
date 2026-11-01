@@ -11,7 +11,7 @@ import { TeacherNav } from "./TeacherNav";
 
 export const dynamic = "force-dynamic";
 
-const card = "rounded-md border border-hairline bg-surface p-4";
+const card = "card p-5";
 const DAY = 24 * 60 * 60 * 1000;
 
 export function generateMetadata({
@@ -41,11 +41,21 @@ export default async function TeacherPage({
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
   );
 
-  const courses = await db.course.findMany({
-    where: { instructorId: me.id },
-    orderBy: { slug: "asc" },
-    include: { grade: true },
-  });
+  const [courses, profile] = await Promise.all([
+    db.course.findMany({
+      where: { instructorId: me.id },
+      orderBy: { slug: "asc" },
+      include: { grade: true, _count: { select: { skus: { where: { active: true, price: { gt: 0 } } } } } },
+    }),
+    db.user.findUnique({ where: { id: me.id }, select: { photoUrl: true, bioAr: true, bioEn: true } }),
+  ]);
+  // The first-run checklist, computed from what is stored; it disappears once every step is done.
+  const setup = [
+    { key: "setupPhoto", done: Boolean(profile?.photoUrl && (profile.bioAr || profile.bioEn)), href: "/teacher/profile" },
+    { key: "setupCourse", done: courses.length > 0, href: "/teacher#new-course" },
+    { key: "setupPrice", done: courses.some((c) => c._count.skus > 0), href: courses[0] ? `/admin/courses/${courses[0].id}` : "/teacher#new-course" },
+    { key: "setupPublish", done: courses.some((c) => c.published), href: courses[0] ? `/admin/courses/${courses[0].id}` : "/teacher#new-course" },
+  ] as const;
   // Every grade of the teacher's country, each with the subjects it teaches: the teacher picks any pair.
   const countryIds = await teacherCountryIds(me.id);
   const grades = await db.grade.findMany({
@@ -185,8 +195,36 @@ export default async function TeacherPage({
         ))}
       </section>
 
+      {me.role === "INSTRUCTOR" && setup.some((s) => !s.done) && (
+        <section className="card grid gap-4 p-6">
+          <div className="grid gap-1">
+            <h2 className="font-display text-h2 font-semibold">{t("setupTitle")}</h2>
+            <p className="text-small text-ink-muted">{t("setupHint")}</p>
+          </div>
+          <ol className="grid gap-2 sm:grid-cols-2">
+            {setup.map((s, i) => (
+              <li key={s.key}>
+                <Link
+                  href={s.href}
+                  className={`flex min-h-11 items-center gap-3 rounded-md border p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) ${s.done ? "border-hairline text-ink-muted" : "border-primary/30 bg-primary/5 hover:bg-primary/10"}`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`grid size-7 shrink-0 place-items-center rounded-full text-label font-semibold ${s.done ? "bg-up text-on-primary" : "bg-primary text-on-primary"}`}
+                  >
+                    {s.done ? "✓" : i + 1}
+                  </span>
+                  <span className={s.done ? "line-through" : "font-medium"}>{t(s.key)}</span>
+                  {s.done && <span className="sr-only">{t("setupDone")}</span>}
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
       {me.role === "INSTRUCTOR" && (
-        <section className="grid gap-3">
+        <section id="new-course" className="grid scroll-mt-24 gap-3">
           <h2 className="font-display text-h2 font-semibold">
             {t("newCourse")}
           </h2>

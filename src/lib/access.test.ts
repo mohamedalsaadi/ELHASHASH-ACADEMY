@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accessEnd, schoolYearEnd } from "./access";
+import { accessEnd, learnerOf, schoolYearEnd } from "./access";
 
 const paidAt = new Date("2026-10-24T10:00:00Z");
 
@@ -22,5 +22,14 @@ describe("schoolYearEnd", () => {
     expect(schoolYearEnd(new Date("2027-03-01T00:00:00Z"))).toBe("2027-07-15");
     expect(schoolYearEnd(new Date("2027-07-15T12:00:00Z"))).toBe("2027-07-15");
     expect(schoolYearEnd(new Date("2027-07-16T00:00:00Z"))).toBe("2028-07-15");
+  });
+});
+
+describe("learnerOf", () => {
+  it("grants the buyer by default", () => {
+    expect(learnerOf({ userId: "student", beneficiaryId: null })).toBe("student");
+  });
+  it("grants the child when a parent pays", () => {
+    expect(learnerOf({ userId: "parent", beneficiaryId: "child" })).toBe("child");
   });
 });

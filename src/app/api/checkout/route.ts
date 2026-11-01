@@ -25,7 +25,21 @@ export async function POST(req: Request) {
 
   const parsed = checkoutSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
-  const { skuIds, method, locale, coupon } = parsed.data;
+  const { skuIds, method, locale, coupon, forStudentId } = parsed.data;
+
+  // A parent learns nothing themselves: they buy for a child they have linked, and only for one.
+  let beneficiaryId: string | null = null;
+  if (session.user.role === "PARENT") {
+    if (!forStudentId) return NextResponse.json({ error: "child_required" }, { status: 400 });
+    const link = await db.parentLink.findUnique({
+      where: { parentId_studentId: { parentId: session.user.id, studentId: forStudentId } },
+      select: { id: true },
+    });
+    if (!link) return NextResponse.json({ error: "child_required" }, { status: 400 });
+    beneficiaryId = forStudentId;
+  } else if (forStudentId) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
 
   let result;
   try {
@@ -71,6 +85,7 @@ export async function POST(req: Request) {
   const order = await db.order.create({
     data: {
       userId: user.id,
+      beneficiaryId,
       gateway,
       method: free ? null : method,
       currency: priced.currency,

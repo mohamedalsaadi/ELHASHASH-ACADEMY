@@ -23,11 +23,11 @@ function Submit({ disabled }: { disabled?: boolean }) {
   );
 }
 
-export function SignUpForm({ groups, locale, next }: { groups: { label: string; grades: { id: string; name: string }[] }[]; locale: string; next: string }) {
+export function SignUpForm({ groups, locale, next, parent }: { groups: { label: string; grades: { id: string; name: string }[] }[]; locale: string; next: string; parent?: boolean }) {
   const t = useTranslations("signup");
   const [state, action] = useActionState(signUp, null);
   const v = state?.values;
-  const [type, setType] = useState<"STUDENT" | "PARENT">(v?.type === "PARENT" ? "PARENT" : "STUDENT");
+  const [type, setType] = useState<"STUDENT" | "PARENT">((v ? v.type === "PARENT" : parent) ? "PARENT" : "STUDENT");
   const hasGrades = groups.some((group) => group.grades.length > 0);
   return (
     // React resets the form after each submit; the key remounts it with what the student typed.

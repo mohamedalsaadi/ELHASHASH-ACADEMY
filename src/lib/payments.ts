@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-import { accessEnd } from "@/lib/access";
+import { accessEnd, learnerOf } from "@/lib/access";
 import { logEvent } from "@/lib/analytics";
 import { db } from "@/lib/db";
 import { DEFAULT_FINANCE, splitLine, type FinanceConfig } from "@/lib/finance";
@@ -48,7 +48,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
           if (count === 1) {
             await trx.entitlement.createMany({
               data: order.items.map((i) => ({
-                userId: order.userId,
+                userId: learnerOf(order),
                 courseId: i.sku.courseId,
                 lessonId: i.sku.lessonId,
                 liveSessionId: i.sku.liveSessionId,

@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
+import { ParentNav } from "./ParentNav";
 import { courseZone, formatMoney } from "@/lib/format";
 import { average } from "@/lib/grades";
 import { unlinkParent } from "../account/actions";
@@ -69,7 +70,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
         db.lessonView.count({ where: { userId: link.student.id, completedAt: { gte: weekStart } } }),
         db.liveAttendance.count({ where: { userId: link.student.id, joinedAt: { gte: monthStart } } }),
         db.order.findFirst({
-          where: { userId: link.student.id, status: "PAID" },
+          where: { OR: [{ userId: link.student.id }, { beneficiaryId: link.student.id }], status: "PAID" },
           orderBy: { paidAt: "desc" },
           select: { total: true, currency: true, paidAt: true },
         }),
@@ -102,6 +103,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
 
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
+      <ParentNav current="children" />
       <div className="grid gap-2">
         <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
         <p className={small}>{t("lede")}</p>
@@ -154,6 +156,10 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
                 </Link>
                 <Link href="/parent/requests" className="text-pen underline underline-offset-4">
                   {th("requests")}
+                </Link>
+                {/* Checkout asks which linked child the course is for. */}
+                <Link href="/courses" className="text-pen underline underline-offset-4">
+                  {t("buyFor", { name: link.student.name })}
                 </Link>
               </div>
             </li>

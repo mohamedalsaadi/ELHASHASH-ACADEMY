@@ -13,6 +13,7 @@ const TABS = [
   ["live", "/admin/live"],
   ["questions", "/admin/questions"],
   ["requests", "/admin/requests"],
+  ["support", "/admin/support"],
   ["marketing", "/admin/marketing"],
   ["analytics", "/admin/analytics"],
   ["settings", "/admin/settings"],

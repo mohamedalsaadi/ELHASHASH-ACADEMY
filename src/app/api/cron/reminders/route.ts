@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { average } from "@/lib/grades";
-import { createNotification } from "@/lib/notify";
+import { formatMoney } from "@/lib/format";
+import { createNotification, notifyAdmins } from "@/lib/notify";
+import { writeWeeklyNote } from "@/lib/parent-report";
 
 const DAY = 86_400_000;
 
@@ -93,18 +95,37 @@ export async function GET(req: Request) {
       const ar: string[] = [];
       const en: string[] = [];
       for (const link of p.parentLinks) {
-        const [done, attended, graded, progress] = await Promise.all([
+        const [done, attended, graded, progress, exams] = await Promise.all([
           db.lessonView.count({ where: { userId: link.student.id, completedAt: { gte: weekStart } } }),
           db.liveAttendance.count({ where: { userId: link.student.id, joinedAt: { gte: weekStart } } }),
           db.submission.findMany({
             where: { studentId: link.student.id, status: "GRADED", score: { not: null } },
-            select: { score: true, assignment: { select: { maxScore: true } } },
+            orderBy: { gradedAt: "desc" },
+            select: { score: true, feedback: true, gradedAt: true, assignment: { select: { maxScore: true } } },
             take: 200,
           }),
           db.studentProgress.findUnique({ where: { userId: link.student.id }, select: { xp: true, currentStreak: true } }),
+          db.examAttempt.count({ where: { userId: link.student.id, submittedAt: { gte: weekStart } } }),
         ]);
         const avg = average(graded.filter((g) => g.score !== null).map((g) => ({ value: g.score!, max: g.assignment.maxScore })));
         const streak = progress?.currentStreak ?? 0;
+        // The name stays here; the model only sees numbers and the teacher's words.
+        const note = await writeWeeklyNote({
+          lessonsCompleted: done,
+          liveAttended: attended,
+          homeworkAverage: avg?.avg ?? null,
+          streakDays: streak,
+          examsSubmitted: exams,
+          feedback: graded
+            .filter((g) => g.feedback && g.gradedAt && g.gradedAt >= weekStart)
+            .slice(0, 3)
+            .map((g) => g.feedback!.slice(0, 500)),
+        }).catch(() => null);
+        if (note) {
+          ar.push(`${link.student.name}: ${note.ar}`);
+          en.push(`${link.student.name}: ${note.en}`);
+          continue;
+        }
         ar.push(
           `${link.student.name}: ${done} حصة مكتملة، ${attended} حصة مباشرة، ${avg ? `متوسط الواجبات ${avg.avg}%` : "لا درجات واجبات بعد"}، ${streak} يوم متتالي`,
         );
@@ -125,5 +146,34 @@ export async function GET(req: Request) {
     }
   }
 
+  if (now.getUTCHours() === 5) await ownerBriefing(now);
+
   return NextResponse.json({ ok: true });
+}
+
+/** The owner's morning list: what came in and what is waiting. Plain numbers from the database. */
+async function ownerBriefing(now: Date) {
+  const since = new Date(now.getTime() - DAY);
+  const stale = new Date(now.getTime() - 2 * DAY);
+  const [revenue, signups, transfers, bankQueue, requests, tickets, homework, questions] = await Promise.all([
+    db.ledgerEntry.groupBy({ by: ["currency"], where: { createdAt: { gte: since } }, _sum: { gross: true } }),
+    db.user.count({ where: { role: { in: ["STUDENT", "PARENT"] }, createdAt: { gte: since } } }),
+    db.order.count({ where: { status: "PENDING", gateway: "MANUAL" } }),
+    db.bankEmail.count({ where: { status: "NEEDS_REVIEW" } }),
+    db.specialRequest.count({ where: { status: "OPEN" } }),
+    db.supportTicket.count({ where: { status: "OPEN" } }),
+    db.submission.count({ where: { status: "SUBMITTED", submittedAt: { lt: stale } } }),
+    db.question.count({ where: { answer: null, createdAt: { lt: stale } } }),
+  ]);
+  const money = (l: "ar" | "en") =>
+    revenue.length ? revenue.map((r) => formatMoney(r._sum.gross ?? 0, r.currency, l)).join("، ") : "0";
+  await notifyAdmins({
+    kind: "SYSTEM",
+    titleAr: "ملخص الصباح",
+    titleEn: "Morning briefing",
+    bodyAr: `آخر 24 ساعة: مبيعات ${money("ar")}، ${signups} حساب جديد. بانتظارك: ${transfers + bankQueue} تحويل، ${requests} طلب، ${tickets} رسالة دعم. متأخر أكثر من يومين: ${homework} واجب بدون تصحيح، ${questions} سؤال بدون رد.`,
+    bodyEn: `Last 24 hours: sales ${money("en")}, ${signups} new accounts. Waiting for you: ${transfers + bankQueue} transfers, ${requests} requests, ${tickets} support messages. Over two days old: ${homework} homework ungraded, ${questions} questions unanswered.`,
+    href: "/admin",
+    dedupeKey: `brief:${now.toISOString().slice(0, 10)}`,
+  });
 }

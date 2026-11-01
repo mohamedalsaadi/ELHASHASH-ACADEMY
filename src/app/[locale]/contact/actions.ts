@@ -1,10 +1,14 @@
 "use server";
 
+import { after } from "next/server";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { esc, emailLayout, sendMail } from "@/lib/mail";
+import { db } from "@/lib/db";
+import { emailLayout, sendMail } from "@/lib/mail";
+import { notifyAdmins } from "@/lib/notify";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { CONTACT_EMAIL } from "@/lib/site";
+import { draftTicket } from "@/lib/support";
 
 export async function sendSupportMessage(_: unknown, form: FormData): Promise<"ok" | "invalid" | "limited" | "unavailable"> {
   // A bot fills the hidden field; answer as if it worked so it does not retry.
@@ -26,6 +30,24 @@ export async function sendSupportMessage(_: unknown, form: FormData): Promise<"o
   if (await isLimited(key, 5, 3_600_000)) return "limited";
   await recordAttempt(key);
 
+  // Kept so the owner answers from the back office with an AI draft; the email below is the fallback copy.
+  const ticket = await db.supportTicket
+    .create({ data: { name: d.data.name, email: d.data.email, phone: d.data.phone || null, topic: d.data.topic, message: d.data.message } })
+    .catch(() => null);
+  if (ticket) {
+    after(async () => {
+      await draftTicket(ticket.id);
+      await notifyAdmins({
+        kind: "SYSTEM",
+        titleAr: `رسالة دعم جديدة: ${d.data.name}`,
+        titleEn: `New support message: ${d.data.name}`,
+        href: "/admin/support",
+        dedupeKey: `ticket:${ticket.id}`,
+        email: false,
+      });
+    });
+  }
+
   const subject = `[Support: ${d.data.topic}] ${d.data.name}`;
   const lines = [
     `Name: ${d.data.name}`,
@@ -35,5 +57,5 @@ export async function sendSupportMessage(_: unknown, form: FormData): Promise<"o
     d.data.message,
   ];
   const sent = await sendMail({ to: CONTACT_EMAIL, subject, html: emailLayout(subject, lines, undefined, "en"), replyTo: d.data.email });
-  return sent ? "ok" : "unavailable";
+  return sent || ticket ? "ok" : "unavailable";
 }

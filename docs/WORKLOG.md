@@ -23,6 +23,32 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-02: AI operations, phase 1 (solo owner, no staff)
+
+- Plan: `C:\Users\sw-os\.claude\plans\rebrand-to-a-magical-meteor.md` (owner, teacher, student and parent AI
+  steps; recommended stack; phases 2–3 still open).
+- `src/lib/ai.ts` `askJson()` is now the only Gemini call (plain fetch plus zod). `AI_MODEL` env overrides the
+  model, and `AI_ENABLED=0` turns every AI feature off. `ai-grading.ts` and `bank-email.ts` use it.
+- **Bank transfers:** an alert that lands in NEEDS_REVIEW now notifies every ADMIN (`notifyAdmins` in
+  `notify.ts`). Before this, nobody was told about the queue.
+- **Support inbox:** contact-form messages are stored as `SupportTicket`. Gemini drafts a reply grounded in the
+  policy text in `src/lib/support.ts`. The owner edits and sends it at `/admin/support`; nothing is sent
+  automatically. There is a new tile on the admin home. The email copy to `CONTACT_EMAIL` still goes out.
+  **Keep `POLICY` in `support.ts` in step with the FAQ and policy pages.**
+- **Homework:** the AI mark suggestion now runs once on submit (`after()`, capped at 300 a day per course). The
+  teacher button still works. A resubmission clears the old AI mark.
+- **Cron (daily 05:00 UTC):** a morning briefing to admins with the last 24 h of sales and signups, plus what is
+  waiting and what is overdue. The Sunday parent summary is now an AI-written note per child, from numbers and
+  teacher feedback only; the model never sees the child's name. It falls back to the fixed sentence.
+- FAQ: dropped the stale "Unit 1 is free" entry (both languages).
+- **Open:**
+  - Migration `20261105120000_support_tickets` is **not applied yet**. Until it is, `/admin`, `/admin/support`
+    and the briefing fail on the missing table. Run `npx prisma migrate deploy` before deploying.
+  - Live-session reminders use windows of an hour or less on a daily cron, so most never fire. This needs an
+    hourly scheduler (Vercel Pro or an external one).
+  - The generic `AiRun` log and `/admin/ai` queue were left out. Add them when there is a second kind of AI
+    draft to approve.
+
 ## 2026-11-02: New home planet and dawn intro
 
 - The constellation is replaced by a planet (`src/components/three/Planet.tsx`, scene in `planet-scene.ts`):

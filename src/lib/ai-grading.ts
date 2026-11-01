@@ -1,14 +1,10 @@
-// AI-assisted marking on Gemini Flash: well under a fils per submission, one call per submission, only
-// when a teacher asks, capped per teacher per day. The model never decides a grade on its own — its
-// suggestion sits beside the teacher's box and the teacher confirms or overrides.
+// AI-assisted marking on Gemini Flash: well under a fils per submission. It runs once when the student
+// hands in, and again when a teacher asks. The model never decides a grade on its own — its suggestion
+// sits beside the teacher's box and the teacher confirms or overrides.
 import { get } from "@vercel/blob";
 import { z } from "zod";
-
-/**
- * One constant to change if handwriting ever needs a stronger reader. 2.5 Flash is closed to new
- * Google API keys, so this tracks the current Flash generation.
- */
-export const AI_MODEL = "gemini-3.6-flash";
+import { askJson, type AiPart } from "./ai";
+import { db } from "./db";
 
 const MAX_FILES = 3;
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -37,9 +33,7 @@ const SYSTEM = [
   'Reply with JSON only: {"score": number|null, "confidence": "high"|"medium"|"low", "rationale": string, "needsReview": boolean}',
 ].join(" ");
 
-type Part = { text: string } | { inlineData: { mimeType: string; data: string } };
-
-async function readPart(pathname: string): Promise<Part | null> {
+async function readPart(pathname: string): Promise<AiPart | null> {
   const blob = await get(pathname, { access: "private" });
   if (!blob || blob.statusCode !== 200) return null;
   const buffer = Buffer.from(await new Response(blob.stream).arrayBuffer());
@@ -56,11 +50,9 @@ export async function gradeWithAi(input: {
   text: string | null;
   files: { pathname: string; contentType: string }[];
 }): Promise<AiGrade | null> {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
   if (!input.text?.trim() && input.files.length === 0) return null;
 
-  const parts: Part[] = [];
+  const parts: AiPart[] = [];
   for (const file of input.files.slice(0, MAX_FILES)) {
     const part = await readPart(file.pathname);
     if (part) parts.push(part);
@@ -69,59 +61,47 @@ export async function gradeWithAi(input: {
   if (parts.length === 0) return null;
   parts.push({ text: `Maximum score: ${input.maxScore}. Mark it now.` });
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: `${SYSTEM}\n\nAssignment: ${input.title}\n${input.instructions ?? ""}`.trim() }] },
-        contents: [{ role: "user", parts }],
-        // 3.x models reason before answering, and those tokens count against the budget.
-        generationConfig: { temperature: 0, maxOutputTokens: 2048, responseMimeType: "application/json" },
-      }),
-    },
-  );
-  if (!response.ok) return null;
+  const result = await askJson({
+    system: `${SYSTEM}\n\nAssignment: ${input.title}\n${input.instructions ?? ""}`.trim(),
+    parts,
+    schema: Reply,
+  });
+  if (!result) return null;
+  const { usage, model } = result;
+  if (!result.data) return { score: null, confidence: "low", rationale: "", needsReview: true, usage, model };
 
-  const data = (await response.json()) as {
-    candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
-    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
-  };
-
-  const usage = { input: data.usageMetadata?.promptTokenCount ?? 0, output: data.usageMetadata?.candidatesTokenCount ?? 0 };
-  // Thinking parts carry the model's reasoning; only the answer part is JSON.
-  const text = (data.candidates?.[0]?.content?.parts ?? [])
-    .filter((p) => p.thought !== true)
-    .map((p) => p.text ?? "")
-    .join("");
-  if (!text) return { score: null, confidence: "low", rationale: "", needsReview: true, usage, model: AI_MODEL };
-
-  let parsedJson: unknown = null;
-  try {
-    parsedJson = JSON.parse(text);
-  } catch {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      try {
-        parsedJson = JSON.parse(text.slice(start, end + 1));
-      } catch {
-        parsedJson = null;
-      }
-    }
-  }
-
-  const parsed = Reply.safeParse(parsedJson);
-  if (!parsed.success) return { score: null, confidence: "low", rationale: "", needsReview: true, usage, model: AI_MODEL };
-
-  const { score, confidence, rationale, needsReview } = parsed.data;
+  const { score, confidence, rationale, needsReview } = result.data;
   return {
     score: score === null ? null : Math.max(0, Math.min(input.maxScore, Math.round(score))),
     confidence,
     rationale: rationale.trim(),
     needsReview,
     usage,
-    model: AI_MODEL,
+    model,
   };
+}
+
+/** Marks one stored submission and writes the suggestion beside it. False when AI gave nothing. */
+export async function suggestGrade(submissionId: string): Promise<boolean> {
+  const submission = await db.submission.findUnique({
+    where: { id: submissionId },
+    select: {
+      text: true,
+      revision: true,
+      files: { select: { pathname: true, contentType: true } },
+      assignment: { select: { title: true, instructions: true, maxScore: true } },
+    },
+  });
+  if (!submission) return false;
+  const result = await gradeWithAi({ ...submission.assignment, text: submission.text, files: submission.files });
+  if (!result) return false;
+  // Only the revision that was marked: a resubmission while this ran must not inherit the old mark.
+  await db.submission.updateMany({
+    where: { id: submissionId, revision: submission.revision },
+    data: {
+      aiScore: result.score,
+      aiFeedback: [result.rationale, `confidence: ${result.confidence}`].filter(Boolean).join("\n").slice(0, 4000),
+    },
+  });
+  return true;
 }

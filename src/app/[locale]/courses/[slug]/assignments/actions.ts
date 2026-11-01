@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { suggestGrade } from "@/lib/ai-grading";
 import { opensAssignment } from "@/lib/assignments";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, submissionPrefix } from "@/lib/blob";
 import { grantsFor } from "@/lib/catalog";
@@ -70,6 +72,7 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
     select: { id: true, status: true, revision: true },
   });
 
+  let submissionId: string;
   if (existing) {
     // Returning the work is the instructor asking for a redo, so it always reopens once. The switch only
     // covers the other case: resubmitting after a grade the teacher did not ask to see again.
@@ -88,18 +91,28 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
           feedback: null,
           gradedAt: null,
           gradedById: null,
+          aiScore: null,
+          aiFeedback: null,
         },
       }),
     ]);
     await saveFiles(existing.id, assignment.id, studentId, files);
+    submissionId = existing.id;
   } else {
     const created = await db.submission.create({
       data: { assignmentId: assignment.id, studentId, text, submittedAt: now, status: "SUBMITTED" },
     });
     await saveFiles(created.id, assignment.id, studentId, files);
+    submissionId = created.id;
   }
 
   await recordAttempt(`submit:${studentId}`);
+  // A first mark is waiting when the teacher opens it. Capped per course so one class cannot run up the bill.
+  after(async () => {
+    const key = `ai-auto:${assignment.courseId}`;
+    if (await isLimited(key, 300, 86_400_000)) return;
+    if (await suggestGrade(submissionId).catch(() => false)) await recordAttempt(key);
+  });
   await db.notification
     .create({
       data: {

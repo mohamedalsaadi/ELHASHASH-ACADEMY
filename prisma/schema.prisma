@@ -1242,3 +1242,22 @@ model BankEmail {
   @@index([status, createdAt])
   @@index([orderId])
 }
+
+/// A message from the contact form. The AI drafts `aiDraft`; the owner edits it and sends `reply`.
+model SupportTicket {
+  id          String        @id @default(cuid())
+  name        String        @db.VarChar(80)
+  email       String
+  phone       String?       @db.VarChar(30)
+  topic       String        @db.VarChar(20)
+  message     String        @db.VarChar(2000)
+  status      RequestStatus @default(OPEN)
+  aiDraft     String?       @db.VarChar(4000)
+  reply       String?       @db.VarChar(4000)
+  repliedById String?
+  repliedAt   DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}

@@ -11,6 +11,7 @@ import {
   type MatchOrder,
 } from "@/lib/bank-email";
 import { db } from "@/lib/db";
+import { notifyAdmins } from "@/lib/notify";
 import { applyPaymentOutcome } from "@/lib/payments";
 
 export type InboundEmail = {
@@ -111,6 +112,16 @@ export async function receiveBankEmail(input: InboundEmail) {
         create: { ...base, ...parsedFields, status, reason: result.reason },
         update: { ...parsedFields, status, reason: result.reason },
       });
+      // The queue is only useful if someone looks at it; a failed notice must not fail the webhook.
+      await notifyAdmins({
+        kind: "SYSTEM",
+        titleAr: "تحويل بنكي ينتظر المراجعة",
+        titleEn: "A bank transfer needs review",
+        bodyAr: parsed?.senderName ?? undefined,
+        bodyEn: parsed?.senderName ?? undefined,
+        href: "/admin/transfers",
+        dedupeKey: `bank-review:${input.messageId}`,
+      }).catch(() => null);
       return { status, reason: result.reason };
     }
 

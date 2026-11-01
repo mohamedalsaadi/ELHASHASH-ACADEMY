@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, homeworkPrefix } from "@/lib/blob";
-import { gradeWithAi as requestAiGrade } from "@/lib/ai-grading";
+import { suggestGrade } from "@/lib/ai-grading";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -244,34 +244,14 @@ export async function gradeWithAi(_prev: AiError, form: FormData): Promise<AiErr
 
   const submission = await db.submission.findUnique({
     where: { id: parsed.data.id },
-    select: {
-      id: true,
-      text: true,
-      files: { select: { pathname: true, contentType: true } },
-      assignment: { select: { courseId: true, title: true, instructions: true, maxScore: true } },
-    },
+    select: { id: true, assignment: { select: { courseId: true } } },
   });
   if (!submission) return "invalid";
   await assertCourse(me, submission.assignment.courseId);
   if (await isLimited(`ai-grade:${me.id}`, 100, 86_400_000)) return "limited";
 
-  const result = await requestAiGrade({
-    title: submission.assignment.title,
-    instructions: submission.assignment.instructions,
-    maxScore: submission.assignment.maxScore,
-    text: submission.text,
-    files: submission.files,
-  });
-  if (!result) return "unavailable";
-
+  if (!(await suggestGrade(submission.id))) return "unavailable";
   await recordAttempt(`ai-grade:${me.id}`);
-  await db.submission.update({
-    where: { id: submission.id },
-    data: {
-      aiScore: result.score,
-      aiFeedback: [result.rationale, `confidence: ${result.confidence}`].filter(Boolean).join("\n").slice(0, 4000),
-    },
-  });
 
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
   return "ok";

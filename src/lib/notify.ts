@@ -96,3 +96,9 @@ export async function notifyAnswer(questionId: string) {
     dedupeKey: `answer:${q.id}`,
   });
 }
+
+/** Tells every owner account; `dedupeKey` gets the admin id appended so each admin is told once. */
+export async function notifyAdmins(input: Omit<NotificationInput, "userId" | "dedupeKey"> & { dedupeKey: string }) {
+  const admins = await db.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  for (const a of admins) await createNotification({ ...input, userId: a.id, dedupeKey: `${input.dedupeKey}:${a.id}` });
+}

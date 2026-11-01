@@ -18,10 +18,6 @@ const ar: Section[] = [
     ),
   },
   {
-    h: "هل توجد حصة مجانية؟",
-    body: <p>الوحدة الأولى من كل مادة مجانية، ويمكنك تجربتها قبل الاشتراك.</p>,
-  },
-  {
     h: "هل يمكنني المشاهدة على أكثر من جهاز؟",
     body: <p>الحساب يعمل على جهاز واحد في نفس الوقت. فتح الحساب على جهاز جديد يوقف التشغيل على الجهاز السابق.</p>,
   },
@@ -87,10 +83,6 @@ const en: Section[] = [
         number of days. Access lasts until the end date shown at purchase.
       </p>
     ),
-  },
-  {
-    h: "Is there a free lesson?",
-    body: <p>Unit 1 of every subject is free, so you can try before subscribing.</p>,
   },
   {
     h: "Can I watch on more than one device?",

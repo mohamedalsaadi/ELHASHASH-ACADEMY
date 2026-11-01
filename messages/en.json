@@ -899,6 +899,7 @@
       "questions": "Questions",
       "marketing": "Marketing",
       "requests": "Requests",
+      "support": "Support",
       "analytics": "Behaviour",
       "settings": "Settings"
     },
@@ -1061,7 +1062,28 @@
     "days": "{n, plural, one {# day} other {# days}}",
     "noQuestions": "No questions yet.",
     "pendingTransfers": "Transfers to review",
-    "openRequests": "Open requests"
+    "openRequests": "Open requests",
+    "openTickets": "Open support messages",
+    "support": {
+      "hint": "Messages from the contact form. The AI writes a first draft; read it, edit it and send. Nothing is sent without you.",
+      "empty": "No support messages yet.",
+      "draft": "AI draft (edit before sending)",
+      "write": "Your reply",
+      "send": "Send reply",
+      "sent": "Sent reply",
+      "close": "Close without replying",
+      "topic": {
+        "general": "General",
+        "billing": "Billing",
+        "technical": "Technical",
+        "privacy": "Privacy"
+      },
+      "status": {
+        "OPEN": "Open",
+        "ANSWERED": "Answered",
+        "CLOSED": "Closed"
+      }
+    }
   },
   "account": {
     "title": "My account",

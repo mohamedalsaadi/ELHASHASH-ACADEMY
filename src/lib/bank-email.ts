@@ -4,7 +4,7 @@
 // else queues for the owner.
 
 import { z } from "zod";
-import { AI_MODEL } from "./ai-grading";
+import { askJson } from "./ai";
 import { minorPerUnit } from "./format";
 import type { Currency } from "./pricing-engine";
 
@@ -167,47 +167,13 @@ const SYSTEM = [
 
 /** Reads the alert body with Gemini. Returns null when unconfigured or unusable. */
 export async function parseBankEmailWithAi(subject: string | null, body: string): Promise<ParsedBankEmail | null> {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key || !body.trim()) return null;
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents: [{ role: "user", parts: [{ text: `Subject: ${subject ?? ""}\n\n${body.slice(0, 12000)}` }] }],
-        generationConfig: { temperature: 0, maxOutputTokens: 1024, responseMimeType: "application/json" },
-      }),
-    },
-  );
-  if (!response.ok) return null;
-
-  const data = (await response.json()) as {
-    candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[];
-  };
-  const text = (data.candidates?.[0]?.content?.parts ?? [])
-    .filter((p) => p.thought !== true)
-    .map((p) => p.text ?? "")
-    .join("");
-  if (!text) return null;
-
-  let raw: unknown = null;
-  try {
-    raw = JSON.parse(text);
-  } catch {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      try {
-        raw = JSON.parse(text.slice(start, end + 1));
-      } catch {
-        raw = null;
-      }
-    }
-  }
-  const parsed = ParsedBankEmailSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
+  if (!body.trim()) return null;
+  const result = await askJson({
+    system: SYSTEM,
+    parts: [{ text: `Subject: ${subject ?? ""}\n\n${body.slice(0, 12000)}` }],
+    schema: ParsedBankEmailSchema,
+    maxTokens: 1024,
+  });
+  return result?.data ?? null;
 }
 

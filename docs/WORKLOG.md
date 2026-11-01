@@ -58,6 +58,9 @@ The pane cannot screenshot WebGL; the scene was checked by reading pixels.
 - The owner chooses Aurora or Metro after the preview. Then that branch goes to main and production on approval.
 - Not yet walked as a real INSTRUCTOR or PARENT account in the browser (needs the owner's sign-in).
 - Lighthouse on the home page with the 3D hero not measured yet.
+- Preview: https://alsaadi-academy-git-redesign-aurora-elhashash-academy.vercel.app (Vercel login). Its env vars are
+  scoped to Preview + branch `redesign-aurora`, copied from `.env.local` (Production values are Sensitive and
+  unreadable): same Neon DB, Stripe test key, `APP_URL` = the preview URL. No `GEMINI_API_KEY` there yet.
 
 ## 2026-11-01: Curriculum Metro redesign, marketplace stage, teacher control (uncommitted)
 

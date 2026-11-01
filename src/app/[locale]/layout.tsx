@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Alexandria } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Readex_Pro } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -13,10 +13,16 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { PwaRegister } from "@/components/PwaRegister";
 import "../globals.css";
 
-const alexandria = Alexandria({
+const plex = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-alexandria",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex",
+  display: "swap",
+});
+const readex = Readex_Pro({
+  subsets: ["arabic", "latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-readex",
   display: "swap",
 });
 
@@ -50,7 +56,7 @@ export default async function LocaleLayout({
   const t = await getTranslations("nav");
 
   return (
-    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={alexandria.variable}>
+    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${plex.variable} ${readex.variable}`}>
       <body className="antialiased">
         <a
           href="#main-content"

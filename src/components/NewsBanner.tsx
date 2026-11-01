@@ -69,7 +69,7 @@ export async function NewsBanner() {
   const [t, locale] = await Promise.all([getTranslations("news"), getLocale()]);
   const ar = locale === "ar";
   return (
-    <aside aria-label={t("label")} className="bg-ink text-on-primary">
+    <aside aria-label={t("label")} className="bg-night text-night-text">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4">
         <span className="shrink-0 bg-marker px-2 py-1 font-display text-label font-bold text-ink">{t("label")}</span>
         <ul className="flex snap-x gap-6 overflow-x-auto text-small [scrollbar-width:none]">

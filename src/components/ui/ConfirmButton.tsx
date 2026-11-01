@@ -45,7 +45,7 @@ export function ConfirmButton({ action, children, confirmText, className = "", t
           <button
             type="button"
             onClick={() => dialog.current?.close()}
-            className="min-h-11 rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold hover:bg-raised"
+            className="min-h-11 rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold hover:bg-raised"
           >
             {t("cancel")}
           </button>

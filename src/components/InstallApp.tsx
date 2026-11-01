@@ -48,7 +48,7 @@ export function InstallApp() {
           }
           dismiss();
         }}
-        className="rounded-sm border border-ink-muted px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+        className="rounded-full border border-hairline bg-surface px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
       >
         {t("install")}
       </button>

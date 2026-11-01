@@ -57,14 +57,14 @@ export default async function CoursesPage({
         })
       : Promise.resolve([]),
   ]);
-  const tab = "inline-flex min-h-11 items-center border-2 border-ink px-4 py-2 font-display font-bold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-ink hover:text-on-primary";
+  const tab = "inline-flex min-h-11 items-center rounded-full border border-hairline bg-surface px-5 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
   return (
     <main>
       <section className="border-b border-rule bg-surface">
         <div className="mx-auto grid max-w-5xl gap-3 px-4 py-10">
           <p className="font-display text-small font-semibold text-pen">{t("eyebrow")}</p>
-          <h1 className="font-display text-h1 font-extrabold">{t.rich("pickCountry", { m: (c) => <span className="marker">{c}</span> })}</h1>
+          <h1 className="font-display text-h1 font-bold">{t.rich("pickCountry", { m: (c) => <span className="marker">{c}</span> })}</h1>
           <p className="max-w-[60ch] text-ink-muted">{t("pickCountryLede")}</p>
           <nav className="mt-2 flex flex-wrap gap-3">
             <a href="#school" className={tab}>
@@ -128,8 +128,8 @@ export default async function CoursesPage({
             <p className="text-ink-muted">{t("noCountries")}</p>
           </EmptyState>
         )}
-        <section id="skills" className="grid scroll-mt-6 gap-4 border-t-(length:--line) border-ink pt-10">
-          <h2 className="font-display text-h1 font-extrabold">{t("skillTab")}</h2>
+        <section id="skills" className="grid scroll-mt-6 gap-4 border-t border-hairline pt-10">
+          <h2 className="font-display text-h1 font-bold">{t("skillTab")}</h2>
           {skills.length ? (
             <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {skills.map((c) => (

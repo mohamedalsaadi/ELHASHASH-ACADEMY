@@ -25,7 +25,7 @@ export function PageHeader({
       )}
       <div className="grid gap-2">
         {eyebrow && <p className="text-small font-medium text-pen">{eyebrow}</p>}
-        <h1 className="font-display text-h1 font-extrabold text-balance">{title}</h1>
+        <h1 className="font-display text-h1 font-bold text-balance">{title}</h1>
         {meta && <div className="text-small text-ink-muted">{meta}</div>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}

@@ -46,41 +46,69 @@ body {
 }
 
 @layer components {
-  /* The one action shape: a platform sign (square, solid, bold). Hover swaps to ink. Padding, font and press state live here so 20 call sites cannot drift. */
+  /* The one action shape: an indigo pill. Hover lifts 1px with a stronger glow. Padding, font and press state live here so call sites cannot drift. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding-block: 12px;
-    padding-inline: 18px;
-    border-radius: var(--radius-sm);
-    font-family: var(--font-display);
-    font-weight: 700;
+    min-height: var(--control-h);
+    padding-block: 10px;
+    padding-inline: 20px;
+    border-radius: var(--radius-full);
+    font-family: var(--font-body);
+    font-weight: 600;
     line-height: 1.25;
     text-align: center;
     transition:
       background-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
+      color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
   }
   .btn-primary {
     background: var(--color-primary);
     color: var(--color-on-primary);
+    box-shadow: 0 6px 16px -8px rgb(91 77 255 / .6);
   }
   .btn-primary:hover {
-    background: var(--color-ink);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px -8px rgb(91 77 255 / .7);
   }
   .btn-outline {
-    border: var(--border-strong) solid var(--color-ink);
+    border: 1px solid var(--color-hairline);
+    background: var(--color-surface);
     color: var(--color-ink);
   }
   .btn-outline:hover {
-    background: var(--color-ink);
-    color: var(--color-on-primary);
+    background: var(--color-raised);
+  }
+  /* On the night stage. */
+  .btn-glow {
+    background: var(--color-night-text);
+    color: var(--color-night);
+    box-shadow: var(--shadow-glow);
+  }
+  .btn-glow:hover {
+    transform: translateY(-1px);
+  }
+  .btn-ghost {
+    border: 1px solid rgb(255 255 255 / .25);
+    color: var(--color-night-text);
+  }
+  .btn-ghost:hover {
+    background: rgb(255 255 255 / .08);
   }
   .btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+  }
+  /* A card: white, hairline, soft layered shadow. */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-paper);
   }
 }
 
@@ -90,7 +118,7 @@ body {
 }
 
 ::selection {
-  background: var(--color-marker);
+  background: var(--color-aurora-3);
   color: var(--color-ink);
 }
 
@@ -101,16 +129,19 @@ button:disabled {
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  border-color: var(--color-ink);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgb(91 77 255 / .15);
+  outline: none;
 }
 
-/* Cards on the network: hover draws an ink ring, like a station lit on the map. No lift: signs don't float. */
+/* Cards lift softly on hover. */
 .hover-lift {
-  transition: box-shadow var(--dur-fast) var(--ease-out);
+  transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 .hover-lift:hover,
 .hover-lift:focus-visible {
-  box-shadow: 0 0 0 2px var(--color-ink);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-float);
 }
 
 @media (prefers-reduced-motion: reduce) {

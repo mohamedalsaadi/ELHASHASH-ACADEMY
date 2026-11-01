@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 
 const check = "flex min-h-11 items-center gap-2 text-small text-ink-muted";
 const smallButton =
-  "rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+  "rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 const CURRENCIES = ["EGP", "SAR", "AED", "KWD", "QAR", "BHD", "OMR"] as const;
 const CURRICULA = ["NATIONAL_EG", "MOE", "BRITISH", "AMERICAN", "IB"] as const;
 
@@ -410,7 +410,7 @@ export default async function CatalogPage({
             <ul className="grid gap-2 sm:grid-cols-2">
               {ordered.map((s) => (
                 <li key={s.id}>
-                  <label className="flex items-center gap-3 rounded-md border border-hairline bg-surface p-3 has-checked:border-ink">
+                  <label className="flex items-center gap-3 rounded-md border border-hairline bg-surface p-3 has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20">
                     <input type="checkbox" name="subject" value={s.id} defaultChecked={on.has(s.id)} className="size-5 accent-(--color-pen)" />
                     <SubjectIcon icon={s.icon} size={28} muted={!s.active} />
                     <span className={`font-display font-semibold ${s.active ? "" : "text-ink-muted"}`}>{ar ? s.nameAr : s.nameEn}</span>

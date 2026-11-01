@@ -1,35 +1,25 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenCheck, ChartNoAxesColumnIncreasing, Presentation } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Landmark } from "@/components/brand/Landmark";
 import { EmptyState } from "@/components/brand/Mark";
 import { Intro } from "@/components/brand/Intro";
-import { LineBadge, Network, type NetLine } from "@/components/brand/Network";
+import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
 import { JsonLd } from "@/components/JsonLd";
 import { PromoBand } from "@/components/PromoBand";
-import { Link, getPathname } from "@/i18n/navigation";
+import { Constellation } from "@/components/three/Constellation";
+import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
-import { KNOWN_COUNTRIES } from "@/lib/countries";
 import { db } from "@/lib/db";
 import { alternates, siteUrl } from "@/lib/seo";
 
 // Catalog data changes rarely; a five-minute cache keeps the home page fast.
 export const revalidate = 300;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   return { alternates: alternates(locale) };
 }
-
-// Platform signs: solid blocks, square corners, white type, an arrow. The one button language of the marketing pages.
-const sign =
-  "inline-flex min-h-(--control-h) items-center justify-between gap-6 px-5 py-3.5 font-display text-[1.0625rem] font-bold transition-colors duration-(--dur-fast) ease-(--ease-out)";
 
 function getHome() {
   const published = { published: true };
@@ -38,97 +28,37 @@ function getHome() {
     db.country.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
-      select: {
-        id: true,
-        code: true,
-        nameAr: true,
-        nameEn: true,
-        grades: {
-          where: { active: true, courses: { some: published } },
-          orderBy: [{ order: "asc" }, { level: "asc" }],
-          select: { level: true, nameAr: true, nameEn: true },
-        },
-        _count: { select: { grades: { where: { active: true } } } },
-      },
+      select: { code: true, nameAr: true, nameEn: true, currency: true, _count: { select: { grades: { where: { active: true } } } } },
     }),
-    db.course.findMany({
-      where: published,
-      orderBy: { createdAt: "desc" },
-      take: 3,
-      include: cardInclude(now),
-    }),
+    db.course.findMany({ where: published, orderBy: { createdAt: "desc" }, take: 3, include: cardInclude(now) }),
     db.promotion.findMany({
       where: {
         active: true,
         placement: "CARD",
-        AND: [
-          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
-          { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
-        ],
+        AND: [{ OR: [{ startsAt: null }, { startsAt: { lte: now } }] }, { OR: [{ endsAt: null }, { endsAt: { gt: now } }] }],
       },
       orderBy: { order: "asc" },
     }),
     Promise.all([
       db.course.count({ where: published }),
       db.lesson.count({ where: { unit: { course: published } } }),
-      db.subject.count({
-        where: { active: true, courses: { some: published } },
-      }),
+      db.subject.count({ where: { active: true, courses: { some: published } } }),
       db.user.count({ where: { courses: { some: published } } }),
     ]),
   ]);
 }
 
-/** Lines in service take the two level slots first, so their station labels read straight. */
-function toLines<T extends { inService: boolean }>(all: T[]): T[] {
-  const open = all.filter((l) => l.inService);
-  const rest = all.filter((l) => !l.inService);
-  const out: T[] = [];
-  if (open[0]) out.push(open.shift()!);
-  if (rest[0]) out.push(rest.shift()!);
-  if (open[0]) out.push(open.shift()!);
-  return [...out, ...open, ...rest];
-}
-
-export default async function Home({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [
-    t,
-    tc,
-    [
-      countries,
-      latest,
-      cards,
-      [courseCount, lessonCount, subjectCount, teacherCount],
-    ],
-  ] = await Promise.all([
+  const [t, [countries, latest, cards, [courseCount, lessonCount, subjectCount, teacherCount]]] = await Promise.all([
     getTranslations("home"),
-    getTranslations("catalog"),
     getHome(),
   ]);
   const ar = locale === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
 
-  const lines: (NetLine & { name: string; grades: number })[] = toLines(
-    countries.map((c) => ({
-      code: c.code,
-      name: ar ? c.nameAr : c.nameEn,
-      grades: c._count.grades,
-      inService: c.grades.length > 0,
-      stations: c.grades.slice(0, 3).map((g) => ({
-        label: ar ? g.nameAr : g.nameEn,
-        href: getPathname({
-          href: `/courses/c/${c.code.toLowerCase()}/${g.level}`,
-          locale,
-        }),
-      })),
-    })),
-  );
+  // Real counts only; zeros are left out rather than shown.
   const stats = [
     { key: "courses", value: courseCount },
     { key: "lessons", value: lessonCount },
@@ -136,221 +66,120 @@ export default async function Home({
     { key: "teachers", value: teacherCount },
   ].filter((s) => s.value > 0);
 
-  const steps = ["s1", "s2", "s3", "s4"] as const;
+  const roles = [
+    { key: "student", href: "/courses", Icon: BookOpenCheck },
+    { key: "parent", href: "/signup?type=PARENT", Icon: ChartNoAxesColumnIncreasing },
+    { key: "teacher", href: "/contact", Icon: Presentation },
+  ] as const;
 
   const jsonLd = [
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      name: "A+ Academy",
-      url: siteUrl,
-      logo: `${siteUrl}/icon.svg`,
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      name: "A+ Academy",
-      url: siteUrl,
-      inLanguage: ["ar", "en"],
-    },
+    { "@context": "https://schema.org", "@type": "Organization", name: "A+ Academy", url: siteUrl, logo: `${siteUrl}/icon.svg` },
+    { "@context": "https://schema.org", "@type": "WebSite", name: "A+ Academy", url: siteUrl, inLanguage: ["ar", "en"] },
   ];
 
   return (
     <main>
       <JsonLd data={jsonLd} />
-      <Intro
-        skipLabel={t("skipIntro")}
-        lines={lines.map(({ code, inService }) => ({ code, inService }))}
-      />
 
-      {/* First viewport: the copy column on the start side, the network on the end side; on a phone the map leads. */}
-      <section className="border-b border-rule bg-surface">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 md:grid-cols-[minmax(0,30rem)_1fr] md:py-20">
-          <div className="order-2 grid gap-6 md:order-1">
-            <h1 className="font-display text-hero leading-[1.12] font-extrabold text-balance">
-              {t("headline")}
+      {/* The night stage: the constellation behind, the copy on the start side. On a phone the globe sits above the copy. */}
+      <section className="stage">
+        <Constellation codes={countries.map((c) => c.code)} rtl={ar} />
+        <Intro skipLabel={t("skipIntro")} />
+        <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(52vw,20rem)] pb-14 md:pt-28 md:pb-20">
+          <div className="as-hero-copy grid max-w-[38rem] gap-6">
+            <span className="text-label font-medium tracking-wide text-night-muted" style={{ "--i": 0 } as React.CSSProperties}>
+              {t("eyebrow")}
+            </span>
+            <h1 className="font-display text-hero leading-[1.05] font-bold" style={{ "--i": 1 } as React.CSSProperties}>
+              {t.rich("headline", {
+                a: (chunks) => (
+                  <bdi dir="ltr" className="marker">
+                    {chunks}
+                  </bdi>
+                ),
+              })}
             </h1>
-            <p className="max-w-[46ch] text-[1.125rem] text-ink-muted">
+            <p className="max-w-[36rem] text-[1.1875rem] text-night-muted" style={{ "--i": 2 } as React.CSSProperties}>
               {t("lede")}
             </p>
-            <div className="grid max-w-sm gap-3">
-              <Link
-                href="/courses"
-                className={`${sign} bg-primary text-on-primary hover:bg-ink`}
-              >
+            <div className="flex flex-wrap gap-3" style={{ "--i": 3 } as React.CSSProperties}>
+              <Link href="/courses" className="btn btn-glow">
                 {t("ctaStart")}
-                <Arrow
-                  aria-hidden="true"
-                  className="size-5"
-                  strokeWidth={2.5}
-                />
+                <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
               </Link>
-              <a
-                href="#parents"
-                className={`${sign} bg-ink text-on-primary hover:bg-primary`}
-              >
+              <a href="#roles" className="btn btn-ghost">
                 {t("ctaParent")}
-                <Arrow
-                  aria-hidden="true"
-                  className="size-5"
-                  strokeWidth={2.5}
-                />
               </a>
             </div>
-          </div>
-          <div className="order-1 md:order-2">
-            <Network
-              id="hero"
-              lines={lines}
-              label={t("mapLabel")}
-              className="w-full"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* The legend: the map's key and the catalogue's real counts. Zeros are left out. */}
-      <section
-        aria-labelledby="legend"
-        className="border-b border-rule bg-surface"
-      >
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 md:grid-cols-[auto_1fr] md:items-center md:gap-12">
-          <div className="grid gap-3">
-            <h2
-              id="legend"
-              className="font-display text-label font-bold text-ink-muted uppercase"
-            >
-              {t("legend.title")}
-            </h2>
-            <span className="flex items-center gap-3 text-small">
-              <i aria-hidden="true" className="h-1.5 w-10 bg-ink" />
-              {t("legend.open")}
-            </span>
-            <span className="flex items-center gap-3 text-small">
-              <i
-                aria-hidden="true"
-                className="h-1.5 w-10 bg-[repeating-linear-gradient(90deg,var(--color-ink)_0_calc(var(--spacing)*2.5),transparent_calc(var(--spacing)*2.5)_calc(var(--spacing)*4))] rtl:bg-[repeating-linear-gradient(270deg,var(--color-ink)_0_calc(var(--spacing)*2.5),transparent_calc(var(--spacing)*2.5)_calc(var(--spacing)*4))]"
-              />
-              {t("legend.soon")}
-            </span>
-          </div>
-          {stats.length > 0 && (
-            <div className="grid gap-2">
-              <ul className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+            {stats.length > 0 && (
+              <ul aria-label={t("statsLabel")} className="mt-4 flex flex-wrap gap-x-10 gap-y-4" style={{ "--i": 4 } as React.CSSProperties}>
                 {stats.map((s) => (
-                  <li
-                    key={s.key}
-                    className="grid gap-0.5 border-s-(length:--line) border-ink ps-3"
-                  >
-                    <span className="num font-display text-figure leading-none font-bold">
-                      {s.value}
-                    </span>
-                    <span className="text-small text-ink-muted">
-                      {t(`legend.units.${s.key}`)}
-                    </span>
+                  <li key={s.key} className="grid">
+                    <span className="num font-display text-figure leading-tight font-semibold">{s.value}</span>
+                    <span className="text-small text-night-muted">{t(`legend.units.${s.key}`)}</span>
                   </li>
                 ))}
               </ul>
-              <p className="text-label text-ink-muted">{t("legend.caption")}</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </section>
 
-      <div className="mx-auto grid max-w-6xl gap-20 px-4 py-16">
-        <section id="lines" className="grid scroll-mt-6 gap-6">
-          <div className="grid gap-2">
-            <h2 className="font-display text-h1 font-extrabold">
-              {t("lines.title")}
-            </h2>
-            <p className="max-w-[60ch] text-ink-muted">{t("lines.lede")}</p>
+      <div className="mx-auto grid max-w-(--container-page) gap-24 px-4 py-20 md:gap-32 md:py-28">
+        <section id="lines" className="reveal grid scroll-mt-24 gap-8">
+          <div className="grid gap-3">
+            <h2 className="font-display text-display leading-tight font-bold">{t("lines.title")}</h2>
+            <p className="max-w-[56ch] text-[1.125rem] text-ink-muted">{t("lines.lede")}</p>
           </div>
-          {lines.length === 0 ? (
+          {countries.length === 0 ? (
             <EmptyState>
               <p className="text-ink-muted">{t("noCountries")}</p>
             </EmptyState>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {lines.map((l) => (
-                <li key={l.code}>
-                  <Link
-                    href={`/courses/c/${l.code.toLowerCase()}`}
-                    className="group flex h-full items-center gap-4 border-2 border-ink bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-                  >
-                    <LineBadge code={l.code} />
-                    <span className="grid min-w-0 flex-1 gap-0.5">
-                      <span className="flex items-center gap-2 font-display text-h3 font-bold">
-                        {KNOWN_COUNTRIES.has(l.code) && (
-                          <Image
-                            src={`/flags/${l.code.toLowerCase()}.svg`}
-                            alt=""
-                            width={24}
-                            height={18}
-                            className="ring-1 ring-hairline"
-                          />
-                        )}
-                        {l.name}
-                      </span>
-                      <span className="text-small text-ink-muted">
-                        {l.inService
-                          ? tc("gradeCount", { count: l.grades })
-                          : t("lines.soon")}
-                      </span>
-                    </span>
-                    <Landmark code={l.code} size={40} />
-                    <Arrow
-                      aria-hidden="true"
-                      className="size-5 shrink-0 text-ink-muted transition-transform duration-(--dur-fast) ease-(--ease-out) group-hover:translate-x-1 rtl:group-hover:-translate-x-1"
-                    />
-                  </Link>
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {countries.map((c) => (
+                <li key={c.code}>
+                  <CountryTile country={c} locale={locale} />
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        {/* How it works, as a line with four stops. */}
-        <section className="grid gap-8">
-          <h2 className="font-display text-h1 font-extrabold">
-            {t("how.title")}
-          </h2>
-          <ol className="relative grid gap-8 md:grid-cols-4 md:gap-6">
-            <i
-              aria-hidden="true"
-              className="absolute inset-y-2 start-[calc(var(--spacing)*3-var(--line)/2)] w-[var(--line)] bg-primary md:inset-x-0 md:start-0 md:top-[calc(var(--spacing)*3-var(--line)/2)] md:bottom-auto md:h-[var(--line)] md:w-auto"
-            />
-            {steps.map((s) => (
+        {/* One tile per role, Stripe-style bento: the student tile is the dark, wide one. */}
+        <section id="roles" className="reveal grid scroll-mt-24 gap-8">
+          <h2 className="max-w-[24ch] font-display text-display leading-tight font-bold">{t("roles.title")}</h2>
+          <ul className="grid gap-5 md:grid-cols-6">
+            {roles.map(({ key, href, Icon }, i) => (
               <li
-                key={s}
-                className="relative grid content-start gap-2 ps-10 md:ps-0 md:pt-10"
+                key={key}
+                className={`relative isolate grid content-start gap-3 overflow-hidden rounded-lg p-7 md:p-9 ${
+                  i === 0 ? "stage md:col-span-6 lg:col-span-4 lg:row-span-2" : "card md:col-span-3 lg:col-span-2"
+                }`}
               >
-                <i
-                  aria-hidden="true"
-                  className="absolute start-0 top-0 size-6 rounded-full border-4 border-ink bg-surface"
-                />
-                <h3 className="font-display text-h3 font-bold">
-                  {t(`how.${s}.t`)}
-                </h3>
-                <p className="text-ink-muted">{t(`how.${s}.b`)}</p>
+                <Icon aria-hidden="true" className={`size-7 ${i === 0 ? "text-aurora-3" : "text-primary"}`} strokeWidth={1.75} />
+                <span className={`text-label font-medium tracking-wide ${i === 0 ? "text-night-muted" : "text-ink-muted"}`}>{t(`roles.${key}.k`)}</span>
+                <h3 className={`font-display font-bold ${i === 0 ? "text-display leading-tight" : "text-h2"}`}>{t(`roles.${key}.t`)}</h3>
+                <p className={`max-w-[44ch] ${i === 0 ? "text-[1.125rem] text-night-muted" : "text-ink-muted"}`}>{t(`roles.${key}.b`)}</p>
+                <Link href={href} className={`btn mt-3 justify-self-start ${i === 0 ? "btn-glow" : "btn-outline"}`}>
+                  {t(`roles.${key}.cta`)}
+                  <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
+                </Link>
               </li>
             ))}
-          </ol>
+          </ul>
         </section>
 
         {latest.length > 0 && (
-          <section className="grid gap-6">
+          <section className="reveal grid gap-8">
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="font-display text-h1 font-extrabold">
-                {t("latest.title")}
-              </h2>
-              <Link
-                href="/courses"
-                className="font-semibold underline decoration-primary decoration-2 underline-offset-4"
-              >
+              <h2 className="font-display text-display leading-tight font-bold">{t("latest.title")}</h2>
+              <Link href="/courses" className="btn btn-outline">
                 {t("latest.all")}
+                <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
               </Link>
             </div>
-            <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {latest.map((c) => (
                 <li key={c.id}>
                   <CourseCard course={c} locale={locale} />
@@ -360,53 +189,34 @@ export default async function Home({
           </section>
         )}
 
-        <PromoBand
-          promos={cards}
-          locale={locale}
-          variant="CARD"
-          label={t("promotions")}
-        />
+        <PromoBand promos={cards} locale={locale} variant="CARD" label={t("promotions")} />
+
+        {/* How it works: four stops, the order is the journey. */}
+        <section className="reveal grid gap-8">
+          <h2 className="font-display text-display leading-tight font-bold">{t("how.title")}</h2>
+          <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {(["s1", "s2", "s3", "s4"] as const).map((s, i) => (
+              <li key={s} className="card grid content-start gap-2 p-6">
+                <span className="num font-display text-h2 font-bold text-primary">{i + 1}</span>
+                <h3 className="font-display text-h3 font-bold">{t(`how.${s}.t`)}</h3>
+                <p className="text-ink-muted">{t(`how.${s}.b`)}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
 
         {/* "Three ways to learn" (subscribe, rent, live) is hidden while teachers set their own courses and prices
             (temporary marketplace stage, to end of 2026). The strings stay in messages/*.json under home.ways. */}
 
-        <section
-          id="parents"
-          aria-labelledby="parents-title"
-          className="grid scroll-mt-6 gap-6 bg-night p-6 text-on-primary md:grid-cols-[1fr_auto] md:items-end md:p-10"
-        >
-          <div className="grid gap-3">
-            <h2
-              id="parents-title"
-              className="font-display text-h1 font-extrabold"
-            >
-              {t("parent.title")}
-            </h2>
-            <p className="max-w-[56ch] text-night-text">{t("parent.body")}</p>
-            <ul className="mt-2 grid gap-2 text-small text-night-text sm:grid-cols-2">
-              {(["free", "device", "lang"] as const).map((k) => (
-                <li key={k} className="flex items-center gap-2">
-                  <i
-                    aria-hidden="true"
-                    className="size-2.5 shrink-0 rounded-full border-2 border-on-primary"
-                  />
-                  {t(`trust.${k}`)}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="grid gap-3">
-            <Link
-              href="/courses"
-              className={`${sign} bg-primary text-on-primary hover:bg-surface hover:text-ink`}
-            >
-              {t("parent.cta")}
-              <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
+        <section className="stage reveal grid justify-items-center gap-5 rounded-lg px-6 py-16 text-center md:py-24">
+          <h2 className="font-display text-display leading-tight font-bold">{t("final.title")}</h2>
+          <p className="max-w-[44ch] text-[1.125rem] text-night-muted">{t("final.body")}</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/signup" className="btn btn-glow">
+              {t("ctaStart")}
+              <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
             </Link>
-            <Link
-              href="/faq"
-              className="font-semibold underline decoration-2 underline-offset-4"
-            >
+            <Link href="/faq" className="btn btn-ghost">
               {t("parent.faq")}
             </Link>
           </div>

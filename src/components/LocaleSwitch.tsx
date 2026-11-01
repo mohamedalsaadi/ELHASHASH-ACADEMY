@@ -24,7 +24,7 @@ export function LocaleSwitch() {
         const href = `${pathname}${window.location.search}${window.location.hash}`;
         router.push(getPathname({ href, locale: other }));
       }}
-      className="inline-flex min-h-11 items-center rounded-sm border border-hairline px-3 py-2 font-display text-label transition-colors duration-(--dur-fast) ease-(--ease-out) hover:border-ink-muted hover:bg-raised"
+      className="inline-flex min-h-11 items-center rounded-full border border-hairline px-3 py-2 font-display text-label transition-colors duration-(--dur-fast) ease-(--ease-out) hover:border-ink-muted hover:bg-raised"
     >
       {t("switchLocale")}
     </Link>

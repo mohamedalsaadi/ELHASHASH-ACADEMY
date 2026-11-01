@@ -4,7 +4,7 @@ export type ChipTone = "active" | "expiring" | "expired" | "locked" | "live" | "
 
 const TONES: Record<ChipTone, { className: string; Icon: typeof Check | null }> = {
   active: { className: "border-pen text-pen", Icon: Check },
-  expiring: { className: "border-ink text-ink", Icon: Clock },
+  expiring: { className: "border-marker text-ink", Icon: Clock },
   expired: { className: "border-down text-down", Icon: X },
   locked: { className: "border-hairline text-ink-muted", Icon: Lock },
   live: { className: "border-pen text-pen", Icon: null },

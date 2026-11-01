@@ -115,7 +115,7 @@ export default async function CountryPage({
             )}
             {name} · <span className="num">{country.currency}</span>
           </p>
-          <h1 className="font-display text-h1 font-extrabold">
+          <h1 className="font-display text-h1 font-bold">
             {t.rich("pickGrade", {
               country: name,
               m: (c) => <span className="marker">{c}</span>,
@@ -179,14 +179,14 @@ export default async function CountryPage({
                       aria-hidden="true"
                       className={`relative grid size-8 shrink-0 place-items-center rounded-full border-4 transition-colors duration-(--dur-fast) ease-(--ease-out) ${
                         isMine
-                          ? "border-ink bg-marker"
+                          ? "border-surface bg-marker shadow-glow"
                           : open
-                            ? "border-ink bg-surface group-hover:bg-ink"
-                            : "border-dashed border-field bg-surface group-hover:border-ink"
+                            ? "border-primary bg-surface group-hover:bg-primary"
+                            : "border-dashed border-field bg-surface group-hover:border-primary"
                       }`}
                     />
                     <span className="grid gap-0.5 sm:justify-items-center">
-                      <span className="num font-display text-h2 leading-none font-extrabold">
+                      <span className="num font-display text-h2 leading-none font-bold">
                         {numeral.format(g.level)}
                       </span>
                       {/* The big numeral already says "grade", so the station drops the leading الصف. */}

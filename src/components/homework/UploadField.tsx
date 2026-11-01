@@ -66,7 +66,7 @@ export function UploadField({
             void add(e.target.files);
             e.target.value = "";
           }}
-          className="text-small file:me-2 file:rounded-sm file:border file:border-ink file:bg-surface file:px-3 file:py-1.5 file:font-semibold"
+          className="text-small file:me-2 file:rounded-full file:border file:border-hairline file:bg-surface file:px-3 file:py-1.5 file:font-semibold"
         />
       </label>
       {error && <p role="alert" className="text-small text-down">{error}</p>}

@@ -11,7 +11,7 @@ import { dismissBankEmail, matchBankEmailManually } from "./actions";
 export const dynamic = "force-dynamic";
 
 const button =
-  "rounded-sm border border-ink-muted px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+  "rounded-full border border-hairline bg-surface px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/admin/transfers", "office", { key: "nav.transfers", noindex: true });

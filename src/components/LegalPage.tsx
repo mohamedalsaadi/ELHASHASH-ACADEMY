@@ -25,8 +25,8 @@ export function LegalPage({
   );
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
-      <div className="grid gap-2 border-b-(length:--line) border-ink pb-6">
-        <h1 className="font-display text-h1 font-extrabold">{title}</h1>
+      <div className="grid gap-2 border-b border-hairline pb-6">
+        <h1 className="font-display text-h1 font-bold">{title}</h1>
         <p className="text-small text-ink-muted">{ar ? `آخر تحديث: ${date}` : `Last updated: ${date}`}</p>
       </div>
       {children}

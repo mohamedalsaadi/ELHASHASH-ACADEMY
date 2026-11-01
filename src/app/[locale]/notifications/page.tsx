@@ -43,7 +43,7 @@ export default async function NotificationsPage({
         <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
         {unread && (
           <form action={markAllRead}>
-            <SubmitButton className="rounded-sm border border-ink-muted px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
+            <SubmitButton className="rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised">
               {t("markAll")}
             </SubmitButton>
           </form>

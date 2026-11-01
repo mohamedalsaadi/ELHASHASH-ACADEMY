@@ -1,48 +1,72 @@
-/* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay, the network map and the route loader. */
+/* Brand motion (DESIGN.md "Aurora"). Marketing only: the night stage, the intro, scroll reveals and the route loader. */
 
-/* Intro, 1.8 s, once per tab session (guard in Intro.tsx). The country lines draw from the edges into the A+
-   interchange 0–0.88 s (60 ms apart), the interchange settles 0.76–1.0 s, the name rises 0.96–1.3 s, and the white
-   overlay fades 1.56–1.8 s. Pure SVG and CSS: nothing to download, so it cannot stall on a slow phone. */
-.as-intro { display: none; }
-html[data-intro] { overflow: hidden; }
-html[data-intro] .as-intro {
-  position: fixed; inset: 0; z-index: 50;
-  display: grid; place-items: center;
-  background: var(--color-surface);
-  border-block-start: 8px solid var(--color-ink);
-  cursor: pointer;
-  animation: as-intro-out 240ms var(--ease-out) 1560ms forwards;
+/* The night stage: deep navy with aurora light rising from below. The home hero and the closing band. */
+.stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 70% 10%, var(--color-night-2), var(--color-night) 60%);
+  color: var(--color-night-text);
 }
-html[data-intro="skip"] .as-intro { animation-delay: 0ms; animation-duration: var(--dur-fast); }
-html[data-intro] .as-intro .net-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: as-draw 520ms var(--ease-out) calc(var(--i) * 60ms) forwards; }
-html[data-intro] .as-intro .net-hub { transform-box: fill-box; transform-origin: center; opacity: 0; animation: as-hub 240ms var(--ease-out) 760ms forwards; }
-html[data-intro] .as-intro-word { opacity: 0; animation: as-rise 340ms var(--ease-out) 960ms forwards; }
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: auto -20% -40% -20%;
+  z-index: -1;
+  height: 70%;
+  background:
+    radial-gradient(closest-side, rgb(161 109 243 / .45), transparent),
+    radial-gradient(closest-side at 30% 60%, rgb(252 143 39 / .35), transparent),
+    radial-gradient(closest-side at 75% 50%, rgb(47 211 201 / .25), transparent);
+  filter: blur(40px);
+  pointer-events: none;
+  animation: as-aurora 20s ease-in-out infinite alternate;
+}
+@keyframes as-aurora { to { transform: translateX(6%) scale(1.08); } }
 
-@keyframes as-draw { to { stroke-dashoffset: 0; } }
-@keyframes as-hub { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
-@keyframes as-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes as-intro-out { to { opacity: 0; visibility: hidden; } }
+/* Intro, 3.4 s, once per tab session (guard in Intro.tsx). The scene spells A+ and wraps it into a globe; the hero
+   copy waits off-stage and rises at 2.6 s. Skipping shows the copy at once. */
+.as-intro-skip { display: none; }
+html[data-intro="play"] .as-intro-skip { display: inline-flex; }
+html[data-intro="play"] .as-hero-copy > * {
+  opacity: 0;
+  animation: as-rise var(--dur-reveal) var(--ease-out) forwards;
+  animation-delay: calc(2600ms + var(--i, 0) * var(--stagger));
+}
+html[data-intro="skip"] .as-hero-copy > * { animation-delay: 0ms; }
 
-/* Network map. Hover or keyboard focus on a line or one of its stations lights that line and dims the others. */
-.net-line { transition: opacity var(--dur-fast) var(--ease-out); }
-.net:has(.net-line:is(:hover, :focus-within)) .net-line:not(:hover, :focus-within) { opacity: .25; }
-/* Labels are set in board units; the board shrinks on a phone, so labels step up to stay about 12px on screen. */
-.net-label { font-size: 22px; }
-.net-hub-label { font-size: 22px; }
-@media (max-width: 40rem) { .net-label { font-size: 34px; } }
+@keyframes as-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
-/* Route loader: a line draws across the top only while a page is really loading. */
-.as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 4px; overflow: hidden; }
+/* Scroll reveal: content rises 16px once as it enters. Complete at rest where the browser lacks view timelines. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: as-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+}
+
+/* Route loader: an aurora line draws across the top only while a page is really loading. */
+.as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 3px; overflow: hidden; }
 .as-loader::after {
   content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 100%;
-  background: var(--color-primary);
+  background: linear-gradient(90deg, var(--color-aurora-1), var(--color-aurora-4), var(--color-aurora-6));
   transform-origin: var(--as-origin, right);
   animation: as-load 1400ms var(--ease-out) infinite;
 }
 [dir="ltr"] .as-loader { --as-origin: left; }
 @keyframes as-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
+/* The network map (country pages still draw it). Hover lights one line and dims the others. */
+.net-line { transition: opacity var(--dur-fast) var(--ease-out); }
+.net:has(.net-line:is(:hover, :focus-within)) .net-line:not(:hover, :focus-within) { opacity: .25; }
+.net-label { font-size: 22px; }
+.net-hub-label { font-size: 22px; }
+@media (max-width: 40rem) { .net-label { font-size: 34px; } }
+
 @media (prefers-reduced-motion: reduce) {
-  html[data-intro] .as-intro { display: none; }
+  .stage::before { animation: none; }
+  .reveal { animation: none; }
+  html[data-intro] .as-hero-copy > * { opacity: 1; animation: none; }
   .as-loader::after { animation: none; transform: scaleX(.4); }
 }

@@ -67,7 +67,7 @@ export function Network({ id, lines, label, className = "" }: { id: string; line
       ))}
       <g className="net-hub">
         <circle cx={C.x} cy={C.y} r="26" className="fill-surface stroke-ink" strokeWidth="8" />
-        <text x={C.x} y={C.y + 8} textAnchor="middle" direction="ltr" className="net-hub-label fill-ink font-display font-extrabold">
+        <text x={C.x} y={C.y + 8} textAnchor="middle" direction="ltr" className="net-hub-label fill-ink font-display font-bold">
           A+
         </text>
       </g>
@@ -83,7 +83,7 @@ export function LineBadge({ code, className = "size-11" }: { code: string; class
   return (
     <span
       aria-hidden="true"
-      className={`grid shrink-0 place-items-center font-display text-small font-extrabold ${INK_ON.has(code) ? "text-ink" : "text-on-primary"} ${className}`}
+      className={`grid shrink-0 place-items-center font-display text-small font-bold ${INK_ON.has(code) ? "text-ink" : "text-on-primary"} ${className}`}
       style={{ background: color(code) }}
     >
       {code}

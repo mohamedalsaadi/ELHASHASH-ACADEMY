@@ -28,11 +28,14 @@ export function CountryTile({
   return (
     <Link
       href={`/courses/c/${c.code.toLowerCase()}`}
-      className="group grid h-full content-between gap-4 border-2 border-t-(length:--line) border-ink bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
-      style={{
-        borderTopColor: `var(--color-line-${c.code.toLowerCase()}, var(--color-ink))`,
-      }}
+      className="group relative isolate grid h-full content-between gap-5 overflow-hidden card p-5 hover-lift"
     >
+      {/* The country's colour as soft light in the corner, not a stripe. */}
+      <span
+        aria-hidden="true"
+        className="absolute -end-16 -top-16 -z-10 size-44 rounded-full opacity-25 blur-2xl transition-opacity duration-(--dur-base) ease-(--ease-out) group-hover:opacity-45"
+        style={{ background: `var(--color-line-${c.code.toLowerCase()}, var(--color-primary))` }}
+      />
       <span className="flex items-start justify-between gap-3">
         <Landmark code={c.code} size={56} />
         {KNOWN_COUNTRIES.has(c.code) && (
@@ -41,7 +44,7 @@ export function CountryTile({
             alt=""
             width={36}
             height={27}
-            className="ring-1 ring-hairline"
+            className="rounded-sm shadow-paper ring-1 ring-hairline"
           />
         )}
       </span>

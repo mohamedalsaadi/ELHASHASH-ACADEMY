@@ -55,11 +55,11 @@ type Offer = { id: string | null; label?: string; price: string; was?: string; n
 /** One plan as a card: what it includes, then each way to buy it with its price per lecture and saving. */
 function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }: { name: string; lines: Line[]; offers: Offer[]; best?: boolean; bestLabel: string; cta: string; className?: string }) {
   return (
-    <li className={`grid content-start gap-4 bg-surface p-5 ${best ? "border-2 border-ink border-t-(length:--line)" : "border-2 border-rule"} ${className}`}>
+    <li className={`grid content-start gap-4 bg-surface p-5 ${best ? "card ring-2 ring-primary" : "card"} ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-display text-h3 font-bold">{name}</h3>
         {best && (
-          <span className="shrink-0 bg-marker px-2 py-0.5 font-display text-label font-bold text-ink">{bestLabel}</span>
+          <span className="shrink-0 rounded-full bg-marker/20 px-2.5 py-0.5 font-display text-label font-bold text-ink">{bestLabel}</span>
         )}
       </div>
       <ul className="grid gap-2 text-small">
@@ -74,7 +74,7 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
         <div key={o.id ?? "pick"} className="grid gap-1.5 border-t border-dashed border-rule pt-3">
           {o.id && o.label && <span className="text-small font-semibold">{o.label}</span>}
           <span className="flex flex-wrap items-baseline gap-2">
-            <span className="num font-display text-h2 font-extrabold">{o.price}</span>
+            <span className="num font-display text-h2 font-bold">{o.price}</span>
             {o.was && <s className="num text-small text-ink-muted">{o.was}</s>}
           </span>
           {o.notes.map((n) => (
@@ -85,7 +85,7 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
           {o.id ? (
             <Link
               href={{ pathname: "/checkout", query: { sku: o.id } }}
-              className={`mt-1 rounded-sm px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-ink" : "border-2 border-ink hover:bg-ink hover:text-on-primary"}`}
+              className={`mt-1 rounded-full px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-primary/90" : "border border-hairline bg-surface hover:bg-raised"}`}
             >
               {cta}
             </Link>
@@ -350,7 +350,7 @@ export default async function CoursePage({
       )}
 
       <section id="units" className="grid scroll-mt-6 gap-4">
-        <h2 className="font-display text-h2 font-extrabold">{t("units")}</h2>
+        <h2 className="font-display text-h2 font-bold">{t("units")}</h2>
         {course.units.length === 0 && (
           <EmptyState>
             <p className="text-ink-muted">{t("noUnits")}</p>
@@ -411,7 +411,7 @@ export default async function CoursePage({
 
       {live.length > 0 && (
         <section id="live" className="grid scroll-mt-6 gap-4">
-          <h2 className="font-display text-h2 font-extrabold">{t("live")}</h2>
+          <h2 className="font-display text-h2 font-bold">{t("live")}</h2>
           <ul className="grid gap-3">
             {live.map((l) => {
               const seat = l.sku?.active && (!l.sku.saleTo || l.sku.saleTo > now) ? l.sku : null;
@@ -452,7 +452,7 @@ export default async function CoursePage({
 
       {level === "partial" && upgrades.length > 0 && (
         <section id="packages" className="grid scroll-mt-6 gap-4">
-          <h2 className="font-display text-h2 font-extrabold">{t("upgradeTitle")}</h2>
+          <h2 className="font-display text-h2 font-bold">{t("upgradeTitle")}</h2>
           <ul className="grid gap-3">
             {upgrades.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-surface p-4">
@@ -476,7 +476,7 @@ export default async function CoursePage({
 
       {showPlans && (single || months.length > 0 || terms.length > 0) && (
         <section id="packages" className="grid scroll-mt-6 gap-4">
-          <h2 className="font-display text-h2 font-extrabold">{lapsed ? t("renewTitle") : tp("title")}</h2>
+          <h2 className="font-display text-h2 font-bold">{lapsed ? t("renewTitle") : tp("title")}</h2>
           <ul className="grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
             {single && (
               <PlanCard
@@ -533,7 +533,7 @@ export default async function CoursePage({
 
       {bank && showPlans && course.skus.length > 0 && (
         <section id="transfer" className="grid scroll-mt-6 gap-3 border border-rule bg-surface p-4">
-          <h2 className="font-display text-h2 font-extrabold">{t("transfer.title")}</h2>
+          <h2 className="font-display text-h2 font-bold">{t("transfer.title")}</h2>
           <p className="max-w-[65ch] text-small text-ink-muted">{t("transfer.hint")}</p>
           {transferError && (
             <p role="alert" className="text-small text-down">
@@ -560,14 +560,14 @@ export default async function CoursePage({
 
       {level === "none" && !lapsed && !single && months.length === 0 && terms.length === 0 && (
         <section className="grid gap-2">
-          <h2 className="font-display text-h2 font-extrabold">{tp("title")}</h2>
+          <h2 className="font-display text-h2 font-bold">{tp("title")}</h2>
           <p className="text-ink-muted">{t("noPackages")}</p>
         </section>
       )}
 
       {level === "none" && others.length > 0 && (
         <section className="grid gap-4">
-          <h2 className="font-display text-h2 font-extrabold">{tp("other")}</h2>
+          <h2 className="font-display text-h2 font-bold">{tp("other")}</h2>
           <ul className="grid gap-3">
             {others.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-4 border border-rule bg-surface p-4">
@@ -582,7 +582,7 @@ export default async function CoursePage({
                   </span>
                   <Link
                     href={{ pathname: "/checkout", query: { sku: s.id } }}
-                    className="rounded-sm border border-ink-muted px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                    className="rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                   >
                     {t("subscribe")}
                   </Link>

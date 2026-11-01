@@ -12,7 +12,7 @@ import { sendVerification, unlinkParent } from "./actions";
 export const dynamic = "force-dynamic";
 
 const panel = "grid gap-3 rounded-md border border-hairline bg-surface p-5";
-const smallButton = "w-fit rounded-sm border border-ink-muted px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+const smallButton = "w-fit rounded-full border border-hairline bg-surface px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/account", "account", { key: "title", noindex: true });

@@ -10,7 +10,7 @@ import { field, label } from "../styles";
 
 export const dynamic = "force-dynamic";
 
-const button = "min-h-11 rounded-sm border border-ink-muted px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+const button = "min-h-11 rounded-full border border-hairline bg-surface px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/admin/subscribers", "office", { key: "nav.subscribers", noindex: true });

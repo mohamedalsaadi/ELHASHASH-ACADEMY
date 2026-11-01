@@ -1,32 +1,28 @@
-# A+ ACADEMY · Design DNA
+# A+ ACADEMY · Design DNA ("Aurora", branch `redesign-aurora`)
 
 The single source of truth for every screen. Every colour, size, radius and duration in code comes from this file through `tokens.css`. No raw hex, px or ms values in components.
 
-Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, and the parents who pay. Identity "Curriculum Metro" (chosen 2026-11-01, replacing "the illuminated page"): the school year drawn as a metro network. Arabic first (RTL), English second. The previous identity is archived in `docs/brand/brand-book.html`.
+Audience: secondary students across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, the parents who pay, and the teachers who sell. Identity "Aurora" (2026-11-01, competing with "Curriculum Metro" on `redesign-curriculum-metro`): Stripe/Apple-style light, airy surfaces with one night stage and an aurora gradient. The measured palette and effects are in `docs/brand/aurora-dna.json`. Arabic first (RTL), English second.
+
+> Sections 2 to 8 below were written for Metro. Where they conflict with this section and `tokens.css`, this section and the tokens win. The token names are unchanged, so components did not need renaming.
 
 ## 0. Brand
 
-**Idea.** The school year is a metro network. Each country is a coloured line out of one interchange, the A+. Grades are stations; lessons are the stops inside them. The whole network is shown before sign-up: nothing about the catalogue, the price or the payment is hidden behind an account.
+**Idea.** One night sky over the region. The intro is a constellation: particles swirl, settle into "A+", then fold into a globe with a pin at each country's capital. After that the site is daylight: white cards on a cool grey ground.
 
-**Mark.** An A routed like a metro line (90° stems, 45° shoulders, a crossbar) beside a + drawn as the Egypt line (red) crossing the UAE line (blue) at a white roundel with an ink ring. 64 × 48 grid, one 6-unit line weight, square ends. The geometry lives once in `src/app/brand-svg.ts`; `src/components/brand/Mark.tsx` (`Mark`, `Wordmark`, `EmptyMark`, `EmptyState`) and every generated image read it.
+**Mark.** Same geometry (`src/app/brand-svg.ts`); the + strokes take `aurora-1` and `aurora-4`.
 
-**Wordmark.** Latin only, in both locales: the mark beside "A+ Academy" in Alexandria 700. Ink is `currentColor`.
+**Wordmark.** Latin only in both locales. Display face Readex Pro, body IBM Plex Sans Arabic (both via `next/font`).
 
-**Icons and share images.** Favicon `src/app/icon.svg`, `apple-icon.tsx` and the three PWA icon routes: white tile, ink A, the coloured +. Share images (`src/app/opengraph-image.tsx`, the course `opengraph-image.tsx`): white ground, mark and name, a heavy ink rule, and the seven line colours as a band along the foot. Satori has no Arabic shaping, so share images use English text.
+## 1. Theses (validated 2026-11-01, "1 · Constellation")
 
-**Where it appears.** Header (wordmark, heavy ink rule under it) · the home network map and intro · footer (wordmark and the seven-line band) · empty states (the A drawn dashed: a line under construction).
+**Visual.** Cool grey ground (`--color-ground`), white cards with a hairline and a soft shadow, large radii, pill buttons. Indigo primary (`--color-primary`), orange earned accent (`--color-marker`). One dark stage (`.stage`, `--color-night`) for the home hero and the final call to action, lit by the aurora gradient (`--color-aurora-1..6`). Gradient text (`.marker`) on one word per heading at most. Country colours survive as a dot or a corner glow.
 
-## 1. Theses (validated)
+**Interaction.** Calm and smooth: 160 / 280 / 700 ms on `cubic-bezier(.16,1,.3,1)`. Cards lift 3 px on hover. Sections reveal on scroll with CSS `animation-timeline: view()`. The three.js constellation (`src/components/three/Constellation.tsx`) runs only in the home hero: 3.4 s story on the first visit per tab, any input skips, a still frame under reduced motion, paused off-screen. Forbidden: 3D outside the home hero, autoplay carousels, bounce, scroll-jacking.
 
-**Visual.** White enamel ground, ink text, one fixed line weight drawn at 0°, 45° and 90° only, a colour per country line. Lines with a published course are solid; the others are dashed, "under construction", and say they open when their first course is published. Station roundels: white fill, ink ring; the interchange is larger. Buttons are platform signs: solid blocks, white bold type, square corners, an arrow. Counts sit in a map legend. Alexandria sets everything. Light only.
+**Marketing vs app.** Marketing pages get the stage, the gradient and reveal motion. App pages (dashboard, lessons, teacher, admin, parent, checkout) get cards, pills and state transitions only.
 
-**Interaction.** Brisk: 150 to 250 ms on one ease-out `cubic-bezier(.2,.7,.2,1)`. Hover on the map lights a line and dims the others; signs swap to ink. Forbidden: parallax, bounce, looping animation, camera flights, autoplay carousels, marquees.
-
-**Marketing vs app.** Marketing pages (home, catalogue, country, grade, course, teacher, FAQ, contact, legal) carry the map, the line colours and the intro. App pages (dashboard, lessons, teacher, admin, parent, checkout) get the tokens and the mark only, with no motion beyond state transitions.
-
-**Allowed patterns:** 45° line routing, station roundels, a line colour per country, dashed lines for routes not yet open, platform-sign buttons, the map legend, the session-once intro, a line loader only while a route is loading, the signal-yellow underline on one word per heading at most.
-
-Every number in a column, table, timer or price uses `--font-data` (Alexandria, tabular Western digits).
+**Allowed patterns:** the night stage, the aurora gradient, gradient text on one word, glass sticky header (the one place blur is allowed), white hairline cards, pill buttons and segmented pill navs, a country-colour dot or glow, scroll reveal, the session-once constellation intro.
 
 ## 2. Genjitsu directives
 

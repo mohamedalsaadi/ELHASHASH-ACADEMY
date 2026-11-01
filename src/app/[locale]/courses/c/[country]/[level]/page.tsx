@@ -83,7 +83,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
           {ar ? grade.nameAr : grade.nameEn}
         </p>
-        <h1 className="font-display text-h1 font-extrabold">{t.rich("pickSubject", { grade: ar ? grade.nameAr : grade.nameEn, m: (c) => <span className="marker">{c}</span> })}</h1>
+        <h1 className="font-display text-h1 font-bold">{t.rich("pickSubject", { grade: ar ? grade.nameAr : grade.nameEn, m: (c) => <span className="marker">{c}</span> })}</h1>
         <p className="text-ink-muted">{t("subjectCount", { count: tiles.length, live })}</p>
       </header>
 
@@ -109,7 +109,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
               {count > 0 ? (
                 <Link
                   href={`/courses/c/${slug.toLowerCase()}/${level}/${subject.slug}`}
-                  className={`${card} border-2 border-ink border-t-(length:--line) bg-surface hover-lift`}
+                  className={`${card} card border-t-(length:--line) bg-surface hover-lift`}
                   style={{ borderTopColor: line }}
                 >
                   <SubjectIcon icon={subject.icon} size={44} />

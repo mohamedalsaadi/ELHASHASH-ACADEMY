@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "name": "A+ Academy — Aurora",
+    "version": "1.0",
+    "date": "2026-11-01",
+    "references": ["https://stripe.com/ (captured 1440x2400, colours measured)", "https://www.apple.com/education/ (headless capture blank; type, spacing and surface rules from the known Apple system)"],
+    "audience": "Arabic-first (RTL) secondary students, parents and teachers across the GCC and Egypt",
+    "notes": "Stripe gives the aurora gradient ribbon, indigo CTA and navy ink; Apple gives the restraint: huge quiet headlines, alternating light surfaces, generous whitespace, one idea per section."
+  },
+  "design_system": {
+    "color": {
+      "measurement": { "k": 8, "sampling": { "method": "deterministic_stratified", "max_pixels": 160000 } },
+      "measured_palette": [
+        { "hex": "#fefdfe", "coverage": 0.7179, "role": "background" },
+        { "hex": "#eaa8ec", "coverage": 0.1029, "role": "aurora-pink" },
+        { "hex": "#fbb196", "coverage": 0.0686, "role": "aurora-peach" },
+        { "hex": "#fc8f27", "coverage": 0.0414, "role": "accent" },
+        { "hex": "#a16df3", "coverage": 0.0261, "role": "aurora-violet" },
+        { "hex": "#c294b4", "coverage": 0.0213, "role": "aurora-mauve" },
+        { "hex": "#5f6b82", "coverage": 0.0153, "role": "text-muted" },
+        { "hex": "#0c1b33", "coverage": 0.0065, "role": "text" }
+      ],
+      "primary": { "hex": "#5B4DFF", "usage": "Primary actions, links, focus. White text 5.4:1." },
+      "secondary": { "hex": "#0C1B33", "usage": "Ink: headings and body text, dark sections." },
+      "accent": { "hex": "#FC8F27", "usage": "Earned things only: discounts, streaks, what a student achieved. Never body text on white." },
+      "aurora": { "stops": ["#FC8F27", "#FBB196", "#EAA8EC", "#A16DF3", "#5B4DFF"], "usage": "The ribbon/mesh behind heroes and the intro; never behind body text." },
+      "surface": { "background": "#FEFDFE", "alt": "#F5F6FA", "raised": "#EEF0F6", "card": "#FFFFFF", "night": "#0A1124" },
+      "neutral": { "scale": ["#FEFDFE", "#F5F6FA", "#EEF0F6", "#E4E7EF", "#C9CFDC", "#8A94A8", "#5F6B82", "#0C1B33"], "usage": "#0C1B33 is the foreground on light surfaces; #5F6B82 secondary text (5.3:1)." },
+      "semantic": { "success": "#16834A", "danger": "#D1293D", "warning": "#B86200", "info": "#5B4DFF" },
+      "country_accents": { "ae": "#1F6FD1", "sa": "#16834A", "eg": "#D1293D", "kw": "#00807E", "qa": "#8A1538", "bh": "#E8761C", "om": "#7A3E9D" }
+    },
+    "typography": {
+      "families": { "display": "IBM Plex Sans Arabic", "body": "IBM Plex Sans Arabic", "data": "IBM Plex Sans Arabic (tabular nums)" },
+      "rationale": "One humanist family with Arabic and Latin drawn together, the Apple move: let size and weight do the work.",
+      "scale_ratio": 1.25,
+      "sizes": { "hero": "clamp(2.75rem, 1.6rem + 4.6vw, 5.5rem)", "display": "clamp(2.1rem, 1.5rem + 2.4vw, 3.5rem)", "h1": "clamp(1.75rem, 1.45rem + 1.2vw, 2.5rem)", "h2": "clamp(1.375rem, 1.25rem + .6vw, 1.75rem)", "h3": "1.25rem", "body": "1rem", "body_ar": "1.0625rem", "small": ".875rem", "label": ".8125rem" },
+      "weights": { "hero": 700, "heading": 600, "body": 400, "label": 500 },
+      "tracking": { "hero_latin": "-0.03em", "arabic": "0" },
+      "line_height": { "hero": 1.08, "heading": 1.2, "body": 1.65, "body_ar": 1.85 }
+    },
+    "spacing": { "base": "4px", "density": "airy", "section_gap": "clamp(5rem, 3rem + 8vw, 10rem)", "rhythm": "8-step multiples; sections separated by space, not rules" },
+    "layout": { "max_width": "76rem", "reading_width": "44rem", "grid": "12 columns, 24px gutter; bento cards 2+1 / 1+1+1", "alignment": "start-aligned headlines (right in Arabic), centered only for the final CTA" },
+    "shape": { "radius": { "sm": "8px", "md": "14px", "lg": "22px", "pill": "9999px" }, "borders": "1px hairline #E4E7EF on cards; no heavy rules" },
+    "elevation": { "card": "0 1px 2px rgb(12 27 51 / .06), 0 8px 24px -12px rgb(12 27 51 / .12)", "float": "0 2px 4px rgb(12 27 51 / .06), 0 24px 48px -16px rgb(12 27 51 / .22)", "approach": "soft, layered, low-opacity navy shadows" },
+    "iconography": { "style": "1.75px outline, rounded joins, 24px grid", "landmarks": "existing country landmark line icons kept" },
+    "motion": { "easing": { "out": "cubic-bezier(.16,1,.3,1)", "in_out": "cubic-bezier(.65,0,.35,1)" }, "durations": { "fast": "160ms", "base": "280ms", "reveal": "700ms", "intro": "2600ms" }, "stagger": "60ms", "principle": "Marketing pages reveal on scroll; app pages only fade state changes; reduced motion removes all movement." },
+    "components": {
+      "button_primary": "pill, #5B4DFF fill, white 600 text, 44px min height, hover lifts 1px with a stronger shadow",
+      "button_secondary": "pill, white fill, 1px hairline, ink text",
+      "card": "white, 22px radius, hairline + card shadow, 24–32px padding",
+      "nav": "translucent white with backdrop blur, hairline bottom, sticky",
+      "stat_tile": "large tabular figure, small muted label, no chart junk"
+    }
+  },
+  "design_style": {
+    "aesthetic": { "archetype": "premium SaaS × consumer-tech product page", "mood": ["optimistic", "calm", "confident", "luminous"], "personality": "a top school with a design studio: serious about results, warm to students" },
+    "visual_language": { "contrast": "high type contrast on near-white; colour only in the aurora and actions", "ornamentation": "minimal; the aurora is the one ornament", "texture": "smooth gradients, soft glass on the nav only" },
+    "composition": { "strategy": "one idea per section, big headline + supporting line + proof", "whitespace": "generous, Apple-like", "rhythm": "alternate white and #F5F6FA sections; bento grids for features" },
+    "imagery": { "style": "real UI (course cards, dashboards) rendered as product shots; country flags and landmarks; teacher photos when they exist", "never": "stock smiles, invented testimonials or numbers" },
+    "interaction_feel": { "speed": "quick and soft", "feedback": "subtle lift on hover, press scale .98", "scroll": "content rises 16px and fades in once" },
+    "brand_voice_in_ui": { "tone": "short, direct, encouraging", "arabic": "Modern Standard Arabic, friendly", "numbers": "always real from the database" }
+  },
+  "visual_effects": {
+    "overview": { "effect_intensity": "medium on marketing, none in app", "performance_tier": "mid: three.js on the home hero and intro only, poster image on phones and reduced motion" },
+    "background_effects": { "enabled": true, "type": "aurora gradient ribbon / mesh (CSS conic + radial gradients, slow 20s drift)", "where": "home hero, course catalogue header, final CTA" },
+    "particle_systems": { "enabled": true, "type": "points on a sphere (three.js) forming the globe surface", "count": "≈4000 desktop" },
+    "3d_elements": { "enabled": true, "type": "glass-dot globe with GCC + Egypt pins in country colours and arcs between them", "interaction": "slow auto-rotate, pointer parallax, pauses off-screen", "library": "three@0.160 (already installed)" },
+    "shader_effects": { "enabled": false },
+    "scroll_effects": {
+      "parallax": { "enabled": true, "notes": "hero globe drifts up slower than text" },
+      "scroll_triggered_animations": { "enabled": true, "notes": "fade + 16px rise, once, via animation-timeline: view() with IntersectionObserver fallback" },
+      "scroll_morphing": { "enabled": false }
+    },
+    "text_effects": { "enabled": true, "type": "gradient-clipped key word in the hero headline (aurora stops)" },
+    "cursor_effects": { "enabled": false },
+    "image_effects": { "enabled": true, "type": "product-shot cards tilt 2–4° in perspective in the hero bento" },
+    "glassmorphism_neumorphism": { "enabled": true, "type": "nav bar and intro skip button only: white 72% + blur(16px)" },
+    "canvas_drawings": { "enabled": true, "type": "WebGL canvas for the globe" },
+    "svg_animations": { "enabled": true, "type": "A+ mark stroke-draw at the end of the intro" },
+    "composite_notes": "Intro (≈2.6s, once per tab session): aurora fades up → points fly in and assemble the globe → country pins light up one by one with arcs → camera dollies in → A+ wordmark resolves → overlay dissolves into the hero, where the same globe keeps turning. Skippable on any input."
+  }
+}

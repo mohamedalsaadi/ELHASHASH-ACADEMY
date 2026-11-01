@@ -76,7 +76,7 @@ export default async function SubjectPage({ params }: { params: Promise<Params> 
             {ar ? grade.nameAr : grade.nameEn}
           </Link>
         </p>
-        <h1 className="font-display text-h1 font-extrabold">{ar ? subject.nameAr : subject.nameEn}</h1>
+        <h1 className="font-display text-h1 font-bold">{ar ? subject.nameAr : subject.nameEn}</h1>
         <p className="max-w-[60ch] text-ink-muted">{t("subjectLede", { count: courses.length })}</p>
       </header>
 

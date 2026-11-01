@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 const PAGE = 50;
 const STATUSES = ["PENDING", "PAID", "FAILED", "EXPIRED", "REFUNDED"] as const;
 const GATEWAYS = ["PAYMOB", "STRIPE", "MANUAL", "ZIINA"] as const;
-const button = "min-h-11 rounded-sm border border-ink-muted px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+const button = "min-h-11 rounded-full border border-hairline bg-surface px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/admin/orders", "office", { key: "nav.orders", noindex: true });
@@ -116,7 +116,7 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
                 <td className={o.status === "PAID" ? "font-semibold text-up" : o.status === "PENDING" ? "" : "text-ink-muted"}>
                   {t(`orderStatus.${o.status}`)}
                   {o.receiptKey && (
-                    <span className="ms-2 rounded-full bg-marker px-2 py-0.5 text-label font-semibold text-ink">{t("receiptBadge")}</span>
+                    <span className="ms-2 rounded-full rounded-full bg-marker/20 px-2.5 py-0.5 text-label font-semibold text-ink">{t("receiptBadge")}</span>
                   )}
                 </td>
                 <td>

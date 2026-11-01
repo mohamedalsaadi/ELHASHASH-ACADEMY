@@ -23,6 +23,42 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-01: "Aurora" redesign and role gaps (branch `redesign-aurora`)
+
+A second, competing design on its own branch, cut from `redesign-curriculum-metro` so the marketplace, teacher-control
+and Ziina work come along. Metro stays untouched on its branch for comparison. Production is untouched until the owner
+picks one.
+
+**Design**
+- Stripe/Apple style, measured DNA in `docs/brand/aurora-dna.json`, theses in `DESIGN.md` §0–1.
+- `tokens.css` rewritten with the same token names, so every page restyled at once. New fonts: IBM Plex Sans Arabic + Readex Pro.
+- `globals.css`: pill buttons (`.btn-glow`, `.btn-ghost`), `.card`, `.hover-lift`. `brand.css`: `.stage`, aurora,
+  scroll reveal, intro rules.
+- Home hero: three.js constellation (`src/components/three/Constellation.tsx`): swirl → "A+" → globe with capital pins.
+  The intro guard (`src/components/brand/Intro.tsx`) plays it once per tab, any input skips, reduced motion gets a still.
+- Home page rewritten: hero, countries, roles bento (student / parent / teacher), latest courses, how it works, final CTA.
+  Only real counts from the database.
+- Header is glass and sticky; footer, CountryTile, CourseCard, nav shells and the country stations restyled.
+
+**Roles**
+- **Parent pays for a child.** `Order.beneficiaryId` (additive migration `20261103120000_order_beneficiary`, **already
+  applied to Neon**, which is shared by local, preview and live). A parent's checkout must pick a linked child
+  (`ParentLink`); grants go to `learnerOf(order)` in `src/lib/access.ts`. The parent receives the receipt.
+- Parent area: `ParentNav`; the child page now shows exam results and live attendance. Weekly parent email already ran
+  from the Sunday cron, no change.
+- Signup honours `?type=PARENT` (the "I'm a parent" buttons).
+- Teacher: `/teacher/earnings` by month and course from the ledger, CSV export at `/teacher/earnings/export`, and a
+  setup checklist on `/teacher` (photo and bio, course, price, publish), shown to INSTRUCTOR accounts until done.
+- Admin overview: added linked tiles for transfers to review (manual orders + bank emails) and open requests.
+
+**Checked:** `tsc`, 190 vitest tests, `next build`, and key routes in ar/en at mobile and desktop in the browser pane.
+The pane cannot screenshot WebGL; the scene was checked by reading pixels.
+
+**Open**
+- The owner chooses Aurora or Metro after the preview. Then that branch goes to main and production on approval.
+- Not yet walked as a real INSTRUCTOR or PARENT account in the browser (needs the owner's sign-in).
+- Lighthouse on the home page with the 3D hero not measured yet.
+
 ## 2026-11-01: Curriculum Metro redesign, marketplace stage, teacher control (uncommitted)
 
 All of the following is in the working tree, **not committed or deployed**. The owner approves push and deploy.

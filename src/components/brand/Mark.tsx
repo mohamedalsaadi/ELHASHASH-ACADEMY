@@ -6,8 +6,8 @@ function Glyph({ className = "", ...rest }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox={MARK_VIEWBOX} aria-hidden="true" fill="none" strokeWidth="6" className={`shrink-0 ${className}`} {...rest}>
       <path d={A_PATH} stroke="currentColor" />
-      <path d={PLUS_H} className="stroke-line-eg" />
-      <path d={PLUS_V} className="stroke-line-ae" />
+      <path d={PLUS_H} className="stroke-aurora-1" />
+      <path d={PLUS_V} className="stroke-aurora-4" />
       <circle {...ROUNDEL} className="fill-surface" stroke="currentColor" strokeWidth="3" />
     </svg>
   );
@@ -39,7 +39,7 @@ export function EmptyMark({ size = 56 }: { size?: number }) {
 
 export function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid justify-items-center gap-3 rounded-lg border border-dashed border-rule bg-surface p-8 text-center">
+    <div className="grid justify-items-center gap-3 rounded-lg border border-dashed border-rule bg-surface/60 p-10 text-center">
       <EmptyMark />
       {children}
     </div>

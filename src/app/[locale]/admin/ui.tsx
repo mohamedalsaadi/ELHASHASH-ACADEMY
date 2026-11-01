@@ -13,7 +13,7 @@ import { addTeacher, changePassword, createCourse, inviteTeacher, resetPassword 
 import { field, label } from "./styles";
 
 const button =
-  "rounded-sm border border-ink-muted px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised disabled:cursor-not-allowed disabled:opacity-45";
+  "rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised disabled:cursor-not-allowed disabled:opacity-45";
 
 export function SaveButton({ children, danger }: { children?: React.ReactNode; danger?: boolean }) {
   const t = useTranslations("admin");

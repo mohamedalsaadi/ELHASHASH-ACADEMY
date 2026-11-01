@@ -35,7 +35,7 @@ export function Countdown({ at, locale }: { at: string; locale: string }) {
   const s = Math.floor((left ?? 0) / 1000);
   const parts = [Math.floor(s / 86400), Math.floor(s / 3600) % 24, Math.floor(s / 60) % 60, s % 60];
   return (
-    <p dir="ltr" role="timer" aria-live="off" className="num font-display text-display font-extrabold tracking-wide">
+    <p dir="ltr" role="timer" aria-live="off" className="num font-display text-display font-bold tracking-wide">
       {left === null ? "--:--:--" : `${parts[0] ? `${day.format(parts[0])} ` : ""}${parts.slice(1).map((x) => n.format(x)).join(":")}`}
     </p>
   );

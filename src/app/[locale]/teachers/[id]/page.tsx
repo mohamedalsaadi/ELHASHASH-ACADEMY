@@ -39,18 +39,18 @@ export default async function PublicTeacherPage({ params }: { params: Promise<{ 
 
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
-      <header className="flex flex-wrap items-center gap-5 border-b-(length:--line) border-ink pb-6">
+      <header className="flex flex-wrap items-center gap-5 border-b border-hairline pb-6">
         {user.photoUrl ? (
           // Same-origin stream from the private store.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/avatars/${user.id}`} alt="" className="size-24 rounded-full border-4 border-ink object-cover" />
+          <img src={`/api/avatars/${user.id}`} alt="" className="size-24 rounded-full ring-4 ring-surface shadow-float object-cover" />
         ) : (
-          <span aria-hidden="true" className="grid size-24 place-items-center rounded-full border-4 border-ink bg-raised font-display text-h2 font-extrabold">
+          <span aria-hidden="true" className="grid size-24 place-items-center rounded-full ring-4 ring-surface shadow-float bg-raised font-display text-h2 font-bold">
             {user.name.trim().charAt(0)}
           </span>
         )}
         <div className="grid gap-1">
-          <h1 className="font-display text-h1 font-extrabold">{user.name}</h1>
+          <h1 className="font-display text-h1 font-bold">{user.name}</h1>
           {subjects.length > 0 && <p className="font-display font-semibold">{subjects.join(" · ")}</p>}
           {bio && (
             <p className="max-w-[60ch] text-small text-ink-muted" dir="auto">
@@ -61,7 +61,7 @@ export default async function PublicTeacherPage({ params }: { params: Promise<{ 
       </header>
 
       <section className="grid gap-3">
-        <h2 className="font-display text-h2 font-extrabold">{t("coursesTaught")}</h2>
+        <h2 className="font-display text-h2 font-bold">{t("coursesTaught")}</h2>
         <ul className="grid gap-5 sm:grid-cols-2">
           {user.courses.map((c) => (
             <li key={c.id}>

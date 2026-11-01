@@ -35,6 +35,36 @@ Everything uncertain goes to `/admin/transfers` for one-click approval. A studen
 receipt is supporting evidence, never proof: it can be edited, so it never approves anything
 on its own.
 
+## Ziina: card payments in AED during the beta
+
+Ziina's **Professional** tier takes card payments with **no trade licence**, and has a hosted
+checkout, a status webhook and refunds. In this app it is selected only for **AED** carts when
+`ZIINA_API_KEY` is set and `ZIINA_ENABLED` is not `0`. Paymob still takes EGP, Stripe everything
+else.
+
+Two design consequences worth keeping in mind:
+
+- **The webhook is a trigger, not evidence.** Ziina's public docs do not describe the payload or
+  its signature, so `/api/webhooks/ziina` only harvests a candidate intent id, finds our own
+  pending order, and re-fetches the intent from Ziina before settling. A forged call can cause a
+  lookup and a GET; it cannot mark anything paid. The result page is therefore the primary
+  settlement path and the webhook the backstop.
+- **The intent carries no metadata**, so the order is found by our `Order.gatewayOrderId`. That
+  write is retried and must never be allowed to mark a real payment as `FAILED`.
+
+Test mode (`ZIINA_TEST=1`) creates intents that complete without money. It is refused on a
+production deployment, both when selecting the gateway and when creating an intent.
+
+### Switching Ziina off later
+
+1. Set `ZIINA_ENABLED=0` — new AED checkouts fall back to Stripe immediately.
+2. Wait until no `PENDING` Ziina orders remain, then remove the inbound webhook in Ziina's
+   dashboard.
+3. **Keep `ZIINA_API_KEY`** until every Ziina order is past its refund window; refunds and any
+   delayed webhook still need it.
+4. Remove the key last. No database change is needed at any step: each `Order` records the
+   gateway that took it, and entitlements, ledger and history are untouched.
+
 ## What this is not
 
 - Not a card processor and not a merchant of record.
@@ -77,4 +107,5 @@ only for an exception the owner handles by hand, as it always did.
 |---|---|
 | 2026-11-02 | Bank transfer + receipt + owner approval built as the bridge. |
 | 2026-11-02 | Bank-alert email path added, auto-approval off by default, exact-match only. |
-| — | Pending: licence issued → Stripe live → remove the bridge per the steps above. |
+| 2026-11-02 | Ziina added for AED card payments at the Professional tier; no trade licence needed. |
+| — | Pending: licence issued → Stripe live → set `ZIINA_ENABLED=0`, then remove the bridge. |

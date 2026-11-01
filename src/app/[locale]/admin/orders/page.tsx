@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 const PAGE = 50;
 const STATUSES = ["PENDING", "PAID", "FAILED", "EXPIRED", "REFUNDED"] as const;
-const GATEWAYS = ["PAYMOB", "STRIPE", "MANUAL"] as const;
+const GATEWAYS = ["PAYMOB", "STRIPE", "MANUAL", "ZIINA"] as const;
 const button = "min-h-11 rounded-sm border border-ink-muted px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

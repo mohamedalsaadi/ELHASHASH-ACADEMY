@@ -12,6 +12,7 @@ import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { blobInfo, coverPrefix } from "@/lib/blob";
 import type { FinanceConfig } from "@/lib/finance";
 import { saveBankDetails, saveFinanceConfig } from "@/lib/platform-settings";
+import { refundIntent } from "@/lib/ziina";
 import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
 import { toMinor } from "@/lib/format";
@@ -360,13 +361,19 @@ export async function markOrderPaid(form: FormData) {
 export async function refundOrder(form: FormData) {
   const me = await requireAdmin();
   const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
-  const order = await db.order.findUniqueOrThrow({ where: { id }, select: { id: true, status: true, gateway: true, gatewayOrderId: true } });
+  const order = await db.order.findUniqueOrThrow({
+    where: { id },
+    select: { id: true, status: true, gateway: true, gatewayOrderId: true, total: true, vat: true, currency: true },
+  });
   if (order.status !== "PAID") return;
 
   if (order.gateway === "STRIPE" && order.gatewayOrderId) {
     const session = await stripe().checkout.sessions.retrieve(order.gatewayOrderId);
     const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
     if (paymentIntent) await stripe().refunds.create({ payment_intent: paymentIntent });
+  } else if (order.gateway === "ZIINA" && order.gatewayOrderId) {
+    // The refund id is derived from the order, so a retry or a double-click is one refund.
+    await refundIntent({ orderId: order.id, paymentIntentId: order.gatewayOrderId, amount: order.total + order.vat });
   }
 
   await db.$transaction(async (trx) => {

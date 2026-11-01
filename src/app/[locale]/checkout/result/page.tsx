@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { getBankDetails } from "@/lib/platform-settings";
 import { stripe, syncCheckoutSession } from "@/lib/stripe";
+import { syncPaymentIntent } from "@/lib/ziina";
 import { PendingPoll } from "./PendingPoll";
 import { ReceiptUpload } from "./ReceiptUpload";
 
@@ -46,6 +47,13 @@ export default async function ResultPage({
   if (order.status === "PENDING" && order.gateway === "STRIPE" && order.gatewayOrderId) {
     const cs = await stripe().checkout.sessions.retrieve(order.gatewayOrderId);
     await syncCheckoutSession(cs, `stripe:${cs.id}:${cs.status}:${cs.payment_status}`);
+    order = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: { select: { skuId: true } } } });
+  }
+
+  // Ziina's webhook cannot be trusted for shape, so the return page is the primary settlement
+  // path; the webhook is the backstop. Both settle through the same idempotent event id.
+  if (order.status === "PENDING" && order.gateway === "ZIINA" && order.gatewayOrderId) {
+    await syncPaymentIntent(order).catch((e) => console.error("[ziina] result sync failed", order!.id, e));
     order = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: { select: { skuId: true } } } });
   }
 

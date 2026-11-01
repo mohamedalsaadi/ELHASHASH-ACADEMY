@@ -70,6 +70,8 @@ enum Gateway {
   PAYMOB
   STRIPE
   MANUAL
+  /// UAE card payments through Ziina, used while the academy has no trade licence.
+  ZIINA
 }
 
 enum PaymentMethod {

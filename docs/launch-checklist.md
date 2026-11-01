@@ -78,6 +78,7 @@ Each line says what was checked instead, and how to close it.
 - [ ] **Paymob.** Callback and response URLs to `https://<domain>/api/webhooks/paymob`; `PAYMOB_HMAC_SECRET` and the four `PAYMOB_INTEGRATION_*` ids from the dashboard. EGP only.
 - [ ] **Resend.** Verify the sending domain (SPF, DKIM, DMARC); set `RESEND_API_KEY` and `MAIL_FROM`.
 - [ ] **Bank transfer is a temporary bridge**, removed once Stripe live is enabled. The why, the flow and the removal steps are in `docs/payment-bridge.md`.
+- [ ] **Ziina (AED card payments, beta).** Set `ZIINA_API_KEY` and leave `ZIINA_ENABLED` on; register the webhook at `https://<domain>/api/webhooks/ziina` in Ziina's dashboard. Keep `ZIINA_TEST=0` on production — a test intent completes without money and the code refuses it there anyway. Confirm the merchant fee in writing; their public fee page does not state one.
 - [ ] **Bank-alert inbox (optional).** Enable receiving on `inbound.<domain>` in Resend, add its MX records, and point the `email.received` webhook at `/api/webhooks/bank-email`. Set `RESEND_WEBHOOK_SECRET`, `BANK_INBOUND_ADDRESS`, `BANK_SENDER_ALLOWLIST`, and leave `BANK_AUTO_APPROVE=0` until one real alert parses and matches an order correctly. If the bank only emails the registered address, forwarding breaks SPF/DKIM: keep auto-approval off and use the review queue. The bank cannot be read directly; the alert email is the only signal.
 - [ ] **Support channels.** `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` — the only contacts contact masking lets through.
 - [ ] **One test purchase end-to-end** after DNS, because `APP_URL` changes the callbacks.
@@ -99,6 +100,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `DAILY_API_KEY` | yes | live lectures |
 | `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_{CARD,WALLET,KIOSK,VALU}` | for Egypt | without them EGP checkout falls back to Stripe |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | yes | test keys |
+| `ZIINA_API_KEY` | beta | AED card payments; `ZIINA_ENABLED=0` switches them off |
 | `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` | recommended | support identity and masking allow-list |
 | `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
 

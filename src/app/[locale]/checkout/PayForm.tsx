@@ -5,7 +5,7 @@ import { useState } from "react";
 
 type Method = "CARD" | "WALLET" | "KIOSK" | "VALU";
 
-export function PayForm({ skuIds, locale, methods, gateway, coupon }: { skuIds: string[]; locale: string; methods: Method[]; gateway: "PAYMOB" | "STRIPE"; coupon?: string }) {
+export function PayForm({ skuIds, locale, methods, gateway, coupon }: { skuIds: string[]; locale: string; methods: Method[]; gateway: "PAYMOB" | "ZIINA" | "STRIPE"; coupon?: string }) {
   const t = useTranslations("checkout");
   const [method, setMethod] = useState<Method>(methods[0]);
   const [busy, setBusy] = useState(false);

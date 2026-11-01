@@ -56,6 +56,35 @@ describe("gateway", () => {
     vi.stubEnv("PAYMOB_SECRET_KEY", "");
     expect(activeGateway("EGP").gateway).toBe("STRIPE");
   });
+
+  it("sends AED to Ziina when its key is set, and other currencies stay on Stripe", () => {
+    vi.stubEnv("PAYMOB_SECRET_KEY", "");
+    vi.stubEnv("ZIINA_API_KEY", "test");
+    expect(activeGateway("AED")).toEqual({ gateway: "ZIINA", methods: ["CARD"] });
+    expect(activeGateway("KWD").gateway).toBe("STRIPE");
+    // EGP without Paymob keys still falls back to Stripe, never to Ziina.
+    expect(activeGateway("EGP").gateway).toBe("STRIPE");
+  });
+
+  it("uses Stripe instead when Ziina is switched off", () => {
+    vi.stubEnv("ZIINA_API_KEY", "test");
+    vi.stubEnv("ZIINA_ENABLED", "0");
+    expect(activeGateway("AED").gateway).toBe("STRIPE");
+  });
+
+  it("never selects Ziina when the test flag is set on a production deployment", () => {
+    vi.stubEnv("ZIINA_API_KEY", "test");
+    vi.stubEnv("ZIINA_TEST", "1");
+    vi.stubEnv("VERCEL_ENV", "production");
+    expect(activeGateway("AED").gateway).toBe("STRIPE");
+  });
+
+  it("allows Ziina test mode off production", () => {
+    vi.stubEnv("ZIINA_API_KEY", "test");
+    vi.stubEnv("ZIINA_TEST", "1");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(activeGateway("AED").gateway).toBe("ZIINA");
+  });
 });
 
 describe("courseZone", () => {

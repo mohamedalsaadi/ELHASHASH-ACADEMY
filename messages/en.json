@@ -204,7 +204,8 @@
       "coupon_used_up": "That discount code has reached its limit.",
       "coupon_used_by_you": "You have already used that discount code.",
       "coupon_currency": "That discount code can't be used with this currency.",
-      "method_unavailable": "That payment method isn’t available right now. Pick another one."
+      "method_unavailable": "That payment method isn’t available right now. Pick another one.",
+      "cap_reached": "Card payments have reached this month's limit. Pay by bank transfer instead, or try again next month."
     },
     "couponErrors": {
       "invalid": "That code isn't valid.",
@@ -258,7 +259,8 @@
     "gateways": {
       "PAYMOB": "Paymob",
       "STRIPE": "Stripe",
-      "MANUAL": "Manual"
+      "MANUAL": "Manual",
+      "ZIINA": "Ziina"
     }
   },
   "catalog": {
@@ -903,6 +905,7 @@
     "confirmRefund": "Refund this order and end its access?",
     "confirmMarkPaid": "Mark this order as paid and grant access?",
     "refundHint": "Refunds the amount through Stripe and ends the access it granted.",
+    "refundZiinaHint": "Refunds the amount through Ziina and ends the access it granted.",
     "refundPaymobHint": "For Paymob, refund in the Paymob dashboard first, then press the button to end access and record it.",
     "orderStatus": {
       "PENDING": "Pending",

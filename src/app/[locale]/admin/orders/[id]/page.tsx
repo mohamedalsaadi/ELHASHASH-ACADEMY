@@ -151,7 +151,9 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
           {o.status === "PAID" && (
             <form action={refundOrder} className="grid gap-2">
               <input type="hidden" name="id" value={o.id} />
-              <p className="text-small text-ink-muted">{o.gateway === "PAYMOB" ? t("refundPaymobHint") : t("refundHint")}</p>
+              <p className="text-small text-ink-muted">
+                {o.gateway === "PAYMOB" ? t("refundPaymobHint") : o.gateway === "ZIINA" ? t("refundZiinaHint") : t("refundHint")}
+              </p>
               <div>
                 <ConfirmButton
                   action={refundOrder}

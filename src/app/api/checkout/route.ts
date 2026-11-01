@@ -5,13 +5,14 @@ import { priceSkus } from "@/lib/checkout";
 import { resolveCoupon } from "@/lib/coupon-resolve";
 import { db } from "@/lib/db";
 import { vatOn } from "@/lib/finance";
-import { activeGateway, stripeUnitAmount, type Method } from "@/lib/gateway";
+import { activeGateway, stripeTestKeyInProduction, stripeUnitAmount, type Method } from "@/lib/gateway";
 import { createIntention } from "@/lib/paymob";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { applyCoupon, PricingError } from "@/lib/pricing-engine";
 import { checkoutSchema } from "@/lib/schemas/checkout";
 import { stripe } from "@/lib/stripe";
+import { createIntent, ziinaCapReached } from "@/lib/ziina";
 
 // Kiosk orders wait for cash; after this window the reference is treated as expired.
 const PENDING_TTL_MS = 72 * 60 * 60 * 1000;
@@ -60,6 +61,10 @@ export async function POST(req: Request) {
   const free = payable === 0;
   const { gateway, methods } = free ? { gateway: "MANUAL" as const, methods: [] as Method[] } : activeGateway(priced.currency);
   if (!free && !methods.includes(method)) return NextResponse.json({ error: "method_unavailable" }, { status: 400 });
+  // Ziina's Professional tier caps monthly receipts; refuse rather than fall back to test Stripe.
+  if (gateway === "ZIINA" && (await ziinaCapReached(payable))) {
+    return NextResponse.json({ error: "cap_reached" }, { status: 409 });
+  }
 
   const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id } });
   const net = (l: (typeof priced.lines)[number]) => l.price - l.discount - l.couponDiscount;
@@ -106,10 +111,12 @@ export async function POST(req: Request) {
     .filter((i) => i.amountCents > 0);
   if (vat > 0) items.push({ name: `VAT (${cfg.vatRateBp / 100}%)`, amountCents: vat });
 
+  let checkoutUrl: string;
+  let gatewayOrderId: string;
   try {
-    let checkoutUrl: string;
-    let gatewayOrderId: string;
     if (gateway === "STRIPE") {
+      // A test key in production would take fake payments. Refuse rather than pretend.
+      if (stripeTestKeyInProduction()) throw new Error("stripe_test_key_in_production");
       const cs = await stripe().checkout.sessions.create({
         mode: "payment",
         client_reference_id: order.id,
@@ -125,6 +132,16 @@ export async function POST(req: Request) {
       });
       checkoutUrl = cs.url!;
       gatewayOrderId = cs.id;
+    } else if (gateway === "ZIINA") {
+      const intent = await createIntent({
+        amount: payable,
+        // Human fallback for support; never parsed as authority.
+        message: `Order ${order.id}`,
+        successUrl: resultUrl,
+        cancelUrl: resultUrl,
+      });
+      checkoutUrl = intent.redirectUrl;
+      gatewayOrderId = intent.id;
     } else {
       const intention = await createIntention({
         amountCents: payable,
@@ -139,11 +156,22 @@ export async function POST(req: Request) {
       checkoutUrl = intention.checkoutUrl;
       gatewayOrderId = intention.intentionId;
     }
-    await db.order.update({ where: { id: order.id }, data: { gatewayOrderId } });
-    return NextResponse.json({ orderId: order.id, checkoutUrl });
   } catch (e) {
     await db.order.update({ where: { id: order.id }, data: { status: "FAILED" } });
     console.error(e);
     return NextResponse.json({ error: "gateway_unavailable" }, { status: 502 });
   }
+
+  // Kept apart from creation: a provider that does not echo our order id (Ziina) would leave a
+  // real payment orphaned if this write failed and we marked the order FAILED.
+  try {
+    await db.order.update({ where: { id: order.id }, data: { gatewayOrderId } });
+  } catch {
+    try {
+      await db.order.update({ where: { id: order.id }, data: { gatewayOrderId } });
+    } catch {
+      console.error("[checkout] gatewayOrderId write failed", { orderId: order.id, gatewayOrderId });
+    }
+  }
+  return NextResponse.json({ orderId: order.id, checkoutUrl });
 }

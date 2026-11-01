@@ -31,9 +31,6 @@ export function CourseCard({ course: c, locale }: { course: CardCourse; locale: 
         </span>
       )}
       <span className="grid content-start gap-1 p-5">
-        {c.units.some((u) => u.isFree) && (
-          <span className="mb-1 justify-self-start rounded-full bg-marker/20 px-2.5 py-0.5 text-label font-bold text-ink">{t("freeUnit")}</span>
-        )}
         <span className="flex items-center gap-2 text-small text-ink-muted">
           <i
             aria-hidden="true"

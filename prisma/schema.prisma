@@ -269,6 +269,7 @@ model Unit {
   order    Int
   titleAr  String
   titleEn  String
+  /// Cancelled 2026-11-01: always false (migration 20261104120000_cancel_free_units). Kept for additive migrations.
   isFree   Boolean @default(false)
   /// School term, 1 or 2; a SEMESTER plan opens the units of its term.
   term     Int     @default(1)

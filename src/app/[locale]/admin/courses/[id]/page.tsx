@@ -155,10 +155,6 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                   ))}
                 </select>
               </label>
-              <label className={`${check} min-h-11`}>
-                <input type="checkbox" name="isFree" defaultChecked={u.isFree} className="size-4" />
-                {t("freeUnit")}
-              </label>
               <SaveButton />
             </form>
 

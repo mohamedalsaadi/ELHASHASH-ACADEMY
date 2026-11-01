@@ -105,7 +105,7 @@
     "promotions": "Offers",
     "noCountries": "Countries are being prepared. Check back soon.",
     "trust": {
-      "free": "A free unit, when a course has one, shows on its card",
+      "free": "The full price is shown before you pay",
       "device": "One device per account, to protect lessons",
       "pay": "Secure card payment",
       "lang": "In Arabic and English"
@@ -139,8 +139,8 @@
         "b": "Your country, then your grade, then the subject."
       },
       "s2": {
-        "t": "Unit 1 is free",
-        "b": "Watch the lessons and do the practice without paying."
+        "t": "See it all before you pay",
+        "b": "Lessons, sessions and the full price are shown before you sign up."
       },
       "s3": {
         "t": "Pick a teacher’s course",
@@ -163,7 +163,7 @@
     },
     "eyebrow": "Egypt and the Gulf · Grades 1 to 12",
     "roles": {
-      "title": "Everything students, parents and teachers need.",
+      "title": "Everything a student and a parent need.",
       "student": {
         "k": "Students",
         "t": "Your country's teachers, their sessions and prices.",
@@ -175,17 +175,11 @@
         "t": "Follow your child and pay for them.",
         "b": "Lessons, homework, exams and attendance, with a weekly report by email.",
         "cta": "Parent account"
-      },
-      "teacher": {
-        "k": "Teachers",
-        "t": "Your course, your price, your students.",
-        "b": "Publish your courses, set your prices, follow your students and earnings.",
-        "cta": "Teach with us"
       }
     },
     "final": {
       "title": "Ready for your A+?",
-      "body": "The first unit is free on many courses. Start now."
+      "body": "Pick your grade's course and start today."
     },
     "statsLabel": "Real numbers from today's catalogue"
   },
@@ -702,13 +696,15 @@
       "invalid_grade": "Choose your grade.",
       "phone_taken": "This number already has an account. Sign in instead.",
       "too_many": "Too many new accounts from this network. Try again in an hour."
-    }
+    },
+    "teacherQ": "A teacher who wants to join?",
+    "teacherLink": "Contact us"
   },
   "dashboard": {
     "title": "Student dashboard",
     "hello": "Hi, {name}",
     "myCourses": "My courses",
-    "empty": "You haven't subscribed to a course yet. Start with the free unit in any subject.",
+    "empty": "You haven't subscribed to a course yet. Browse your grade's courses to start.",
     "browse": "Browse courses",
     "until": "Open until {date}",
     "forever": "Open with no end date",

@@ -89,7 +89,7 @@ export async function updateCourse(form: FormData) {
 export async function updateUnit(form: FormData) {
   const me = await requireStaff();
   const { id, ...data } = z
-    .object({ id: z.string(), titleAr: text, titleEn: text, isFree: checkbox, term })
+    .object({ id: z.string(), titleAr: text, titleEn: text, term })
     .parse(Object.fromEntries(form));
   await assertCourse(me, await unitCourse(id));
   await db.unit.update({ where: { id }, data });

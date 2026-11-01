@@ -23,6 +23,14 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-01: Free unit cancelled, no teacher marketing
+
+- Owner decision: no free unit. Migration `20261104120000_cancel_free_units` set the 4 free units to paid (ids in
+  the SQL comment, **applied to Neon**). The admin switch, the course-page "start the free unit" button, the free chip
+  and the course-card badge are gone; `Unit.isFree` stays in the schema, always false.
+- Home no longer markets to teachers (the teacher tile is removed). Teachers join only through a small
+  "A teacher who wants to join? Contact us" line on `/signup`, which links to `/contact`.
+
 ## 2026-11-01: "Aurora" redesign and role gaps (branch `redesign-aurora`)
 
 A second, competing design on its own branch, cut from `redesign-curriculum-metro` so the marketplace, teacher-control

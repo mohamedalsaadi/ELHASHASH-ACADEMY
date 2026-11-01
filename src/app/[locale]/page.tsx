@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, ArrowRight, BookOpenCheck, ChartNoAxesColumnIncreasing, Presentation } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenCheck, ChartNoAxesColumnIncreasing } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Intro } from "@/components/brand/Intro";
@@ -69,7 +69,6 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const roles = [
     { key: "student", href: "/courses", Icon: BookOpenCheck },
     { key: "parent", href: "/signup?type=PARENT", Icon: ChartNoAxesColumnIncreasing },
-    { key: "teacher", href: "/contact", Icon: Presentation },
   ] as const;
 
   const jsonLd = [
@@ -154,7 +153,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <li
                 key={key}
                 className={`relative isolate grid content-start gap-3 overflow-hidden rounded-lg p-7 md:p-9 ${
-                  i === 0 ? "stage md:col-span-6 lg:col-span-4 lg:row-span-2" : "card md:col-span-3 lg:col-span-2"
+                  i === 0 ? "stage md:col-span-4" : "card md:col-span-2"
                 }`}
               >
                 <Icon aria-hidden="true" className={`size-7 ${i === 0 ? "text-aurora-3" : "text-primary"}`} strokeWidth={1.75} />

@@ -194,7 +194,6 @@ export default async function CoursePage({
     if (pct !== null) notes.push({ text: t("percentOff", { pct }), good: true });
     return { id: s.id, label, price: formatMoney(price, s.currency, locale), was: pct !== null ? formatMoney(s.price, s.currency, locale) : undefined, notes };
   };
-  const firstFree = course.units.find((u) => u.isFree)?.lessons[0];
   const zone = courseZone(course);
   const lessonHref = (id: string) => `/courses/${course.slug}/lessons/${id}`;
   const live = course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime());
@@ -277,14 +276,7 @@ export default async function CoursePage({
                 {t("planPanel.renew")}
                 <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
               </Link>
-            ) : (
-              firstFree && (
-                <Link href={lessonHref(firstFree.id)} className="btn btn-primary">
-                  {t("startFree")}
-                  <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
-                </Link>
-              )
-            )}
+            ) : null}
           </>
         }
       />
@@ -370,7 +362,6 @@ export default async function CoursePage({
               <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
                 <span className="flex items-center gap-2">
                   <span className="font-display text-h3 font-bold">{ar ? u.titleAr : u.titleEn}</span>
-                  {u.isFree && <StatusChip tone="neutral">{t("free")}</StatusChip>}
                 </span>
                 <span className="num text-label text-ink-muted">{t("unitCount", { done, total: u.lessons.length })}</span>
               </summary>

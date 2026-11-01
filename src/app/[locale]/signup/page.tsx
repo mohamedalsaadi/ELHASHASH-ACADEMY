@@ -42,6 +42,13 @@ export default async function SignUpPage({
           {t("signIn")}
         </Link>
       </p>
+      {/* Teachers are invited, not marketed to: this line is their only door on the public site. */}
+      <p className="text-label text-ink-muted">
+        {t("teacherQ")}{" "}
+        <Link href="/contact" className="underline underline-offset-4 hover:text-ink">
+          {t("teacherLink")}
+        </Link>
+      </p>
     </main>
   );
 }

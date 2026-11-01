@@ -1,6 +1,6 @@
-# AAcademy — Milestone 1 Spec (Website MVP)
+# A+ Academy — Milestone 1 Spec (Website MVP)
 
-> Archived: the brand was renamed to AAcademy on 2026-10-25. This spec describes the original MVP.
+> Archived: the brand is now A+ Academy (renamed 2026-10-25, then again 2026-11-01). This spec describes the original MVP.
 
 Source: the original development plan. Markets: Egypt (primary, Thanawya Amma) and UAE.
 

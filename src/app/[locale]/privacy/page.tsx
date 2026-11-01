@@ -12,7 +12,7 @@ const ar: Section[] = [
     h: "من نحن",
     body: (
       <p>
-        AAcademy منصة تعليمية في الإمارات العربية المتحدة. تشرح هذه السياسة ما نجمعه وكيف نستخدمه. للتواصل بشأن الخصوصية:{" "}
+        A+ Academy منصة تعليمية في الإمارات العربية المتحدة. تشرح هذه السياسة ما نجمعه وكيف نستخدمه. للتواصل بشأن الخصوصية:{" "}
         <Mail />.
       </p>
     ),
@@ -95,7 +95,7 @@ const en: Section[] = [
     h: "Who we are",
     body: (
       <p>
-        AAcademy is an education platform in the United Arab Emirates. This policy explains what we collect and how we use it.
+        A+ Academy is an education platform in the United Arab Emirates. This policy explains what we collect and how we use it.
         For privacy questions: <Mail />.
       </p>
     ),

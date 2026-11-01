@@ -3,7 +3,7 @@ import { monogramSvg, svgUri } from "./brand-svg";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "AAcademy";
+export const alt = "A+ Academy";
 
 // Night ground with the lapis fold slash, the wordmark and the tagline in both languages.
 export default function OpengraphImage() {
@@ -15,7 +15,7 @@ export default function OpengraphImage() {
           <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={svgUri(monogramSvg("#F6F7FB"))} width={150} height={94} alt="" />
-            <div style={{ fontSize: 86, fontWeight: 700, letterSpacing: -2 }}>AAcademy</div>
+            <div style={{ fontSize: 86, fontWeight: 700, letterSpacing: -2 }}>A+ Academy</div>
           </div>
           <div style={{ fontSize: 34, color: "#F2B544" }}>Every page counts.</div>
         </div>

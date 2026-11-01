@@ -1,6 +1,6 @@
 // Development seed: a small Egyptian Grade 12 catalog, one bundle rule and a test student.
 // Prices are placeholders in fils, AED only for now (30000 = 300 AED); set real ones from the admin later.
-// Test login (dev only): phone 01000000001, password from SEED_STUDENT_PASSWORD or "aacademy-dev-1234".
+// Test login (dev only): phone 01000000001, password from SEED_STUDENT_PASSWORD or "aplusacademy-dev-1234".
 // On the live database these two accounts are locked (random password); use a separate dev database to test.
 import { config } from "dotenv";
 import bcrypt from "bcryptjs";
@@ -41,11 +41,11 @@ async function main() {
   for (const s of subjects) await db.subject.upsert({ where: { slug: s.slug }, update: {}, create: s });
   const bySlug = Object.fromEntries((await db.subject.findMany()).map((s) => [s.slug, s]));
 
-  const password = process.env.SEED_STUDENT_PASSWORD ?? "aacademy-dev-1234";
+  const password = process.env.SEED_STUDENT_PASSWORD ?? "aplusacademy-dev-1234";
   const instructor = await db.user.upsert({
     where: { phone: "01000000000" },
     update: {},
-    create: { name: "AAcademy Teacher", phone: "01000000000", role: "INSTRUCTOR", passwordHash: await bcrypt.hash(password, 10) },
+    create: { name: "A+ Academy Teacher", phone: "01000000000", role: "INSTRUCTOR", passwordHash: await bcrypt.hash(password, 10) },
   });
   await db.user.upsert({
     where: { phone: "01000000001" },

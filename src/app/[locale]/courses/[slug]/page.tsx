@@ -208,7 +208,7 @@ export default async function CoursePage({
     "@type": "Course",
     name: courseTitle,
     description: (ar ? course.descAr : course.descEn) ?? undefined,
-    provider: { "@type": "Organization", name: "AAcademy", sameAs: siteUrl },
+    provider: { "@type": "Organization", name: "A+ Academy", sameAs: siteUrl },
     url: courseUrl,
     offers: course.skus.map((s) => ({
       "@type": "Offer",

@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
     title: { default: title, template: `%s · ${title}` },
     description,
-    openGraph: { title, description, siteName: "AAcademy", locale: locale === "ar" ? "ar_AE" : "en_US", type: "website" },
+    openGraph: { title, description, siteName: "A+ Academy", locale: locale === "ar" ? "ar_AE" : "en_US", type: "website" },
     twitter: { card: "summary_large_image", title, description },
   };
 }

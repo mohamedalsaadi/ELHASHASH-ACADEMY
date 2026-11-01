@@ -1,6 +1,6 @@
-# AAcademy: rules for every agent
+# A+ Academy: rules for every agent
 
-Brand: **AAcademy**, written in Latin in both locales. Audience: Arabic-speaking secondary students and parents across the whole GCC plus Egypt. The owner talks only to the Manager agent; specialists report to the Manager.
+Brand: **A+ Academy**, written in Latin in both locales. Audience: Arabic-speaking secondary students and parents across the whole GCC plus Egypt. The owner talks only to the Manager agent; specialists report to the Manager.
 
 ## Stack
 - Next.js 15.5 App Router, React 19, TypeScript. Dev server: `npm run dev` (port 3000).

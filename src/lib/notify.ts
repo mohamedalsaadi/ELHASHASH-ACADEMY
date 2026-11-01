@@ -46,7 +46,7 @@ export async function createNotification(input: NotificationInput) {
     const ar = user.locale === "ar";
     const title = ar ? input.titleAr : input.titleEn;
     const body = (ar ? input.bodyAr : input.bodyEn) ?? null;
-    const cta = input.href ? { href: `${appUrl()}${input.href}`, label: ar ? "افتح AAcademy" : "Open AAcademy" } : undefined;
+    const cta = input.href ? { href: `${appUrl()}${input.href}`, label: ar ? "افتح A+ Academy" : "Open A+ Academy" } : undefined;
     const sent = await sendMail({ to: user.email, subject: title, html: emailLayout(title, body ? [body] : [], cta, ar ? "ar" : "en") });
     if (sent) await db.notification.update({ where: { id: notification.id }, data: { emailedAt: new Date() } });
   }

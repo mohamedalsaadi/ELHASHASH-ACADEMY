@@ -77,8 +77,8 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   ] as const;
 
   const jsonLd = [
-    { "@context": "https://schema.org", "@type": "Organization", name: "AAcademy", url: siteUrl, logo: `${siteUrl}/icon.svg` },
-    { "@context": "https://schema.org", "@type": "WebSite", name: "AAcademy", url: siteUrl, inLanguage: ["ar", "en"] },
+    { "@context": "https://schema.org", "@type": "Organization", name: "A+ Academy", url: siteUrl, logo: `${siteUrl}/icon.svg` },
+    { "@context": "https://schema.org", "@type": "WebSite", name: "A+ Academy", url: siteUrl, inLanguage: ["ar", "en"] },
   ];
 
   return (

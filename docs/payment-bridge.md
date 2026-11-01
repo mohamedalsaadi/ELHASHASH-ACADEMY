@@ -2,7 +2,7 @@
 
 **Status:** temporary mitigation. Not a product feature. Remove it when Stripe live is on.
 **Opened:** 2026-11-02. **Owner:** the academy owner. **Review trigger:** the day the
-AAcademy trade licence is issued and Stripe live keys are enabled.
+A+ Academy trade licence is issued and Stripe live keys are enabled.
 
 ## Why this exists
 

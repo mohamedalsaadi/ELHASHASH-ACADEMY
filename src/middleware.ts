@@ -15,7 +15,7 @@ export default function middleware(req: NextRequest) {
     if (given !== password) {
       return new NextResponse("Password required", {
         status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="AAcademy", charset="UTF-8"' },
+        headers: { "WWW-Authenticate": 'Basic realm="A+ Academy", charset="UTF-8"' },
       });
     }
   }

@@ -12,7 +12,7 @@
     "backToTeacher": "Back to teacher dashboard"
   },
   "meta": {
-    "title": "AAcademy",
+    "title": "A+ Academy",
     "description": "Grade 10–12 lessons for students across the GCC and Egypt, with your real scores in front of you."
   },
   "pwa": {
@@ -123,7 +123,7 @@
       "all": "All courses"
     },
     "promotions": "Offers",
-    "announce": "Welcome to AAcademy. Unit 1 of every subject is free.",
+    "announce": "Welcome to A+ Academy. Unit 1 of every subject is free.",
     "announceCta": "Start now",
     "noCountries": "Countries are being prepared. Check back soon.",
     "trust": {
@@ -697,7 +697,7 @@
     "faq": "FAQ",
     "legalNav": "Help and legal",
     "contact": "Contact us",
-    "rights": "AAcademy, United Arab Emirates",
+    "rights": "A+ Academy, United Arab Emirates",
     "tagline": "Every lesson builds confidence."
   },
   "teacher": {
@@ -1052,8 +1052,8 @@
     "invalid": "This link is invalid or has expired."
   },
   "invite": {
-    "metaTitle": "An invitation to teach at AAcademy",
-    "title": "An invitation to teach at AAcademy, {name}",
+    "metaTitle": "An invitation to teach at A+ Academy",
+    "title": "An invitation to teach at A+ Academy, {name}",
     "lede": "You have been invited to teach the subjects below. Choose a password for your account to continue.",
     "password": "Password",
     "confirm": "Confirm password",

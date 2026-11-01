@@ -90,9 +90,9 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
   const ar = locale === "ar";
   await sendMail({
     to: email,
-    subject: ar ? "أهلًا بك في AAcademy" : "Welcome to AAcademy",
+    subject: ar ? "أهلًا بك في A+ Academy" : "Welcome to A+ Academy",
     html: emailLayout(
-      ar ? "أهلًا بك في AAcademy" : "Welcome to AAcademy",
+      ar ? "أهلًا بك في A+ Academy" : "Welcome to A+ Academy",
       [
         ar ? "تم إنشاء حسابك. أكّد بريدك حتى تصلك الإيصالات وتنبيهات الدروس." : "Your account is ready. Confirm your email so receipts and lesson updates reach you.",
       ],

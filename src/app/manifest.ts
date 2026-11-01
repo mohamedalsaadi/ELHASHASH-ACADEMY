@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AAcademy",
-    short_name: "AAcademy",
+    name: "A+ Academy",
+    short_name: "A+ Academy",
     description: "Secondary-school lessons, live classes and real scores for students across the GCC and Egypt.",
     id: "/",
     start_url: "/ar",

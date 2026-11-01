@@ -1,14 +1,14 @@
-# AACADEMY · Design DNA
+# A+ ACADEMY · Design DNA
 
 The single source of truth for every screen. Every colour, size, radius and duration in code comes from this file through `tokens.css`. No raw hex, px or ms values in components.
 
-Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, and the parents who pay. Identity "the illuminated page" (chosen 2026-10-25): two open books laid face down form the double A of AAcademy. Brand book: `docs/brand/brand-book.html`. Arabic first (RTL), English second.
+Audience: secondary students (Grade 10 to 12) across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, and the parents who pay. Identity "the illuminated page" (chosen 2026-10-25): two open books laid face down form the double A monogram. The name became A+ Academy on 2026-11-01 (the earlier trade name was refused); the monogram is kept until the A+ identity replaces it. Brand book: `docs/brand/brand-book.html`. Arabic first (RTL), English second.
 
 ## 0. Brand
 
-**Idea.** A book laid open, spine up, to keep your place is an A. AAcademy holds two of them side by side, tied by one gold ribbon. It promises: pick up exactly where you left off.
+**Idea.** A book laid open, spine up, to keep your place is an A. The monogram holds two of them side by side, tied by one gold ribbon. It promises: pick up exactly where you left off.
 
-**Wordmark.** Latin only, in both locales. The two-A monogram sits beside "AAcademy" set in Readex Pro. The monogram is drawn on a 100-unit cap height with a 14-unit stroke; the double A shares one gold ribbon. Ink is `currentColor`. Code: `src/components/brand/Mark.tsx` (`Wordmark`).
+**Wordmark.** Latin only, in both locales. The two-A monogram sits beside "A+ Academy" set in Readex Pro. The monogram is drawn on a 100-unit cap height with a 14-unit stroke; the double A shares one gold ribbon. Ink is `currentColor`. Code: `src/components/brand/Mark.tsx` (`Wordmark`).
 
 **Monogram.** The double A with its ribbon (`Mark`). Favicon and app icon: lapis tile, vellum A A, gold ribbon (`src/app/icon.svg`, `apple-icon.tsx`). Share image: `opengraph-image.tsx`. Static SVG strings for generated images: `src/app/brand-svg.ts`.
 

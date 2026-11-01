@@ -14,7 +14,7 @@ export function Mark({ size = 24, className = "" }: { size?: number; className?:
   );
 }
 
-/** The wordmark: the monogram plus "AAcademy" in Readex; Latin in both locales. */
+/** The wordmark: the monogram plus "A+ Academy" in Readex; Latin in both locales. */
 export function Wordmark({ className = "" }: { locale?: string; className?: string }) {
   return (
     <span className={`inline-flex items-center gap-[.32em] leading-none ${className}`} dir="ltr">
@@ -22,7 +22,7 @@ export function Wordmark({ className = "" }: { locale?: string; className?: stri
         <path d={RIBBON} strokeWidth="12" className="stroke-marker" />
         <path d={AA} stroke="currentColor" strokeLinejoin="round" />
       </svg>
-      <span className="font-display text-[1em] font-semibold tracking-[-.03em]">AAcademy</span>
+      <span className="font-display text-[1em] font-semibold tracking-[-.03em]">A+ Academy</span>
     </span>
   );
 }

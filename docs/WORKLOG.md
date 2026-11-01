@@ -23,6 +23,17 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-02: New home planet and dawn intro
+
+- The constellation is replaced by a planet (`src/components/three/Planet.tsx`, scene in `planet-scene.ts`):
+  continents as dots from Natural Earth 110m (public domain), packed into `land.ts` (15 KB, regenerate with a
+  d3-geo script: land and the Egypt + GCC region masks on a 0.9° grid). Ocean and atmosphere shaders, a beam on
+  each capital, arcs from Cairo and Abu Dhabi. Colours come from `--color-planet-*` and the aurora tokens.
+- Intro is now 4.2 s: back-lit crescent, dawn sweeps across while the planet turns to the Gulf, capitals light,
+  arcs draw; the copy rises at 3.2 s (`brand.css`, guard timer 4.4 s in `Intro.tsx`). Reduced motion: one still frame.
+- Framing follows the window shape, and the planet turns by the off-axis angle so the Gulf faces the viewer.
+- Checked: tsc, tests, build; ar/en desktop and ar phone in the browser pane. Not seen on a real phone yet.
+
 ## 2026-11-01: Free unit cancelled, no teacher marketing
 
 - Owner decision: no free unit. Migration `20261104120000_cancel_free_units` set the 4 free units to paid (ids in

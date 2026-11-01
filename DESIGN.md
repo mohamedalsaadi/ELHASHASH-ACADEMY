@@ -8,21 +8,21 @@ Audience: secondary students across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, B
 
 ## 0. Brand
 
-**Idea.** One night sky over the region. The intro is a constellation: particles swirl, settle into "A+", then fold into a globe with a pin at each country's capital. After that the site is daylight: white cards on a cool grey ground.
+**Idea.** One night sky over the region. The home hero is a planet: real continents as dots (Natural Earth), Egypt and the GCC warm in their own borders, a beam on each capital and arcs of light from Cairo and Abu Dhabi. The intro is a dawn: the planet starts back-lit with a crescent on its rim, turns to the Gulf as day sweeps across it, then the capitals light and connect. After that the site is daylight: white cards on a cool grey ground.
 
 **Mark.** Same geometry (`src/app/brand-svg.ts`); the + strokes take `aurora-1` and `aurora-4`.
 
 **Wordmark.** Latin only in both locales. Display face Readex Pro, body IBM Plex Sans Arabic (both via `next/font`).
 
-## 1. Theses (validated 2026-11-01, "1 · Constellation")
+## 1. Theses (validated 2026-11-01; planet and dawn intro approved 2026-11-02)
 
 **Visual.** Cool grey ground (`--color-ground`), white cards with a hairline and a soft shadow, large radii, pill buttons. Indigo primary (`--color-primary`), orange earned accent (`--color-marker`). One dark stage (`.stage`, `--color-night`) for the home hero and the final call to action, lit by the aurora gradient (`--color-aurora-1..6`). Gradient text (`.marker`) on one word per heading at most. Country colours survive as a dot or a corner glow.
 
-**Interaction.** Calm and smooth: 160 / 280 / 700 ms on `cubic-bezier(.16,1,.3,1)`. Cards lift 3 px on hover. Sections reveal on scroll with CSS `animation-timeline: view()`. The three.js constellation (`src/components/three/Constellation.tsx`) runs only in the home hero: 3.4 s story on the first visit per tab, any input skips, a still frame under reduced motion, paused off-screen. Forbidden: 3D outside the home hero, autoplay carousels, bounce, scroll-jacking.
+**Interaction.** Calm and smooth: 160 / 280 / 700 ms on `cubic-bezier(.16,1,.3,1)`. Cards lift 3 px on hover. Sections reveal on scroll with CSS `animation-timeline: view()`. The three.js planet (`src/components/three/Planet.tsx`, scene in `planet-scene.ts`, dot masks in `land.ts`) runs only in the home hero: 4.2 s story, copy rises at 3.2 s, on the first visit per tab, any input skips, a still frame under reduced motion, paused off-screen. Forbidden: 3D outside the home hero, autoplay carousels, bounce, scroll-jacking.
 
 **Marketing vs app.** Marketing pages get the stage, the gradient and reveal motion. App pages (dashboard, lessons, teacher, admin, parent, checkout) get cards, pills and state transitions only.
 
-**Allowed patterns:** the night stage, the aurora gradient, gradient text on one word, glass sticky header (the one place blur is allowed), white hairline cards, pill buttons and segmented pill navs, a country-colour dot or glow, scroll reveal, the session-once constellation intro.
+**Allowed patterns:** the night stage, the aurora gradient, gradient text on one word, glass sticky header (the one place blur is allowed), white hairline cards, pill buttons and segmented pill navs, a country-colour dot or glow, scroll reveal, the session-once dawn intro.
 
 ## 2. Genjitsu directives
 

@@ -24,14 +24,14 @@
 }
 @keyframes as-aurora { to { transform: translateX(6%) scale(1.08); } }
 
-/* Intro, 3.4 s, once per tab session (guard in Intro.tsx). The scene spells A+ and wraps it into a globe; the hero
-   copy waits off-stage and rises at 2.6 s. Skipping shows the copy at once. */
+/* Intro, 4.2 s, once per tab session (guard in Intro.tsx). Dawn sweeps across the planet and the capitals light; the hero
+   copy waits off-stage and rises at 3.2 s. Skipping shows the copy at once. */
 .as-intro-skip { display: none; }
 html[data-intro="play"] .as-intro-skip { display: inline-flex; }
 html[data-intro="play"] .as-hero-copy > * {
   opacity: 0;
   animation: as-rise var(--dur-reveal) var(--ease-out) forwards;
-  animation-delay: calc(2600ms + var(--i, 0) * var(--stagger));
+  animation-delay: calc(3200ms + var(--i, 0) * var(--stagger));
 }
 html[data-intro="skip"] .as-hero-copy > * { animation-delay: 0ms; }
 

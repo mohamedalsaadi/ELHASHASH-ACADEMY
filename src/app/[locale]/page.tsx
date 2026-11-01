@@ -7,7 +7,7 @@ import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
 import { JsonLd } from "@/components/JsonLd";
 import { PromoBand } from "@/components/PromoBand";
-import { Constellation } from "@/components/three/Constellation";
+import { Planet } from "@/components/three/Planet";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -80,9 +80,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     <main>
       <JsonLd data={jsonLd} />
 
-      {/* The night stage: the constellation behind, the copy on the start side. On a phone the globe sits above the copy. */}
+      {/* The night stage: the planet behind, the copy on the start side. On a phone the globe sits above the copy. */}
       <section className="stage">
-        <Constellation codes={countries.map((c) => c.code)} rtl={ar} />
+        <Planet codes={countries.map((c) => c.code)} rtl={ar} />
         <Intro skipLabel={t("skipIntro")} />
         <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(52vw,20rem)] pb-14 md:pt-28 md:pb-20">
           <div className="as-hero-copy grid max-w-[38rem] gap-6">

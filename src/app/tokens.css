@@ -31,6 +31,11 @@
   --color-aurora-4: #A16DF3;
   --color-aurora-5: #5B4DFF;
   --color-aurora-6: #2FD3C9;
+  /* Home planet (src/components/three/planet-scene.ts): ocean night and day, land dots, atmosphere. */
+  --color-planet-deep: #070B22;
+  --color-planet-ocean: #1D2266;
+  --color-planet-land: #8F86FF;
+  --color-planet-atmosphere: #6F5CFF;
 
   /* Country accents, one colour each. White type passes 4.5:1 on all but bh, which carries ink. */
   --color-line-eg: #D1293D;

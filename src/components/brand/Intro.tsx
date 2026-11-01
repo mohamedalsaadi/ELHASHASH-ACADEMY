@@ -1,9 +1,9 @@
 // Runs while the HTML is parsed, before the hero paints. Once per tab session, never under reduced motion; without
 // JS nothing is hidden. Any input skips it. A timer always clears the attribute, so an interrupted intro can never
-// leave the hero copy hidden. The scene itself (Constellation) reads the same attribute to play from the top.
-const guard = `try{var d=document.documentElement;if(!sessionStorage.getItem("as-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches){sessionStorage.setItem("as-intro","1");d.dataset.intro="play";var c=function(){delete d.dataset.intro};var s=function(){if(d.dataset.intro==="play"){d.dataset.intro="skip";setTimeout(c,400)}};["pointerdown","keydown","wheel","touchmove"].forEach(function(e){addEventListener(e,s,{once:true,passive:true})});setTimeout(c,3600)}}catch(e){}`;
+// leave the hero copy hidden. The scene itself (Planet) reads the same attribute to play from the top.
+const guard = `try{var d=document.documentElement;if(!sessionStorage.getItem("as-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches){sessionStorage.setItem("as-intro","1");d.dataset.intro="play";var c=function(){delete d.dataset.intro};var s=function(){if(d.dataset.intro==="play"){d.dataset.intro="skip";setTimeout(c,400)}};["pointerdown","keydown","wheel","touchmove"].forEach(function(e){addEventListener(e,s,{once:true,passive:true})});setTimeout(c,4400)}}catch(e){}`;
 
-/** The 3.4 s constellation intro: points of light spell A+, wrap into a globe, the countries light, then the copy rises. */
+/** The 4.2 s dawn intro: the planet turns to the Gulf as day breaks, the capitals light and connect, then the copy rises. */
 export function Intro({ skipLabel }: { skipLabel: string }) {
   return (
     <>

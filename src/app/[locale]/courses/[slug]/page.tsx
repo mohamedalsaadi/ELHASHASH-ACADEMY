@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { logEventLater } from "@/lib/analytics";
-import { CIRCLE_PATH, EmptyState } from "@/components/brand/Mark";
+import { EmptyState } from "@/components/brand/Mark";
 import { JsonLd } from "@/components/JsonLd";
 import { LiveRow } from "@/components/learning/LiveRow";
 import { LessonRow } from "@/components/learning/LessonRow";
@@ -54,16 +55,11 @@ type Offer = { id: string | null; label?: string; price: string; was?: string; n
 /** One plan as a card: what it includes, then each way to buy it with its price per lecture and saving. */
 function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }: { name: string; lines: Line[]; offers: Offer[]; best?: boolean; bestLabel: string; cta: string; className?: string }) {
   return (
-    <li className={`grid content-start gap-4 rounded-lg bg-surface p-5 ${best ? "border-strong border-ink shadow-paper" : "border border-hairline"} ${className}`}>
+    <li className={`grid content-start gap-4 bg-surface p-5 ${best ? "border-2 border-ink border-t-(length:--line)" : "border-2 border-rule"} ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-display text-h3 font-bold">{name}</h3>
         {best && (
-          <span className="relative shrink-0 px-3.5 py-2 font-display text-label font-semibold">
-            <svg viewBox="0 0 48 48" preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 size-full overflow-visible">
-              <path d={CIRCLE_PATH} fill="none" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke" className="stroke-pen" />
-            </svg>
-            <span className="marker">{bestLabel}</span>
-          </span>
+          <span className="shrink-0 bg-marker px-2 py-0.5 font-display text-label font-bold text-ink">{bestLabel}</span>
         )}
       </div>
       <ul className="grid gap-2 text-small">
@@ -89,7 +85,7 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
           {o.id ? (
             <Link
               href={{ pathname: "/checkout", query: { sku: o.id } }}
-              className={`mt-1 rounded-sm px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]" : "border-strong border-ink hover:bg-marker"}`}
+              className={`mt-1 rounded-sm px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-ink" : "border-2 border-ink hover:bg-ink hover:text-on-primary"}`}
             >
               {cta}
             </Link>
@@ -120,6 +116,7 @@ export default async function CoursePage({
   const th = await getTranslations("homework");
   const te = await getTranslations("exam");
   const ar = locale === "ar";
+  const Arrow = ar ? ArrowLeft : ArrowRight;
   const now = new Date();
 
   const course = await db.course.findUnique({
@@ -223,6 +220,9 @@ export default async function CoursePage({
   const upgrades = level === "partial" ? course.skus.filter((s) => lecturesIn(course.units, s) > openPaid) : [];
   const showPlans = level === "none" || (level === "partial" && upgrades.length === 0);
 
+  // The course wears its country's line colour; skill courses have no country and use ink.
+  const line = course.grade ? `var(--color-line-${course.grade.country.code.toLowerCase()}, var(--color-ink))` : "var(--color-ink)";
+
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
       <JsonLd data={jsonLd} />
@@ -232,7 +232,8 @@ export default async function CoursePage({
         <img
           src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`}
           alt=""
-          className="aspect-[16/9] w-full rounded-lg object-cover"
+          className="aspect-[16/9] w-full border-b-(length:--line) object-cover"
+          style={{ borderColor: line }}
         />
       )}
 
@@ -269,15 +270,18 @@ export default async function CoursePage({
             {level !== "none" && !staff && next ? (
               <Link href={lessonHref(next.lesson.id)} className="btn btn-primary">
                 {t("continueCourse")}
+                <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
               </Link>
             ) : lapsed ? (
               <Link href="#packages" className="btn btn-primary">
                 {t("planPanel.renew")}
+                <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
               </Link>
             ) : (
               firstFree && (
                 <Link href={lessonHref(firstFree.id)} className="btn btn-primary">
                   {t("startFree")}
+                  <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
                 </Link>
               )
             )}
@@ -286,7 +290,7 @@ export default async function CoursePage({
       />
 
       {(bestPlan || lapsed || staff) && (
-        <section className="grid gap-2 rounded-md bg-raised p-4 text-small">
+        <section className="grid gap-2 bg-raised p-4 text-small">
           <span className="font-display font-semibold">{t("planPanel.yourPlan")}</span>
           {staff ? (
             <span className="text-ink-muted">{t("staffView")}</span>
@@ -307,6 +311,7 @@ export default async function CoursePage({
               </StatusChip>
               <Link href="#packages" className="w-fit text-pen underline underline-offset-4">
                 {t("planPanel.renew")}
+                <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
               </Link>
             </>
           )}
@@ -321,8 +326,8 @@ export default async function CoursePage({
       )}
 
       {homeworkCount > 0 && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4">
-          <span className="font-display text-h3 font-semibold">{th("title")}</span>
+        <section className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-surface p-4">
+          <span className="font-display text-h3 font-bold">{th("title")}</span>
           <span className="flex items-center gap-3 text-small">
             <span className="num text-ink-muted">{homeworkCount}</span>
             <Link href={`/courses/${slug}/assignments`} className="font-semibold text-pen underline underline-offset-4">
@@ -333,8 +338,8 @@ export default async function CoursePage({
       )}
 
       {examCount > 0 && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4">
-          <span className="font-display text-h3 font-semibold">{te("title")}</span>
+        <section className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-surface p-4">
+          <span className="font-display text-h3 font-bold">{te("title")}</span>
           <span className="flex items-center gap-3 text-small">
             <span className="num text-ink-muted">{examCount}</span>
             <Link href={`/courses/${slug}/exams`} className="font-semibold text-pen underline underline-offset-4">
@@ -345,7 +350,7 @@ export default async function CoursePage({
       )}
 
       <section id="units" className="grid scroll-mt-6 gap-4">
-        <h2 className="font-display text-h2 font-semibold">{t("units")}</h2>
+        <h2 className="font-display text-h2 font-extrabold">{t("units")}</h2>
         {course.units.length === 0 && (
           <EmptyState>
             <p className="text-ink-muted">{t("noUnits")}</p>
@@ -356,10 +361,15 @@ export default async function CoursePage({
           const done = u.lessons.filter((l) => completed.has(l.id)).length;
           const hasCurrent = u.lessons.some((l) => l.id === currentView?.lessonId);
           return (
-            <details key={u.id} open={hasCurrent || (u === course.units[0] && !currentView)} className="rounded-md border border-hairline bg-surface">
+            <details
+              key={u.id}
+              open={hasCurrent || (u === course.units[0] && !currentView)}
+              className="border border-rule border-t-(length:--line) bg-surface"
+              style={{ borderTopColor: line }}
+            >
               <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
                 <span className="flex items-center gap-2">
-                  <span className="font-display text-h3 font-semibold">{ar ? u.titleAr : u.titleEn}</span>
+                  <span className="font-display text-h3 font-bold">{ar ? u.titleAr : u.titleEn}</span>
                   {u.isFree && <StatusChip tone="neutral">{t("free")}</StatusChip>}
                 </span>
                 <span className="num text-label text-ink-muted">{t("unitCount", { done, total: u.lessons.length })}</span>
@@ -401,7 +411,7 @@ export default async function CoursePage({
 
       {live.length > 0 && (
         <section id="live" className="grid scroll-mt-6 gap-4">
-          <h2 className="font-display text-h2 font-semibold">{t("live")}</h2>
+          <h2 className="font-display text-h2 font-extrabold">{t("live")}</h2>
           <ul className="grid gap-3">
             {live.map((l) => {
               const seat = l.sku?.active && (!l.sku.saleTo || l.sku.saleTo > now) ? l.sku : null;
@@ -442,10 +452,10 @@ export default async function CoursePage({
 
       {level === "partial" && upgrades.length > 0 && (
         <section id="packages" className="grid scroll-mt-6 gap-4">
-          <h2 className="font-display text-h2 font-semibold">{t("upgradeTitle")}</h2>
+          <h2 className="font-display text-h2 font-extrabold">{t("upgradeTitle")}</h2>
           <ul className="grid gap-3">
             {upgrades.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4">
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-surface p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`planKind.${s.accessType}`)}</span>
                   <span className="text-small text-ink-muted">
@@ -466,8 +476,8 @@ export default async function CoursePage({
 
       {showPlans && (single || months.length > 0 || terms.length > 0) && (
         <section id="packages" className="grid scroll-mt-6 gap-4">
-          <h2 className="font-display text-h2 font-semibold">{lapsed ? t("renewTitle") : tp("title")}</h2>
-          <ul className="grid gap-4 sm:grid-cols-3">
+          <h2 className="font-display text-h2 font-extrabold">{lapsed ? t("renewTitle") : tp("title")}</h2>
+          <ul className="grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
             {single && (
               <PlanCard
                 name={tp("SINGLE")}
@@ -522,8 +532,8 @@ export default async function CoursePage({
       )}
 
       {bank && showPlans && course.skus.length > 0 && (
-        <section id="transfer" className="grid scroll-mt-6 gap-3 rounded-md border border-hairline bg-surface p-4">
-          <h2 className="font-display text-h2 font-semibold">{t("transfer.title")}</h2>
+        <section id="transfer" className="grid scroll-mt-6 gap-3 border border-rule bg-surface p-4">
+          <h2 className="font-display text-h2 font-extrabold">{t("transfer.title")}</h2>
           <p className="max-w-[65ch] text-small text-ink-muted">{t("transfer.hint")}</p>
           {transferError && (
             <p role="alert" className="text-small text-down">
@@ -550,17 +560,17 @@ export default async function CoursePage({
 
       {level === "none" && !lapsed && !single && months.length === 0 && terms.length === 0 && (
         <section className="grid gap-2">
-          <h2 className="font-display text-h2 font-semibold">{tp("title")}</h2>
+          <h2 className="font-display text-h2 font-extrabold">{tp("title")}</h2>
           <p className="text-ink-muted">{t("noPackages")}</p>
         </section>
       )}
 
       {level === "none" && others.length > 0 && (
         <section className="grid gap-4">
-          <h2 className="font-display text-h2 font-semibold">{tp("other")}</h2>
+          <h2 className="font-display text-h2 font-extrabold">{tp("other")}</h2>
           <ul className="grid gap-3">
             {others.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-hairline bg-surface p-4">
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-4 border border-rule bg-surface p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</span>
                   {s.accessEndsAt && <span className="text-small text-ink-muted">{t("until", { date: formatDate(s.accessEndsAt, zone, locale) })}</span>}

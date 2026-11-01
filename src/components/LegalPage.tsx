@@ -25,14 +25,14 @@ export function LegalPage({
   );
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
-      <div className="grid gap-2">
-        <h1 className="font-display text-h1 font-semibold">{title}</h1>
+      <div className="grid gap-2 border-b-(length:--line) border-ink pb-6">
+        <h1 className="font-display text-h1 font-extrabold">{title}</h1>
         <p className="text-small text-ink-muted">{ar ? `آخر تحديث: ${date}` : `Last updated: ${date}`}</p>
       </div>
       {children}
       {sections.map((s, i) => (
         <section key={s.h} className="grid max-w-[65ch] gap-2">
-          <h2 className="font-display text-h3 font-semibold">
+          <h2 className="font-display text-h3 font-bold">
             <span className="num text-ink-muted">{i + 1}. </span>
             {s.h}
           </h2>

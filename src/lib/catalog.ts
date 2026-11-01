@@ -85,7 +85,10 @@ export function groupByStage<T extends { level: number }>(grades: T[], stages: r
 export function cardInclude(now: Date) {
   return {
     skus: { where: { ...onSale(now), ...wholeCourse }, orderBy: { price: "asc" as const }, take: 10 },
-    units: { where: { isFree: true }, select: { id: true }, take: 1 },
-    grade: true,
+    // Every unit, for the session count and the free-unit badge.
+    units: { select: { isFree: true, _count: { select: { lessons: true } } } },
+    grade: { include: { country: { select: { code: true } } } },
+    subject: { select: { icon: true, nameAr: true, nameEn: true } },
+    instructor: { select: { id: true, name: true } },
   };
 }

@@ -7,7 +7,13 @@ import { CONTACT_EMAIL } from "@/lib/site";
 export async function SiteFooter() {
   const [t, locale] = await Promise.all([getTranslations("footer"), getLocale()]);
   return (
-    <footer className="mt-8 border-t border-hairline bg-surface print:hidden">
+    <footer className="mt-8 bg-surface print:hidden">
+      {/* The seven country lines as one band, Egypt first: the network the whole site is drawn on. */}
+      <div aria-hidden="true" className="flex h-2">
+        {["eg", "sa", "ae", "kw", "qa", "bh", "om"].map((c) => (
+          <i key={c} className="flex-1" style={{ background: `var(--color-line-${c})` }} />
+        ))}
+      </div>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-5 px-4 py-8 text-small text-ink-muted">
         <div className="grid gap-2">
           <span className="justify-self-start text-ink">

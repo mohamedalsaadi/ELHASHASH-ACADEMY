@@ -1,12 +1,12 @@
 import { ImageResponse } from "next/og";
-import { monogramSvg, svgUri } from "../brand-svg";
+import { markSvg, svgUri } from "../brand-svg";
 
 export function GET() {
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#2430D8" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#FFFFFF" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={svgUri(monogramSvg("#F6F7FB"))} width={300} height={188} alt="" />
+        <img src={svgUri(markSvg())} width={300} height={225} alt="" />
       </div>
     ),
     { width: 512, height: 512 },

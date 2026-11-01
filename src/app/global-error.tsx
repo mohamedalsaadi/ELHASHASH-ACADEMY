@@ -15,10 +15,10 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           <h1 style={{ fontSize: 28, margin: "0 0 12px" }}>Something went wrong</h1>
           <p style={{ color: "#545A7A", lineHeight: 1.7 }}>حدث خطأ في تحميل الصفحة. حاول مرة أخرى أو تواصل مع الدعم.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
-            <button onClick={reset} style={{ background: "#2430D8", color: "#fff", border: 0, borderRadius: 6, padding: "12px 18px", fontSize: 15, cursor: "pointer" }}>
+            <button onClick={reset} style={{ background: "#1F6FD1", color: "#fff", border: 0, borderRadius: 2, padding: "12px 18px", fontSize: 15, cursor: "pointer" }}>
               Try again / إعادة المحاولة
             </button>
-            <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: "#2430D8", padding: "12px 6px" }}>
+            <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: "#1F6FD1", padding: "12px 6px" }}>
               Contact / تواصل
             </a>
           </div>

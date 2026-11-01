@@ -80,19 +80,7 @@
     "account": "My account"
   },
   "home": {
-    "eyebrow": "Grades 1 to 12 · Egypt and the Gulf",
-    "headline": "<m>Confidence</m> that grows with every lesson",
-    "lede": "Clear teaching from your teacher, practice after every lesson, and progress you can see in your account. Unit 1 of every subject is free.",
-    "ctaFree": "Start the free unit",
-    "ctaGrade": "Choose your country",
     "skipIntro": "Skip intro",
-    "paper": {
-      "label": "Lesson result · Mathematics",
-      "q": "Q1: Find the limit as x → 2",
-      "a": "Solution: substitute directly…",
-      "score": "Score 48 out of 50",
-      "sample": "Sample result"
-    },
     "stats": {
       "courses": "{count, plural, one {# course} other {# courses}}",
       "lessons": "{count, plural, one {# lesson} other {# lessons}}",
@@ -114,23 +102,64 @@
         "body": "Join your teacher live and ask questions, with a private link that only works for you."
       }
     },
-    "grades": {
-      "title": "Choose your country"
-    },
-    "skills": {
-      "title": "Courses",
-      "lede": "Courses outside the school curriculum, such as IELTS, at one price for a set number of days.",
-      "all": "All courses"
-    },
     "promotions": "Offers",
-    "announce": "Welcome to A+ Academy. Unit 1 of every subject is free.",
-    "announceCta": "Start now",
     "noCountries": "Countries are being prepared. Check back soon.",
     "trust": {
-      "free": "Unit 1 of every subject is free",
+      "free": "A free unit, when a course has one, shows on its card",
       "device": "One device per account, to protect lessons",
       "pay": "Secure card payment",
       "lang": "In Arabic and English"
+    },
+    "headline": "Your school year, one clear line",
+    "lede": "Pick your country, grade and subject, and see every course, its teacher, its sessions and its price before you sign up.",
+    "ctaStart": "Find your course",
+    "ctaParent": "I’m a parent",
+    "mapLabel": "Course map: one line per country, all meeting at A+",
+    "legend": {
+      "title": "Map legend",
+      "caption": "Counted from the catalogue today",
+      "open": "Line in service",
+      "soon": "Under construction",
+      "units": {
+        "courses": "courses",
+        "lessons": "lessons",
+        "subjects": "subjects",
+        "teachers": "teachers"
+      }
+    },
+    "lines": {
+      "title": "Find your line",
+      "lede": "Each country is a line in its own colour. Dashed lines are under construction and open when their first course is published.",
+      "soon": "Under construction"
+    },
+    "how": {
+      "title": "How the trip works",
+      "s1": {
+        "t": "Find your line",
+        "b": "Your country, then your grade, then the subject."
+      },
+      "s2": {
+        "t": "Unit 1 is free",
+        "b": "Watch the lessons and do the practice without paying."
+      },
+      "s3": {
+        "t": "Pick a teacher’s course",
+        "b": "Each teacher sets the sessions and the price, shown up front."
+      },
+      "s4": {
+        "t": "Follow your progress",
+        "b": "A mark after every practice, which parents see too."
+      }
+    },
+    "latest": {
+      "title": "Latest courses",
+      "all": "All courses"
+    },
+    "parent": {
+      "title": "For parents",
+      "body": "The full price is shown before sign-up, in your country’s currency. Follow your child’s marks from a parent account.",
+      "cta": "See courses and prices",
+      "faq": "Questions and answers"
     }
   },
   "signin": {
@@ -266,7 +295,7 @@
   "catalog": {
     "title": "Courses",
     "empty": "No courses are published yet.",
-    "freeUnit": "Unit 1 is free",
+    "freeUnit": "Free unit to try",
     "from": "From",
     "percentOff": "{pct}% off",
     "progress": "{pct}% complete · {done} of {total} lessons",
@@ -390,7 +419,10 @@
     "adminView": "Admin view",
     "allDone": "All available lessons completed.",
     "unitCount": "{done} of {total, plural, one {# lesson} other {# lessons}}",
-    "progressLabel": "Your progress in this course"
+    "progressLabel": "Your progress in this course",
+    "sessions": "{count, plural, one {# session} other {# sessions}}",
+    "subjectLede": "{count, plural, =0 {No teacher has released a course in this subject yet.} one {One course, with the sessions and price its teacher set.} other {# courses, each with the sessions and price its teacher set.}}",
+    "subjectEmpty": "No courses in this subject yet. Check back soon."
   },
   "player": {
     "title": "Lesson",
@@ -720,7 +752,7 @@
     "newCourse": "New course",
     "newCourseHint": "Choose the grade and subject",
     "createCourse": "Create the course",
-    "noSlots": "You have no grades or subjects yet. Ask the admin to add them to your account.",
+    "noSlots": "Your country is not set yet. Ask the admin to add one grade and subject to your account; after that you can open any grade and subject in that country.",
     "courseStudents": "Students: {count}",
     "published": "Published",
     "hidden": "Hidden",
@@ -739,7 +771,9 @@
     "earlyWarning": "Students to check on",
     "earlyWarningHint": "No lesson opened in seven days. Reach out before it becomes a gap.",
     "lastSeen": "Last activity: {date}",
-    "never": "No activity recorded"
+    "never": "No activity recorded",
+    "ownCourses": "You run your own courses: pick any grade and subject in your country, then set the sessions, prices, discounts and cover picture yourself, and publish when you're ready.",
+    "navCourses": "My courses"
   },
   "live": {
     "title": "Live lectures",
@@ -1305,5 +1339,11 @@
     "takeAgain": "Try again",
     "noAttempts": "No attempts left for this exam.",
     "attemptsUsed": "Attempts: {used} of {max}"
+  },
+  "news": {
+    "label": "New",
+    "course": "New course",
+    "discount": "Discount",
+    "offer": "Offer"
   }
 }

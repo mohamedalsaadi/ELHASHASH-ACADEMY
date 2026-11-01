@@ -85,10 +85,10 @@ export function PromoBand({
           <div key={p.id}>
             {wrap(
               p.href,
-              "fold grid content-start gap-2 rounded-lg bg-night p-6 text-on-primary shadow-paper hover-lift [--cut:22px]",
+              "grid h-full content-start gap-2 border-t-(length:--line) border-marker bg-night p-6 text-on-primary hover-lift",
               <>
                 <h2 className="font-display text-h3 font-bold">{ar ? p.titleAr : p.titleEn}</h2>
-                {body && <p className="text-small opacity-80">{body}</p>}
+                {body && <p className="text-small text-night-text">{body}</p>}
               </>,
             )}
           </div>

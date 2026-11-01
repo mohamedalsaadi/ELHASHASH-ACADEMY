@@ -1,17 +1,33 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
-const tab = "rounded-sm px-3 py-2 font-display text-label transition-colors duration-(--dur-fast) ease-(--ease-out)";
+const tab =
+  "rounded-sm px-3 py-2 font-display text-label transition-colors duration-(--dur-fast) ease-(--ease-out)";
 
 export async function TeacherNav({
   current,
 }: {
-  current: "home" | "live" | "assignments" | "bank" | "exams" | "requests" | "analytics" | "questions" | "profile";
+  current:
+    | "home"
+    | "courses"
+    | "live"
+    | "assignments"
+    | "bank"
+    | "exams"
+    | "requests"
+    | "analytics"
+    | "questions"
+    | "profile";
 }) {
   const t = await getTranslations("teacher");
   const items = [
     { key: "home", href: "/teacher", label: t("navHome") },
-    { key: "assignments", href: "/teacher/assignments", label: t("navHomework") },
+    { key: "courses", href: "/teacher#courses", label: t("navCourses") },
+    {
+      key: "assignments",
+      href: "/teacher/assignments",
+      label: t("navHomework"),
+    },
     { key: "bank", href: "/teacher/bank", label: t("navBank") },
     { key: "exams", href: "/teacher/exams", label: t("navExams") },
     { key: "analytics", href: "/teacher/analytics", label: t("navAnalytics") },

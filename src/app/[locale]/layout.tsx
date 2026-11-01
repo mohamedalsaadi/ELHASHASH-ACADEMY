@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Readex_Pro } from "next/font/google";
+import { Alexandria } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -7,14 +7,16 @@ import { ViewTransitions } from "next-view-transitions";
 import { routing } from "@/i18n/routing";
 import { RouteAnnouncer } from "@/components/RouteAnnouncer";
 import { SiteFooter } from "@/components/SiteFooter";
+import { MarketingOnly } from "@/components/MarketingOnly";
+import { NewsBanner } from "@/components/NewsBanner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PwaRegister } from "@/components/PwaRegister";
 import "../globals.css";
 
-const readex = Readex_Pro({
+const alexandria = Alexandria({
   subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-readex",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-alexandria",
   display: "swap",
 });
 
@@ -48,7 +50,7 @@ export default async function LocaleLayout({
   const t = await getTranslations("nav");
 
   return (
-    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={readex.variable}>
+    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={alexandria.variable}>
       <body className="antialiased">
         <a
           href="#main-content"
@@ -59,6 +61,9 @@ export default async function LocaleLayout({
         <PwaRegister />
         <ViewTransitions>
           <NextIntlClientProvider>
+            <MarketingOnly>
+              <NewsBanner />
+            </MarketingOnly>
             <SiteHeader />
             <div id="main-content" tabIndex={-1} className="outline-none">
               {children}

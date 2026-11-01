@@ -46,7 +46,7 @@ body {
 }
 
 @layer components {
-  /* The one action shape. Padding, font and press state live here so 20 call sites cannot drift. */
+  /* The one action shape: a platform sign (square, solid, bold). Hover swaps to ink. Padding, font and press state live here so 20 call sites cannot drift. */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -56,7 +56,7 @@ body {
     padding-inline: 18px;
     border-radius: var(--radius-sm);
     font-family: var(--font-display);
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.25;
     text-align: center;
     transition:
@@ -68,14 +68,15 @@ body {
     color: var(--color-on-primary);
   }
   .btn-primary:hover {
-    background: color-mix(in oklab, var(--color-primary) 86%, #fff);
+    background: var(--color-ink);
   }
   .btn-outline {
     border: var(--border-strong) solid var(--color-ink);
     color: var(--color-ink);
   }
   .btn-outline:hover {
-    background: var(--color-marker);
+    background: var(--color-ink);
+    color: var(--color-on-primary);
   }
   .btn:disabled {
     opacity: 0.45;
@@ -103,72 +104,21 @@ textarea:focus-visible {
   border-color: var(--color-ink);
 }
 
+/* Cards on the network: hover draws an ink ring, like a station lit on the map. No lift: signs don't float. */
 .hover-lift {
-  transition:
-    transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
+  transition: box-shadow var(--dur-fast) var(--ease-out);
 }
 .hover-lift:hover,
 .hover-lift:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-paper);
-}
-
-/* A dog-eared page corner with the gold ribbon hanging from it. Put .page-corner on a wrapper and
-   .fold on the child card: .fold's clip-path would clip these pseudo-elements away. One feature
-   card per view, per DESIGN.md. Static, so reduced motion needs nothing here. */
-.page-corner {
-  --ear: var(--cut, 28px);
-  --ribbon-w: 10px;
-  --ribbon-inset: 8px;
-  --page-corner-crease: color-mix(in oklab, var(--color-ink) 16%, transparent);
-  position: relative;
-  isolation: isolate;
-}
-
-/* The flap covers the triangle .fold removes: --ear wide, --ear * --fold tall.
-   --page-corner-back is read with a fallback, never declared here: this file is unlayered CSS and would
-   outrank the Tailwind arbitrary-property utility that sets it per instance. */
-.page-corner::before {
-  content: "";
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-end: 0;
-  width: var(--ear);
-  height: calc(var(--ear) * var(--fold));
-  background: linear-gradient(135deg, color-mix(in oklab, var(--page-corner-back, var(--color-raised)) 72%, var(--page-corner-crease)), var(--page-corner-back, var(--color-raised)) 70%);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
-  z-index: 2;
-  pointer-events: none;
-}
-[dir="rtl"] .page-corner::before {
-  background: linear-gradient(45deg, color-mix(in oklab, var(--page-corner-back, var(--color-raised)) 72%, var(--page-corner-crease)), var(--page-corner-back, var(--color-raised)) 70%);
-  clip-path: polygon(0 0, 100% 0, 0 100%);
-}
-
-/* The ribbon slips out from under the flap and ends in a notched tail. */
-.page-corner::after {
-  content: "";
-  position: absolute;
-  inset-block-start: calc(var(--ear) * 0.9);
-  inset-inline-end: var(--ribbon-inset);
-  width: var(--ribbon-w);
-  height: calc(var(--ear) * (var(--fold) - 0.9));
-  background: var(--color-marker);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 74%, 0 100%);
-  z-index: 1;
-  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--color-ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  .hover-lift,
-  .hover-lift:hover,
-  .hover-lift:focus-visible {
-    transform: none;
-    box-shadow: none;
+  .hover-lift {
+    transition: none;
   }
   ::view-transition-group(*),
   ::view-transition-old(*),

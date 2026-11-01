@@ -11,7 +11,7 @@ import { db } from "@/lib/db";
 const navItem =
   "inline-flex min-h-11 items-center rounded-sm px-3 py-2 font-display text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 const primaryItem =
-  "inline-flex min-h-11 items-center rounded-sm bg-primary px-4 py-2 font-display text-small font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]";
+  "inline-flex min-h-11 items-center rounded-sm bg-primary px-4 py-2 font-display text-small font-semibold text-on-primary transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-ink";
 
 type NavItem = { href: string; label: string; badge?: number; primary?: boolean };
 
@@ -37,7 +37,7 @@ export async function SiteHeader() {
   }
 
   return (
-    <header className="border-b border-hairline bg-surface print:hidden">
+    <header className="border-b-(length:--line) border-ink bg-surface print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
         <Link href="/" className="flex items-center rounded-sm py-1 text-ink">
           <Wordmark locale={locale} className="text-[1.65rem]" />

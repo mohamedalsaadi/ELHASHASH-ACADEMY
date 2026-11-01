@@ -15,11 +15,11 @@ export function emailLayout(title: string, lines: string[], cta: { href: string;
   const dir = ar ? "rtl" : "ltr";
   return `<!doctype html><html dir="${dir}" lang="${locale}"><body style="margin:0;background:#F6F7FB;font-family:Tahoma,Arial,sans-serif;color:#0D1030">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px">
-    <div style="background:#0B0F4A;color:#fff;border-radius:10px 10px 0 0;padding:20px 24px;font-size:20px;font-weight:700">A+ Academy</div>
+    <div style="background:#111418;color:#fff;border-radius:0;padding:20px 24px;font-size:20px;font-weight:700">A+ Academy</div>
     <div style="background:#fff;border:1px solid #E3E6F3;border-top:0;border-radius:0 0 10px 10px;padding:24px">
       <h1 style="margin:0 0 12px;font-size:20px">${esc(title)}</h1>
       ${lines.map((l) => `<p style="margin:0 0 12px;line-height:1.7">${esc(l)}</p>`).join("")}
-      ${cta ? `<p style="margin:20px 0 0"><a href="${esc(cta.href)}" style="background:#2430D8;color:#fff;text-decoration:none;padding:12px 18px;border-radius:6px;display:inline-block">${esc(cta.label)}</a></p>` : ""}
+      ${cta ? `<p style="margin:20px 0 0"><a href="${esc(cta.href)}" style="background:#1F6FD1;color:#fff;text-decoration:none;padding:12px 18px;border-radius:2px;display:inline-block">${esc(cta.label)}</a></p>` : ""}
     </div>
     <p style="color:#8A90B0;font-size:12px;text-align:center;margin-top:16px">${ar ? "كل صفحة تفرق." : "Every page counts."}</p>
   </div>

@@ -57,11 +57,11 @@ export default async function CoursesPage({
         })
       : Promise.resolve([]),
   ]);
-  const tab = "rounded-full border-strong border-ink px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+  const tab = "inline-flex min-h-11 items-center border-2 border-ink px-4 py-2 font-display font-bold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-ink hover:text-on-primary";
 
   return (
     <main>
-      <section className="border-b border-hairline">
+      <section className="border-b border-rule bg-surface">
         <div className="mx-auto grid max-w-5xl gap-3 px-4 py-10">
           <p className="font-display text-small font-semibold text-pen">{t("eyebrow")}</p>
           <h1 className="font-display text-h1 font-extrabold">{t.rich("pickCountry", { m: (c) => <span className="marker">{c}</span> })}</h1>
@@ -96,7 +96,7 @@ export default async function CoursesPage({
         <section id="results" className="scroll-mt-6 border-b border-hairline">
           <div className="mx-auto grid max-w-5xl gap-4 px-4 py-8">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <h2 className="font-display text-h2 font-semibold">{t("searchResults", { count: results.length })}</h2>
+              <h2 className="font-display text-h2 font-bold">{t("searchResults", { count: results.length })}</h2>
               <Link href="/courses" className="text-small text-pen underline-offset-4 hover:underline">
                 {t("searchClear")}
               </Link>
@@ -116,7 +116,7 @@ export default async function CoursesPage({
         </section>
       )}
       <div className="mx-auto grid max-w-5xl gap-12 px-4 py-10">
-        <ul id="school" className="grid scroll-mt-6 grid-cols-2 gap-4 lg:grid-cols-4">
+        <ul id="school" className="grid scroll-mt-6 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {countries.map((c) => (
             <li key={c.id}>
               <CountryTile country={c} locale={locale} />
@@ -128,8 +128,8 @@ export default async function CoursesPage({
             <p className="text-ink-muted">{t("noCountries")}</p>
           </EmptyState>
         )}
-        <section id="skills" className="grid scroll-mt-6 gap-4 border-t border-hairline pt-10">
-          <h2 className="font-display text-h2 font-semibold">{t("skillTab")}</h2>
+        <section id="skills" className="grid scroll-mt-6 gap-4 border-t-(length:--line) border-ink pt-10">
+          <h2 className="font-display text-h1 font-extrabold">{t("skillTab")}</h2>
           {skills.length ? (
             <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {skills.map((c) => (

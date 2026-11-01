@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Landmark } from "@/components/brand/Landmark";
-import { CIRCLE_PATH, EmptyState } from "@/components/brand/Mark";
+import { EmptyState } from "@/components/brand/Mark";
+import { LineBadge } from "@/components/brand/Network";
 import { Link } from "@/i18n/navigation";
 import { groupByStage } from "@/lib/catalog";
 import { KNOWN_COUNTRIES } from "@/lib/countries";
@@ -13,19 +14,33 @@ import { alternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string; country: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; country: string }>;
+}): Promise<Metadata> {
   const { locale, country: slug } = await params;
-  const country = await db.country.findUnique({ where: { code: slug.toUpperCase(), active: true }, select: { nameAr: true, nameEn: true } });
+  const country = await db.country.findUnique({
+    where: { code: slug.toUpperCase(), active: true },
+    select: { nameAr: true, nameEn: true },
+  });
   if (!country) return {};
   const name = locale === "ar" ? country.nameAr : country.nameEn;
   return {
     title: name,
-    description: locale === "ar" ? `صفوف وكورسات ${name} على A+ Academy.` : `${name} grades and courses on A+ Academy.`,
+    description:
+      locale === "ar"
+        ? `صفوف وكورسات ${name} على A+ Academy.`
+        : `${name} grades and courses on A+ Academy.`,
     alternates: alternates(locale, `/courses/c/${slug.toLowerCase()}`),
   };
 }
 
-export default async function CountryPage({ params }: { params: Promise<{ locale: string; country: string }> }) {
+export default async function CountryPage({
+  params,
+}: {
+  params: Promise<{ locale: string; country: string }>;
+}) {
   const { locale, country: slug } = await params;
   setRequestLocale(locale);
   const code = slug.toUpperCase();
@@ -41,39 +56,75 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
         grades: {
           where: { active: true },
           orderBy: [{ order: "asc" }, { level: "asc" }],
-          include: { _count: { select: { courses: { where: { published: true } } } } },
+          include: {
+            _count: { select: { courses: { where: { published: true } } } },
+          },
         },
       },
     }),
   ]);
   if (!country) notFound();
 
-  const mine = session?.user ? (await db.user.findUnique({ where: { id: session.user.id }, select: { gradeId: true } }))?.gradeId : null;
+  const mine = session?.user
+    ? (
+        await db.user.findUnique({
+          where: { id: session.user.id },
+          select: { gradeId: true },
+        })
+      )?.gradeId
+    : null;
   const numeral = new Intl.NumberFormat(ar ? "ar-EG-u-nu-latn" : "en");
   const name = ar ? country.nameAr : country.nameEn;
   // One tile per level; the URL has no curriculum segment, so the first curriculum wins.
-  const grades = country.grades.filter((g, i, all) => all.findIndex((x) => x.level === g.level) === i);
+  const grades = country.grades.filter(
+    (g, i, all) => all.findIndex((x) => x.level === g.level) === i,
+  );
   const groups = groupByStage(grades, country.stages);
+  const line = `var(--color-line-${code.toLowerCase()}, var(--color-ink))`;
 
   return (
     <main className="mx-auto grid max-w-5xl gap-8 px-4 py-10">
-      <header className="flex items-center gap-4">
-        <Landmark code={code} size={64} />
-        <div className="grid gap-1">
+      <header
+        className="flex items-center gap-4 border-b-(length:--line) pb-6"
+        style={{ borderColor: line }}
+      >
+        <LineBadge code={code} className="size-16 text-h3" />
+        <div className="grid flex-1 gap-1">
           <p className="flex items-center gap-2 text-small text-ink-muted">
-            <Link href="/courses" className="text-pen underline-offset-4 hover:underline">
+            <Link
+              href="/courses"
+              className="inline-flex min-h-11 items-center text-pen underline-offset-4 hover:underline"
+            >
               {t("title")}
             </Link>
-            <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
+            <span aria-hidden="true" className="rtl:-scale-x-100">
+              ‹
+            </span>
             {KNOWN_COUNTRIES.has(code) ? (
-              <Image src={`/flags/${slug.toLowerCase()}.svg`} alt="" width={20} height={15} className="rounded-[2px] ring-1 ring-hairline" />
+              <Image
+                src={`/flags/${slug.toLowerCase()}.svg`}
+                alt=""
+                width={20}
+                height={15}
+                className="rounded-sm ring-1 ring-hairline"
+              />
             ) : (
-              <span className="rounded-[2px] px-1 text-label font-semibold ring-1 ring-hairline">{code}</span>
+              <span className="rounded-sm px-1 text-label font-semibold ring-1 ring-hairline">
+                {code}
+              </span>
             )}
             {name} · <span className="num">{country.currency}</span>
           </p>
-          <h1 className="font-display text-h1 font-extrabold">{t.rich("pickGrade", { country: name, m: (c) => <span className="marker">{c}</span> })}</h1>
+          <h1 className="font-display text-h1 font-extrabold">
+            {t.rich("pickGrade", {
+              country: name,
+              m: (c) => <span className="marker">{c}</span>,
+            })}
+          </h1>
         </div>
+        <span className="hidden sm:block">
+          <Landmark code={code} size={88} />
+        </span>
       </header>
 
       {groups.length === 0 && (
@@ -82,47 +133,87 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
         </EmptyState>
       )}
       {groups.map(({ stage, grades }) => (
-        <section key={stage?.id ?? "other"} className="grid gap-3">
+        <section key={stage?.id ?? "other"} className="grid gap-5">
           <h2 className="flex items-baseline gap-3">
-            <span className="font-display text-h3 font-semibold">{stage ? (ar ? stage.nameAr : stage.nameEn) : t("otherGrades")}</span>
+            <span className="font-display text-h3 font-bold">
+              {stage ? (ar ? stage.nameAr : stage.nameEn) : t("otherGrades")}
+            </span>
             {stage && (
               <span className="text-small text-ink-muted">
-                {t("gradeRange", { from: numeral.format(stage.fromLevel), to: numeral.format(stage.toLevel) })}
+                {t("gradeRange", {
+                  from: numeral.format(stage.fromLevel),
+                  to: numeral.format(stage.toLevel),
+                })}
               </span>
             )}
           </h2>
-          <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {grades.map((g) => {
+          {/* The stage as a stretch of the country's line: one station per grade, vertical on a phone, horizontal from sm up.
+              A segment runs from each station to the next; it is solid only when both ends have courses, dashed otherwise
+              (under construction), so the line itself tells which grades are open. */}
+          <ol className="grid sm:auto-cols-fr sm:grid-flow-col">
+            {grades.map((g, i) => {
               const isMine = g.id === mine;
+              const open = g._count.courses > 0;
+              const next = grades[i + 1];
               return (
-                <li key={g.id}>
+                <li key={g.id} className="relative">
+                  {next && (
+                    <i
+                      aria-hidden="true"
+                      className={`absolute start-[calc(var(--spacing)*4-var(--line)/2)] top-[calc(var(--spacing)*6)] h-full border-s-(length:--line) sm:start-1/2 sm:top-[calc(var(--spacing)*4-var(--line)/2)] sm:h-0 sm:w-full sm:border-s-0 sm:border-t-(length:--line) ${
+                        open && next._count.courses > 0 ? "" : "border-dashed"
+                      }`}
+                      style={{ borderColor: line }}
+                    />
+                  )}
                   <Link
                     href={`/courses/c/${slug.toLowerCase()}/${g.level}`}
-                    aria-label={isMine ? `${ar ? g.nameAr : g.nameEn}، ${t("yourGrade")}` : undefined}
-                    className="flex h-36 flex-col justify-between rounded-md border-strong border-ink bg-surface p-3 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker"
+                    aria-label={
+                      isMine
+                        ? `${ar ? g.nameAr : g.nameEn}، ${t("yourGrade")}`
+                        : undefined
+                    }
+                    className="group flex items-start gap-4 py-2 sm:grid sm:justify-items-center sm:gap-2 sm:px-1 sm:py-0 sm:text-center"
                   >
-                    <span className="flex items-start justify-between gap-1">
-                      <span className="relative grid place-items-center">
-                        {isMine && (
-                          <svg viewBox="0 0 48 48" preserveAspectRatio="none" aria-hidden="true" className="absolute -inset-x-3 -inset-y-2 size-[calc(100%+1rem)] overflow-visible">
-                            <path d={CIRCLE_PATH} fill="none" strokeWidth="2.2" strokeLinecap="round" className="stroke-pen" />
-                          </svg>
-                        )}
-                        <span className="font-display text-[2.75rem] leading-none font-extrabold">{numeral.format(g.level)}</span>
+                    <span
+                      aria-hidden="true"
+                      className={`relative grid size-8 shrink-0 place-items-center rounded-full border-4 transition-colors duration-(--dur-fast) ease-(--ease-out) ${
+                        isMine
+                          ? "border-ink bg-marker"
+                          : open
+                            ? "border-ink bg-surface group-hover:bg-ink"
+                            : "border-dashed border-field bg-surface group-hover:border-ink"
+                      }`}
+                    />
+                    <span className="grid gap-0.5 sm:justify-items-center">
+                      <span className="num font-display text-h2 leading-none font-extrabold">
+                        {numeral.format(g.level)}
                       </span>
-                      {isMine && <span className="text-label font-semibold text-pen">{t("yourGrade")}</span>}
-                    </span>
-                    <span className="grid justify-items-start gap-0.5">
-                      {g.isTerminal && <span className="rounded-full bg-marker px-2 font-display text-[.6875rem] font-semibold">{t("terminal")}</span>}
-                      {/* The big numeral already says "grade", so the tile drops the leading الصف. */}
-                      <span className="text-small leading-snug font-medium">{ar ? g.nameAr.replace(/^الصف /, "") : g.nameEn}</span>
-                      {g._count.courses > 0 && <span className="text-label text-pen">{t("available", { count: g._count.courses })}</span>}
+                      {/* The big numeral already says "grade", so the station drops the leading الصف. */}
+                      <span className="text-small leading-snug font-medium">
+                        {ar ? g.nameAr.replace(/^الصف /, "") : g.nameEn}
+                      </span>
+                      {g.isTerminal && (
+                        <span className="bg-marker px-1.5 font-display text-label font-bold">
+                          {t("terminal")}
+                        </span>
+                      )}
+                      {isMine && (
+                        <span className="text-label font-bold text-pen">
+                          {t("yourGrade")}
+                        </span>
+                      )}
+                      {open && (
+                        <span className="text-label font-semibold text-pen">
+                          {t("available", { count: g._count.courses })}
+                        </span>
+                      )}
                     </span>
                   </Link>
                 </li>
               );
             })}
-          </ul>
+          </ol>
         </section>
       ))}
     </main>

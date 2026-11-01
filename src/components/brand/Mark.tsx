@@ -1,47 +1,45 @@
-// The brand: two open books laid face down are the double A, tied by one gold ribbon. See DESIGN.md §0.
-// Drawn on a 100-unit cap height with a 14-unit stroke. The viewBox ends at the baseline and the cap line, so it trims
-// the leg ends square without a clip path. Ink is currentColor; the ribbon is --color-marker (gold).
-const AA = "M260.5 110 296 7 331.5 110M332.5 110 368 7 403.5 110";
-const RIBBON = "M271 66H393";
+// The brand: an A routed like a metro line, and a + where the Egypt and UAE lines cross at a roundel. See DESIGN.md §0.
+// Geometry lives in brand-svg.ts so the generated icons and this component never drift. Ink is currentColor.
+import { A_PATH, MARK_VIEWBOX, PLUS_H, PLUS_V, ROUNDEL } from "@/app/brand-svg";
 
-/** The AA monogram: favicons, small badges, seals. */
-export function Mark({ size = 24, className = "" }: { size?: number; className?: string }) {
+function Glyph({ className = "", ...rest }: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg width={size} height={(size * 100) / 160} viewBox="250 0 160 100" aria-hidden="true" className={`shrink-0 ${className}`} fill="none" strokeWidth="14">
-      <path d={RIBBON} strokeWidth="12" className="stroke-marker" />
-      <path d={AA} stroke="currentColor" strokeLinejoin="round" />
+    <svg viewBox={MARK_VIEWBOX} aria-hidden="true" fill="none" strokeWidth="6" className={`shrink-0 ${className}`} {...rest}>
+      <path d={A_PATH} stroke="currentColor" />
+      <path d={PLUS_H} className="stroke-line-eg" />
+      <path d={PLUS_V} className="stroke-line-ae" />
+      <circle {...ROUNDEL} className="fill-surface" stroke="currentColor" strokeWidth="3" />
     </svg>
   );
 }
 
-/** The wordmark: the monogram plus "A+ Academy" in Readex; Latin in both locales. */
+/** The A+ mark: favicons, small badges, seals. */
+export function Mark({ size = 24, className = "" }: { size?: number; className?: string }) {
+  return <Glyph width={size} height={(size * 48) / 64} className={className} />;
+}
+
+/** The wordmark: the mark plus "A+ Academy" in Alexandria; Latin in both locales. */
 export function Wordmark({ className = "" }: { locale?: string; className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-[.32em] leading-none ${className}`} dir="ltr">
-      <svg viewBox="250 0 160 100" aria-hidden="true" className="h-[1.05em] w-auto shrink-0" fill="none" strokeWidth="14">
-        <path d={RIBBON} strokeWidth="12" className="stroke-marker" />
-        <path d={AA} stroke="currentColor" strokeLinejoin="round" />
-      </svg>
-      <span className="font-display text-[1em] font-semibold tracking-[-.03em]">A+ Academy</span>
+    <span className={`inline-flex items-center gap-[.36em] leading-none ${className}`} dir="ltr">
+      <Glyph className="h-[1.1em] w-auto" />
+      <span className="font-display text-[1em] font-bold tracking-[-.02em]">A+ Academy</span>
     </span>
   );
 }
 
-// Hand-drawn marking circle, kept for the "best value" and "your grade" highlights on catalog pages.
-export const CIRCLE_PATH = "M24 4c11 0 20 8.5 20 19.5 0 11.5-9.5 20.5-21 20.5C12 44 4 35 4 24 4 13.5 12 5 22 4";
-
-/** Empty state: the double A drawn dashed in pencil grey, a book not opened yet. */
+/** Empty state: the A drawn dashed, a line still under construction. */
 export function EmptyMark({ size = 56 }: { size?: number }) {
   return (
-    <svg width={size} height={(size * 100) / 160} viewBox="250 0 160 100" aria-hidden="true" fill="none" strokeWidth="8" strokeDasharray="10 12" className="stroke-field">
-      <path d={AA} strokeLinejoin="round" />
+    <svg width={size} height={(size * 48) / 64} viewBox={MARK_VIEWBOX} aria-hidden="true" fill="none" strokeWidth="4" strokeDasharray="6 5" className="stroke-field">
+      <path d={A_PATH} />
     </svg>
   );
 }
 
 export function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid justify-items-center gap-3 rounded-lg border border-dashed border-hairline bg-surface p-8 text-center">
+    <div className="grid justify-items-center gap-3 rounded-lg border border-dashed border-rule bg-surface p-8 text-center">
       <EmptyMark />
       {children}
     </div>

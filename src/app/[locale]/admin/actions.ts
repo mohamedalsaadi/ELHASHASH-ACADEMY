@@ -583,7 +583,7 @@ export async function createCourse(form: FormData) {
   const me = await requireStaff();
   const locale = form.get("locale") === "en" ? "en" : "ar";
 
-  // A teacher creates school courses only, and only inside a slot the owner granted.
+  // A teacher creates school courses only, in any grade and subject of their own country.
   if (me.role !== "ADMIN") {
     const { slot } = z.object({ slot: z.string() }).parse(Object.fromEntries(form));
     const [gradeId, subjectId] = slot.split(":");

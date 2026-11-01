@@ -12,8 +12,8 @@ export function ContactForm() {
   const t = useTranslations("contactForm");
   const [state, action, pending] = useActionState(sendSupportMessage, null);
   return (
-    <form action={action} className="grid gap-3 rounded-lg border border-hairline bg-surface p-5">
-      <h2 className="font-display text-h3 font-semibold">{t("title")}</h2>
+    <form action={action} className="grid gap-3 border-2 border-ink bg-surface p-5">
+      <h2 className="font-display text-h3 font-bold">{t("title")}</h2>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={label}>

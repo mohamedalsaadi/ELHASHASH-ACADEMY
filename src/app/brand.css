@@ -1,44 +1,41 @@
-/* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay and the route loader. */
+/* Brand motion (DESIGN.md §0 and §6). Marketing only: the intro overlay, the network map and the route loader. */
 
-/* Intro, 2.0 s × --intro-k (2.0 s), once per tab session. The 3D books (IntroScene) fall and land as A A 0–0.9 s,
-   the gold ribbon threads through 0.95–1.33 s, the scene fades 1.40–1.85 s while the wordmark rises 1.45–1.95 s,
-   and the overlay fades 1.76–2.00 s. The overlay is pure CSS, so the wordmark still plays if WebGL or the scene
-   chunk never arrives. --intro-k is applied here and to the scene clock in IntroScene.tsx, so they stay aligned. */
+/* Intro, 1.8 s, once per tab session (guard in Intro.tsx). The country lines draw from the edges into the A+
+   interchange 0–0.88 s (60 ms apart), the interchange settles 0.76–1.0 s, the name rises 0.96–1.3 s, and the white
+   overlay fades 1.56–1.8 s. Pure SVG and CSS: nothing to download, so it cannot stall on a slow phone. */
 .as-intro { display: none; }
 html[data-intro] { overflow: hidden; }
 html[data-intro] .as-intro {
   position: fixed; inset: 0; z-index: 50;
   display: grid; place-items: center;
-  background: radial-gradient(120% 90% at 50% 0%, #1A2290 0%, var(--color-night) 55%, #060828 100%);
-  color: var(--color-ground);
+  background: var(--color-surface);
+  border-block-start: 8px solid var(--color-ink);
   cursor: pointer;
-  /* The overlay lives inside #main-content, which the intro hides. visibility inherits, so without this
-     the overlay is hidden for the whole intro and only shows while it fades out. */
-  visibility: visible;
+  animation: as-intro-out 240ms var(--ease-out) 1560ms forwards;
 }
-/* The timeline waits for IntroScene (see Intro.tsx): while the overlay is "ready" it shows the ground with no motion. */
-html[data-intro]:not([data-intro="ready"]) .as-intro { animation: as-intro-out calc(var(--dur-base) * var(--intro-k)) var(--ease-out) calc(1760ms * var(--intro-k)) forwards; }
 html[data-intro="skip"] .as-intro { animation-delay: 0ms; animation-duration: var(--dur-fast); }
-.as-intro-scene { position: absolute; inset: 0; }
-html[data-intro]:not([data-intro="ready"]) .as-intro-scene { animation: as-fade-out calc(450ms * var(--intro-k)) var(--ease-out) calc(1400ms * var(--intro-k)) forwards; }
-html[data-intro] .as-intro-word { opacity: 0; }
-html[data-intro]:not([data-intro="ready"]) .as-intro-word { animation: as-rise calc(500ms * var(--intro-k)) var(--ease-out) calc(1450ms * var(--intro-k)) forwards; }
-/* The page stays hidden under the overlay until it fades, so the web-font swap behind it is not a layout shift. */
-html[data-intro]:not([data-intro="ready"]) body > :not(main),
-html[data-intro]:not([data-intro="ready"]) main > :not(.as-intro) { animation: as-reveal 0s calc(1760ms * var(--intro-k)) both; }
-html[data-intro="skip"] body > :not(main),
-html[data-intro="skip"] main > :not(.as-intro) { animation-delay: 0ms; }
+html[data-intro] .as-intro .net-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: as-draw 520ms var(--ease-out) calc(var(--i) * 60ms) forwards; }
+html[data-intro] .as-intro .net-hub { transform-box: fill-box; transform-origin: center; opacity: 0; animation: as-hub 240ms var(--ease-out) 760ms forwards; }
+html[data-intro] .as-intro-word { opacity: 0; animation: as-rise 340ms var(--ease-out) 960ms forwards; }
 
-@keyframes as-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-@keyframes as-fade-out { to { opacity: 0; } }
+@keyframes as-draw { to { stroke-dashoffset: 0; } }
+@keyframes as-hub { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes as-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes as-intro-out { to { opacity: 0; visibility: hidden; } }
-@keyframes as-reveal { from { visibility: hidden; } }
 
-/* Route loader: the gold ribbon threads across the top only while a page is really loading. */
-.as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 3px; overflow: hidden; }
+/* Network map. Hover or keyboard focus on a line or one of its stations lights that line and dims the others. */
+.net-line { transition: opacity var(--dur-fast) var(--ease-out); }
+.net:has(.net-line:is(:hover, :focus-within)) .net-line:not(:hover, :focus-within) { opacity: .25; }
+/* Labels are set in board units; the board shrinks on a phone, so labels step up to stay about 12px on screen. */
+.net-label { font-size: 22px; }
+.net-hub-label { font-size: 22px; }
+@media (max-width: 40rem) { .net-label { font-size: 34px; } }
+
+/* Route loader: a line draws across the top only while a page is really loading. */
+.as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 4px; overflow: hidden; }
 .as-loader::after {
   content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 100%;
-  background: var(--color-marker);
+  background: var(--color-primary);
   transform-origin: var(--as-origin, right);
   animation: as-load 1400ms var(--ease-out) infinite;
 }
@@ -46,6 +43,6 @@ html[data-intro="skip"] main > :not(.as-intro) { animation-delay: 0ms; }
 @keyframes as-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-intro]:not([data-intro="ready"]) .as-intro { display: none; }
+  html[data-intro] .as-intro { display: none; }
   .as-loader::after { animation: none; transform: scaleX(.4); }
 }

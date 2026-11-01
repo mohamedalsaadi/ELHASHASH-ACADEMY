@@ -42,7 +42,7 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
   const courses = await db.course.findMany({ where, orderBy: { slug: "asc" }, include: { grade: { include: { country: true } }, instructor: { select: { name: true } } } });
   const named = (rows: { id: string; nameAr: string; nameEn: string }[]) => rows.map((r) => ({ id: r.id, name: ar ? r.nameAr : r.nameEn }));
   const gradeGroups = countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, options: named(c.grades) }));
-  const shownGrades = countries.filter((c) => !f.country || c.code === f.country).flatMap((c) => c.grades);
+  const shownCountries = countries.filter((c) => !f.country || c.code === f.country);
 
   return (
     <main className="mx-auto grid max-w-5xl gap-8 px-4 py-12">
@@ -65,10 +65,15 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
           {to("grade")}
           <select name="grade" defaultValue={f.grade ?? ""} className={field}>
             <option value="">{to("all")}</option>
-            {shownGrades.map((g) => (
-              <option key={g.id} value={g.id}>
-                {ar ? g.nameAr : g.nameEn}
-              </option>
+            {/* Grade names repeat across countries, so each country's grades sit under its name. */}
+            {shownCountries.map((c) => (
+              <optgroup key={c.code} label={ar ? c.nameAr : c.nameEn}>
+                {c.grades.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {ar ? g.nameAr : g.nameEn}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>

@@ -1,28 +1,26 @@
 import { Wordmark } from "./Mark";
-import { IntroStage } from "./IntroStage";
+import { Network, type NetLine } from "./Network";
 
-// Runs while the HTML is parsed, before the overlay below paints. It opts in only once per tab session and never
-// under reduced motion. Without JS the overlay stays display:none.
-// The overlay opens in "ready": the night ground shows and the page stays hidden, but the clock has not started.
-// IntroScene promotes it to "play" once it has actually mounted, so the books are never missed because their chunk
-// arrived late. A timer promotes it anyway after 1.2 s, so a blocked or broken WebGL chunk cannot leave a dead overlay.
-// The page is hidden by an animation with `fill: both`, so if that animation is ever interrupted the event that
-// clears it never arrives and the page would stay blank: a timer always clears the attribute.
-const guard = `try{var d=document.documentElement;if(!sessionStorage.getItem("as-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches){sessionStorage.setItem("as-intro","1");d.dataset.intro="ready";var c=function(){delete d.dataset.intro};var go=function(){if(d.dataset.intro==="ready"){window.__asIntroT0=performance.now();d.dataset.intro="play"}};var s=function(){if(d.dataset.intro==="ready"||d.dataset.intro==="play"){go();d.dataset.intro="skip";setTimeout(c,400)}};addEventListener("pointerdown",s,{once:true});addEventListener("keydown",s,{once:true});addEventListener("click",s,{once:true});addEventListener("wheel",s,{once:true,passive:true});addEventListener("touchmove",s,{once:true,passive:true});var m=matchMedia("(prefers-reduced-motion: reduce)");if(m.addEventListener)m.addEventListener("change",function(e){if(e.matches)s()});var k=parseFloat(getComputedStyle(d).getPropertyValue("--intro-k"))||1;setTimeout(go,1200);setTimeout(c,1200+2000*k+800);addEventListener("animationend",function e(v){if(v.animationName==="as-intro-out"){c();removeEventListener("animationend",e)}})}}catch(e){}`;
+// Runs while the HTML is parsed, before the overlay paints. Once per tab session, never under reduced motion; without
+// JS the overlay stays display:none. Any input skips it. A timer always clears the attribute, so an interrupted
+// animation can never leave the overlay up.
+const guard = `try{var d=document.documentElement;if(!sessionStorage.getItem("as-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches){sessionStorage.setItem("as-intro","1");d.dataset.intro="play";var c=function(){delete d.dataset.intro};var s=function(){if(d.dataset.intro==="play"){d.dataset.intro="skip";setTimeout(c,200)}};["pointerdown","keydown","wheel","touchmove"].forEach(function(e){addEventListener(e,s,{once:true,passive:true})});setTimeout(c,1900)}}catch(e){}`;
 
-/** ~2 s brand intro (2 s × --intro-k) over the already-rendered home page: two books land as A A, then the name. Fixed position: no layout shift. */
-export function Intro({ skipLabel }: { skipLabel: string }) {
+/** 1.8 s brand intro over the already-rendered home page: the country lines draw into the A+ interchange, then the name. */
+export function Intro({ skipLabel, lines }: { skipLabel: string; lines: NetLine[] }) {
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: guard }} />
       <div className="as-intro">
-        <IntroStage />
-        <div aria-hidden="true" className="as-intro-word relative text-[clamp(2.5rem,1.5rem+5vw,5rem)]">
-          <Wordmark />
+        <div className="grid w-full max-w-3xl justify-items-center gap-8 px-6">
+          <Network id="intro" lines={lines} className="w-full" />
+          <div aria-hidden="true" className="as-intro-word text-[clamp(2rem,1.4rem+3vw,3.5rem)]">
+            <Wordmark />
+          </div>
         </div>
         <button
           type="button"
-          className="absolute end-6 bottom-6 min-h-11 rounded-sm border border-white/30 bg-white/5 px-4 py-2 font-display text-small text-white/80 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-white/10"
+          className="absolute end-6 bottom-6 min-h-11 border-2 border-ink bg-surface px-4 py-2 font-display text-small font-semibold text-ink"
         >
           {skipLabel}
         </button>

@@ -25,6 +25,15 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-03: Minimal Contour intro (owner chose A over B)
+
+- **Why:** the owner kept option A (Contour) and asked for a minimalist version that works on laptop and phone.
+- **What:** `summit-scene.ts` now draws eight thin snow lines (six on a phone) with only the top one gold, a fine gold
+  trail in one gentle curve and a single gold summit point; the flag and colour ramp are gone. The peak is taller.
+  Framing measures the free space beside `.as-hero-copy`, so the mountain sits beside the text on a laptop and above
+  it on a phone. `brand.css` quiets the still contour field behind the hero (`.stage:has(> canvas)`).
+- **Removed:** option B (`dawn-scene.ts`) and the `?intro=dawn` switch. Kept: any `?intro=` link replays the intro.
+
 ## 2026-11-03: Intro option B "Dawn Relief" for the owner to compare; email sender fix
 
 - **Why:** the owner asked for a second, comparable intro and mountain that looks right on laptop and phone.

@@ -1,11 +1,11 @@
-// The home hero summit (DESIGN.md §6). Contour rings of one terrain fade in flat like a map, lift to their heights while
-// the camera tilts, a summit-gold trail climbs from the foot to the top and a flag settles there. Framework-free:
-// Summit.tsx owns the lifecycle. The name is DOM text over the canvas, never drawn here.
+// The home hero summit (DESIGN.md §6), drawn minimally: a few thin snow contour lines fade in flat like a map, lift to
+// their heights while the camera tilts, and only the top one is summit gold. A fine gold trail climbs to the summit
+// and one gold point settles there. Framework-free: Summit.tsx owns the lifecycle. The name is DOM text, never drawn.
 import type * as Three from "three";
 
 export const SUMMIT_END = 4.0;
 
-export type SummitColors = { ramp: string[]; summit: string; snow: string };
+export type SummitColors = { line: string; summit: string };
 
 // cubic-bezier(.16,1,.3,1), the brand easing (--ease-out), solved by Newton steps.
 const easeOut = (() => {
@@ -29,13 +29,12 @@ const easeOut = (() => {
 })();
 const seg = (t: number, start: number, dur: number) => easeOut((t - start) / dur);
 
-// The terrain: one dominant summit and two lower shoulders, with a little ripple so the rings read as land, not targets.
-const SX = 0.1, SZ = -0.05, HEIGHT = 0.62;
+// The terrain: one dominant summit and one lower shoulder, with only a trace of ripple so the lines stay clean.
+const SX = 0.1, SZ = -0.05, HEIGHT = 0.95;
 const height = (x: number, z: number) =>
-  Math.exp(-((x - SX) ** 2 + (z - SZ) ** 2) / 0.3) +
-  0.38 * Math.exp(-((x + 0.62) ** 2 + (z - 0.5) ** 2) / 0.09) +
-  0.26 * Math.exp(-((x - 0.7) ** 2 + (z - 0.62) ** 2) / 0.06) +
-  0.03 * Math.sin(x * 7.1 + z * 3.3) * Math.cos(z * 6.2);
+  Math.exp(-((x - SX) ** 2 + (z - SZ) ** 2) / 0.24) +
+  0.34 * Math.exp(-((x + 0.62) ** 2 + (z - 0.5) ** 2) / 0.09) +
+  0.012 * Math.sin(x * 7.1 + z * 3.3) * Math.cos(z * 6.2);
 
 /** Marching squares over the height grid: one flat set of line segments per contour level, at y = 0. */
 function contours(n: number, span: number, levels: number[]) {
@@ -77,62 +76,59 @@ export function createSummit(
   const disposables: { dispose(): void }[] = [];
   const keep = <T extends { dispose(): void }>(x: T) => (disposables.push(x), x);
 
-  // Contour rings, coloured up the elevation ramp; the highest ring is summit gold.
-  const ramp = colors.ramp.map((c) => new THREE.Color(c));
-  const rampAt = (f: number) => {
-    const k = f * (ramp.length - 1), i = Math.min(ramp.length - 2, Math.floor(k));
-    return ramp[i].clone().lerp(ramp[i + 1], k - i);
-  };
-  const LEVELS = small ? 11 : 14;
-  const levelValues = Array.from({ length: LEVELS }, (_, l) => 0.06 + (l * (0.98 - 0.06)) / (LEVELS - 1));
+  // Few lines, one colour: snow, fainter low and clearer high. Only the highest line is summit gold.
+  const LEVELS = small ? 6 : 8;
+  const levelValues = Array.from({ length: LEVELS }, (_, l) => 0.1 + (l * (0.94 - 0.1)) / (LEVELS - 1));
   const rings = contours(small ? 100 : 150, 1.25, levelValues).map((pts, l) => {
     const geo = keep(new THREE.BufferGeometry());
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    const color = l === LEVELS - 1 ? new THREE.Color(colors.summit) : rampAt(l / (LEVELS - 2));
-    const mat = keep(new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0 }));
+    const top = l === LEVELS - 1;
+    const mat = keep(new THREE.LineBasicMaterial({ color: top ? colors.summit : colors.line, transparent: true, opacity: 0 }));
     const ring = new THREE.LineSegments(geo, mat);
-    ring.userData.h = levelValues[l] * HEIGHT;
+    ring.userData = { h: levelValues[l] * HEIGHT, alpha: top ? 0.95 : 0.16 + 0.44 * (l / (LEVELS - 2)) };
     scene.add(ring);
     return ring;
   });
 
-  // The trail: spirals up from the foot to the summit, drawn by growing the tube's draw range.
+  // The trail: a fine gold line curving up from the foot to the summit in one gentle turn, drawn by growing its range.
   const path: Three.Vector3[] = [];
   for (let k = 0; k <= 220; k++) {
-    const s = k / 220, th = 2.6 + s * Math.PI * 1.25, r = 0.95 * Math.pow(1 - s, 1.15);
+    const s = k / 220, th = 2.5 + s * Math.PI * 0.6, r = 0.95 * Math.pow(1 - s, 1.15);
     const x = SX + r * Math.cos(th), z = SZ + r * Math.sin(th) * 0.9;
-    path.push(new THREE.Vector3(x, height(x, z) * HEIGHT + 0.012, z));
+    path.push(new THREE.Vector3(x, height(x, z) * HEIGHT + 0.01, z));
   }
-  const tube = keep(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path), 260, small ? 0.011 : 0.008, 6, false));
-  const trail = new THREE.Mesh(tube, keep(new THREE.MeshBasicMaterial({ color: colors.summit })));
+  const tube = keep(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path), 260, small ? 0.007 : 0.005, 6, false));
+  const gold = keep(new THREE.MeshBasicMaterial({ color: colors.summit }));
+  const trail = new THREE.Mesh(tube, gold);
   const trailCount = tube.index!.count;
   scene.add(trail);
 
-  // The flag on the summit: a snow pole, a gold pennant, a gold point at its foot.
+  // The summit: one gold point.
   const top = path[path.length - 1];
-  const flag = new THREE.Group();
-  const pole = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.004, 0.004, 0.16, 6)), keep(new THREE.MeshBasicMaterial({ color: colors.snow })));
-  pole.position.y = 0.08;
-  const pennantGeo = keep(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.16, 0), new THREE.Vector3(rtl ? -0.085 : 0.085, 0.135, 0), new THREE.Vector3(0, 0.11, 0)]));
-  const gold = keep(new THREE.MeshBasicMaterial({ color: colors.summit, side: THREE.DoubleSide }));
-  const point = new THREE.Mesh(keep(new THREE.SphereGeometry(0.016, 16, 12)), gold);
-  flag.add(pole, new THREE.Mesh(pennantGeo, gold), point);
-  flag.position.copy(top);
-  scene.add(flag);
+  const point = new THREE.Mesh(keep(new THREE.SphereGeometry(small ? 0.024 : 0.018, 16, 12)), gold);
+  scene.add(point);
 
-  // The terrain sits on the end side, opposite the copy. On a phone it sits above the copy, seen from farther away so
-  // the whole peak fits the narrow frame.
-  let distance = 1;
+  // Framing: measure the free part of the hero beside the copy (the end side on a wide screen, the band above it on a
+  // phone), fit the terrain's bounding sphere into it, and shift the view so the sphere's centre lands there.
+  let distance = 4;
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    const wide = w >= 768;
-    camera.fov = wide ? 36 : 50;
-    distance = wide ? 1 : 1.9;
-    if (wide) camera.setViewOffset(w, h, (rtl ? 1 : -1) * w * 0.2, -h * 0.1, w, h);
-    else camera.setViewOffset(w, h, 0, h * 0.3, w, h);
+    const box = canvas.getBoundingClientRect();
+    const copy = canvas.parentElement?.querySelector(".as-hero-copy")?.getBoundingClientRect();
+    const wide = w >= 768 && w / h > 0.9;
+    const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+    const freeW = copy ? (rtl ? copy.left - box.left : box.right - copy.right) : w * 0.44;
+    const freeH = copy ? copy.top - box.top : h * 0.4;
+    const rw = wide ? clamp(freeW - 32, w * 0.34, w * 0.6) : w * 0.94;
+    const rh = wide ? h * 0.86 : clamp(freeH - 12, h * 0.25, h * 0.5);
+    const cx = wide ? (rtl ? rw / 2 + 16 : w - rw / 2 - 16) : w / 2;
+    const cy = wide ? h * 0.47 : rh / 2 + 6;
+    const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    distance = (wide ? 1.05 : 0.92) / Math.sin(Math.atan(Math.min(tanV * (rh / h), tanV * camera.aspect * (rw / w))));
+    camera.setViewOffset(w, h, w / 2 - cx, h / 2 - cy, w, h);
     camera.updateProjectionMatrix();
   }
   resize();
@@ -142,19 +138,20 @@ export function createSummit(
     render(t: number, now = 0, px = 0, py = 0) {
       const lift = seg(t, 0.6, 2.0);
       rings.forEach((ring, l) => {
-        (ring.material as Three.LineBasicMaterial).opacity = 0.85 * seg(t, l * 0.04, 0.8);
+        (ring.material as Three.LineBasicMaterial).opacity = ring.userData.alpha * seg(t, l * 0.06, 0.8);
         ring.position.y = ring.userData.h * lift;
       });
       trail.geometry.setDrawRange(0, Math.floor((trailCount * seg(t, 1.8, 1.6)) / 6) * 6);
       trail.scale.y = Math.max(lift, 1e-4);
-      flag.scale.setScalar(Math.max(seg(t, 3.4, 0.4), 1e-4));
-      flag.position.y = top.y * lift;
+      point.scale.setScalar(Math.max(seg(t, 3.3, 0.5), 1e-4));
+      point.position.set(top.x, top.y * lift, top.z);
 
-      const idle = t > SUMMIT_END ? Math.sin(now / 9) * 0.06 : 0;
-      const az = 0.55 + idle + px * 0.1;
-      const r = (3.3 - lift * 0.35) * distance, el = 0.03 + lift + py * 0.08;
-      camera.position.set(r * Math.sin(el) * Math.sin(az), r * Math.cos(el), r * Math.sin(el) * Math.cos(az));
-      camera.lookAt(0, 0.16 * lift, 0);
+      const idle = t > SUMMIT_END ? Math.sin(now / 9) * 0.05 : 0;
+      const az = 0.55 + idle + px * 0.08;
+      const el = 0.03 + lift + py * 0.06;
+      const target = 0.2 * lift;
+      camera.position.set(distance * Math.sin(el) * Math.sin(az), target + distance * Math.cos(el), distance * Math.sin(el) * Math.cos(az));
+      camera.lookAt(0, target, 0);
       renderer.render(scene, camera);
     },
     resize,

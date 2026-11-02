@@ -18,25 +18,16 @@ export function Summit({ rtl }: { rtl: boolean }) {
 
     (async () => {
       const root = document.documentElement;
-      // Option B is under review: ?intro=dawn shows it, anything else the Contour scene.
-      const dawn = new URLSearchParams(location.search).get("intro") === "dawn";
-      const [THREE, { createSummit, SUMMIT_END }, { createDawn }] = await Promise.all([
-        import("three"),
-        import("./summit-scene"),
-        dawn ? import("./dawn-scene") : { createDawn: null },
-      ]);
+      const [THREE, { createSummit, SUMMIT_END }] = await Promise.all([import("three"), import("./summit-scene")]);
       if (disposed) return;
 
       const css = getComputedStyle(root);
       const token = (name: string) => css.getPropertyValue(`--color-${name}`).trim();
-      const colors = {
-        ramp: [1, 2, 3, 4, 6].map((i) => token(`contour-${i}`)),
-        summit: token("summit"),
-        snow: token("contour-6"),
-        night: token("night"),
-      };
-      const opts = { rtl, small: innerWidth < 700, colors };
-      const summit = createDawn ? createDawn(THREE, canvas, opts) : createSummit(THREE, canvas, opts);
+      const summit = createSummit(THREE, canvas, {
+        rtl,
+        small: innerWidth < 700,
+        colors: { line: token("contour-6"), summit: token("summit") },
+      });
 
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
         const still = () => summit.render(SUMMIT_END + 1);

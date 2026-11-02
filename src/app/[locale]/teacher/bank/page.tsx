@@ -53,7 +53,7 @@ export default async function BankPage({ params }: { params: Promise<{ locale: s
         <p className="text-small text-ink-muted">{t("empty")}</p>
       ) : (
         courses.map((c) => (
-          <section key={c.id} className="grid gap-3 rounded-md border border-hairline bg-surface p-4">
+          <section key={c.id} className="grid gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-display text-h3 font-semibold">{ar ? c.titleAr : c.titleEn}</h2>
               <form action={toggleLeaderboard} className="flex items-center gap-2 text-label text-ink-muted">

@@ -6,9 +6,9 @@ Git history has the rest (`git log --oneline`).
 
 ## Standing facts
 
-- **Brand:** Sabboura (سبّورة), since 2026-11-02, when the owner registered the trade licence under it (ADDED had
-  refused AAcademy and A+ Academy). Identity "Chalkboard" (DESIGN.md §0). Domains (`sabbouraacademy.*`), the social
-  handles and the Resend DNS are owner actions and are not done yet.
+- **Brand:** Dhirwa (ذروة, "the peak"), since 2026-11-02, when the owner reserved the trade name. Sabboura was
+  dropped the same day (a Dubai "Saboura" and an existing trademark). Identity "Contour" (DESIGN.md §0,
+  `docs/brand/dhirwa-dna.json`). No domain or handle is bought yet; `APP_URL`, `MAIL_FROM` and callbacks are unchanged.
 - **Live site:** https://elhashash-academy.vercel.app. It is behind HTTP Basic auth (`SITE_PASSWORD` in
   `src/middleware.ts`). The Claude desktop browser pane cannot show the Basic-auth prompt, so use Claude in
   Chrome; the owner types the password. On 2026-11-01 the live site ran the pre-redesign code (old look, old intro).
@@ -24,6 +24,25 @@ Git history has the rest (`git log --oneline`).
   - Teachers publish their own courses, sessions, prices and cover picture per country, grade and subject.
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
+
+## 2026-11-02: Rebrand to Dhirwa, identity "Contour" (uncommitted on `redesign-aurora`)
+
+- **Why:** the owner reserved the trade name Dhirwa and asked for a full redesign with a new intro (design-dna,
+  genjutsu bunshin standard, three.js).
+- **Identity:** survey-paper pages, a night-map `.stage`, contour lines (`contour-1..6`) as the one ornament, one
+  summit-gold point (`summit`), trail-green primary `#1F7356`, Reem Kufi for the name ذروة only. Mark = three ridge
+  lines plus a gold dot (`src/app/brand-svg.ts`, `Mark.tsx`, `icon.svg`, OG images, manifest).
+- **Intro:** `src/components/three/Summit.tsx` + `summit-scene.ts` replace the Board (4.0 s: contour rings lift into a
+  peak, a gold trail climbs, a flag lands; copy at 3.2 s, guard clears at 4.4 s). The student-home `Ride` is now a
+  trail with waypoints.
+- **Pages:** home redesigned as a "climb"; catalogue trail map; auth side panel (`signin/AuthShell.tsx`); every other
+  page re-skinned through tokens. Strings in `messages/*.json`.
+- **Review round 1 fixed:** gold focus ring on the map; the course header buy button always reaches a plans section;
+  ink check on Bahrain's colour; the intro clock starts at page load; list markup; promo `h3`; homework tile grid;
+  `--text-lede` token; dead CSS.
+- **Open:** the share images are English only (Satori needs an Arabic font file to shape ذروة); Paymob's fallback
+  billing email is now `SUPPORT_EMAIL` → `MAIL_FROM` → `no-reply@example.com` (Paymob is off). Nothing committed,
+  pushed or deployed.
 
 ## 2026-11-02: Rebrand to Sabboura, identity "Chalkboard"
 

@@ -7,7 +7,7 @@ import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
 import { JsonLd } from "@/components/JsonLd";
 import { PromoBand } from "@/components/PromoBand";
-import { Board } from "@/components/three/Board";
+import { Summit } from "@/components/three/Summit";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -72,21 +72,21 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   ] as const;
 
   const jsonLd = [
-    { "@context": "https://schema.org", "@type": "Organization", name: "Sabboura", url: siteUrl, logo: `${siteUrl}/icon.svg` },
-    { "@context": "https://schema.org", "@type": "WebSite", name: "Sabboura", url: siteUrl, inLanguage: ["ar", "en"] },
+    { "@context": "https://schema.org", "@type": "Organization", name: "Dhirwa", url: siteUrl, logo: `${siteUrl}/icon.svg` },
+    { "@context": "https://schema.org", "@type": "WebSite", name: "Dhirwa", url: siteUrl, inLanguage: ["ar", "en"] },
   ];
 
   return (
     <main>
       <JsonLd data={jsonLd} />
 
-      {/* The board: the chalk drawings on the end side, the copy on the start side. On a phone the drawings sit above the copy. */}
+      {/* The map: the summit on the end side, the copy on the start side. On a phone the summit sits above the copy. */}
       <section className="stage">
-        <Board rtl={ar} word={ar ? "سبّورة" : "Sabboura"} />
+        <Summit rtl={ar} />
         <Intro skipLabel={t("skipIntro")} />
-        <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(52vw,20rem)] pb-14 md:pt-28 md:pb-20">
+        <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(80vw,20rem)] pb-14 md:pt-28 md:pb-20">
           <div className="as-hero-copy grid max-w-[38rem] gap-6">
-            <span className="text-label font-medium tracking-wide text-night-muted" style={{ "--i": 0 } as React.CSSProperties}>
+            <span className="text-label font-medium text-night-muted ltr:tracking-wide" style={{ "--i": 0 } as React.CSSProperties}>
               {t("eyebrow")}
             </span>
             <h1 className="font-display text-hero leading-[1.05] font-bold" style={{ "--i": 1 } as React.CSSProperties}>
@@ -96,7 +96,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 ),
               })}
             </h1>
-            <p className="max-w-[36rem] text-[1.1875rem] text-night-muted" style={{ "--i": 2 } as React.CSSProperties}>
+            <p className="max-w-[36rem] text-lede text-night-muted" style={{ "--i": 2 } as React.CSSProperties}>
               {t("lede")}
             </p>
             <div className="flex flex-wrap gap-3" style={{ "--i": 3 } as React.CSSProperties}>
@@ -122,103 +122,108 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         </div>
       </section>
 
-      <div className="mx-auto grid max-w-(--container-page) gap-24 px-4 py-20 md:gap-32 md:py-28">
-        <section id="lines" className="reveal grid scroll-mt-24 gap-8">
-          <div className="grid gap-3">
-            <h2 className="font-display text-display leading-tight font-bold">{t("lines.title")}</h2>
-            <p className="max-w-[56ch] text-[1.125rem] text-ink-muted">{t("lines.lede")}</p>
-          </div>
-          {countries.length === 0 ? (
-            <EmptyState>
-              <p className="text-ink-muted">{t("noCountries")}</p>
-            </EmptyState>
-          ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {countries.map((c) => (
-                <li key={c.code}>
-                  <CountryTile country={c} locale={locale} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      {/* The climb: every section is one stage of the trail, rising from base camp (low contour) to the summit (gold). */}
+      <div className="mx-auto max-w-(--container-page) px-4 py-20 md:py-28">
+        <ol aria-label={t("climb.label")} className="relative grid gap-24 before:absolute before:inset-y-2 before:start-1.5 before:border-s before:border-contour-5 md:gap-32">
 
-        {/* One tile per role, Stripe-style bento: the student tile is the dark, wide one. */}
-        <section id="roles" className="reveal grid scroll-mt-24 gap-8">
-          <h2 className="max-w-[24ch] font-display text-display leading-tight font-bold">{t("roles.title")}</h2>
-          <ul className="grid gap-5 md:grid-cols-6">
-            {roles.map(({ key, href, Icon }, i) => (
-              <li
-                key={key}
-                className={`relative isolate grid content-start gap-3 overflow-hidden rounded-lg p-7 md:p-9 ${
-                  i === 0 ? "stage md:col-span-4" : "card md:col-span-2"
-                }`}
-              >
-                <Icon aria-hidden="true" className={`size-7 ${i === 0 ? "text-chalk-1" : "text-primary"}`} strokeWidth={1.75} />
-                <span className={`text-label font-medium tracking-wide ${i === 0 ? "text-night-muted" : "text-ink-muted"}`}>{t(`roles.${key}.k`)}</span>
-                <h3 className={`font-display font-bold ${i === 0 ? "text-display leading-tight" : "text-h2"}`}>{t(`roles.${key}.t`)}</h3>
-                <p className={`max-w-[44ch] ${i === 0 ? "text-[1.125rem] text-night-muted" : "text-ink-muted"}`}>{t(`roles.${key}.b`)}</p>
-                <Link href={href} className={`btn mt-3 justify-self-start ${i === 0 ? "btn-glow" : "btn-outline"}`}>
-                  {t(`roles.${key}.cta`)}
-                  <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+          <li id="lines" className="reveal relative grid scroll-mt-24 gap-8 ps-8 md:ps-14">
+            <Camp tone="bg-contour-1" />
+            <Heading k={t("climb.c1.k")} title={t("climb.c1.t")} lede={t("climb.c1.b")} />
+            {countries.length === 0 ? (
+              <EmptyState>
+                <p className="text-ink-muted">{t("noCountries")}</p>
+              </EmptyState>
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {countries.map((c) => (
+                  <li key={c.code}>
+                    <CountryTile country={c} locale={locale} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
 
-        {latest.length > 0 && (
-          <section className="reveal grid gap-8">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="font-display text-display leading-tight font-bold">{t("latest.title")}</h2>
+          <li className="reveal relative grid gap-8 ps-8 md:ps-14">
+            <Camp tone="bg-contour-2" />
+            <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+              <Heading k={t("climb.c2.k")} title={t("climb.c2.t")} lede={t("climb.c2.b")} />
               <Link href="/courses" className="btn btn-outline">
                 {t("latest.all")}
                 <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
               </Link>
             </div>
-            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {latest.map((c) => (
-                <li key={c.id}>
-                  <CourseCard course={c} locale={locale} />
+            {latest.length > 0 && (
+              <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {latest.map((c) => (
+                  <li key={c.id}>
+                    <CourseCard course={c} locale={locale} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <PromoBand promos={cards} locale={locale} variant="CARD" label={t("promotions")} />
+          </li>
+
+          <li id="roles" className="reveal relative grid scroll-mt-24 gap-8 ps-8 md:ps-14">
+            <Camp tone="bg-contour-3" />
+            <Heading k={t("climb.c3.k")} title={t("climb.c3.t")} lede={t("climb.c3.b")} />
+            <ul className="grid gap-5 md:grid-cols-2">
+              {roles.map(({ key, href, Icon }) => (
+                <li key={key} className="card grid content-start gap-3 p-7 md:p-9">
+                  <Icon aria-hidden="true" className="size-7 text-primary" strokeWidth={1.75} />
+                  <span className="text-label font-medium text-ink-muted">{t(`roles.${key}.k`)}</span>
+                  <h3 className="font-display text-h2 font-bold">{t(`roles.${key}.t`)}</h3>
+                  <p className="max-w-[44ch] text-ink-muted">{t(`roles.${key}.b`)}</p>
+                  <Link href={href} className={`btn mt-3 justify-self-start ${key === "student" ? "btn-primary" : "btn-outline"}`}>
+                    {t(`roles.${key}.cta`)}
+                    <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
+                  </Link>
                 </li>
               ))}
             </ul>
-          </section>
-        )}
+          </li>
 
-        <PromoBand promos={cards} locale={locale} variant="CARD" label={t("promotions")} />
+          {/* "Three ways to learn" (subscribe, rent, live) is hidden while teachers set their own courses and prices
+              (temporary marketplace stage, to end of 2026). The strings stay in messages/*.json under home.ways. */}
 
-        {/* How it works: four stops, the order is the journey. */}
-        <section className="reveal grid gap-8">
-          <h2 className="font-display text-display leading-tight font-bold">{t("how.title")}</h2>
-          <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {(["s1", "s2", "s3", "s4"] as const).map((s, i) => (
-              <li key={s} className="card grid content-start gap-2 p-6">
-                <span className="num font-display text-h2 font-bold text-primary">{i + 1}</span>
-                <h3 className="font-display text-h3 font-bold">{t(`how.${s}.t`)}</h3>
-                <p className="text-ink-muted">{t(`how.${s}.b`)}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/* "Three ways to learn" (subscribe, rent, live) is hidden while teachers set their own courses and prices
-            (temporary marketplace stage, to end of 2026). The strings stay in messages/*.json under home.ways. */}
-
-        <section className="stage reveal grid justify-items-center gap-5 rounded-lg px-6 py-16 text-center md:py-24">
-          <h2 className="font-display text-display leading-tight font-bold">{t("final.title")}</h2>
-          <p className="max-w-[44ch] text-[1.125rem] text-night-muted">{t("final.body")}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/signup" className="btn btn-glow">
-              {t("ctaStart")}
-              <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
-            </Link>
-            <Link href="/faq" className="btn btn-ghost">
-              {t("parent.faq")}
-            </Link>
-          </div>
-        </section>
+          {/* The summit: the one closing night-map band, marked by the gold point at the top of the trail. */}
+          <li className="reveal relative ps-8 md:ps-14">
+            <Camp tone="bg-summit" />
+            <section className="stage grid justify-items-center gap-5 rounded-lg px-6 py-16 text-center md:py-24">
+              <span className="text-label font-medium text-night-muted">{t("climb.c4.k")}</span>
+              <h2 className="font-display text-display leading-tight font-bold">
+                {t.rich("final.title", { a: (chunks) => <span className="marker">{chunks}</span> })}
+              </h2>
+              <p className="max-w-[44ch] text-lede text-night-muted">{t("final.body")}</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link href="/signup" className="btn btn-glow">
+                  {t("ctaStart")}
+                  <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
+                </Link>
+                <Link href="/faq" className="btn btn-ghost">
+                  {t("parent.faq")}
+                </Link>
+              </div>
+            </section>
+          </li>
+        </ol>
       </div>
     </main>
+  );
+}
+
+/** A camp on the trail: a dot on the trail line, its colour climbing the elevation ramp. */
+function Camp({ tone }: { tone: string }) {
+  return <span aria-hidden="true" className={`absolute start-0 top-2 size-3 rounded-full ring-4 ring-ground ${tone}`} />;
+}
+
+function Heading({ k, title, lede }: { k: string; title: string; lede: string }) {
+  return (
+    <div className="grid gap-3">
+      <span className="text-label font-medium text-ink-muted">{k}</span>
+      <h2 className="font-display text-display leading-tight font-bold">{title}</h2>
+      <p className="max-w-[56ch] text-lede text-ink-muted">{lede}</p>
+    </div>
   );
 }

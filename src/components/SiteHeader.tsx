@@ -9,7 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 
 const navItem =
-  "inline-flex min-h-11 items-center rounded-full px-3 py-2 text-small font-medium text-ink-muted transition-colors duration-(--dur-fast) ease-(--ease-out) hover:text-ink aria-[current=page]:text-ink";
+  "inline-flex min-h-11 items-center rounded-full px-3 py-2 text-small font-medium text-ink-muted transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised hover:text-ink aria-[current=page]:text-ink";
 const primaryItem =
   "btn btn-primary text-small";
 

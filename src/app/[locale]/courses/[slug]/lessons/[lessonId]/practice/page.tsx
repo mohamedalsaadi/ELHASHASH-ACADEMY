@@ -101,7 +101,7 @@ export default async function PracticePage({
             const correct = !!reply?.correct;
             const rightChoice = item.choices.find((c) => c.id === reply?.choiceId);
             return (
-              <li key={item.id} className="grid gap-1 rounded-md border border-hairline bg-surface p-4">
+              <li key={item.id} className="grid gap-1 card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <span className="font-semibold" dir="auto">
                     <span className="num text-ink-muted">{i + 1}. </span>

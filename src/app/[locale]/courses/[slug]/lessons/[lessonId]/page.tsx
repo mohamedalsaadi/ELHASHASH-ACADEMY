@@ -185,7 +185,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
           }
         />
 
-        <div className="aspect-video overflow-hidden rounded-md border border-hairline bg-surface">
+        <div className="aspect-video overflow-hidden card">
           {lesson.kind === "PDF" ? (
             <Notice>{tp("pdfUnavailable")}</Notice>
           ) : video?.provider === "YOUTUBE" ? (
@@ -253,7 +253,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
         </nav>
 
         {homework.length > 0 && (
-          <section className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+          <section className="grid gap-2 card p-4">
             <h2 className="font-display text-h3 font-semibold">{th("title")}</h2>
             <ul className="grid gap-1 text-small">
               {homework.map((a) => (
@@ -276,7 +276,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
             {mayAsk ? <AskForm lessonId={lesson.id} /> : <p className="text-small text-ink-muted">{tq("plansOnly")}</p>}
             <ul className="grid gap-3">
               {mine.map((q) => (
-                <li key={q.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+                <li key={q.id} className="grid gap-2 card p-4">
                   <p dir="auto" className="break-words whitespace-pre-line">{q.body}</p>
                   {q.answer ? (
                     <div className="grid gap-1 border-s-2 border-pen ps-3">
@@ -293,7 +293,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
         )}
       </div>
 
-      <aside className="grid gap-3 rounded-md border border-hairline bg-surface p-4 lg:sticky lg:top-6">
+      <aside className="grid gap-3 card p-4 lg:sticky lg:top-6">
         <h2 className="font-display text-h3 font-semibold">{tp("courseLessons")}</h2>
         {outline.units.map((u) => (
           <details key={u.id} open={u.id === unit.id}>

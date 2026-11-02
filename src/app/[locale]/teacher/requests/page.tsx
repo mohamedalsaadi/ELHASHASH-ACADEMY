@@ -47,7 +47,7 @@ export default async function TeacherRequestsPage({ params }: { params: Promise<
       ) : (
         <ul className="grid gap-3">
           {requests.map((r) => (
-            <li key={r.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+            <li key={r.id} className="grid gap-2 rounded-lg border border-hairline bg-surface shadow-paper p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-display font-semibold" dir="auto">{r.subject}</span>
                 <StatusChip tone={r.status === "CLOSED" ? "neutral" : r.status === "ANSWERED" ? "active" : "expiring"}>

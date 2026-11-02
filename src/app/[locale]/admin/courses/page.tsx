@@ -87,7 +87,7 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
             <li key={c.id}>
               <Link
                 href={`/admin/courses/${c.id}`}
-                className="flex items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
               >
                 <span className="grid gap-1">
                   <span className="font-display font-semibold">{ar ? c.titleAr : c.titleEn}</span>

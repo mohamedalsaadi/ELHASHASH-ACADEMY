@@ -111,7 +111,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
                 <form action={toggleExamItem}>
                   <input type="hidden" name="paperId" value={paper.id} />
                   <input type="hidden" name="itemId" value={item.id} />
-                  <button className={`shrink-0 rounded-sm border px-3 py-1 text-label ${chosen.has(item.id) ? "border-pen text-pen" : "border-hairline text-ink-muted"}`}>
+                  <button className={`shrink-0 rounded-full border px-3 py-1 text-label ${chosen.has(item.id) ? "border-pen text-pen" : "border-hairline text-ink-muted"}`}>
                     {chosen.has(item.id) ? "✓" : "+"}
                   </button>
                 </form>

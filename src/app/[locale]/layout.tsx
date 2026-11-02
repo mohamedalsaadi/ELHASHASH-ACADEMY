@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Aref_Ruqaa, IBM_Plex_Sans_Arabic, Readex_Pro } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Readex_Pro, Reem_Kufi } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -26,11 +26,11 @@ const readex = Readex_Pro({
   display: "swap",
 });
 
-// Ruqʿah, the hand teachers write on the board: the Arabic wordmark and chalked words only (DESIGN.md §0).
-const ruqaa = Aref_Ruqaa({
+// Reem Kufi, lettered like a survey map: the Arabic wordmark and words set on the map only (DESIGN.md §0).
+const reem = Reem_Kufi({
   subsets: ["arabic", "latin"],
   weight: ["700"],
-  variable: "--font-ruqaa",
+  variable: "--font-reem",
   display: "swap",
 });
 
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
     title: { default: title, template: `%s · ${title}` },
     description,
-    openGraph: { title, description, siteName: "Sabboura", locale: locale === "ar" ? "ar_AE" : "en_US", type: "website" },
+    openGraph: { title, description, siteName: "Dhirwa", locale: locale === "ar" ? "ar_AE" : "en_US", type: "website" },
     twitter: { card: "summary_large_image", title, description },
   };
 }
@@ -64,11 +64,11 @@ export default async function LocaleLayout({
   const t = await getTranslations("nav");
 
   return (
-    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${plex.variable} ${readex.variable} ${ruqaa.variable}`}>
+    <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${plex.variable} ${readex.variable} ${reem.variable}`}>
       <body className="antialiased">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[60] focus:rounded-sm focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:shadow-paper"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[60] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:shadow-paper"
         >
           {t("skipToContent")}
         </a>

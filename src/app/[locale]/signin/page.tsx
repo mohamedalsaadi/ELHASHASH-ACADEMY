@@ -1,6 +1,7 @@
 import { pageMetadata } from "@/lib/seo";
 import { AuthError } from "next-auth";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { PasswordField } from "@/components/ui/PasswordField";
@@ -41,7 +42,7 @@ export default async function SignInPage({
   }
 
   return (
-    <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
+    <AuthShell>
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
       <form action={action} className="grid gap-4">
         <label className="grid gap-2 text-label text-ink-muted">
@@ -102,6 +103,6 @@ export default async function SignInPage({
           {t("signUp")}
         </Link>
       </p>
-    </main>
+    </AuthShell>
   );
 }

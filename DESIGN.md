@@ -1,44 +1,44 @@
-# SABBOURA · Design DNA ("Chalkboard", branch `redesign-aurora`)
+# DHIRWA · Design DNA ("Contour", branch `redesign-aurora`)
 
 The single source of truth for every screen. Every colour, size, radius and duration in code comes from this file through `tokens.css`. No raw hex, px or ms values in components.
 
-Audience: secondary students across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, the parents who pay, and the teachers who sell. Identity "Chalkboard" (2026-11-02, when the trade licence was registered as Sabboura). It keeps Aurora's layout, spacing, radii, motion timing and the two 3D heroes, and replaces its colour, ornament, mark and intro. The full profile is `docs/brand/sabboura-dna.json`. Arabic first (RTL), English second.
+Audience: secondary students across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, the parents who pay, and the teachers who sell. Identity "Contour" (2026-11-02, when the trade name Dhirwa was reserved). It keeps the layout, spacing, radii, motion timing and the two 3D hero mechanics of the earlier identities, and replaces colour, ornament, mark, wordmark face and intro. The full profile is `docs/brand/dhirwa-dna.json`. Arabic first (RTL), English second.
 
-> Sections 2 to 8 below were written for Metro. Where they conflict with this section and `tokens.css`, this section and the tokens win. The token names are unchanged, so components did not need renaming.
+> Sections 2 to 8 below were written for earlier identities. Where they conflict with sections 0, 1 and 6 and `tokens.css`, those win. Token roles are unchanged, so components did not need renaming.
 
 ## 0. Brand
 
-**Name.** Sabboura, سبّورة: the classroom blackboard, the one object every student in Cairo, Riyadh and Dubai shares. Arabic copy writes سبّورة; English copy writes Sabboura; legal lines write "سبّورة (Sabboura)".
+**Name.** Dhirwa, ذروة: the peak. Every student is climbing toward one. Arabic copy writes ذروة; English copy writes Dhirwa; legal lines write "ذروة (Dhirwa)". Identifier `dhirwa`. Never bring back A+, Alsaadi, AAcademy or Sabboura.
 
-**Idea.** The best teacher's board, brought home. The heroes are a real slate; everything you read sits on warm exercise-book paper. Coloured chalk is the one ornament, and chalk is written, never animated for its own sake: it draws once at the speed of a hand, then stays.
+**Idea.** A survey map of the climb. Pages are warm survey paper; the heroes are a night map. Contour lines are the one ornament: they show height, and height is progress. One summit-gold point marks what matters (the summit, the one highlighted word, what a student earned). Lines rise once, then rest.
 
-**Mark.** A slate board on its wooden ledge, a stick of yellow chalk on the ledge, and one chalk stroke writing س, the first letter of the name (its three teeth also read as a handwriting squiggle). 64 × 48 grid, geometry in `src/app/brand-svg.ts`, component `src/components/brand/Mark.tsx`, favicon `src/app/icon.svg`; the PWA icons, Apple icon and share images are generated from the same geometry.
+**Mark.** Three nested ridge lines closing in on one peak, and a summit-gold point above them that is both the summit and the dot of ذ, the first letter of the name. 64 × 48 grid, geometry in `src/app/brand-svg.ts`, component `src/components/brand/Mark.tsx` (ridges take `currentColor`: ink on paper, snow on the map), favicon `src/app/icon.svg` (generated from `markSvg()`); the PWA icons, Apple icon and share images use the same geometry.
 
-**Wordmark.** The mark plus سبّورة in **Aref Ruqaa** (Ruqʿah, the script Arab teachers actually write on the board) in Arabic, or Sabboura in Readex Pro in English. Ruqʿah (`--font-hand`, `font-hand`) is only for the wordmark and words chalked on the board, never for reading text or app pages. Display face Readex Pro, body IBM Plex Sans Arabic (all via `next/font`).
+**Wordmark.** The mark plus ذروة in **Reem Kufi** 700 (geometric Kufi, lettered like a survey map) in Arabic, or Dhirwa in Readex Pro 700 (+0.04em) in English. Reem Kufi (`--font-mark`, `font-mark`) is only for the wordmark and words set on the map, never for reading text or app pages. Display face Readex Pro, body IBM Plex Sans Arabic (all via `next/font`).
 
 **Palette.**
 | Token | Hex | Use |
 |---|---|---|
-| `--color-ground` | `#F5F2EA` | exercise-book paper, every page |
+| `--color-ground` | `#F6F3EC` | survey paper, every page |
 | `--color-surface` | `#FFFFFF` | cards, header, footer |
-| `--color-ink` | `#16211D` | text on paper (16.5:1 on white) |
-| `--color-ink-muted` | `#5C6660` | meta, labels (6.0:1 on white, 5.3:1 on paper) |
-| `--color-primary` / `pen` / `focus` | `#1F6B4F` | board green: actions, links, focus ring (white on it 6.4:1) |
-| `--color-night` / `night-2` | `#15251F` / `#1E352C` | the slate (`.stage`) |
-| `--color-night-text` / `night-muted` | `#EEF1EA` / `#A7B7AE` | chalk white and muted text on the board (14.0:1 / 7.6:1) |
-| `--color-marker` / `chalk-1` | `#F2D06B` | yellow chalk: the board's button, the heading underline, what a student earned. Never text on paper; slate on it 10.6:1 |
-| `--color-chalk-2..6` | `#F4A261` `#F2A6B8` `#8CC4E8` `#A9DDB3` `#EEF1EA` | orange, pink, blue, green, white chalk: board drawings, the ride's rail, the footer rule |
-| `--color-wood` | `#8A5A36` | the board's ledge (mark, share images) |
+| `--color-ink` | `#13202F` | text on paper (16.6:1 on white) |
+| `--color-ink-muted` | `#586273` | meta, labels (6.1:1 on white, 5.5:1 on paper) |
+| `--color-primary` / `pen` / `focus` | `#1F7356` | trail green: actions, links, focus ring (white on it 5.8:1) |
+| `--color-night` / `night-2` | `#0F1B2D` / `#172840` | the night map (`.stage`) |
+| `--color-night-text` / `night-muted` | `#EEF0EA` / `#9FAABB` | snow and muted text on the map (15.6:1 / 7.4:1) |
+| `--color-marker` / `summit` | `#E8B04B` | summit gold: the map's button, the heading underline, the summit point, what a student earned. Never text on paper; night on it 8.9:1 |
+| `--color-contour-1..4` | `#3E5C7A` `#5D7FA0` `#8FB0C9` `#C3D3DE` | elevation ramp, low to high: contour lines, the footer rule, the loader |
+| `--color-contour-5` / `contour-6` | `#2F8F6B` / `#EEF0EA` | the trail line / the snow line |
 
 ## 1. Theses (validated with the trade name, 2026-11-02)
 
-**Visual.** Paper ground, white cards with a warm hairline and a slate-tinted soft shadow, large radii, pill buttons. Board-green primary. One slate stage (`.stage`) for the home hero, the student-home hero and the closing call: slate lighter where the classroom light falls, the faint smears of erased lessons and a fine chalk grain, all still. `.marker` underlines one word per heading by hand in yellow chalk; on the board the word itself turns chalk yellow. On the board the primary button is a stick of yellow chalk (`.btn-glow`). The footer closes every page with a thin rule of coloured chalk.
+**Visual.** Survey paper ground, white cards with a warm hairline and a navy-tinted soft shadow, large radii, pill buttons. Trail-green primary. One night-map stage (`.stage`) for the home hero, the student-home hero, the closing call and the small side panel of the sign-in and sign-up pages: navy, a little lighter where the summit catches the light, a faint field of still contour lines and a fine grain. `.marker` underlines one word per heading with a hand-drawn contour line in summit gold; on the map the word itself turns gold. On the map the primary button is summit gold (`.btn-glow`). The footer closes every page on three contour lines rising to one gold point (`.contour-rule`).
 
-**Interaction.** Calm and smooth: 160 / 280 / 700 ms on `cubic-bezier(.16,1,.3,1)`. Cards lift 3 px on hover. Sections reveal on scroll with CSS `animation-timeline: view()`. The home hero is the board (`src/components/three/Board.tsx`, scene in `board-scene.ts`): a 4.2 s chalk story on the first visit per tab (axes and a parabola in yellow, a wave in blue with its wavelength in pink, a benzene ring in green, then the name written in Ruqʿah and underlined in yellow), dust shed from the chalk tip, then idle motes drifting in three depth layers with a slight pointer parallax. The copy rises at 3.2 s; any input finishes the drawing at once; reduced motion gets the finished board with no dust; it pauses off-screen. Diagrams are never mirrored in Arabic (an x axis points right in every language): only their two columns swap so the name sits beside the copy. The signed-in student home has the subject ride (`Ride.tsx`, scene in `ride-scene.ts`): one card per subject with courses on a looping rail of coloured chalk, moved only by the student (drag, sideways wheel, the subject buttons, arrow keys), settling in about 700 ms. Forbidden: 3D outside those two heroes, autoplay carousels, bounce, scroll-jacking.
+**Interaction.** Rise, then rest: 160 / 280 / 700 ms on `cubic-bezier(.16,1,.3,1)`. Cards lift 3 px on hover. Sections reveal on scroll with CSS `animation-timeline: view()`. The home hero is the summit (`src/components/three/Summit.tsx`, scene in `summit-scene.ts`), see §6. The signed-in student home has the subject trail (`Ride.tsx`, scene in `ride-scene.ts`): one card per subject on a trail coloured with the elevation ramp and the country line, moved only by the student (drag, sideways wheel, the subject buttons, arrow keys), settling in about 700 ms. Forbidden: 3D outside those two heroes, autoplay carousels, bounce, scroll-jacking.
 
-**Marketing vs app.** Marketing pages get the board, the chalk and reveal motion. The student home counts as a store page. App pages (dashboard, lessons, teacher, admin, parent, checkout) get paper cards, pills and state transitions only, and never Ruqʿah.
+**Marketing vs app.** Marketing pages get the map, contour lines and reveal motion. The student home counts as a store page. App pages (dashboard, lessons, teacher, admin, parent, checkout) get paper cards, pills and state transitions only, and never Reem Kufi.
 
-**Allowed patterns:** the slate stage, coloured chalk, the yellow chalk underline on one word, Ruqʿah for the name only, glass sticky header (the one place blur is allowed), white paper cards, pill buttons and segmented pill navs, a country-colour dot or glow, scroll reveal, the session-once chalk intro.
+**Allowed patterns:** the night-map stage, contour lines in the elevation ramp, the summit-gold point, the gold contour underline on one word, Reem Kufi for the name only, glass sticky header (the one place blur is allowed), white paper cards, pill buttons and segmented pill navs, a country-colour trail or dot, scroll reveal, the session-once summit intro.
 
 ## 2. Genjitsu directives
 
@@ -139,18 +139,20 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 
 | Token | Value | Use |
 |---|---|---|
-| `--ease-out` | `cubic-bezier(.2,.7,.2,1)` | everything |
+| `--ease-out` | `cubic-bezier(.16,1,.3,1)` | everything |
 | `--dur-fast` | 160ms | hover, press |
-| `--dur-base` | 240ms | tabs, panel open/close, toasts |
+| `--dur-base` | 280ms | tabs, panel open/close, toasts, card lift |
+| `--dur-reveal` | 700ms | scroll reveal, hero copy rise |
 | `--dur-count` | 700ms | score count-up, bar fill, once per value per page load |
-| `--stagger` | 30ms | streak day cells |
+| `--dur-press` | 80ms | button press |
+| `--stagger` | 60ms | hero copy, lists |
 
 - Animate only `transform`, `opacity`, `background-color`, `border-color`, `color`, `stroke-dashoffset`.
-- **Intro** (home only; `src/components/brand/Intro.tsx`, timings in `src/app/brand.css`), 1.8s on a white overlay with the ink rule, over the already-rendered page: 0–0.88s the country lines draw from the edges into the interchange, 60ms apart (dashed lines draw through a mask) · 0.76–1.0s the A+ roundel settles from 60% scale · 0.96–1.3s the wordmark rises 10px · 1.56–1.8s the overlay fades. Pure SVG and CSS, nothing to download. A pointer, key, wheel or touch skips it; a timer always clears it at 1.9s. Once per tab session (`sessionStorage`), never under reduced motion, never without JS.
-- **Map** (`src/components/brand/Network.tsx`): hover on a line or station dims the others to 25%. On desktop pointers only, the map rests at a slight isometric tilt (10° × −3°) and flattens on hover or focus over 600ms; flat on touch screens and under reduced motion. Done in CSS; three.js is no longer used.
-- **Route loader:** a 4px primary line draws across the top only while a route is loading.
-- Nothing reacts to scroll.
-- `prefers-reduced-motion`: durations become 0, the intro never shows, count-ups show the final value, colour still changes.
+- **Summit intro** (home only; `src/components/three/Summit.tsx`, scene in `summit-scene.ts`, gate in `src/components/brand/Intro.tsx`, copy delay in `src/app/brand.css`), 4.0 s (`SUMMIT_END`): 0–0.8 s the contour rings fade in flat, seen from above like a map · 0.6–2.6 s they lift to their heights while the camera tilts to three-quarter view · 1.8–3.4 s a summit-gold trail climbs from the foot to the top · 3.4–3.8 s a flag settles on the summit · the hero copy rises from 3.2 s. Then only a slow camera drift of a few degrees and pointer parallax. The name is DOM text, never drawn into the canvas. Any pointer, key, wheel or touch jumps to the end; a timer always clears the gate at 4.4 s. Once per tab session (`sessionStorage`); reduced motion and later visits get the final frame. Paused off-screen and when the tab is hidden.
+- **Map** (`src/components/brand/Network.tsx`): hover on a line or station dims the others to 25%.
+- **Route loader:** a 3px contour line (low ground to summit gold) draws across the top only while a route is loading.
+- Nothing reacts to scroll except the one-time reveal.
+- `prefers-reduced-motion`: durations become 0, 3D scenes render their final frame once, count-ups show the final value, colour still changes.
 
 ## 7. Components (5 states each: default · hover · focus-visible · active · disabled)
 

@@ -9,8 +9,8 @@ export type RideSubject = RideCar & { id: string; anchor: string; cta: string };
 type Scene = ReturnType<typeof import("./ride-scene").createRide>;
 
 /**
- * The student home hero: the subject ride (canvas, decorative) driven by a row of real buttons. The canvas only
- * draws when something moves; under reduced motion each choice jumps straight to the station.
+ * The student home hero: the subject trail (canvas, decorative) driven by a row of real buttons. The canvas only
+ * draws when something moves; under reduced motion each choice jumps straight to its waypoint.
  */
 export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubject[]; rtl: boolean; countryCode: string; label: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -45,13 +45,13 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
         small,
         font,
         colors: {
-          rail: ["chalk-1", "chalk-2", "chalk-3", "chalk-4", "chalk-5"].map(token),
+          ramp: ["contour-1", "contour-2", "contour-3", "contour-4", "contour-6"].map(token),
           card: token("night-2"),
-          cardEdge: token("chalk-6"),
+          cardEdge: token("contour-6"),
           ink: token("night-text"),
           muted: token("night-muted"),
-          pen: token(`line-${countryCode.toLowerCase()}`) || token("chalk-1"),
-          glow: token("chalk-1"),
+          pen: token(`line-${countryCode.toLowerCase()}`) || token("contour-5"),
+          glow: token("contour-3"),
         },
       });
 

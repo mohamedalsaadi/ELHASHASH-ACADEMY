@@ -410,7 +410,7 @@ export default async function CatalogPage({
             <ul className="grid gap-2 sm:grid-cols-2">
               {ordered.map((s) => (
                 <li key={s.id}>
-                  <label className="flex items-center gap-3 rounded-md border border-hairline bg-surface p-3 has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20">
+                  <label className="flex items-center gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-3 has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20">
                     <input type="checkbox" name="subject" value={s.id} defaultChecked={on.has(s.id)} className="size-5 accent-(--color-pen)" />
                     <SubjectIcon icon={s.icon} size={28} muted={!s.active} />
                     <span className={`font-display font-semibold ${s.active ? "" : "text-ink-muted"}`}>{ar ? s.nameAr : s.nameEn}</span>

@@ -19,7 +19,7 @@ export function PasswordField({ name = "password", className, ...rest }: Props) 
         aria-label={show ? t("hidePassword") : t("showPassword")}
         aria-controls={id}
         onClick={() => setShow((value) => !value)}
-        className="absolute end-1 grid size-10 place-items-center rounded-sm text-ink-muted hover:bg-raised"
+        className="absolute end-1 grid size-10 place-items-center rounded-full text-ink-muted transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised hover:text-ink"
       >
         {show ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
       </button>

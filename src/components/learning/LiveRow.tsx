@@ -39,7 +39,7 @@ export function LiveRow({
     </div>
   );
 
-  const className = `grid gap-2 rounded-md border p-4 ${phase === "now" ? "border-pen bg-surface" : "border-hairline bg-surface"}`;
+  const className = `card grid gap-2 p-4 ${phase === "now" ? "border-pen" : ""}`;
   if (!href) return <div className={className}>{body}</div>;
   return (
     <Link href={href} className={`${className} transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised`}>

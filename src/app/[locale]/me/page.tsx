@@ -70,13 +70,13 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
       <section className="stage">
         <div className="relative mx-auto grid max-w-(--container-page) gap-8 px-4 pt-14 pb-12 md:pt-20">
           <div className="grid max-w-[40rem] gap-4">
-            <span className="text-label font-medium tracking-wide text-night-muted">{t("hello", { name: home.name.split(" ")[0] })}</span>
+            <span className="text-label font-medium text-night-muted">{t("hello", { name: home.name.split(" ")[0] })}</span>
             <h1 className="flex flex-wrap items-center gap-3 font-display text-display leading-tight font-bold">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/flags/${code}.svg`} alt="" className="h-7 w-auto rounded-sm" />
               {t("title", { grade: gradeName, country: countryName })}
             </h1>
-            <p className="text-[1.125rem] text-night-muted">{t("lede", { count: subjects.length })}</p>
+            <p className="text-night-muted">{t("lede", { count: subjects.length })}</p>
           </div>
           <Ride subjects={ride} rtl={ar} countryCode={grade.country.code} label={t("subjects")} />
           {ride.length > 0 ? (
@@ -108,17 +108,17 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
         )}
 
         {bundle && (
-          <section className="stage grid gap-4 rounded-lg p-7 md:grid-cols-[1fr_auto] md:items-center md:p-10">
+          <section className="card grid gap-4 border-t-(length:--line) p-7 md:grid-cols-[1fr_auto] md:items-center md:p-10" style={{ borderTopColor: line }}>
             <div className="grid gap-2">
-              <span className="text-label font-medium tracking-wide text-night-muted">{t("bundle.k")}</span>
+              <span className="text-label font-medium text-ink-muted">{t("bundle.k")}</span>
               <h2 className="font-display text-h1 font-bold">{t("bundle.title", { subjects: bundleNames.join(ar ? "، " : ", ") })}</h2>
-              <p className="text-night-muted">
+              <p className="text-ink-muted">
                 <s className="num">{formatMoney(bundle.subtotal, bundle.currency, locale)}</s>{" "}
-                <span className="num font-display text-h2 font-bold text-night-text">{formatMoney(bundle.total, bundle.currency, locale)}</span>{" "}
+                <span className="num font-display text-h2 font-bold text-ink">{formatMoney(bundle.total, bundle.currency, locale)}</span>{" "}
                 {t("bundle.save", { amount: formatMoney(bundle.subtotal - bundle.total, bundle.currency, locale) })}
               </p>
             </div>
-            <Link href={`/checkout?${bundle.skuIds.map((id) => `sku=${encodeURIComponent(id)}`).join("&")}`} className="btn btn-glow">
+            <Link href={`/checkout?${bundle.skuIds.map((id) => `sku=${encodeURIComponent(id)}`).join("&")}`} className="btn btn-primary">
               {t("bundle.cta")}
               <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
             </Link>
@@ -129,6 +129,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
           {ready.map((s) => (
             <section key={s.id} id={`subject-${s.slug}`} className="grid scroll-mt-24 gap-5">
               <div className="flex items-center gap-3">
+                {/* The country's trail colour marks each waypoint section. */}
                 <i aria-hidden="true" className="h-6 w-1 rounded-full" style={{ background: line }} />
                 <h2 className="font-display text-h2 font-bold">{name(s)}</h2>
                 <span className="text-small text-ink-muted">{t("courses", { count: s.courses.length })}</span>

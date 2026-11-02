@@ -68,8 +68,8 @@ export default async function NotificationsPage({
                 <span className="num text-label text-ink-muted">{when.format(n.createdAt)}</span>
               </span>
             );
-            const className = `block w-full rounded-md border p-4 text-start transition-colors duration-(--dur-fast) ease-(--ease-out) ${
-              n.readAt ? "border-hairline bg-surface" : "border-pen bg-surface"
+            const className = `card block w-full p-4 text-start transition-colors duration-(--dur-fast) ease-(--ease-out) ${
+              n.readAt ? "" : "border-pen"
             } ${n.href ? "hover:bg-raised" : ""}`;
             return (
               <li key={n.id}>

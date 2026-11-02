@@ -15,7 +15,7 @@ export async function replyTicket(form: FormData) {
   if (!ticket || ticket.status === "CLOSED") return;
 
   const ar = /[\u0600-\u06FF]/.test(ticket.message);
-  const subject = ar ? "رد من سبّورة" : "Reply from Sabboura";
+  const subject = ar ? "رد من ذروة" : "Reply from Dhirwa";
   const sent = await sendMail({ to: ticket.email, subject, html: emailLayout(subject, d.data.reply.split(/\n{2,}/), undefined, ar ? "ar" : "en") });
   if (!sent) return;
 

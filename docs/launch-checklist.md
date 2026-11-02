@@ -1,4 +1,4 @@
-# Sabboura launch checklist
+# Dhirwa launch checklist
 
 Last updated: 2026-10-30 · live commit `22d5f76`.
 
@@ -22,10 +22,10 @@ This is the single place for: **what has not been verified**, **what only the ow
 **Gate 0 — prove the database is the same one.**
 - [ ] Vercel → Settings → Environment Variables → `DATABASE_URL`. The host must be `ep-twilight-feather-b97jpk23-pooler.c-7.eu-central-1.aws.neon.tech`. If it is a different database, run `npx prisma migrate deploy` against it and re-run `npx tsx prisma/seed-uae-prices.ts --apply` first. Without this, every signed-in screen errors on missing tables.
 
-**Domain and handles (owner).** The trade name is Sabboura (licence registered 2026-11-02). On 2026-11-02 `sabbouraacademy` was free as .com, .net, .org and .ae (the .ae by DNS only) and on Instagram and TikTok; plain `sabboura.com` was taken.
-- [ ] Reserve `@sabbouraacademy` on Instagram and TikTok the same day the domains are bought.
-- [ ] Buy `sabbouraacademy.com` (and .net/.org to protect it) and `sabbouraacademy.ae` at an aeDA-accredited registrar (Vercel cannot register .ae); point the nameservers at `ns1.vercel-dns.com` / `ns2.vercel-dns.com`.
-- [ ] Once it resolves with a valid certificate: `MAIL_FROM=Sabboura <no-reply@<domain>>` after Resend verifies SPF, DKIM and DMARC. `src/lib/paymob.ts` falls back to `no-reply@sabbouraacademy.ae`; change it if a different domain is bought.
+**Domain and handles (owner).** The trade name is Dhirwa, ذروة ("the peak"; reserved 2026-11-02). Nothing is bought yet. On 2026-11-02 `dhirwa.net`, `dhirwa.org` and `dhirwa.ae` (the .ae by DNS only) and Instagram `@dhirwa` were free; `dhirwa.com` is taken. TikTok was not checked.
+- [ ] Reserve `@dhirwa` on Instagram (and check TikTok) the same day the domains are bought.
+- [ ] Buy `dhirwa.ae` at an aeDA-accredited registrar (Vercel cannot register .ae) and `dhirwa.net` / `dhirwa.org` to protect it; pick one as the primary. Point the nameservers at `ns1.vercel-dns.com` / `ns2.vercel-dns.com`.
+- [ ] Once it resolves with a valid certificate: `MAIL_FROM=Dhirwa <no-reply@<domain>>` after Resend verifies SPF, DKIM and DMARC. `src/lib/paymob.ts` takes its no-reply address from `SUPPORT_EMAIL`, then `MAIL_FROM`, then the neutral `no-reply@example.com`, so no domain is hard-coded.
 
 **Then, in this order**
 1. [ ] Add the domain in Vercel → Domains; `A 76.76.21.21` for the apex, `CNAME cname.vercel-dns.com` for `www`; 308 `www` → apex. Wait for *Valid Configuration*.
@@ -113,7 +113,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 
 ### Product and legal
 
-- [ ] **Legal entity and address** in `/terms`, `/privacy`, `/refund` — they read "Sabboura (سبّورة), UAE"; add the licence number and address.
+- [ ] **Legal entity and address** in `/terms`, `/privacy`, `/refund` — they must read "ذروة (Dhirwa), UAE" (the legal pages are owned by Content/SEO; check they were renamed); add the licence number and address.
 - [ ] **Privacy review** by the owner's advisor.
 - [ ] **Branded support address** — `SUPPORT_EMAIL` falls back to `chemical.mohammed@gmail.com`.
 - [ ] **New-country art.** New countries get a code badge until flag/landmark art exists.
@@ -134,7 +134,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | **VdoCipher** | DRM video OTP and player | `dev.vdocipher.com`, `player.vdocipher.com` | `VDOCIPHER_API_SECRET` | `src/lib/vdocipher.ts`, CSP `frame-src` |
 | **Daily.co** | Live rooms and tokens | `api.daily.co`, `*.daily.co` | `DAILY_API_KEY` | `src/lib/daily.ts`, CSP and Permissions-Policy |
 | **Resend** | Transactional email | `api.resend.com/emails`, `/emails/receiving` | `RESEND_API_KEY`, `MAIL_FROM` | `src/lib/mail.ts`, `src/lib/notify.ts` |
-| **Google Fonts** | Readex Pro at build | `fonts.googleapis.com` | none | `layout.tsx`, `next/font` |
+| **Google Fonts** | Readex Pro, IBM Plex Sans Arabic and Reem Kufi at build | `fonts.googleapis.com` | none | `layout.tsx`, `next/font` |
 | **YouTube (nocookie)** | Free lesson embeds | `www.youtube-nocookie.com` | none | lesson player, CSP `frame-src` |
 | **GitHub** | Source and Vercel integration | `<owner>/<repo>` | none | owner rename pending |
 | **npm registry** | Dependencies | `registry.npmjs.org` | none | `package.json`, `package-lock.json` |

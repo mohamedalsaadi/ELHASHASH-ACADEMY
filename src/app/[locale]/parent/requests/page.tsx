@@ -62,7 +62,7 @@ export default async function ParentRequestsPage({ params }: { params: Promise<{
       <ParentNav current="requests" />
       <PageHeader title={t("requests")} />
 
-      <section className="grid gap-3 rounded-md border border-hairline bg-surface p-4">
+      <section className="grid gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4">
         <h2 className="font-display text-h3 font-semibold">{t("newRequest")}</h2>
         {children.length === 0 ? (
           <p className="text-small text-ink-muted">{t("noRequests")}</p>
@@ -92,7 +92,7 @@ export default async function ParentRequestsPage({ params }: { params: Promise<{
       ) : (
         <ul className="grid gap-3">
           {requests.map((r) => (
-            <li key={r.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+            <li key={r.id} className="grid gap-2 rounded-lg border border-hairline bg-surface shadow-paper p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-display font-semibold" dir="auto">{r.subject}</span>
                 <StatusChip tone={r.status === "CLOSED" ? "neutral" : r.status === "ANSWERED" ? "active" : "expiring"}>

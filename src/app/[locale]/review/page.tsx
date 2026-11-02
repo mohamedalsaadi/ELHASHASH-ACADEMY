@@ -78,7 +78,7 @@ export default async function ReviewPage({
         <ul className="grid gap-3">
           {attempts.flatMap((a) =>
             a.answers.map((ans, i) => (
-              <li key={`${a.id}-${i}`} className="grid gap-1 rounded-md border border-hairline bg-surface p-4">
+              <li key={`${a.id}-${i}`} className="grid gap-1 card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <span className="font-semibold" dir="auto">{ans.item.prompt}</span>
                   <StatusChip tone={ans.correct ? "active" : "expired"}>{ans.correct ? t("correctLabel") : t("wrongLabel")}</StatusChip>

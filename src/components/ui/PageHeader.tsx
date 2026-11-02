@@ -18,7 +18,7 @@ export function PageHeader({
   return (
     <div className="grid gap-3">
       {back && (
-        <Link href={back.href} className="flex w-fit items-center gap-2 text-small text-ink-muted hover:text-ink">
+        <Link href={back.href} className="flex min-h-11 w-fit items-center gap-2 rounded-full text-small text-ink-muted transition-colors duration-(--dur-fast) ease-(--ease-out) hover:text-ink">
           <Mark size={18} />
           <span>{back.label}</span>
         </Link>

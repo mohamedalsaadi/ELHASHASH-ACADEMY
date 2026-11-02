@@ -104,8 +104,12 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
         eyebrow={ar ? paper.course.titleAr : paper.course.titleEn}
         title={<span dir="auto">{paper.title}</span>}
         meta={
-          <span className="num">
+          <span className="num inline-flex flex-wrap items-center gap-2">
             {attempt.marks ?? "—"} / {attempt.maxMarks} · {t("attemptsUsed", { used, max: paper.maxAttempts })}
+            {/* The summit point: full marks on a graded paper. */}
+            {attempt.status === "GRADED" && attempt.maxMarks > 0 && attempt.marks === attempt.maxMarks && (
+              <span aria-hidden="true" className="size-2 rounded-full bg-summit" />
+            )}
           </span>
         }
         actions={
@@ -129,7 +133,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
           const ans = answered.get(item.id);
           const pending = item.kind === "WRITTEN" && (ans?.marks ?? null) === null;
           return (
-            <li key={item.id} className="grid gap-1 rounded-md border border-hairline bg-surface p-4">
+            <li key={item.id} className="grid gap-1 card p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <span className="font-semibold" dir="auto">
                   <span className="num text-ink-muted">{i + 1}. </span>

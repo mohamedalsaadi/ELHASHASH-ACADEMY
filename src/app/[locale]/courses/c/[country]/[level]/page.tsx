@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const name = locale === "ar" ? grade.nameAr : grade.nameEn;
   return {
     title: name,
-    description: locale === "ar" ? `مواد ${name} وكورساتها على سبّورة.` : `${name} subjects and courses on Sabboura.`,
+    description: locale === "ar" ? `مواد ${name} وكورساتها على ذروة.` : `${name} subjects and courses on Dhirwa.`,
     alternates: alternates(locale, `/courses/c/${slug.toLowerCase()}/${level}`),
   };
 }
@@ -87,7 +87,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
         <p className="text-ink-muted">{t("subjectCount", { count: tiles.length, live })}</p>
       </header>
 
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <ul className="reveal grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.length === 0 && (
           <li className="col-span-full">
             <EmptyState>
@@ -120,7 +120,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
                   </span>
                 </Link>
               ) : (
-                <div className={`${card} border-2 border-dashed border-field`}>
+                <div className={`${card} rounded-lg border-2 border-dashed border-field`}>
                   <SubjectIcon icon={subject.icon} size={44} muted />
                   {label}
                   <span className="mt-auto border-t border-dashed border-rule pt-2 text-small text-ink-muted">{t("soon")}</span>

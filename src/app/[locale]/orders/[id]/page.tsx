@@ -60,7 +60,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
         <PrintButton label={t("print")} />
       </div>
 
-      <section className="grid gap-5 rounded-md border border-hairline bg-surface p-6 print:border-0 print:p-0">
+      <section className="grid gap-5 card p-6 print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline pb-4">
           <div className="grid gap-1">
             <h1 className="font-display text-h2 font-semibold">{t("title")}</h1>

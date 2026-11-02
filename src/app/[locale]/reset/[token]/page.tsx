@@ -1,5 +1,6 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { ResetForm } from "./ResetForm";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -11,9 +12,9 @@ export default async function ResetPage({ params }: { params: Promise<{ locale: 
   setRequestLocale(locale);
   const t = await getTranslations("reset");
   return (
-    <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
+    <AuthShell>
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
       <ResetForm token={token} />
-    </main>
+    </AuthShell>
   );
 }

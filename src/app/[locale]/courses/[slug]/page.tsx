@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
@@ -16,7 +16,6 @@ import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, 
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
 import { alternates, siteUrl } from "@/lib/seo";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressBar } from "@/components/ui/progress";
 import { StatusChip } from "@/components/ui/StatusChip";
 
@@ -53,11 +52,11 @@ type Offer = { id: string | null; label?: string; price: string; was?: string; n
 /** One plan as a card: what it includes, then each way to buy it with its price per lecture and saving. */
 function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }: { name: string; lines: Line[]; offers: Offer[]; best?: boolean; bestLabel: string; cta: string; className?: string }) {
   return (
-    <li className={`grid content-start gap-4 bg-surface p-5 ${best ? "card ring-2 ring-primary" : "card"} ${className}`}>
+    <li className={`card grid content-start gap-4 p-5 ${best ? "ring-2 ring-primary" : ""} ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-display text-h3 font-bold">{name}</h3>
         {best && (
-          <span className="shrink-0 rounded-full bg-marker/20 px-2.5 py-0.5 font-display text-label font-bold text-ink">{bestLabel}</span>
+          <span className="shrink-0 rounded-full bg-marker px-2.5 py-0.5 font-display text-label font-bold text-ink">{bestLabel}</span>
         )}
       </div>
       <ul className="grid gap-2 text-small">
@@ -83,7 +82,7 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
           {o.id ? (
             <Link
               href={{ pathname: "/checkout", query: { sku: o.id } }}
-              className={`mt-1 rounded-full px-4 py-2.5 text-center font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) ${best ? "bg-primary text-on-primary hover:bg-primary/90" : "border border-hairline bg-surface hover:bg-raised"}`}
+              className={`btn mt-1 font-display ${best ? "btn-primary" : "btn-outline"}`}
             >
               {cta}
             </Link>
@@ -106,6 +105,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const tl = await getTranslations("live");
   const th = await getTranslations("homework");
   const te = await getTranslations("exam");
+  const tt = await getTranslations("teacher");
   const ar = locale === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
   const now = new Date();
@@ -115,7 +115,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     include: {
       grade: { include: { country: true } },
       liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
-      instructor: { select: { id: true, name: true } },
+      instructor: { select: { id: true, name: true, photoUrl: true } },
       units: {
         orderBy: { order: "asc" },
         include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now) } } } },
@@ -194,7 +194,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     "@type": "Course",
     name: courseTitle,
     description: (ar ? course.descAr : course.descEn) ?? undefined,
-    provider: { "@type": "Organization", name: "Sabboura", sameAs: siteUrl },
+    provider: { "@type": "Organization", name: ar ? "ذروة" : "Dhirwa", sameAs: siteUrl },
     url: courseUrl,
     offers: course.skus.map((s) => ({
       "@type": "Offer",
@@ -209,42 +209,48 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const upgrades = level === "partial" ? course.skus.filter((s) => lecturesIn(course.units, s) > openPaid) : [];
   const showPlans = level === "none" || (level === "partial" && upgrades.length === 0);
 
-  // The course wears its country's line colour; skill courses have no country and use ink.
-  const line = course.grade ? `var(--color-line-${course.grade.country.code.toLowerCase()}, var(--color-ink))` : "var(--color-ink)";
+  // The course wears its country's trail colour; skill courses have no country and use the trail green.
+  const line = course.grade ? `var(--color-line-${course.grade.country.code.toLowerCase()}, var(--color-primary))` : "var(--color-primary)";
+  // The one buy call in the header: only for someone who holds nothing yet and has a plan to pick.
+  // Bahrain's red is too light for white; it carries ink (as on the map).
+  const inkOnLine = course.grade?.country.code === "BH";
+  const buyFrom = showPlans && level === "none" && !lapsed ? cheapestSku(single ? [...course.skus, single] : course.skus, now) : null;
+  const headline = ar ? course.headlineAr : course.headlineEn;
+  const desc = ar ? course.descAr : course.descEn;
 
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
       <JsonLd data={jsonLd} />
 
-      {course.coverKey && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`}
-          alt=""
-          className="aspect-[16/9] w-full border-b-(length:--line) object-cover"
-          style={{ borderColor: line }}
-        />
-      )}
-
-      <PageHeader
-        back={{ href: "/courses", label: t("title") }}
-        eyebrow={course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}
-        title={courseTitle}
-        meta={
-          <>
-            {(ar ? course.headlineAr : course.headlineEn) && (
-              <p className="max-w-[65ch] font-semibold">{ar ? course.headlineAr : course.headlineEn}</p>
+      <header className="card overflow-hidden">
+        {course.coverKey && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`} alt="" className="aspect-[16/9] w-full object-cover" />
+        )}
+        {/* The course's trail over a contour line. Not mirrored: a map is never flipped. */}
+        <svg aria-hidden="true" viewBox="0 0 400 24" preserveAspectRatio="none" className={`h-6 w-full ${course.coverKey ? "-mt-3" : ""}`}>
+          <g fill="none" strokeLinecap="round">
+            {!course.coverKey && (
+              <path d="M0 10C80 9 150 3 230 4S340 10 400 7" className="stroke-contour-4" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
             )}
-            {(ar ? course.descAr : course.descEn) && <p className="max-w-[65ch]">{ar ? course.descAr : course.descEn}</p>}
-            <p className="mt-1">
-              <Link href={`/teachers/${course.instructor.id}`} className="text-pen underline underline-offset-4">
-                {t("teacher", { name: course.instructor.name })}
-              </Link>
+            <path d="M0 20C70 19 130 12 200 10S330 4 400 3" strokeWidth="3" vectorEffect="non-scaling-stroke" style={{ stroke: line }} />
+          </g>
+        </svg>
+        <div className="grid gap-4 px-5 pb-6 sm:px-8 sm:pb-8">
+          <Link href="/courses" className="inline-flex min-h-11 w-fit items-center gap-2 text-small text-pen underline-offset-4 hover:underline">
+            <Arrow aria-hidden="true" className="size-4 rotate-180" />
+            {t("title")}
+          </Link>
+          <div className="grid gap-2">
+            <p className="flex items-center gap-2 text-small font-medium text-ink-muted">
+              <i aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ background: line }} />
+              {course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}
             </p>
-          </>
-        }
-        actions={
-          <>
+            <h1 className="font-display text-display font-bold">{courseTitle}</h1>
+            {headline && <p className="max-w-[65ch] text-h3 font-semibold">{headline}</p>}
+            {desc && <p className="max-w-[65ch] text-ink-muted">{desc}</p>}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             {staff ? (
               <StatusChip tone="neutral">{session?.user?.role === "ADMIN" ? t("adminView") : t("staffView")}</StatusChip>
             ) : level === "full" ? (
@@ -266,13 +272,24 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                 {t("planPanel.renew")}
                 <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
               </Link>
+            ) : buyFrom ? (
+              <>
+                <Link href="#packages" className="btn btn-primary font-display">
+                  {t("subscribe")}
+                  <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
+                </Link>
+                <span className="flex items-baseline gap-2">
+                  <span className="text-small text-ink-muted">{t("from")}</span>
+                  <span className="num font-display text-h3 font-bold">{formatMoney(effectivePrice(buyFrom, now), buyFrom.currency, locale)}</span>
+                </span>
+              </>
             ) : null}
-          </>
-        }
-      />
+          </div>
+        </div>
+      </header>
 
       {(bestPlan || lapsed || staff) && (
-        <section className="grid gap-2 bg-raised p-4 text-small">
+        <section className="grid gap-2 rounded-lg bg-raised p-4 text-small">
           <span className="font-display font-semibold">{t("planPanel.yourPlan")}</span>
           {staff ? (
             <span className="text-ink-muted">{t("staffView")}</span>
@@ -308,7 +325,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       )}
 
       {homeworkCount > 0 && (
-        <section className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-surface p-4">
+        <section className="card flex flex-wrap items-center justify-between gap-3 p-4">
           <span className="font-display text-h3 font-bold">{th("title")}</span>
           <span className="flex items-center gap-3 text-small">
             <span className="num text-ink-muted">{homeworkCount}</span>
@@ -320,7 +337,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       )}
 
       {examCount > 0 && (
-        <section className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-surface p-4">
+        <section className="card flex flex-wrap items-center justify-between gap-3 p-4">
           <span className="font-display text-h3 font-bold">{te("title")}</span>
           <span className="flex items-center gap-3 text-small">
             <span className="num text-ink-muted">{examCount}</span>
@@ -338,56 +355,85 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
             <p className="text-ink-muted">{t("noUnits")}</p>
           </EmptyState>
         )}
-        {course.units.map((u) => {
-          const unitEntries = u.lessons.map((l) => ({ lesson: l, term: u.term, isFree: u.isFree }));
-          const done = u.lessons.filter((l) => completed.has(l.id)).length;
-          const hasCurrent = u.lessons.some((l) => l.id === currentView?.lessonId);
-          return (
-            <details
-              key={u.id}
-              open={hasCurrent || (u === course.units[0] && !currentView)}
-              className="border border-rule border-t-(length:--line) bg-surface"
-              style={{ borderTopColor: line }}
-            >
-              <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
-                <span className="flex items-center gap-2">
-                  <span className="font-display text-h3 font-bold">{ar ? u.titleAr : u.titleEn}</span>
+        {/* The units as waypoints up one trail in the course's colour, ending at the summit point. */}
+        <ol className="grid">
+          {course.units.map((u, i) => {
+            const unitEntries = u.lessons.map((l) => ({ lesson: l, term: u.term, isFree: u.isFree }));
+            const done = u.lessons.filter((l) => completed.has(l.id)).length;
+            const hasCurrent = u.lessons.some((l) => l.id === currentView?.lessonId);
+            const cleared = u.lessons.length > 0 && done === u.lessons.length;
+            const last = i === course.units.length - 1;
+            return (
+              <li key={u.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 sm:gap-x-4">
+                <span aria-hidden="true" className="flex flex-col items-center pt-3">
+                  <span
+                    className={`grid size-10 shrink-0 place-items-center rounded-full border-4 font-display text-small font-bold ${cleared ? (inkOnLine ? "text-ink" : "text-on-primary") : "bg-surface"}`}
+                    style={{ borderColor: line, background: cleared ? line : undefined }}
+                  >
+                    {cleared ? <Check className="size-5" strokeWidth={3} /> : <span className="num">{i + 1}</span>}
+                  </span>
+                  <i className="w-1 flex-1 rounded-full" style={{ background: line }} />
+                  {last && <i className="mb-4 size-4 shrink-0 rounded-full bg-summit shadow-glow" />}
                 </span>
-                <span className="num text-label text-ink-muted">{t("unitCount", { done, total: u.lessons.length })}</span>
-              </summary>
-              <ul className="px-2 pb-2">
-                {u.lessons.map((l) => {
-                  const entry = unitEntries.find((e) => e.lesson.id === l.id)!;
-                  const open = opens(entry);
-                  const done = completed.has(l.id);
-                  const rent = cheapestSku(l.skus, now);
-                  const state = done ? "done" : currentView?.lessonId === l.id ? "current" : open ? "open" : level !== "none" ? "lockedPlan" : "locked";
-                  return (
-                    <li key={l.id}>
-                      <LessonRow
-                        href={open ? lessonHref(l.id) : undefined}
-                        title={ar ? l.titleAr : l.titleEn}
-                        subtitle={t(`kind.${l.kind}`)}
-                        state={state}
-                        trailing={
-                          open ? null : level !== "none" ? (
-                            <span className="text-label text-ink-muted">{t("outsidePlan")}</span>
-                          ) : rent ? (
-                            <Link href={{ pathname: "/checkout", query: { sku: rent.id } }} className="btn btn-outline px-3 py-1.5 text-small">
-                              {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span>
-                            </Link>
-                          ) : (
-                            <span className="text-label">{t("liveSubscribers")}</span>
-                          )
-                        }
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            </details>
-          );
-        })}
+                <details open={hasCurrent || (u === course.units[0] && !currentView)} className="card mb-4 overflow-hidden">
+                  <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
+                    <span className="font-display text-h3 font-bold">{ar ? u.titleAr : u.titleEn}</span>
+                    <span className="num text-label text-ink-muted">{t("unitCount", { done, total: u.lessons.length })}</span>
+                  </summary>
+                  <ul className="px-2 pb-2">
+                    {u.lessons.map((l) => {
+                      const entry = unitEntries.find((e) => e.lesson.id === l.id)!;
+                      const open = opens(entry);
+                      const done = completed.has(l.id);
+                      const rent = cheapestSku(l.skus, now);
+                      const state = done ? "done" : currentView?.lessonId === l.id ? "current" : open ? "open" : level !== "none" ? "lockedPlan" : "locked";
+                      return (
+                        <li key={l.id}>
+                          <LessonRow
+                            href={open ? lessonHref(l.id) : undefined}
+                            title={ar ? l.titleAr : l.titleEn}
+                            subtitle={t(`kind.${l.kind}`)}
+                            state={state}
+                            trailing={
+                              open ? null : level !== "none" ? (
+                                <span className="text-label text-ink-muted">{t("outsidePlan")}</span>
+                              ) : rent ? (
+                                <Link href={{ pathname: "/checkout", query: { sku: rent.id } }} className="btn btn-outline px-3 py-1.5 text-small">
+                                  {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span>
+                                </Link>
+                              ) : (
+                                <span className="text-label">{t("liveSubscribers")}</span>
+                              )
+                            }
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </details>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section className="grid gap-3">
+        <h2 className="font-display text-h2 font-bold">{t("aboutTeacher")}</h2>
+        <Link href={`/teachers/${course.instructor.id}`} className="card flex items-center gap-4 p-4 hover-lift">
+          {course.instructor.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/api/avatars/${course.instructor.id}`} alt="" className="size-14 shrink-0 rounded-full object-cover ring-2 ring-hairline" />
+          ) : (
+            <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-full bg-raised font-display text-h3 font-bold">
+              {course.instructor.name.trim().charAt(0)}
+            </span>
+          )}
+          <span className="grid min-w-0 flex-1 gap-0.5">
+            <span className="font-display text-h3 font-bold">{course.instructor.name}</span>
+            <span className="text-small text-pen">{tt("publicProfile")}</span>
+          </span>
+          <Arrow aria-hidden="true" className="size-5 shrink-0 text-ink-muted" />
+        </Link>
       </section>
 
       {live.length > 0 && (
@@ -436,7 +482,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
           <h2 className="font-display text-h2 font-bold">{t("upgradeTitle")}</h2>
           <ul className="grid gap-3">
             {upgrades.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-surface p-4">
+              <li key={s.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`planKind.${s.accessType}`)}</span>
                   <span className="text-small text-ink-muted">
@@ -520,11 +566,11 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       )}
 
       {level === "none" && others.length > 0 && (
-        <section className="grid gap-4">
+        <section id={single || months.length > 0 || terms.length > 0 ? undefined : "packages"} className="grid scroll-mt-6 gap-4">
           <h2 className="font-display text-h2 font-bold">{tp("other")}</h2>
           <ul className="grid gap-3">
             {others.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-4 border border-rule bg-surface p-4">
+              <li key={s.id} className="card flex flex-wrap items-center justify-between gap-4 p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</span>
                   {s.accessEndsAt && <span className="text-small text-ink-muted">{t("until", { date: formatDate(s.accessEndsAt, zone, locale) })}</span>}
@@ -536,7 +582,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                   </span>
                   <Link
                     href={{ pathname: "/checkout", query: { sku: s.id } }}
-                    className="rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                    className="btn btn-outline font-display"
                   >
                     {t("subscribe")}
                   </Link>

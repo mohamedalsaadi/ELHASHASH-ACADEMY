@@ -105,7 +105,7 @@ export default async function TeacherAnalyticsPage({ params }: { params: Promise
         ) : (
           <ul className="grid gap-1">
             {students.map((s) => (
-              <li key={s.id} className="flex items-center justify-between gap-3 rounded-md border border-hairline bg-surface px-3 py-2 text-small">
+              <li key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-surface shadow-paper px-3 py-2 text-small">
                 <span>{s.name}</span>
                 <span className="num">
                   {s.avg}% · {t("sample", { n: s.n })}
@@ -122,7 +122,7 @@ export default async function TeacherAnalyticsPage({ params }: { params: Promise
           {[...byAssignment.entries()].map(([id, a]) => {
             const avg = average(a.scores);
             return (
-              <li key={id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-hairline bg-surface px-3 py-2 text-small">
+              <li key={id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-hairline bg-surface shadow-paper px-3 py-2 text-small">
                 <span className="min-w-0">
                   <span className="block truncate" dir="auto">{a.title}</span>
                   <span className="text-label text-ink-muted">{a.course}</span>
@@ -141,7 +141,7 @@ export default async function TeacherAnalyticsPage({ params }: { params: Promise
         ) : (
           <ul className="grid gap-1">
             {units.map((u) => (
-              <li key={u.id} className="flex items-center justify-between gap-3 rounded-md border border-hairline bg-surface px-3 py-2 text-small">
+              <li key={u.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-surface shadow-paper px-3 py-2 text-small">
                 <span className="min-w-0">
                   <span className="block truncate">{u.name}</span>
                   <span className="text-label text-ink-muted">{u.course}</span>

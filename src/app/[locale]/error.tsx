@@ -18,11 +18,11 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <div className="flex flex-wrap justify-center gap-3">
         <button
           onClick={reset}
-          className="btn btn-primary text-small transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-[color-mix(in_oklab,var(--color-primary)_86%,#fff)]"
+          className="btn btn-primary text-small"
         >
           {t("retry")}
         </button>
-        <Link href="/contact" className="btn btn-outline px-4 text-small hover:bg-raised">
+        <Link href="/contact" className="btn btn-outline text-small">
           {t("contact")}
         </Link>
         <Link href="/" className="px-3 py-3 text-small text-pen underline-offset-4 hover:underline">

@@ -25,7 +25,7 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
     };
   }, [open]);
 
-  const itemClass = "flex min-h-11 items-center justify-between gap-2 rounded-sm px-3 py-2 font-display text-body text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+  const itemClass = "flex min-h-11 items-center justify-between gap-2 rounded-full px-4 py-2 font-display text-body text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
   return (
     <>
@@ -37,7 +37,7 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
           ref.current?.showModal();
           setOpen(true);
         }}
-        className="grid size-11 place-items-center rounded-sm border border-hairline text-ink md:hidden"
+        className="grid size-11 place-items-center rounded-full border border-hairline bg-surface text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised md:hidden"
       >
         <Menu aria-hidden="true" className="size-5" />
       </button>
@@ -46,12 +46,12 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
         ref={ref}
         onClose={() => setOpen(false)}
         aria-label={t("menu")}
-        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-surface p-0 text-ink backdrop:bg-ink/40 md:hidden"
+        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-surface p-0 text-ink backdrop:bg-night/50 md:hidden"
       >
         <div className="flex h-full flex-col gap-5 overflow-y-auto p-5">
           <div className="flex justify-end">
             <form method="dialog">
-              <button aria-label={t("close")} className="grid size-11 place-items-center rounded-sm border border-hairline text-ink">
+              <button aria-label={t("close")} className="grid size-11 place-items-center rounded-full border border-hairline text-ink hover:bg-raised">
                 <X aria-hidden="true" className="size-5" />
               </button>
             </form>
@@ -64,7 +64,7 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
                   key={item.href}
                   href={item.href}
                   onClick={() => ref.current?.close()}
-                  className="mt-2 rounded-sm bg-primary px-4 py-3 text-center font-display font-semibold text-on-primary"
+                  className="btn btn-primary mt-2"
                 >
                   {item.label}
                 </Link>
@@ -83,7 +83,7 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
             <LocaleSwitch />
             {signOut && (
               <form action={signOut}>
-                <SubmitButton pendingLabel={t("signingOut")} className="min-h-11 rounded-sm px-3 py-2 text-start font-display text-small text-ink-muted hover:bg-raised">
+                <SubmitButton pendingLabel={t("signingOut")} className="min-h-11 rounded-full px-4 py-2 text-start font-display text-small text-ink-muted hover:bg-raised">
                   {t("signOut")}
                 </SubmitButton>
               </form>

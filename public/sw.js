@@ -1,5 +1,5 @@
 // A small installability + offline-page worker. It does not cache lessons, APIs or payments.
-const CACHE = "sabboura-v1";
+const CACHE = "dhirwa-v1";
 const OFFLINE = ["/ar/offline", "/en/offline"];
 
 self.addEventListener("install", (event) => {

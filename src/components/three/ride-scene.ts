@@ -1,11 +1,12 @@
-// The student home ride: one card per subject on a looping rail of coloured chalk. The cars move only when the student
-// moves them (drag, sideways wheel, the subject buttons); the nearest car eases into the front "station".
+// The student home ride: one waypoint card per subject on a looping trail over contour rings. The trail is shaded up the
+// elevation ramp and marked in the country's line colour. The cards move only when the student moves them (drag,
+// sideways wheel, the subject buttons); the nearest card eases into the front "station".
 // Timing follows the brand DNA: settle in about 700 ms on an ease-out, no bounce, no autoplay.
 import type * as Three from "three";
 import { subjectPaths } from "@/components/brand/SubjectIcon";
 
 export type RideCar = { name: string; meta: string; price: string; icon: string };
-export type RideColors = { rail: string[]; card: string; cardEdge: string; ink: string; muted: string; pen: string; glow: string };
+export type RideColors = { ramp: string[]; card: string; cardEdge: string; ink: string; muted: string; pen: string; glow: string };
 
 /** Critically damped follow: about 95% of the way in 700 ms, whatever the frame rate. */
 const follow = (dt: number) => 1 - Math.exp(-dt * 4.3);
@@ -24,11 +25,16 @@ function carTexture(THREE: typeof Three, car: RideCar, c: RideColors, opts: { rt
   card.roundRect(inset, inset, w - 2 * inset, h - 2 * inset, r);
   g.fillStyle = c.card;
   g.fill(card);
-  const edge = g.createLinearGradient(0, 0, w, h);
-  c.rail.forEach((col, i) => edge.addColorStop(i / Math.max(1, c.rail.length - 1), col));
-  g.lineWidth = 3 * s;
-  g.strokeStyle = edge;
+  g.globalAlpha = 0.35;
+  g.lineWidth = 2 * s;
+  g.strokeStyle = c.cardEdge;
   g.stroke(card);
+  g.globalAlpha = 1;
+  // The waypoint pin: a short bar in the country's line colour across the top edge.
+  g.fillStyle = c.pen;
+  g.beginPath();
+  g.roundRect(w / 2 - 28 * s, inset - 1 * s, 56 * s, 6 * s, 3 * s);
+  g.fill();
 
   // The subject icon, on the brand's 48 grid, ink strokes plus the pen stroke.
   const { ink, pen } = subjectPaths(car.icon);
@@ -86,23 +92,25 @@ export function createRide(
   });
   const curve = new THREE.CatmullRomCurve3(points, true, "centripetal");
 
-  // The rail: a thin tube shaded along its length through the coloured chalk, plus a soft wider glow tube.
+  // The trail: a thin tube shaded by height up the elevation ramp (low ground to high ground), plus a soft wider halo.
   const TUBE = small ? 220 : 400;
-  const railGeo = keep(new THREE.TubeGeometry(curve, TUBE, 0.035, 8, true));
-  const ramp = colors.rail.map((c) => new THREE.Color(c));
-  const tint = (u: number, out: Three.Color) => {
-    const x = wrap(u) * ramp.length, i = Math.floor(x);
-    return out.copy(ramp[i % ramp.length]).lerp(ramp[(i + 1) % ramp.length], x - i);
+  const trailGeo = keep(new THREE.TubeGeometry(curve, TUBE, 0.035, 8, true));
+  const ramp = colors.ramp.map((c) => new THREE.Color(c));
+  const ys = points.map((p) => p.y);
+  const low = Math.min(...ys), high = Math.max(...ys);
+  const tint = (y: number, out: Three.Color) => {
+    const x = Math.min(0.999, Math.max(0, (y - low) / (high - low))) * (ramp.length - 1), i = Math.floor(x);
+    return out.copy(ramp[i]).lerp(ramp[i + 1], x - i);
   };
-  const rgb = new Float32Array(railGeo.attributes.position.count * 3);
-  const tmp = new THREE.Color();
-  for (let v = 0; v < railGeo.attributes.position.count; v++) {
-    tint(Math.floor(v / 9) / TUBE, tmp).toArray(rgb, v * 3);
-  }
-  railGeo.setAttribute("color", new THREE.BufferAttribute(rgb, 3));
-  scene.add(new THREE.Mesh(railGeo, keep(new THREE.MeshBasicMaterial({ vertexColors: true }))));
+  const shade = (geo: Three.TubeGeometry) => {
+    const pos = geo.attributes.position, rgb = new Float32Array(pos.count * 3), tmp = new THREE.Color();
+    for (let v = 0; v < pos.count; v++) tint(pos.getY(v), tmp).toArray(rgb, v * 3);
+    geo.setAttribute("color", new THREE.BufferAttribute(rgb, 3));
+  };
+  shade(trailGeo);
+  scene.add(new THREE.Mesh(trailGeo, keep(new THREE.MeshBasicMaterial({ vertexColors: true }))));
   const glowGeo = keep(new THREE.TubeGeometry(curve, TUBE, 0.16, 8, true));
-  glowGeo.setAttribute("color", new THREE.BufferAttribute(rgb.slice(0, glowGeo.attributes.position.count * 3), 3));
+  shade(glowGeo);
   scene.add(
     new THREE.Mesh(
       glowGeo,
@@ -110,13 +118,25 @@ export function createRide(
     ),
   );
 
-  // Sleepers: chalk dots under the rail.
-  const SLEEPERS = small ? 90 : 160;
-  const dots = new Float32Array(SLEEPERS * 3);
-  for (let i = 0; i < SLEEPERS; i++) curve.getPointAt(i / SLEEPERS).add(new THREE.Vector3(0, -0.12, 0)).toArray(dots, i * 3);
+  // Trail marks: a dotted line in the country's colour just under the trail, like a marked path on a map.
+  const MARKS = small ? 90 : 160;
+  const dots = new Float32Array(MARKS * 3);
+  for (let i = 0; i < MARKS; i++) curve.getPointAt(i / MARKS).add(new THREE.Vector3(0, -0.12, 0)).toArray(dots, i * 3);
   const dotGeo = keep(new THREE.BufferGeometry());
   dotGeo.setAttribute("position", new THREE.BufferAttribute(dots, 3));
-  scene.add(new THREE.Points(dotGeo, keep(new THREE.PointsMaterial({ color: colors.muted, size: 0.05, transparent: true, opacity: 0.6 }))));
+  scene.add(new THREE.Points(dotGeo, keep(new THREE.PointsMaterial({ color: colors.pen, size: 0.05, transparent: true, opacity: 0.7 }))));
+
+  // The map under the trail: still contour rings in the elevation ramp, the lowest widest.
+  const floor = low - 0.55;
+  ramp.slice(0, 4).forEach((col, k) => {
+    const f = 1.25 - k * 0.22;
+    const ring = Array.from({ length: 96 }, (_, j) => {
+      const a = (j / 96) * Math.PI * 2;
+      return new THREE.Vector3(rx * f * Math.sin(a) * (1 + 0.05 * Math.sin(3 * a + k)), floor, rz * f * Math.cos(a) * (1 + 0.06 * Math.cos(2 * a + k)));
+    });
+    const geo = keep(new THREE.BufferGeometry().setFromPoints(ring));
+    scene.add(new THREE.LineLoop(geo, keep(new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.45 }))));
+  });
 
   // The station: a soft pool of light under the front of the loop.
   const glowCanvas = document.createElement("canvas");
@@ -137,6 +157,18 @@ export function createRide(
   scene.add(station);
 
   const carGeo = keep(new THREE.PlaneGeometry(1.5, 1.875));
+  // Waypoints: a pen-coloured point on the trail under each card and a thin stem up to it.
+  const pinGeo = keep(new THREE.SphereGeometry(0.09, 16, 12));
+  const pinMat = keep(new THREE.MeshBasicMaterial({ color: colors.pen }));
+  const pins = cars.map(() => {
+    const pin = new THREE.Mesh(pinGeo, pinMat);
+    scene.add(pin);
+    return pin;
+  });
+  const stems = new Float32Array(cars.length * 6);
+  const stemGeo = keep(new THREE.BufferGeometry());
+  stemGeo.setAttribute("position", new THREE.BufferAttribute(stems, 3));
+  scene.add(new THREE.LineSegments(stemGeo, keep(new THREE.LineBasicMaterial({ color: colors.cardEdge, transparent: true, opacity: 0.35 }))));
   const meshes = cars.map((car) => {
     const map = keep(carTexture(THREE, car, colors, { rtl, font: opts.font, px: small ? 256 : 512 }));
     const mesh = new THREE.Mesh(carGeo, keep(new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false })));
@@ -150,12 +182,17 @@ export function createRide(
       const u = wrap(i / n - offset);
       const p = curve.getPointAt(u);
       const front = (p.z + rz) / (2 * rz); // 1 at the station side, 0 at the back
+      const scale = 0.7 + 0.45 * front * front;
       m.position.set(p.x, p.y + 0.95, p.z);
       m.quaternion.copy(camera.quaternion);
-      m.scale.setScalar(0.7 + 0.45 * front * front);
+      m.scale.setScalar(scale);
+      pins[i].position.copy(p);
+      p.toArray(stems, i * 6);
+      stems.set([p.x, p.y + 0.95 - 0.9 * scale, p.z], i * 6 + 3);
       (m.material as Three.MeshBasicMaterial).opacity = 0.45 + 0.55 * front;
       m.renderOrder = Math.round(front * 100);
     });
+    stemGeo.attributes.position.needsUpdate = true;
   };
 
   const resize = () => {

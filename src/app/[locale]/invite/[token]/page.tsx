@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { findInvite, inviteIsOpen } from "@/lib/invites";
 import { pageMetadata } from "@/lib/seo";
 import { InviteForm } from "./InviteForm";
@@ -18,18 +19,18 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
   const invite = await findInvite(token);
   if (!invite || !inviteIsOpen(invite)) {
     return (
-      <main className="mx-auto grid max-w-sm gap-4 px-4 py-16">
+      <AuthShell>
         <h1 className="font-display text-h1 font-semibold">{t("invalidTitle")}</h1>
         <p className="text-small text-ink-muted">{t("invalid")}</p>
-      </main>
+      </AuthShell>
     );
   }
 
   return (
-    <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
+    <AuthShell>
       <h1 className="font-display text-h1 font-semibold">{t("title", { name: invite.name })}</h1>
       <p className="text-small text-ink-muted">{t("lede")}</p>
-      <ul className="grid gap-1 rounded-sm border border-rule p-3 text-small">
+      <ul className="grid gap-1 rounded-md bg-raised p-3 text-small">
         {invite.slots.map((s) => (
           <li key={s.id}>
             {ar ? s.subject.nameAr : s.subject.nameEn} · {ar ? s.grade.nameAr : s.grade.nameEn} ·{" "}
@@ -38,6 +39,6 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
         ))}
       </ul>
       <InviteForm token={token} />
-    </main>
+    </AuthShell>
   );
 }

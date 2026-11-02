@@ -10,7 +10,7 @@ export function Notice({ children }: { children: React.ReactNode }) {
 }
 
 export const secondaryButton =
-  "rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+  "btn btn-outline";
 
 /**
  * One device per account for paid video, recorded or live. Returns the viewer's IP when this browser is the

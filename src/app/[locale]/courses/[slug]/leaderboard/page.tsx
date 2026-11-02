@@ -11,7 +11,7 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/courses", "practice", { key: "leaderboard", noindex: true });
 }
 
-/** A course's own weekly board. Opt-in per course, and never visible outside its enrolled students. */
+/** A course's own weekly ranking. Opt-in per course, and never visible outside its enrolled students. */
 export default async function LeaderboardPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
@@ -68,13 +68,15 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
           {board.map((row, i) => (
             <li
               key={row.id}
-              className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-small ${
-                row.id === session.user.id ? "border-pen bg-surface" : "border-hairline bg-surface"
+              className={`flex min-h-11 items-center justify-between gap-3 rounded-full border bg-surface px-4 py-2 text-small ${
+                row.id === session.user.id ? "border-pen" : "border-hairline"
               }`}
             >
               <span className="flex min-w-0 items-center gap-3">
                 <span className="num w-6 text-ink-muted">{i + 1}</span>
                 <span className="truncate">{row.name}</span>
+                {/* The summit point: the week's first place, earned. */}
+                {i === 0 && row.xp > 0 && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-summit" />}
               </span>
               <span className="num font-semibold">{row.xp}</span>
             </li>

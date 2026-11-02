@@ -13,7 +13,7 @@ export function StatTile({
   href?: string;
 }) {
   const body = (
-    <div className="grid gap-1 rounded-sm bg-raised px-3 py-2.5">
+    <div className="card grid gap-1 px-4 py-3">
       <span className="num font-display text-figure leading-none font-semibold">{value}</span>
       <span className="text-label text-ink-muted">{label}</span>
       {hint && <span className="text-label text-ink-muted">{hint}</span>}
@@ -21,7 +21,7 @@ export function StatTile({
   );
   if (!href) return body;
   return (
-    <Link href={href} className="hover-lift rounded-sm">
+    <Link href={href} className="hover-lift block rounded-lg">
       {body}
     </Link>
   );

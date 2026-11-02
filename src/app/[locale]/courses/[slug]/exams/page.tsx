@@ -61,7 +61,7 @@ export default async function CourseExamsPage({ params }: { params: Promise<{ lo
           {course.examPapers.map((p) => {
             const last = p.attempts[0];
             return (
-              <li key={p.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+              <li key={p.id} className="grid gap-2 card p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-display font-semibold" dir="auto">{p.title}</span>
                   {last?.status === "GRADED" ? (

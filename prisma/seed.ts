@@ -45,7 +45,7 @@ async function main() {
   const instructor = await db.user.upsert({
     where: { phone: "01000000000" },
     update: {},
-    create: { name: "Sabboura Teacher", phone: "01000000000", role: "INSTRUCTOR", passwordHash: await bcrypt.hash(password, 10) },
+    create: { name: "Dhirwa Teacher", phone: "01000000000", role: "INSTRUCTOR", passwordHash: await bcrypt.hash(password, 10) },
   });
   await db.user.upsert({
     where: { phone: "01000000001" },

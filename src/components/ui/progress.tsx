@@ -1,4 +1,4 @@
-/** Progress, drawn the way DESIGN.md asks: a bar that always carries its value, and a row of small A's. */
+/** Progress, drawn the way DESIGN.md asks: a trail-green bar that always carries its value, and a row of small peaks. */
 
 export function ProgressBar({
   done,
@@ -23,7 +23,7 @@ export function ProgressBar({
         aria-label={label}
         className="block h-1 w-full overflow-hidden rounded-full bg-raised"
       >
-        <span className="block h-full rounded-full bg-marker" style={{ width: `${pct}%` }} />
+        <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
       </span>
       <span className="num text-label text-ink-muted" dir="ltr">
         {done} / {total} · {pct}%
@@ -34,10 +34,10 @@ export function ProgressBar({
 
 export type MarkState = "done" | "current" | "ahead";
 
-/** One lesson as an A: done lapis, current gold, ahead faint. */
+/** One lesson as a small peak: done trail green, current trail green and taller (state in form, not colour alone), ahead faint. */
 export function LessonMark({ state }: { state: MarkState }) {
-  const tone = state === "done" ? "bg-pen" : state === "current" ? "bg-marker" : "bg-field/35";
-  return <span aria-hidden="true" className={`inline-block h-4 w-3 shrink-0 [clip-path:polygon(50%_0,100%_100%,0_100%)] ${tone}`} />;
+  const tone = state === "done" ? "h-4 bg-pen" : state === "current" ? "h-5 bg-pen" : "h-4 bg-field/35";
+  return <span aria-hidden="true" className={`inline-block w-3 shrink-0 [clip-path:polygon(50%_0,100%_100%,0_100%)] ${tone}`} />;
 }
 
 export function LessonMarks({ states, label }: { states: MarkState[]; label: string }) {

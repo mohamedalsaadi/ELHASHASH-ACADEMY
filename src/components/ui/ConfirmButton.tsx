@@ -36,7 +36,7 @@ export function ConfirmButton({ action, children, confirmText, className = "", t
           setOpen(false);
           if (trigger.current?.isConnected) trigger.current.focus();
         }}
-        className="m-auto w-[min(92vw,24rem)] rounded-lg border border-hairline bg-surface p-5 text-ink shadow-paper backdrop:bg-ink/40"
+        className="m-auto w-[min(92vw,24rem)] rounded-lg border border-hairline bg-surface p-6 text-ink shadow-float backdrop:bg-night/50"
       >
         <h2 id={`${id}-title`} className="font-display text-h3 font-semibold">
           {confirmText}
@@ -45,7 +45,7 @@ export function ConfirmButton({ action, children, confirmText, className = "", t
           <button
             type="button"
             onClick={() => dialog.current?.close()}
-            className="min-h-11 rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold hover:bg-raised"
+            className="btn btn-outline text-small"
           >
             {t("cancel")}
           </button>
@@ -64,8 +64,8 @@ function ConfirmSubmit({ action, tone }: { action: (form: FormData) => void | Pr
       type="submit"
       formAction={action}
       disabled={pending}
-      className={`min-h-11 rounded-sm px-4 py-2 font-display text-small font-semibold text-on-primary disabled:opacity-45 ${
-        tone === "danger" ? "bg-down" : "bg-primary"
+      className={`btn text-small ${
+        tone === "danger" ? "bg-down text-on-primary" : "btn-primary"
       }`}
     >
       {pending ? t("saving") : t("confirm")}

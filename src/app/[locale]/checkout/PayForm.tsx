@@ -61,7 +61,7 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon, learners }: 
         {methods.map((m) => (
           <label
             key={m}
-            className="flex cursor-pointer items-start gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20"
+            className="flex cursor-pointer items-start gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20"
           >
             <input type="radio" name="method" value={m} checked={method === m} onChange={() => setMethod(m)} className="mt-1 accent-(--color-primary)" />
             <span className="grid">

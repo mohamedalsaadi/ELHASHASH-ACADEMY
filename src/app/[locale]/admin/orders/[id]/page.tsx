@@ -139,7 +139,7 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
                 <ConfirmButton
                   action={refundOrder}
                   confirmText={t("confirmRefund")}
-                  className="rounded-sm border border-down px-4 py-2 font-display font-semibold text-down transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  className="min-h-11 rounded-full border border-down px-4 py-2 font-display font-semibold text-down transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   {t("refund")}
                 </ConfirmButton>

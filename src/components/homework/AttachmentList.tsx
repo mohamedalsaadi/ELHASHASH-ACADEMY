@@ -28,7 +28,7 @@ export function AttachmentList({
 /** A plain labelled block used by the homework screens. */
 export function Block({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
-    <section className="grid gap-3 rounded-md border border-hairline bg-surface p-4">
+    <section className="grid gap-3 card p-4">
       <h2 className="font-display text-h3 font-semibold">{title}</h2>
       {children}
     </section>

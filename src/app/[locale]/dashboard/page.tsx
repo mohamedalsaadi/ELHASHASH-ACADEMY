@@ -282,30 +282,47 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
               }
             : null;
 
+  // Summary first (DESIGN.md §2): real counts only, zeros left out. A running streak is earned, so it alone carries the
+  // summit point.
+  const streak = progressRow?.currentStreak ?? 0;
+  const summary = [
+    { label: t("summary.completedLessons"), value: completed.size as React.ReactNode, n: completed.size },
+    { label: t("summary.activeCourses"), value: liveCourses.length, n: liveCourses.length },
+    { label: t("summary.upcomingLive"), value: liveList.length, n: liveList.length },
+    { label: tpr("xpEarned"), value: progressRow?.xp ?? 0, n: progressRow?.xp ?? 0 },
+    {
+      label: tpr("streak"),
+      value: (
+        <span className="inline-flex items-center gap-2">
+          {streak}
+          <span aria-hidden="true" className="size-2 rounded-full bg-summit" />
+        </span>
+      ),
+      n: streak,
+    },
+  ].filter((s) => s.n > 0);
+
   const paid = orders.filter((o) => o.status === "PAID" || o.status === "REFUNDED").slice(0, 3);
 
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
       <PageHeader title={t("hello", { name: session.user.name ?? "" })} />
 
-      <section className="grid gap-2">
-        <h2 className="font-display text-h2 font-semibold">{t("summary.title")}</h2>
-        <div className="grid grid-cols-3 gap-2">
-          <StatTile label={t("summary.completedLessons")} value={completed.size} />
-          <StatTile label={t("summary.activeCourses")} value={liveCourses.length} />
-          <StatTile label={t("summary.upcomingLive")} value={liveList.length} />
-        </div>
-      </section>
-
-      <div className="grid grid-cols-2 gap-2">
-        <StatTile label={tpr("xpEarned")} value={progressRow?.xp ?? 0} />
-        <StatTile label={tpr("streak")} value={progressRow?.currentStreak ?? 0} />
-      </div>
+      {summary.length > 0 && (
+        <section className="card grid gap-3 p-5">
+          <h2 className="font-display text-h2 font-semibold">{t("summary.title")}</h2>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {summary.map((s) => (
+              <StatTile key={s.label} label={s.label} value={s.value} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {dueReviews.length > 0 && (
         <Link
           href="/review"
-          className="grid gap-1 rounded-md border border-pen bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+          className="grid gap-1 card border-pen p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
         >
           <span className="text-label font-medium text-pen">{tpr("reviewTitle")}</span>
           <span className="font-display font-semibold">{tpr("reviewDue", { count: dueReviews.length })}</span>
@@ -315,9 +332,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
 
       <section className="grid gap-2">
         <h2 className="font-display text-h2 font-semibold">{th("title")}</h2>
-        <div className="grid grid-cols-3 gap-2">
-          <StatTile label={th("dueSoon")} value={dueSoon} />
-          <StatTile label={th("overdue")} value={overdueCount} />
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
+          {dueSoon > 0 && <StatTile label={th("dueSoon")} value={dueSoon} />}
+          {overdueCount > 0 && <StatTile label={th("overdue")} value={overdueCount} />}
           <StatTile label={th("homeworkAverage")} value={homeworkAvg ? `${homeworkAvg.avg}%` : "—"} hint={homeworkAvg ? th("sample", { n: homeworkAvg.n }) : undefined} />
         </div>
         {nextHomework.length > 0 && (
@@ -326,7 +343,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
               <li key={a.id}>
                 <Link
                   href={`/courses/${a.course.slug}/assignments/${a.id}`}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-hairline bg-surface px-3 py-2 text-small transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  className="flex flex-wrap items-center justify-between gap-2 card px-3 py-2 text-small transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   <span className="min-w-0 truncate" dir="auto">{a.title}</span>
                   <span className="num text-label text-ink-muted">
@@ -342,7 +359,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       {next ? (
         <Link
           href={next.href}
-          className="grid gap-1 rounded-md border border-pen bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+          className="grid gap-1 card border-pen p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
         >
           <span className="text-label font-medium text-pen">{next.eyebrow}</span>
           <span className="font-display font-semibold">{next.title}</span>
@@ -363,7 +380,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       {pending && (
         <section className="grid gap-2">
           <h2 className="font-display text-h2 font-semibold">{t("payments.pendingTitle")}</h2>
-          <div className="grid gap-1 rounded-md border border-hairline bg-surface p-4 text-small">
+          <div className="grid gap-1 card p-4 text-small">
             <span className="num font-semibold">{formatMoney(pending.total, pending.currency, locale)}</span>
             <span className="text-ink-muted">
               {pending.method ? tm(`methods.${pending.method}.name`) : pending.gateway}
@@ -428,10 +445,16 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                 <li key={courseId}>
                   <Link
                     href={active ? `/courses/${course.slug}` : `/courses/${course.slug}#packages`}
-                    className="grid gap-2 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                    className="grid gap-2 card p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                   >
                     <span className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-display font-semibold">{ar ? course.titleAr : course.titleEn}</span>
+                      <span className="flex items-center gap-2 font-display font-semibold">
+                        {ar ? course.titleAr : course.titleEn}
+                        {/* The summit point: every lesson in the course is done. */}
+                        {progress && progress.total > 0 && progress.done === progress.total && (
+                          <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-summit" />
+                        )}
+                      </span>
                       {active ? (
                         <StatusChip tone={expiring ? "expiring" : "active"}>
                           {active.accessType ? tc(`planKind.${active.accessType}`) : t("forever")}
@@ -474,7 +497,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
               <li key={e.id}>
                 <Link
                   href={`/courses/${e.course?.slug}/lessons/${e.lesson!.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  className="flex flex-wrap items-center justify-between gap-3 card p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   <span className="grid min-w-0 gap-1">
                     <span className="font-display font-semibold">{ar ? e.lesson!.titleAr : e.lesson!.titleEn}</span>
@@ -498,7 +521,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
               <li key={q.id}>
                 <Link
                   href={`/courses/${q.lesson.unit.course.slug}/lessons/${q.lessonId}#questions`}
-                  className="grid gap-1 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  className="grid gap-1 card p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   <span className="text-small text-ink-muted">{ar ? q.lesson.titleAr : q.lesson.titleEn}</span>
                   <span dir="auto" className="line-clamp-2">{q.answer}</span>
@@ -518,7 +541,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
               <li key={o.id}>
                 <Link
                   href={`/orders/${o.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 text-small transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  className="flex flex-wrap items-center justify-between gap-3 card p-4 text-small transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   <span className="num">{formatMoney(o.total, o.currency, locale)}</span>
                   <span className="text-ink-muted">

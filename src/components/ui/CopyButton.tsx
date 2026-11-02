@@ -21,7 +21,7 @@ export function CopyButton({ value }: { value: string }) {
             // Clipboard access can be denied; the value stays visible on screen.
           }
         }}
-        className="inline-flex min-h-9 items-center gap-1.5 rounded-sm border border-hairline px-2.5 py-1 text-label text-ink-muted transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+        className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-1 text-label text-ink-muted transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
       >
         {copied ? <Check aria-hidden="true" className="size-4" /> : <Copy aria-hidden="true" className="size-4" />}
         <span>{copied ? t("copied") : t("copy")}</span>

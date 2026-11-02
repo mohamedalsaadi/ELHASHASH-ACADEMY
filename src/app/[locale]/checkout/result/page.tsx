@@ -58,14 +58,14 @@ export default async function ResultPage({
   const tone = { PAID: "text-up", PENDING: "text-ink", FAILED: "text-down", EXPIRED: "text-down", REFUNDED: "text-ink-muted" }[order.status];
   const retryPath = order.items.length ? `/checkout?${order.items.map((i) => `sku=${encodeURIComponent(i.skuId)}`).join("&")}` : "/courses";
   const primaryButton =
-    "w-fit rounded-sm border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+    "btn btn-primary w-fit text-small";
 
   return (
     <main className="mx-auto grid max-w-xl gap-4 px-4 py-16">
       <h1 className={`font-display text-h1 font-semibold ${tone}`}>{t(`status.${order.status}`)}</h1>
       <p className="text-ink-muted">{t(`detail.${order.status}`)}</p>
       {order.status === "PENDING" && order.kioskRef && (
-        <p className="rounded-md border border-hairline bg-surface p-4">
+        <p className="rounded-lg border border-hairline bg-surface shadow-paper p-4">
           {t("kioskRef")} <span className="num font-semibold text-pen">{order.kioskRef}</span>
         </p>
       )}

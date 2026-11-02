@@ -77,18 +77,22 @@ export function PromoBand({
     );
   }
 
+  // Offer cards sit inside a home stage: paper cards, each marked by one summit-gold point.
   return (
-    <section aria-label={label} className="mx-auto grid max-w-6xl gap-4 px-4 pt-10 sm:grid-cols-2 lg:grid-cols-3">
+    <section aria-label={label} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {promos.map((p) => {
         const body = ar ? p.bodyAr : p.bodyEn;
         return (
           <div key={p.id}>
             {wrap(
               p.href,
-              "grid h-full content-start gap-2 border-t-(length:--line) border-marker bg-night p-6 text-on-primary hover-lift",
+              "card grid h-full content-start gap-2 p-6 hover-lift",
               <>
-                <h2 className="font-display text-h3 font-bold">{ar ? p.titleAr : p.titleEn}</h2>
-                {body && <p className="text-small text-night-text">{body}</p>}
+                <h3 className="flex items-center gap-2 font-display text-h3 font-bold">
+                  <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-summit" />
+                  {ar ? p.titleAr : p.titleEn}
+                </h3>
+                {body && <p className="text-small text-ink-muted">{body}</p>}
               </>,
             )}
           </div>

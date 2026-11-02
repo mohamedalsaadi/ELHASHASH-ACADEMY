@@ -1,4 +1,4 @@
-// One landmark per country, drawn like the subject icons: 48 grid, ink strokes, one pen-red marking stroke, a ground line.
+// One landmark per country, drawn like the subject icons: 48 grid, ink strokes, one trail-green marking stroke, a ground line.
 const LANDMARKS: Record<string, { ink: string; pen: string }> = {
   // The Giza pyramids under the sun.
   EG: { ink: "M4 40h40M7 40L20 19l13 21M27 30.5l6-8.5 11 18", pen: "M35 11a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0" },

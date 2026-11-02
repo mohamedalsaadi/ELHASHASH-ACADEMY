@@ -27,7 +27,7 @@ export function ExamForm({
       <ExamTimer at={expiresAt} label={labels.timeLeft} timeUp={labels.timeUp} />
 
       {items.map((item, i) => (
-        <fieldset key={item.id} className="grid gap-2 rounded-md border border-hairline bg-surface p-4">
+        <fieldset key={item.id} className="grid gap-2 card p-4">
           <legend className="px-1 text-label text-ink-muted">
             <span className="num">{i + 1}</span> · <span className="num">{item.marks}</span>
           </legend>

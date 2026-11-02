@@ -176,7 +176,7 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
       />
       <p className="rounded-sm border border-hairline bg-raised px-3 py-2 text-small text-ink-muted">{t("contactRule")}</p>
       <div
-        className={`aspect-[3/4] overflow-hidden rounded-md border bg-surface sm:aspect-video ${liveNow ? "border-pen" : "border-hairline"}`}
+        className={`aspect-[3/4] overflow-hidden card sm:aspect-video ${liveNow ? "border-pen" : "border-hairline"}`}
       >
         {await stage()}
       </div>

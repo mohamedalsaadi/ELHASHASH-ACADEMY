@@ -16,7 +16,7 @@ export function StatusChip({ tone, children, className = "" }: { tone: ChipTone;
   const { className: toneClass, Icon } = TONES[tone];
   return (
     <span
-      className={`inline-flex w-fit items-center gap-1 rounded-sm border px-3 py-1 text-label font-medium ${toneClass} ${className}`}
+      className={`inline-flex w-fit items-center gap-1 rounded-full border px-3 py-1 text-label font-medium ${toneClass} ${className}`}
     >
       {tone === "live" ? (
         <span aria-hidden="true" className="size-2 rounded-full bg-pen" />

@@ -13,7 +13,7 @@ export function GradePicker({ groups, current, label, save }: { groups: Groups; 
           name="gradeId"
           required
           defaultValue={current ?? ""}
-          className="min-h-11 rounded-sm border border-rule bg-surface px-3 text-body text-ink"
+          className="min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink"
         >
           <option value="" disabled>
             {label}

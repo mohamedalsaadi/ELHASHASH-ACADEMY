@@ -15,7 +15,7 @@ type CouponError = "invalid" | "not_started" | "expired" | "used_up" | "used_by_
 
 const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
 const applyButton =
-  "min-h-11 rounded-sm border border-hairline bg-surface px-4 font-display font-semibold text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-marker";
+  "btn btn-outline";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/checkout", "checkout", { key: "title", noindex: true });
@@ -164,7 +164,7 @@ export default async function CheckoutPage({
       {gateway ? (
         <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} learners={children ?? undefined} {...gateway} />
       ) : (
-        <p role="status" className="rounded-md border border-hairline bg-surface p-4 text-small text-ink-muted">
+        <p role="status" className="rounded-lg border border-hairline bg-surface shadow-paper p-4 text-small text-ink-muted">
           {t("errors.payments_unavailable")}
         </p>
       )}

@@ -14,7 +14,7 @@ import { LinkChildForm } from "./LinkChildForm";
 export const dynamic = "force-dynamic";
 
 const DAY = 86_400_000;
-const panel = "grid gap-4 rounded-md border border-hairline bg-surface p-5";
+const panel = "grid gap-4 rounded-lg border border-hairline bg-surface shadow-paper p-5";
 const small = "text-small text-ink-muted";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

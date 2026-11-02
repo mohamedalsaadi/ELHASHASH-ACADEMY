@@ -1,5 +1,6 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { Link } from "@/i18n/navigation";
 import { logEventLater } from "@/lib/analytics";
 import { gradeGroups } from "@/lib/catalog";
@@ -27,7 +28,7 @@ export default async function SignUpPage({
   void logEventLater({ name: "signup_viewed", dedupeScope: "signup" });
 
   return (
-    <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
+    <AuthShell>
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
       <SignUpForm groups={groups} locale={locale} next={next ?? ""} parent={type === "PARENT"} />
       <p className="text-small text-ink-muted">
@@ -43,6 +44,6 @@ export default async function SignUpPage({
           {t("teacherLink")}
         </Link>
       </p>
-    </main>
+    </AuthShell>
   );
 }

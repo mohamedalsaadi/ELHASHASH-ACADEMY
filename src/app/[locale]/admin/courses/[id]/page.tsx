@@ -14,7 +14,7 @@ import { DeleteButton, PlanPrice, SaveButton } from "../../ui";
 
 export const dynamic = "force-dynamic";
 
-const card = "grid gap-4 rounded-md border border-hairline bg-surface p-4";
+const card = "grid gap-4 rounded-lg border border-hairline bg-surface shadow-paper p-4";
 const tile = "grid gap-3 rounded-sm bg-raised p-3";
 const check = "flex items-center gap-2 text-small";
 

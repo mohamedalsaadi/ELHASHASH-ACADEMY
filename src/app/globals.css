@@ -46,7 +46,7 @@ body {
 }
 
 @layer components {
-  /* The one action shape: a board-green pill. Hover lifts 1px with a stronger glow. Padding, font and press state live here so call sites cannot drift. */
+  /* The one action shape: a trail-green pill. Hover lifts 1px with a stronger glow. Padding, font and press state live here so call sites cannot drift. */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -69,11 +69,11 @@ body {
   .btn-primary {
     background: var(--color-primary);
     color: var(--color-on-primary);
-    box-shadow: 0 6px 16px -8px rgb(31 107 79 / .55);
+    box-shadow: 0 6px 16px -8px rgb(31 115 86 / .5);
   }
   .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 24px -8px rgb(31 107 79 / .65);
+    box-shadow: 0 10px 24px -8px rgb(31 115 86 / .6);
   }
   .btn-outline {
     border: 1px solid var(--color-hairline);
@@ -83,9 +83,9 @@ body {
   .btn-outline:hover {
     background: var(--color-raised);
   }
-  /* On the board: a stick of yellow chalk. */
+  /* On the map: the summit-gold button. */
   .btn-glow {
-    background: var(--color-chalk-1);
+    background: var(--color-summit);
     color: var(--color-night);
     box-shadow: var(--shadow-glow);
   }
@@ -118,7 +118,7 @@ body {
 }
 
 ::selection {
-  background: var(--color-chalk-1);
+  background: var(--color-summit);
   color: var(--color-ink);
 }
 
@@ -130,7 +130,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgb(31 107 79 / .18);
+  box-shadow: 0 0 0 4px rgb(31 115 86 / .18);
   outline: none;
 }
 

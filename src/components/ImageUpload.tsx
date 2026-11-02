@@ -56,7 +56,7 @@ export function ImageUpload({
       {(preview ?? (path ? currentSrc : null)) && (
         // A local object URL (or the same-origin stream) that next/image cannot optimise.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview ?? currentSrc ?? ""} alt="" className="h-36 w-full max-w-sm rounded-sm object-cover" />
+        <img src={preview ?? currentSrc ?? ""} alt="" className="h-36 w-full max-w-sm rounded-lg border border-hairline object-cover" />
       )}
       <label className="grid gap-1 text-label text-ink-muted">
         {label}

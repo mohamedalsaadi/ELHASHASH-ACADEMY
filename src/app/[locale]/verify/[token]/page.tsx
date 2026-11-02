@@ -1,5 +1,6 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { VerifyForm } from "./VerifyForm";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -11,10 +12,10 @@ export default async function VerifyPage({ params }: { params: Promise<{ locale:
   setRequestLocale(locale);
   const t = await getTranslations("verify");
   return (
-    <main className="mx-auto grid max-w-sm gap-6 px-4 py-16">
+    <AuthShell>
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
       <p className="text-small text-ink-muted">{t("lede")}</p>
       <VerifyForm token={token} />
-    </main>
+    </AuthShell>
   );
 }

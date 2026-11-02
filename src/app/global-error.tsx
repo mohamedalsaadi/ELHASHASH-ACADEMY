@@ -2,24 +2,36 @@
 
 import { CONTACT_EMAIL } from "@/lib/site";
 
-/** Replaces the root layout when it fails; no provider is available, so the copy is bilingual. */
+/**
+ * Replaces the root layout when it fails; no provider is available, so the copy is bilingual. No stylesheet loads
+ * either, so the Contour colours are written out here (the one place besides email where hex is allowed).
+ */
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <html lang="en">
+    <html lang="ar" dir="rtl">
       <head>
-        <title>Error · Sabboura</title>
+        <title>خطأ · ذروة · Dhirwa</title>
         <meta name="robots" content="noindex" />
       </head>
-      <body style={{ margin: 0, background: "#F6F7FB", color: "#0D1030", fontFamily: "Tahoma, Arial, sans-serif" }}>
+      <body style={{ margin: 0, background: "#F6F3EC", color: "#13202F", fontFamily: "Tahoma, Arial, sans-serif" }}>
         <main style={{ maxWidth: 520, margin: "0 auto", padding: "96px 24px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 28, margin: "0 0 12px" }}>Something went wrong</h1>
-          <p style={{ color: "#545A7A", lineHeight: 1.7 }}>حدث خطأ في تحميل الصفحة. حاول مرة أخرى أو تواصل مع الدعم.</p>
+          <p aria-hidden="true" style={{ margin: "0 0 16px", fontSize: 22, fontWeight: 700, color: "#0F1B2D" }}>
+            ذروة<span style={{ color: "#E8B04B" }}> •</span>
+          </p>
+          <h1 style={{ fontSize: 28, margin: "0 0 12px" }}>حدث خطأ</h1>
+          <p style={{ color: "#586273", lineHeight: 1.7, margin: 0 }}>حدث خطأ في تحميل الصفحة. حاول مرة أخرى أو تواصل مع الدعم.</p>
+          <p lang="en" dir="ltr" style={{ color: "#586273", lineHeight: 1.7, marginTop: 8 }}>
+            Something went wrong loading the page. Try again or contact support.
+          </p>
           <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
-            <button onClick={reset} style={{ background: "#1F6FD1", color: "#fff", border: 0, borderRadius: 2, padding: "12px 18px", fontSize: 15, cursor: "pointer" }}>
-              Try again / إعادة المحاولة
+            <button
+              onClick={reset}
+              style={{ background: "#1F7356", color: "#FFFFFF", border: 0, borderRadius: 999, padding: "12px 20px", minHeight: 44, fontSize: 15, fontWeight: 600, cursor: "pointer" }}
+            >
+              إعادة المحاولة / Try again
             </button>
-            <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: "#1F6FD1", padding: "12px 6px" }}>
-              Contact / تواصل
+            <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: "#1F7356", padding: "12px 6px" }}>
+              تواصل / Contact
             </a>
           </div>
         </main>

@@ -70,8 +70,8 @@ export async function NewsBanner() {
   const ar = locale === "ar";
   return (
     <aside aria-label={t("label")} className="bg-night text-night-text">
-      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4">
-        <span className="shrink-0 bg-marker px-2 py-1 font-display text-label font-bold text-ink">{t("label")}</span>
+      <div className="mx-auto flex max-w-(--container-page) items-center gap-4 px-4">
+        <span className="shrink-0 rounded-full bg-summit px-3 py-1 font-display text-label font-bold text-night">{t("label")}</span>
         <ul className="flex snap-x gap-6 overflow-x-auto text-small [scrollbar-width:none]">
           {items.map((it) => {
             const body = (
@@ -81,7 +81,7 @@ export async function NewsBanner() {
                 {it.price && (
                   <span className="num">
                     <s className="text-night-muted">{formatMoney(it.price.was, it.price.currency, locale)}</s>{" "}
-                    <span className="text-marker">{formatMoney(it.price.now, it.price.currency, locale)}</span>
+                    <span className="text-summit">{formatMoney(it.price.now, it.price.currency, locale)}</span>
                   </span>
                 )}
               </>

@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const name = `${ar ? subject.nameAr : subject.nameEn} · ${ar ? grade.nameAr : grade.nameEn}`;
   return {
     title: name,
-    description: ar ? `كورسات ${name} من مدرسيها على سبّورة.` : `${name} courses from their teachers on Sabboura.`,
+    description: ar ? `كورسات ${name} من مدرسيها على ذروة.` : `${name} courses from their teachers on Dhirwa.`,
     alternates: alternates(locale, `/courses/c/${country.toLowerCase()}/${level}/${subjectSlug}`),
   };
 }

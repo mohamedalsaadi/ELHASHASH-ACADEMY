@@ -1,4 +1,4 @@
-// Subject line icons on the brand's 48 grid: ink strokes plus one pen-red marking stroke (see Mark.tsx).
+// Subject line icons on the brand's 48 grid: ink strokes plus one trail-green marking stroke (see Mark.tsx).
 // Keys match Subject.icon; anything unknown falls back to "book".
 const BUBBLE = "M12 10h24a5 5 0 0 1 5 5v13a5 5 0 0 1-5 5H22l-8 6v-6h-2a5 5 0 0 1-5-5V15a5 5 0 0 1 5-5z";
 const CIRCLE = "M8 24a16 16 0 1 0 32 0a16 16 0 1 0-32 0";

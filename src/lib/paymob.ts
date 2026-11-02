@@ -44,7 +44,7 @@ export async function createIntention(input: {
         first_name: first || "Student",
         last_name: rest.join(" ") || "-",
         phone_number: input.customer.phone,
-        email: input.customer.email || process.env.SUPPORT_EMAIL || "no-reply@sabbouraacademy.ae",
+        email: input.customer.email || process.env.SUPPORT_EMAIL || process.env.MAIL_FROM?.match(/[^<\s]+@[^>\s]+/)?.[0] || "no-reply@example.com",
       },
       special_reference: input.specialReference,
       notification_url: input.notificationUrl,

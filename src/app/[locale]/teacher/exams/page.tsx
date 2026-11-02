@@ -53,7 +53,7 @@ export default async function TeacherExamsPage({ params }: { params: Promise<{ l
             <li key={p.id}>
               <Link
                 href={`/teacher/exams/${p.id}`}
-                className="grid gap-1 rounded-md border border-hairline bg-surface p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                className="grid gap-1 rounded-lg border border-hairline bg-surface shadow-paper p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
               >
                 <span className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-display font-semibold" dir="auto">{p.title}</span>

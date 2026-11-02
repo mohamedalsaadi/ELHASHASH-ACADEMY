@@ -30,8 +30,8 @@ export async function generateMetadata({
     title: name,
     description:
       locale === "ar"
-        ? `صفوف وكورسات ${name} على سبّورة.`
-        : `${name} grades and courses on Sabboura.`,
+        ? `صفوف وكورسات ${name} على ذروة.`
+        : `${name} grades and courses on Dhirwa.`,
     alternates: alternates(locale, `/courses/c/${slug.toLowerCase()}`),
   };
 }
@@ -84,10 +84,20 @@ export default async function CountryPage({
 
   return (
     <main className="mx-auto grid max-w-5xl gap-8 px-4 py-10">
-      <header
-        className="flex items-center gap-4 border-b-(length:--line) pb-6"
-        style={{ borderColor: line }}
-      >
+      <header className="card relative isolate flex items-center gap-4 overflow-hidden p-5 pb-12 sm:p-6 sm:pb-12">
+        {/* The country's trail along the header's foot over two contour lines. Not mirrored: a map is never flipped. */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 400 40"
+          preserveAspectRatio="none"
+          className="absolute inset-x-0 bottom-0 -z-10 h-10 w-full"
+        >
+          <g fill="none" strokeLinecap="round">
+            <path d="M0 22C80 20 140 8 220 9S340 18 400 14" className="stroke-contour-4" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+            <path d="M0 30C80 28 150 17 230 18S340 26 400 23" className="stroke-contour-4" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+            <path d="M0 38C70 37 130 30 200 26S330 12 400 6" strokeWidth="3" vectorEffect="non-scaling-stroke" style={{ stroke: line }} />
+          </g>
+        </svg>
         <LineBadge code={code} className="size-16 text-h3" />
         <div className="grid flex-1 gap-1">
           <p className="flex items-center gap-2 text-small text-ink-muted">
@@ -133,7 +143,7 @@ export default async function CountryPage({
         </EmptyState>
       )}
       {groups.map(({ stage, grades }) => (
-        <section key={stage?.id ?? "other"} className="grid gap-5">
+        <section key={stage?.id ?? "other"} className="reveal grid gap-5">
           <h2 className="flex items-baseline gap-3">
             <span className="font-display text-h3 font-bold">
               {stage ? (ar ? stage.nameAr : stage.nameEn) : t("otherGrades")}
@@ -194,7 +204,7 @@ export default async function CountryPage({
                         {ar ? g.nameAr.replace(/^الصف /, "") : g.nameEn}
                       </span>
                       {g.isTerminal && (
-                        <span className="bg-marker px-1.5 font-display text-label font-bold">
+                        <span className="rounded-full bg-marker px-2 font-display text-label font-bold text-ink">
                           {t("terminal")}
                         </span>
                       )}

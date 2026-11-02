@@ -12,7 +12,7 @@ export function InstallApp() {
 
   useEffect(() => {
     try {
-      if (localStorage.getItem("sabboura-install-dismissed") === "1") return;
+      if (localStorage.getItem("dhirwa-install-dismissed") === "1") return;
     } catch {
       // Private mode: still offer install, just without the remembered dismissal.
     }
@@ -31,7 +31,7 @@ export function InstallApp() {
   const dismiss = () => {
     setHidden(true);
     try {
-      localStorage.setItem("sabboura-install-dismissed", "1");
+      localStorage.setItem("dhirwa-install-dismissed", "1");
     } catch {
       // Ignore storage failures.
     }
@@ -48,11 +48,11 @@ export function InstallApp() {
           }
           dismiss();
         }}
-        className="rounded-full border border-hairline bg-surface px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+        className="btn btn-outline text-small"
       >
         {t("install")}
       </button>
-      <button onClick={dismiss} aria-label={t("dismiss")} className="text-small text-ink-muted hover:text-ink">
+      <button onClick={dismiss} aria-label={t("dismiss")} className="grid size-11 place-items-center rounded-full text-small text-ink-muted hover:bg-raised hover:text-ink">
         ×
       </button>
     </span>

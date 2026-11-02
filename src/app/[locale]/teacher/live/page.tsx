@@ -13,7 +13,7 @@ import { cancelLive, scheduleLive, setSeatPrice, updateLive } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const card = "grid gap-4 rounded-md border border-hairline bg-surface p-4";
+const card = "grid gap-4 rounded-lg border border-hairline bg-surface shadow-paper p-4";
 const row = "grid gap-3 sm:grid-cols-2";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -178,7 +178,7 @@ export default async function TeacherLivePage({
             {past.map((s) => {
               const course = byId.get(s.courseId)!;
               return (
-                <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-hairline bg-surface p-4 text-small">
+                <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4 text-small">
                   <span className="grid gap-1">
                     <span className="font-display font-semibold">{ar ? s.titleAr : s.titleEn}</span>
                     <span className="text-ink-muted">{formatWhen(s.startsAt, courseZone(course), locale)}</span>

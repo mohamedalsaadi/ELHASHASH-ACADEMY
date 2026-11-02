@@ -12,7 +12,7 @@
     "backToTeacher": "Back to teacher dashboard"
   },
   "meta": {
-    "title": "Sabboura",
+    "title": "Dhirwa",
     "description": "Grade 10–12 lessons for students across the GCC and Egypt, with your real scores in front of you."
   },
   "pwa": {
@@ -109,16 +109,16 @@
       "pay": "Secure card payment",
       "lang": "In Arabic and English"
     },
-    "headline": "Your teacher at the <a>board</a>, wherever you are.",
+    "headline": "Every student has a <a>peak</a>. Start the climb.",
     "lede": "Your country's best teachers in one place. Pick your grade and subject, and see every course, its sessions and price before you enrol.",
     "ctaStart": "Find your course",
     "ctaParent": "I’m a parent",
-    "mapLabel": "Course map: one line per country",
+    "mapLabel": "Course map: one trail per country",
     "legend": {
       "title": "Map legend",
       "caption": "Counted from the catalogue today",
-      "open": "Line in service",
-      "soon": "Under construction",
+      "open": "Trail open",
+      "soon": "Trail being marked",
       "units": {
         "courses": "courses",
         "lessons": "lessons",
@@ -132,7 +132,7 @@
       "soon": "Coming soon"
     },
     "how": {
-      "title": "How the trip works",
+      "title": "How the climb works",
       "s1": {
         "t": "Pick your grade",
         "b": "Your country, then your grade, then the subject."
@@ -177,10 +177,31 @@
       }
     },
     "final": {
-      "title": "The board is ready. Are you?",
-      "body": "Pick your grade's course and start today."
+      "title": "The <a>top</a> is closer than you think.",
+      "body": "Pick your grade's course and take the first step today."
     },
-    "statsLabel": "Real numbers from today's catalogue"
+    "statsLabel": "Real numbers from today's catalogue",
+    "climb": {
+      "label": "The stages of the way to the top",
+      "c1": {
+        "k": "Stage one · Base camp",
+        "t": "Choose your country and grade",
+        "b": "Your country's curriculum, exactly. Choose your country to see its grades, subjects and teachers' courses."
+      },
+      "c2": {
+        "k": "Stage two · The climb",
+        "t": "Learn with the best teachers",
+        "b": "Each teacher sets their course's sessions and price, and you see it all before you enrol."
+      },
+      "c3": {
+        "k": "Stage three · Near the top",
+        "t": "Practise and track your level",
+        "b": "A mark after every practice, a review of what you got wrong, and parents can follow your progress too."
+      },
+      "c4": {
+        "k": "The summit"
+      }
+    }
   },
   "signin": {
     "title": "Sign in",
@@ -419,7 +440,9 @@
     "progressLabel": "Your progress in this course",
     "sessions": "{count, plural, one {# session} other {# sessions}}",
     "subjectLede": "{count, plural, =0 {No teacher has released a course in this subject yet.} one {One course, with the sessions and price its teacher set.} other {# courses, each with the sessions and price its teacher set.}}",
-    "subjectEmpty": "No courses in this subject yet. Check back soon."
+    "subjectEmpty": "No courses in this subject yet. Check back soon.",
+    "mapLabel": "Trail map: one trail per country, climbing to the summit",
+    "aboutTeacher": "The teacher"
   },
   "player": {
     "title": "Lesson",
@@ -727,8 +750,8 @@
     "faq": "FAQ",
     "legalNav": "Help and legal",
     "contact": "Contact us",
-    "rights": "Sabboura, United Arab Emirates",
-    "tagline": "Every lesson starts at the board."
+    "rights": "Dhirwa (ذروة), United Arab Emirates",
+    "tagline": "Every lesson is a step toward the peak."
   },
   "teacher": {
     "hello": "Hello, {name}",
@@ -1092,8 +1115,8 @@
     "invalid": "This link is invalid or has expired."
   },
   "invite": {
-    "metaTitle": "An invitation to teach at Sabboura",
-    "title": "An invitation to teach at Sabboura, {name}",
+    "metaTitle": "An invitation to teach at Dhirwa",
+    "title": "An invitation to teach at Dhirwa, {name}",
     "lede": "You have been invited to teach the subjects below. Choose a password for your account to continue.",
     "password": "Password",
     "confirm": "Confirm password",
@@ -1364,9 +1387,9 @@
   "me": {
     "hello": "Welcome back, {name}",
     "title": "Your {grade}, {country}",
-    "lede": "{count, plural, one {# subject} other {# subjects}} in your grade, every teacher in one place. Turn the ride and pick one.",
+    "lede": "{count, plural, one {# subject} other {# subjects}} in your grade, every teacher in one place. Move along the trail and pick one.",
     "subjects": "Subjects in your grade",
-    "hint": "Drag the ride or pick a subject.",
+    "hint": "Drag the trail or pick a subject.",
     "yours": "Yours",
     "courses": "{count, plural, one {# course} other {# courses}}",
     "soon": "Coming soon",
@@ -1389,5 +1412,8 @@
     "grade": "Grade",
     "pickSave": "Show my subjects",
     "noneYet": "Teachers are still adding courses for your grade. Check back soon."
+  },
+  "auth": {
+    "panel": "Every lesson is a step toward the peak."
   }
 }

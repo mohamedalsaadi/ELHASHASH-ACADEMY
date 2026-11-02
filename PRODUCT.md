@@ -23,24 +23,24 @@ The curriculum of one country and one grade, taught in Arabic first (English too
 
 ## Operating Context
 
-- Main channel: Instagram (@sabbouraacademy) and WhatsApp shares, opened on mid-range Android phones and iPhones.
+- Main channel: Instagram (handle not bought yet) and WhatsApp shares, opened on mid-range Android phones and iPhones.
 - Seven countries are active: Egypt (EGP), Saudi Arabia (SAR), UAE (AED), Kuwait (KWD), Qatar (QAR), Bahrain (BHD), Oman (OMR). Each has its own grades, subjects and prices.
 - Payment: card (Stripe test mode, Paymob for EGP, Ziina for AED beta) and bank transfer. One device per account.
 
 ## Capabilities and Constraints
 
 - Next.js 15 App Router, React 19, Tailwind v4, next-intl (`ar` default, `en`), Prisma on Neon. `three` is installed; no GSAP or Motion.
-- Arabic first, RTL, logical properties only. The wordmark is سبّورة in Ruqʿah in Arabic and Sabboura in English.
+- Arabic first, RTL, logical properties only. The wordmark is ذروة in Reem Kufi in Arabic and Dhirwa in English.
 - Tokens live in `src/app/tokens.css` and motion in `src/app/brand.css`; no raw hex, px or ms in components.
 - Motion and 3D only on marketing pages; app pages stay calm; `prefers-reduced-motion` is honoured.
 - Light theme only (owner, 2026-11-01).
 - Routes, navigation labels and form field names are kept.
-- The trade licence is registered as Sabboura (2026-11-02). The domains (sabbouraacademy.com/.net/.org/.ae were free on 2026-11-02) and the handles are not bought yet.
+- The trade name Dhirwa (ذروة) was reserved on 2026-11-02, replacing Sabboura (a Dubai "Saboura" and an existing trademark clashed). The domains and handles are not bought yet; dhirwa.net/.org/.ae and Instagram @dhirwa were free on 2026-11-02, dhirwa.com is taken.
 
 ## Brand Commitments
 
-- Name: Sabboura (سبّورة, the classroom blackboard). Identifier `sabboura`.
-- Identity "Chalkboard" (2026-11-02): a slate board for the heroes, exercise-book paper for everything else, coloured chalk as the one ornament. See DESIGN.md §0 and docs/brand/sabboura-dna.json. The A+ and Aurora looks are retired.
+- Name: Dhirwa (ذروة, the peak). Identifier `dhirwa`.
+- Identity "Contour" (2026-11-02): a night map for the heroes, survey paper for everything else, contour lines as the one ornament and one summit-gold point. See DESIGN.md §0 and docs/brand/dhirwa-dna.json.
 
 ## Evidence on Hand
 

@@ -1,7 +1,14 @@
 // Transactional email through Resend's HTTP API. No SDK: one POST. When RESEND_API_KEY is missing the
 // message is logged and skipped, so local dev and preview builds keep working.
 
-const FROM = process.env.MAIL_FROM || "Dhirwa <onboarding@resend.dev>";
+// MAIL_FROM is pasted into a dashboard, so tolerate stray quotes and spaces; anything Resend would still reject
+// falls back to the domain's no-reply address.
+const ADDR = String.raw`[^\s<>@"]+@[^\s<>@"]+\.[^\s<>@"]+`;
+const VALID_FROM = new RegExp(`^(?:${ADDR}|[^<>"]+ <${ADDR}>)$`);
+const FROM = (() => {
+  const v = (process.env.MAIL_FROM ?? "").replace(/\s+/g, " ").trim().replace(/^["']+|["']+$/g, "").trim();
+  return VALID_FROM.test(v) ? v : "Dhirwa <no-reply@dhirwa.ae>";
+})();
 
 export const appUrl = () => (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 

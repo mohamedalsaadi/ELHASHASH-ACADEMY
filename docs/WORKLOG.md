@@ -25,6 +25,19 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-03: Intro option B "Dawn Relief" for the owner to compare; email sender fix
+
+- **Why:** the owner asked for a second, comparable intro and mountain that looks right on laptop and phone.
+- **What:** `src/components/three/dawn-scene.ts`: a lit relief mountain with shader contour lines, a gold ridge
+  route and one summit pulse, on the same 4 s timeline. It frames itself into the free space beside the hero copy.
+  `Summit.tsx` shows it only for `?intro=dawn`; the default is still option A. `Intro.tsx` replays the intro for any
+  `?intro=` link. DESIGN.md §6 and `dhirwa-dna.json` describe it as under review.
+- **Open:** the owner picks A or B; then delete the loser, the `?intro` switch and the replay rule.
+- **Email:** `src/lib/mail.ts` now cleans `MAIL_FROM` and falls back to `Dhirwa <no-reply@dhirwa.ae>` (the stored
+  value made Resend reject every send with "Invalid from field"). The reset form allows 5 requests per email per
+  hour and then stays silent, which hides failures during testing. Production has `RESEND_API_KEY`, `MAIL_FROM`,
+  `ZIINA_API_KEY` and `APP_URL=https://dhirwa.ae`; `SITE_PASSWORD` was removed, so the site is public.
+
 ## 2026-11-02: Rebrand to Dhirwa, identity "Contour" (uncommitted on `redesign-aurora`)
 
 - **Why:** the owner reserved the trade name Dhirwa and asked for a full redesign with a new intro (design-dna,

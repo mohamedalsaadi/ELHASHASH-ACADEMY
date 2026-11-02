@@ -72,7 +72,7 @@
     "particle_systems": { "enabled": false },
     "3d_elements": {
       "enabled": true,
-      "home_intro": "Summit, minimal (src/components/three/summit-scene.ts). Eight thin snow contour lines (six on a phone), fainter low and clearer high, only the top one summit gold. 0-0.8s the lines fade in flat like a map; 0.6-2.6s they lift into the peak while the camera tilts to three-quarter view; 1.8-3.4s a fine gold trail climbs the face in one gentle curve; 3.3-3.8s one gold point settles on the summit. No flag, no colour ramp. Fits itself into the free space beside the hero copy on any screen. Copy rises at 3.2s; SUMMIT_END 4.0s. Then a slow drift and pointer parallax; any input jumps to the end; once per tab session.",
+      "home_intro": "Summit (src/components/three/summit-scene.ts): one sculpted mountain on a thin round plinth, like a product shot (owner's choice, 2026-11-03): soft studio light (cool sky fill, warm key, pale rim), slate rock shading up to a crisp snow cap, a gold switchback trail and a gold flag. 0-1.3 s the mountain grows out of the flat map while the camera settles to three-quarter view; 0.9-3.1 s a glowing gold climber walks the trail to the top, drawing it behind; 3.0-3.4 s the pole is planted; 3.25-3.85 s the flag unfurls, then keeps waving; the hero copy rises from 3.2 s. Fits itself into the free space beside the hero copy on any screen. SUMMIT_END 4.0s. Then the waving flag, a slow drift and pointer parallax; any input jumps to the end; once per tab session.",
       "student_home": "The ride keeps its mechanics; its track becomes a trail with waypoints, coloured with the contour ramp and the country line"
     },
     "shader_effects": { "enabled": false },

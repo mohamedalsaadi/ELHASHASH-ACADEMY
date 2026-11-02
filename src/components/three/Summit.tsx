@@ -26,7 +26,14 @@ export function Summit({ rtl }: { rtl: boolean }) {
       const summit = createSummit(THREE, canvas, {
         rtl,
         small: innerWidth < 700,
-        colors: { line: token("contour-6"), summit: token("summit") },
+        colors: {
+          low: token("contour-1"),
+          mid: token("contour-2"),
+          high: token("contour-3"),
+          snow: token("contour-6"),
+          summit: token("summit"),
+          base: token("night-2"),
+        },
       });
 
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {

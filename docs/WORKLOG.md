@@ -25,6 +25,15 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-03: Summit intro redrawn as a sculpted mountain with a flag
+
+- **Why:** the owner found the line-only version unclear ("not the mountain, not the animation to the top") and asked
+  for a minimalist Pixar/Apple-style mountain with a flag on top.
+- **What:** `summit-scene.ts` now builds a solid, lit mountain (polar height grid, vertex colours from rock to a crisp
+  snow cap) on a round plinth. It grows out of the map, a glowing climber walks a gold switchback trail to the top,
+  the pole is planted and a gold flag unfurls and keeps waving. Colours still come from tokens (`contour-1/2/3/6`,
+  `summit`, `night-2`); timings, framing, skip, reduced motion and pausing are unchanged.
+
 ## 2026-11-03: Minimal Contour intro (owner chose A over B)
 
 - **Why:** the owner kept option A (Contour) and asked for a minimalist version that works on laptop and phone.

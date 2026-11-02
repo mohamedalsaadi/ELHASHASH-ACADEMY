@@ -26,12 +26,11 @@ export function stripeTestKeyInProduction(): boolean {
   return isProduction() && (process.env.STRIPE_SECRET_KEY ?? "").startsWith("sk_test_");
 }
 
-// Decided by the cart's currency: Paymob settles EGP; Ziina settles AED while the academy has no
-// trade licence; every other currency, and anything unconfigured, pays by card on Stripe.
-export function activeGateway(currency: Currency): { gateway: GatewayName; methods: Method[] } {
-  if (currency === "EGP" && process.env.PAYMOB_SECRET_KEY) {
-    return { gateway: "PAYMOB", methods: ["CARD", "WALLET", "KIOSK", "VALU"] };
-  }
+export type ActiveGateway = { gateway: GatewayName; methods: Method[] };
+
+// Ziina is the only way to pay: it settles AED. Stripe and Paymob stay coded but hidden until the
+// owner turns them on with STRIPE_ENABLED=1 / PAYMOB_ENABLED=1. Null means nothing can take this currency.
+export function activeGateway(currency: Currency): ActiveGateway | null {
   if (
     currency === "AED" &&
     process.env.ZIINA_API_KEY &&
@@ -40,7 +39,11 @@ export function activeGateway(currency: Currency): { gateway: GatewayName; metho
   ) {
     return { gateway: "ZIINA", methods: ["CARD"] };
   }
-  return { gateway: "STRIPE", methods: ["CARD"] };
+  if (currency === "EGP" && process.env.PAYMOB_SECRET_KEY && process.env.PAYMOB_ENABLED === "1") {
+    return { gateway: "PAYMOB", methods: ["CARD", "WALLET", "KIOSK", "VALU"] };
+  }
+  if (process.env.STRIPE_ENABLED === "1") return { gateway: "STRIPE", methods: ["CARD"] };
+  return null;
 }
 
 /** Stripe takes 3-decimal currencies only in multiples of 10 fils; prices are saved that way, so anything else is a bug. */

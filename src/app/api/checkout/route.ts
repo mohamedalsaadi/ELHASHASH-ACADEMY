@@ -73,7 +73,9 @@ export async function POST(req: Request) {
 
   // A 100% code leaves nothing for a gateway to charge; such an order is completed below without one.
   const free = payable === 0;
-  const { gateway, methods } = free ? { gateway: "MANUAL" as const, methods: [] as Method[] } : activeGateway(priced.currency);
+  const active = free ? { gateway: "MANUAL" as const, methods: [] as Method[] } : activeGateway(priced.currency);
+  if (!active) return NextResponse.json({ error: "payments_unavailable" }, { status: 400 });
+  const { gateway, methods } = active;
   if (!free && !methods.includes(method)) return NextResponse.json({ error: "method_unavailable" }, { status: 400 });
   // Ziina's Professional tier caps monthly receipts; refuse rather than fall back to test Stripe.
   if (gateway === "ZIINA" && (await ziinaCapReached(payable))) {

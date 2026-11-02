@@ -20,7 +20,7 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/admin/orders", "office", { key: "nav.orders", noindex: true });
 }
 
-export default async function OrdersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ status?: string; gateway?: string; page?: string; receipt?: string }> }) {
+export default async function OrdersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ status?: string; gateway?: string; page?: string }> }) {
   const { locale } = await params;
   const f = await searchParams;
   setRequestLocale(locale);
@@ -29,14 +29,11 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
   const tm = await getTranslations("checkout");
   const ar = locale === "ar";
   const page = Math.max(1, Number(f.page) || 1);
-  const receiptOnly = f.receipt === "1";
-  // A receipt filter is about orders waiting for approval, so it implies PENDING.
-  const status = receiptOnly ? "PENDING" : STATUSES.find((s) => s === f.status);
+  const status = STATUSES.find((s) => s === f.status);
   const gateway = GATEWAYS.find((g) => g === f.gateway);
   const where: Prisma.OrderWhereInput = {
     ...(status && { status }),
     ...(gateway && { gateway }),
-    ...(receiptOnly && { receiptKey: { not: null } }),
   };
   const [orders, total] = await Promise.all([
     db.order.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * PAGE, take: PAGE, include: { user: { select: { id: true, name: true } } } }),
@@ -45,9 +42,8 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Dubai" });
   const query = (p: number) =>
     new URLSearchParams({
-      ...(status && !receiptOnly && { status }),
+      ...(status && { status }),
       ...(gateway && { gateway }),
-      ...(receiptOnly && { receipt: "1" }),
       page: String(p),
     }).toString();
 
@@ -76,10 +72,6 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
               </option>
             ))}
           </select>
-        </label>
-        <label className="flex min-h-11 items-center gap-2 text-small">
-          <input type="checkbox" name="receipt" value="1" defaultChecked={receiptOnly} className="size-4" />
-          {t("withReceipt")}
         </label>
         <button className={button}>{t("filter")}</button>
       </form>
@@ -115,9 +107,6 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
                 </td>
                 <td className={o.status === "PAID" ? "font-semibold text-up" : o.status === "PENDING" ? "" : "text-ink-muted"}>
                   {t(`orderStatus.${o.status}`)}
-                  {o.receiptKey && (
-                    <span className="ms-2 rounded-full rounded-full bg-marker/20 px-2.5 py-0.5 text-label font-semibold text-ink">{t("receiptBadge")}</span>
-                  )}
                 </td>
                 <td>
                   {o.gateway}

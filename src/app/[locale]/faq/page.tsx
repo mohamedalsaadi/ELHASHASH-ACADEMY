@@ -55,7 +55,7 @@ const ar: Section[] = [
     h: "ما طرق الدفع؟",
     body: (
       <p>
-        في مصر: بطاقة، محفظة موبايل، كاش في منفذ، أو تقسيط valU. خارج مصر: بطاقة عبر Stripe. لا نحتفظ ببيانات بطاقتك.
+        بطاقة بنكية أو Apple Pay أو Google Pay عبر Ziina، بالدرهم الإماراتي. لا نحتفظ ببيانات بطاقتك.
       </p>
     ),
   },
@@ -122,8 +122,7 @@ const en: Section[] = [
     h: "What payment methods are there?",
     body: (
       <p>
-        In Egypt: card, mobile wallet, cash at a kiosk, or valU instalments. Elsewhere: card through Stripe. We never store
-        your card details.
+        Card, Apple Pay or Google Pay through Ziina, in UAE dirhams. We never store your card details.
       </p>
     ),
   },

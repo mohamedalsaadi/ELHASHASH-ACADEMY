@@ -96,3 +96,15 @@ export async function unlinkParent(form: FormData) {
   revalidatePath("/[locale]/account", "page");
   revalidatePath("/[locale]/parent", "page");
 }
+
+/** A student's grade, and with it their country. What they bought is untouched. */
+export async function updateGrade(form: FormData) {
+  const user = await me();
+  if (user.role !== "STUDENT") notFound();
+  const gradeId = String(form.get("gradeId") ?? "");
+  const grade = await db.grade.findFirst({ where: { id: gradeId, active: true, country: { active: true } }, select: { id: true } });
+  if (!grade) return;
+  await db.user.update({ where: { id: user.id }, data: { gradeId: grade.id } });
+  revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/me", "page");
+}

@@ -1,6 +1,6 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getFinanceConfig, getSettingsRow } from "@/lib/platform-settings";
+import { getFinanceConfig } from "@/lib/platform-settings";
 import { requireAdmin } from "@/lib/staff";
 import { saveFinanceSettings } from "../actions";
 import { AdminNav, panel } from "../AdminNav";
@@ -19,7 +19,6 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
   await requireAdmin();
   const t = await getTranslations("office");
   const cfg = await getFinanceConfig();
-  const row = await getSettingsRow();
 
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
@@ -71,38 +70,6 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
         </div>
 
         <p className="max-w-[65ch] text-small text-ink-muted">{t("vatHint")}</p>
-
-        <fieldset className="grid gap-3 rounded-sm border border-rule p-3">
-          <legend className="px-1 text-label text-ink-muted">{t("bank")}</legend>
-          <p className="max-w-[65ch] text-small text-ink-muted">{t("bankHint")}</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className={label}>
-              {t("bankName")}
-              <input name="bankName" defaultValue={row?.bankName ?? ""} maxLength={120} className={field} />
-            </label>
-            <label className={label}>
-              {t("bankAccountName")}
-              <input name="bankAccountName" defaultValue={row?.bankAccountName ?? ""} maxLength={120} className={field} />
-            </label>
-            <label className={label}>
-              {t("bankIban")}
-              <input name="bankIban" defaultValue={row?.bankIban ?? ""} maxLength={64} dir="ltr" className={`${field} num`} />
-            </label>
-          </div>
-          <label className={label}>
-            {t("bankInstructionsAr")}
-            <textarea name="bankInstructionsAr" defaultValue={row?.bankInstructionsAr ?? ""} rows={2} maxLength={500} dir="rtl" className={`${field} py-2`} />
-          </label>
-          <label className={label}>
-            {t("bankInstructionsEn")}
-            <textarea name="bankInstructionsEn" defaultValue={row?.bankInstructionsEn ?? ""} rows={2} maxLength={500} dir="ltr" className={`${field} py-2`} />
-          </label>
-          <label className="flex min-h-11 items-center gap-2 text-small">
-            <input type="checkbox" name="bankAutoApprove" defaultChecked={row?.bankAutoApprove ?? false} className="size-4" />
-            {t("bankAutoApprove")}
-          </label>
-          <p className="max-w-[65ch] text-small text-ink-muted">{t("bankAutoApproveHint")}</p>
-        </fieldset>
 
         <p className="max-w-[65ch] text-small text-ink-muted">{t("financeHistoryHint")}</p>
 

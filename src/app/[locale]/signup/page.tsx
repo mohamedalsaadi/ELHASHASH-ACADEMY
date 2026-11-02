@@ -2,7 +2,7 @@ import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { logEventLater } from "@/lib/analytics";
-import { db } from "@/lib/db";
+import { gradeGroups } from "@/lib/catalog";
 import { SignUpForm } from "./SignUpForm";
 
 export const dynamic = "force-dynamic";
@@ -22,13 +22,7 @@ export default async function SignUpPage({
   const { next, type } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("signup");
-  const ar = locale === "ar";
-  const countries = await db.country.findMany({
-    where: { active: true },
-    orderBy: { order: "asc" },
-    include: { grades: { where: { active: true }, orderBy: [{ order: "asc" }, { level: "asc" }] } },
-  });
-  const groups = countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, grades: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })) }));
+  const groups = await gradeGroups(locale);
 
   void logEventLater({ name: "signup_viewed", dedupeScope: "signup" });
 

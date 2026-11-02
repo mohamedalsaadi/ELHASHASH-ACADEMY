@@ -11,24 +11,75 @@ Git history has the rest (`git log --oneline`).
 - **Live site:** https://elhashash-academy.vercel.app. It is behind HTTP Basic auth (`SITE_PASSWORD` in
   `src/middleware.ts`). The Claude desktop browser pane cannot show the Basic-auth prompt, so use Claude in
   Chrome; the owner types the password. On 2026-11-01 the live site ran the pre-redesign code (old look, old intro).
-- **Payments:**
-  - Routing by cart currency is in `src/lib/gateway.ts`: EGP goes to Paymob, AED to Ziina, everything else to Stripe.
-  - Stripe stays on test keys; live is on hold (AGENTS.md).
-  - Ziina is fully coded (`src/lib/ziina.ts`, `/api/webhooks/ziina`, the checkout result page) but **inactive until
-    `ZIINA_API_KEY` is set** in Vercel and the webhook `https://<domain>/api/webhooks/ziina` is registered in
-    Ziina's dashboard. Keep `ZIINA_TEST=0` in production. See `docs/payment-bridge.md` and `docs/launch-checklist.md`.
-  - Bank transfer with bank-alert approval is a temporary bridge (`docs/payment-bridge.md`).
+- **Payments (owner decision, 2026-11-02): Ziina only.**
+  - `activeGateway` in `src/lib/gateway.ts` returns Ziina for AED and nothing else. Stripe and Paymob code stays but is
+    hidden until the owner allows it: `STRIPE_ENABLED=1` / `PAYMOB_ENABLED=1`. With no gateway, checkout says payment
+    is not open yet and the API answers `payments_unavailable`.
+  - Stripe stays on test keys (AGENTS.md).
+  - Ziina (`src/lib/ziina.ts`, `/api/webhooks/ziina`) takes money only once `ZIINA_API_KEY` is set in Vercel and the
+    webhook `https://<domain>/api/webhooks/ziina` is registered. Keep `ZIINA_TEST=0` in production.
+  - Bank transfer is gone (see the entry below). Do not bring it back without the owner.
 - **Marketplace stage, until the end of 2026:**
   - Teachers publish their own courses, sessions, prices and cover picture per country, grade and subject.
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
+
+## 2026-11-02: Student home ("your grade") with the subject ride
+
+- **Routing:** with a session cookie, `src/middleware.ts` rewrites `/{locale}` to `/{locale}/me`, and the address stays `/`.
+  The public home keeps its 5-minute cache. `/me` checks `auth()`: a STUDENT gets the grade page; anyone else (parent,
+  teacher, admin, stale cookie) gets the public home component; a student without a grade gets a grade picker.
+- **Page** (`src/app/[locale]/me/page.tsx`, data in `src/lib/student-home-server.ts`, shaping in `student-home.ts`
+  with tests):
+  - Hero: "Your {grade}, {country}" with the flag, and the ride.
+  - Continue learning: the student's own courses.
+  - Bundle offer: the real `BundleRule`s run through `price()` on the cheapest plan of each subject not owned yet,
+    linking to checkout with those SKUs.
+  - A row per subject with courses: subjects to buy first, then owned ones, with a "Yours" chip.
+  - One "Coming soon" line naming the empty subjects.
+  - Live sessions in the next 7 days, then a "change grade" link.
+- **Ride** (`src/components/three/Ride.tsx` + `ride-scene.ts`): a CatmullRom aurora rail, dotted sleepers, and a car per
+  subject drawn on a canvas (`subjectPaths` from `SubjectIcon`).
+  - Moved by drag, a sideways wheel, the subject buttons (roving focus, arrow keys) or a tap. Tapping the front car
+    scrolls to its row.
+  - Frames are drawn only while a car moves. Reduced motion jumps instead.
+  - DESIGN.md now allows this second 3D hero.
+  - The design used the Aurora DNA values (700 ms settle, ease-out, no autoplay). The genjutsu brainstorm and approval
+    steps were not run.
+- **Grade setting:** `/account` has a "My grade" picker for students (`GradePicker`, `updateGrade`), and the signup
+  page now shares `gradeGroups()` in `catalog.ts`.
+- **Checked:**
+  - tsc, 183 tests, build.
+  - Student view in ar and en, desktop and phone, through a locally minted session for the seeded test student on
+    `127.0.0.1`. The owner's localhost session was not touched.
+  - Ride buttons, keys and drag; no horizontal overflow; no console errors; admin and signed-out users get the public
+    home.
+- **Not checked:**
+  - Saving a new grade (it would write to the shared database).
+  - The bundle box: no active bundle rule exists yet; the unit test covers it.
+  - Reduced motion in a real browser.
+  - A real phone.
+
+## 2026-11-02: Ziina only, bank transfer removed
+
+- Owner: "we only accept Ziina payment", Stripe hidden until allowed, delete everything about bank transfer.
+- Deleted: `lib/transfer.ts`, `lib/bank-email*.ts` (and its tests), `/api/webhooks/bank-email`, `/admin/transfers`,
+  `checkout/transfer`, `ReceiptUpload`, `docs/payment-bridge.md`. Also the course-page transfer box, bank details and
+  auto-approve in Admin settings, the transfers tab and tile, receipt upload and download, the receipt filter and
+  badge on orders, the transfer count in the morning briefing, the strings, the `BANK_*` env vars.
+- Public copy (FAQ, terms, privacy) and the support AI policy now say: card, Apple Pay or Google Pay through Ziina, in AED.
+- Kept on purpose: the `BankEmail` table, `Order.receipt*` and `PlatformSetting.bank*` columns (migrations stay
+  additive until 2027; all were empty), and the MANUAL gateway (free coupons, admin grants, mark-paid).
+- Checked: tsc, 179 tests, build; course page, checkout (ar/en), admin home, settings and orders in the browser.
+- **Open:** only AED can be paid. A SKU in another currency shows "payment not open"; today all 12 SKUs are AED.
+  The terms page still lists seven currencies.
 
 ## 2026-11-02: AI operations, phase 1 (solo owner, no staff)
 
 - Plan: `C:\Users\sw-os\.claude\plans\rebrand-to-a-magical-meteor.md` (owner, teacher, student and parent AI
   steps; recommended stack; phases 2–3 still open).
 - `src/lib/ai.ts` `askJson()` is now the only Gemini call (plain fetch plus zod). `AI_MODEL` env overrides the
-  model, and `AI_ENABLED=0` turns every AI feature off. `ai-grading.ts` and `bank-email.ts` use it.
+  model, and `AI_ENABLED=0` turns every AI feature off. `ai-grading.ts` uses it.
 - **Bank transfers:** an alert that lands in NEEDS_REVIEW now notifies every ADMIN (`notifyAdmins` in
   `notify.ts`). Before this, nobody was told about the queue.
 - **Support inbox:** contact-form messages are stored as `SupportTicket`. Gemini drafts a reply grounded in the

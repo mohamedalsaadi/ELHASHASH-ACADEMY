@@ -12,14 +12,12 @@ const notFound = () => new Response(null, { status: 404 });
  * Streams a private Blob object to someone who is allowed to read it. Authorisation happens here, in the
  * route: /api sits outside the locale middleware, so nothing upstream decides who may read what.
  */
-export async function GET(request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
   const { kind, id } = await params;
   const session = await auth();
   if (!session?.user) return notFound();
   const me = { id: session.user.id, role: session.user.role };
   const now = new Date();
-  // ?inline=1 lets the owner see a photographed receipt without downloading it.
-  const inline = new URL(request.url).searchParams.get("inline") === "1";
 
   let pathname: string;
   let downloadName: string;
@@ -71,18 +69,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
         : false;
     if (!(staff || submission.studentId === me.id || linkedParent)) return notFound();
     ({ pathname, downloadName, contentType } = file);
-  } else if (kind === "receipt") {
-    const order = await db.order.findUnique({
-      where: { id },
-      select: { userId: true, receiptKey: true, receiptName: true, receiptType: true },
-    });
-    if (!order?.receiptKey) return notFound();
-    // The student who owns the order and the owner may read their own receipt; nobody else.
-    const role = (await db.user.findUnique({ where: { id: me.id }, select: { role: true } }))?.role;
-    if (!(role === "ADMIN" || order.userId === me.id)) return notFound();
-    pathname = order.receiptKey;
-    downloadName = order.receiptName ?? "receipt";
-    contentType = order.receiptType ?? "application/octet-stream";
   } else {
     return notFound();
   }
@@ -93,10 +79,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
   return new Response(blob.stream, {
     headers: {
       "Content-Type": contentType,
-      "Content-Disposition":
-        inline && contentType.startsWith("image/")
-          ? contentDisposition(downloadName).replace(/^attachment/, "inline")
-          : contentDisposition(downloadName),
+      "Content-Disposition": contentDisposition(downloadName),
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-cache",
     },

@@ -11,7 +11,7 @@ import { logEvent } from "@/lib/analytics";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { blobInfo, coverPrefix } from "@/lib/blob";
 import type { FinanceConfig } from "@/lib/finance";
-import { saveBankDetails, saveFinanceConfig } from "@/lib/platform-settings";
+import { saveFinanceConfig } from "@/lib/platform-settings";
 import { refundIntent } from "@/lib/ziina";
 import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
@@ -341,7 +341,7 @@ export async function deleteCoupon(form: FormData) {
   done();
 }
 
-/** Completes a pending order (kiosk cash received, bank transfer, …) through the same path as a webhook. */
+/** Completes a pending order (kiosk cash received, …) through the same path as a webhook. */
 export async function markOrderPaid(form: FormData) {
   const me = await requireAdmin();
   const { id } = z.object({ id: z.string() }).parse(Object.fromEntries(form));
@@ -424,12 +424,6 @@ export async function saveFinanceSettings(form: FormData) {
       vatRate: z.coerce.number().min(0).max(50),
       vatTrn: z.string().trim().max(40).default(""),
       platformShare: z.coerce.number().min(0).max(100),
-      bankName: z.string().trim().max(120).default(""),
-      bankAccountName: z.string().trim().max(120).default(""),
-      bankIban: z.string().trim().max(64).default(""),
-      bankInstructionsAr: z.string().trim().max(500).default(""),
-      bankInstructionsEn: z.string().trim().max(500).default(""),
-      bankAutoApprove: checkbox,
     })
     .parse(Object.fromEntries(form));
 
@@ -440,18 +434,6 @@ export async function saveFinanceSettings(form: FormData) {
     platformShareBp: Math.round(d.platformShare * 100),
   };
   await saveFinanceConfig(cfg, me.id);
-  // No IBAN clears the transfer option entirely, which is the safe default.
-  await saveBankDetails(
-    {
-      bankName: d.bankName || null,
-      bankAccountName: d.bankAccountName || null,
-      bankIban: d.bankIban || null,
-      bankInstructionsAr: d.bankInstructionsAr || null,
-      bankInstructionsEn: d.bankInstructionsEn || null,
-      bankAutoApprove: d.bankAutoApprove,
-    },
-    me.id,
-  );
   revalidatePath("/[locale]/admin", "layout");
 }
 

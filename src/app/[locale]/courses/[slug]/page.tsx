@@ -10,8 +10,6 @@ import { LiveRow } from "@/components/learning/LiveRow";
 import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
 import { grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
-import { getBankDetails } from "@/lib/platform-settings";
-import { requestTransferAction } from "../../checkout/transfer/actions";
 import { db } from "@/lib/db";
 import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
@@ -100,15 +98,8 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
   );
 }
 
-export default async function CoursePage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string; slug: string }>;
-  searchParams: Promise<{ transfer?: string }>;
-}) {
+export default async function CoursePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
-  const { transfer: transferError } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("catalog");
   const tp = await getTranslations("catalog.plans");
@@ -134,7 +125,6 @@ export default async function CoursePage({
   });
   if (!course) notFound();
 
-  const bank = await getBankDetails();
   const session = await auth();
   void logEventLater({ name: "course_viewed", userId: session?.user?.id, courseId: course.id, dedupeScope: course.id });
   const staff = isCourseStaff(session?.user, course);
@@ -519,33 +509,6 @@ export default async function CoursePage({
               />
             )}
           </ul>
-        </section>
-      )}
-
-      {bank && showPlans && course.skus.length > 0 && (
-        <section id="transfer" className="grid scroll-mt-6 gap-3 border border-rule bg-surface p-4">
-          <h2 className="font-display text-h2 font-bold">{t("transfer.title")}</h2>
-          <p className="max-w-[65ch] text-small text-ink-muted">{t("transfer.hint")}</p>
-          {transferError && (
-            <p role="alert" className="text-small text-down">
-              {t(`transfer.errors.${transferError === "too_many" ? "too_many" : "unavailable"}`)}
-            </p>
-          )}
-          <form action={requestTransferAction} className="flex flex-wrap items-end gap-3">
-            <input type="hidden" name="locale" value={locale} />
-            <input type="hidden" name="courseSlug" value={course.slug} />
-            <label className="grid gap-1 text-small">
-              {t("transfer.plan")}
-              <select name="skuId" required className="min-w-56 rounded-sm border border-rule bg-surface px-3 py-2">
-                {course.skus.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {t(`planKind.${s.accessType}`)} — {formatMoney(effectivePrice(s, now), s.currency, locale)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="btn btn-outline px-3 py-1.5 text-small">{t("transfer.submit")}</button>
-          </form>
         </section>
       )}
 

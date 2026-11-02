@@ -9,7 +9,6 @@ const TABS = [
   ["courses", "/admin/courses"],
   ["catalog", "/admin/catalog"],
   ["orders", "/admin/orders"],
-  ["transfers", "/admin/transfers"],
   ["live", "/admin/live"],
   ["questions", "/admin/questions"],
   ["requests", "/admin/requests"],

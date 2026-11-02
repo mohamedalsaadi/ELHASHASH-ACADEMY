@@ -22,7 +22,7 @@ const ar: Section[] = [
     body: (
       <ul>
         <li>بيانات الحساب: الاسم، رقم الموبايل، البريد الإلكتروني، الصف، وكود ربط ولي الأمر.</li>
-        <li>بيانات الدفع: العملة والمبلغ ومرجع العملية من Stripe أو Paymob. لا نحتفظ برقم البطاقة.</li>
+        <li>بيانات الدفع: العملة والمبلغ ومرجع العملية من Ziina. لا نحتفظ برقم البطاقة.</li>
         <li>بيانات الاستخدام: الدرجات المكتملة، الإجابات والأسئلة، حضور الحصص المباشرة، والجهاز وعنوان IP لحماية الدروس.</li>
         <li>رسائل الدعم التي ترسلها إلينا.</li>
       </ul>
@@ -43,7 +43,7 @@ const ar: Section[] = [
     h: "من يعالج البيانات",
     body: (
       <p>
-        نستخدم مزودين يعالجون البيانات نيابة عنا: Neon (قاعدة البيانات)، Vercel (الاستضافة)، Stripe وPaymob (الدفع)،
+        نستخدم مزودين يعالجون البيانات نيابة عنا: Neon (قاعدة البيانات)، Vercel (الاستضافة)، Ziina (الدفع)،
         VdoCipher (حماية الفيديو)، Resend (البريد)، وDaily (الحصص المباشرة). لا نبيع بياناتك.
       </p>
     ),
@@ -105,7 +105,7 @@ const en: Section[] = [
     body: (
       <ul>
         <li>Account data: name, mobile number, email, grade, and the parent-link code.</li>
-        <li>Payment data: currency, amount, and the transaction reference from Stripe or Paymob. We never store card numbers.</li>
+        <li>Payment data: currency, amount, and the transaction reference from Ziina. We never store card numbers.</li>
         <li>Usage data: completed lessons, questions and answers, live-session attendance, and the device/IP used for the one-device guard.</li>
         <li>Support messages you send us.</li>
       </ul>
@@ -126,7 +126,7 @@ const en: Section[] = [
     h: "Who processes it",
     body: (
       <p>
-        We use providers that process data on our behalf: Neon (database), Vercel (hosting), Stripe and Paymob (payments),
+        We use providers that process data on our behalf: Neon (database), Vercel (hosting), Ziina (payments),
         VdoCipher (video protection), Resend (email), and Daily (live sessions). We do not sell your data.
       </p>
     ),

@@ -5,11 +5,9 @@ import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
-import { getBankDetails } from "@/lib/platform-settings";
 import { stripe, syncCheckoutSession } from "@/lib/stripe";
 import { syncPaymentIntent } from "@/lib/ziina";
 import { PendingPoll } from "./PendingPoll";
-import { ReceiptUpload } from "./ReceiptUpload";
 
 // Paymob redirects here after the hosted checkout. The status shown comes from our database
 // (set by the webhook), never from the redirect's query string, which the browser can edit.
@@ -57,8 +55,6 @@ export default async function ResultPage({
     order = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: { select: { skuId: true } } } });
   }
 
-  const ar = locale === "ar";
-  const transfer = order.status === "PENDING" && order.gateway === "MANUAL" ? await getBankDetails() : null;
   const tone = { PAID: "text-up", PENDING: "text-ink", FAILED: "text-down", EXPIRED: "text-down", REFUNDED: "text-ink-muted" }[order.status];
   const retryPath = order.items.length ? `/checkout?${order.items.map((i) => `sku=${encodeURIComponent(i.skuId)}`).join("&")}` : "/courses";
   const primaryButton =
@@ -79,47 +75,6 @@ export default async function ResultPage({
         {t("reference")} <span className="num" dir="ltr">{order.id}</span>
       </p>
 
-      {transfer && (
-        <section className="grid gap-3 rounded-md border border-hairline bg-surface p-4">
-          <h2 className="font-display text-h3 font-semibold">{t("transfer.title")}</h2>
-          <p className="text-small text-ink-muted">{t("transfer.hint", { amount: formatMoney(order.total + order.vat, order.currency, locale) })}</p>
-          <dl className="num grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-small" dir="ltr">
-            {transfer.bankName && (
-              <>
-                <dt className="text-ink-muted">{t("transfer.bank")}</dt>
-                <dd>{transfer.bankName}</dd>
-              </>
-            )}
-            {transfer.bankAccountName && (
-              <>
-                <dt className="text-ink-muted">{t("transfer.account")}</dt>
-                <dd>{transfer.bankAccountName}</dd>
-              </>
-            )}
-            <dt className="text-ink-muted">{t("transfer.iban")}</dt>
-            <dd className="break-all font-semibold">{transfer.bankIban}</dd>
-            <dt className="text-ink-muted">{t("transfer.reference")}</dt>
-            <dd className="break-all">{order.id}</dd>
-          </dl>
-          {(ar ? transfer.bankInstructionsAr : transfer.bankInstructionsEn) && (
-            <p className="text-small text-ink-muted" dir="auto">{ar ? transfer.bankInstructionsAr : transfer.bankInstructionsEn}</p>
-          )}
-          <ReceiptUpload
-            orderId={order.id}
-            pathPrefix={`receipts/${order.id}/`}
-            hasReceipt={!!order.receiptKey}
-            labels={{
-              title: t("transfer.receiptTitle"),
-              hint: t("transfer.receiptHint"),
-              file: t("transfer.receiptFile"),
-              uploading: t("transfer.uploading"),
-              saved: t("transfer.receiptSaved"),
-              failed: t("transfer.receiptFailed"),
-              replace: t("transfer.receiptReplace"),
-            }}
-          />
-        </section>
-      )}
       <div className="flex flex-wrap gap-3">
         {(order.status === "PAID" || order.status === "REFUNDED") && (
           <Link href={`/orders/${order.id}`} className={primaryButton}>

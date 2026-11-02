@@ -16,7 +16,7 @@ Refunds: all sales are final except the written exceptions on the refund policy 
 Live lectures: included in term and yearly plans, a single seat can be bought, the room opens 10 minutes early.
 Questions to teachers: with monthly and semester plans, up to 5 a day, answered under the lesson.
 Parents: the student makes a code in their account and the parent links to it, then sees courses, lessons, attendance and payments, and can pay for the child.
-Payment: in Egypt card, mobile wallet, kiosk cash or valU; elsewhere card, or bank transfer approved after the bank alert arrives. Card details are never stored.
+Payment: online only, by card, Apple Pay or Google Pay through Ziina, in UAE dirhams. There is no bank transfer or cash payment. Card details are never stored.
 Certificates: not offered.
 Teachers join by invitation only.
 `.trim();

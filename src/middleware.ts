@@ -22,7 +22,11 @@ export default function middleware(req: NextRequest) {
 
   // Per-browser id for the one-device rule on the secure player. Every sign-in passes through
   // a page first, so the cookie is in place before any protected video is requested.
-  const res = intl(req);
+  // Signed-in visitors get the student home at the same address. The page re-checks the session and role, and
+  // shows the public home to anyone else, so a stale cookie only costs a dynamic render.
+  const home = /^\/(ar|en)\/?$/.exec(req.nextUrl.pathname);
+  const signedIn = req.cookies.has("authjs.session-token") || req.cookies.has("__Secure-authjs.session-token");
+  const res = home && signedIn ? NextResponse.rewrite(new URL(`/${home[1]}/me${req.nextUrl.search}`, req.url)) : intl(req);
   if (!req.cookies.has(DEVICE_COOKIE)) {
     res.cookies.set(DEVICE_COOKIE, crypto.randomUUID(), {
       httpOnly: true,

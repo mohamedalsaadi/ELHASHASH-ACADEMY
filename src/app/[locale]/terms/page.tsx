@@ -33,8 +33,7 @@ const ar: Section[] = [
       <ul>
         <li>
           الأسعار بعملة بلدك كما تظهر في صفحة الدفع (سبع عملات: الجنيه المصري، الريال السعودي، الدرهم الإماراتي، الدينار
-          الكويتي، الريال القطري، الدينار البحريني، الريال العماني). الدفع عبر Stripe أو Paymob: بطاقة، محفظة موبايل، كاش في
-          منفذ، أو تقسيط valU. لا نحتفظ ببيانات بطاقتك.
+          الكويتي، الريال القطري، الدينار البحريني، الريال العماني). الدفع عبر Ziina بالبطاقة أو Apple Pay أو Google Pay. لا نحتفظ ببيانات بطاقتك.
         </li>
         <li>كل باقة تفتح مادة محددة حتى تاريخ الانتهاء المكتوب عند الشراء (فصل دراسي، سنة كاملة، أو مراجعة نهائية).</li>
         <li>
@@ -112,7 +111,7 @@ const en: Section[] = [
       <ul>
         <li>
           Prices are in your country&apos;s currency as shown at checkout (seven currencies: EGP, SAR, AED, KWD, QAR, BHD,
-          OMR). Payment is handled by Stripe or Paymob: card, mobile wallet, cash at a kiosk, or valU instalments. We never
+          OMR). Payment is handled by Ziina: card, Apple Pay or Google Pay. We never
           store your card.
         </li>
         <li>Each package unlocks one subject until the end date shown at purchase (semester, full year or final revision).</li>

@@ -45,45 +45,45 @@ describe("Stripe amounts", () => {
 describe("gateway", () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it("sends EGP to Paymob when its keys are set, every other currency to Stripe", () => {
-    vi.stubEnv("PAYMOB_SECRET_KEY", "test");
-    expect(activeGateway("EGP").gateway).toBe("PAYMOB");
-    expect(activeGateway("KWD")).toEqual({ gateway: "STRIPE", methods: ["CARD"] });
-    expect(activeGateway("AED").gateway).toBe("STRIPE");
-  });
-
-  it("sends EGP to Stripe when Paymob is not configured", () => {
-    vi.stubEnv("PAYMOB_SECRET_KEY", "");
-    expect(activeGateway("EGP").gateway).toBe("STRIPE");
-  });
-
-  it("sends AED to Ziina when its key is set, and other currencies stay on Stripe", () => {
-    vi.stubEnv("PAYMOB_SECRET_KEY", "");
+  it("pays AED through Ziina and keeps Stripe and Paymob hidden", () => {
     vi.stubEnv("ZIINA_API_KEY", "test");
+    vi.stubEnv("PAYMOB_SECRET_KEY", "test");
+    vi.stubEnv("STRIPE_ENABLED", "");
+    vi.stubEnv("PAYMOB_ENABLED", "");
     expect(activeGateway("AED")).toEqual({ gateway: "ZIINA", methods: ["CARD"] });
-    expect(activeGateway("KWD").gateway).toBe("STRIPE");
-    // EGP without Paymob keys still falls back to Stripe, never to Ziina.
-    expect(activeGateway("EGP").gateway).toBe("STRIPE");
+    expect(activeGateway("EGP")).toBeNull();
+    expect(activeGateway("KWD")).toBeNull();
   });
 
-  it("uses Stripe instead when Ziina is switched off", () => {
+  it("offers nothing when Ziina is switched off and Stripe is hidden", () => {
     vi.stubEnv("ZIINA_API_KEY", "test");
     vi.stubEnv("ZIINA_ENABLED", "0");
-    expect(activeGateway("AED").gateway).toBe("STRIPE");
+    vi.stubEnv("STRIPE_ENABLED", "");
+    expect(activeGateway("AED")).toBeNull();
+  });
+
+  it("brings Stripe and Paymob back only when the owner turns them on", () => {
+    vi.stubEnv("ZIINA_API_KEY", "");
+    vi.stubEnv("PAYMOB_SECRET_KEY", "test");
+    vi.stubEnv("PAYMOB_ENABLED", "1");
+    vi.stubEnv("STRIPE_ENABLED", "1");
+    expect(activeGateway("EGP")?.gateway).toBe("PAYMOB");
+    expect(activeGateway("AED")?.gateway).toBe("STRIPE");
   });
 
   it("never selects Ziina when the test flag is set on a production deployment", () => {
     vi.stubEnv("ZIINA_API_KEY", "test");
     vi.stubEnv("ZIINA_TEST", "1");
     vi.stubEnv("VERCEL_ENV", "production");
-    expect(activeGateway("AED").gateway).toBe("STRIPE");
+    vi.stubEnv("STRIPE_ENABLED", "");
+    expect(activeGateway("AED")).toBeNull();
   });
 
   it("allows Ziina test mode off production", () => {
     vi.stubEnv("ZIINA_API_KEY", "test");
     vi.stubEnv("ZIINA_TEST", "1");
     vi.stubEnv("VERCEL_ENV", "preview");
-    expect(activeGateway("AED").gateway).toBe("ZIINA");
+    expect(activeGateway("AED")?.gateway).toBe("ZIINA");
   });
 });
 

@@ -27,7 +27,7 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const current = { startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] };
 
-  const [revenue, subscribers, newStudents, rentals, live, kiosk, transfers, bankQueue, requests, tickets] = await Promise.all([
+  const [revenue, subscribers, newStudents, rentals, live, kiosk, requests, tickets] = await Promise.all([
     // SALE and REFUND rows together, so a refund reduces the month it reverses.
     db.ledgerEntry.groupBy({ by: ["currency"], where: { createdAt: { gte: monthStart } }, _sum: { gross: true, platformFee: true }, _count: true }),
     db.entitlement.findMany({ where: { lessonId: null, liveSessionId: null, ...current }, distinct: ["userId"], select: { userId: true } }),
@@ -40,8 +40,6 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
       include: { course: { include: { grade: { include: { country: true } } } }, _count: { select: { entitlements: true } } },
     }),
     db.order.findMany({ where: { status: "PENDING", method: "KIOSK" }, orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, name: true } } } }),
-    db.order.count({ where: { status: "PENDING", gateway: "MANUAL" } }),
-    db.bankEmail.count({ where: { status: "NEEDS_REVIEW" } }),
     db.specialRequest.count({ where: { status: "OPEN" } }),
     db.supportTicket.count({ where: { status: "OPEN" } }),
   ]);
@@ -51,7 +49,6 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
     { n: newStudents, l: t("newStudents") },
     { n: rentals, l: t("activeRentals") },
     { n: kiosk.length, l: t("pendingKiosk"), alert: kiosk.length > 0 },
-    { n: transfers + bankQueue, l: t("pendingTransfers"), alert: transfers + bankQueue > 0, href: "/admin/transfers" },
     { n: requests, l: t("openRequests"), alert: requests > 0, href: "/admin/requests" },
     { n: tickets, l: t("openTickets"), alert: tickets > 0, href: "/admin/support" },
   ];

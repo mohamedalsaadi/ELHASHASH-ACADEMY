@@ -82,6 +82,17 @@ export function groupByStage<T extends { level: number }>(grades: T[], stages: r
 }
 
 /** What a course card needs: the whole-course packages (the card picks the cheapest effective price), a free unit, the grade. */
+/** Active grades grouped by country, for every grade select (signup, account, the student home). */
+export async function gradeGroups(locale: string) {
+  const ar = locale === "ar";
+  const countries = await db.country.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    include: { grades: { where: { active: true }, orderBy: [{ order: "asc" }, { level: "asc" }] } },
+  });
+  return countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, grades: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })) }));
+}
+
 export function cardInclude(now: Date) {
   return {
     skus: { where: { ...onSale(now), ...wholeCourse }, orderBy: { price: "asc" as const }, take: 10 },

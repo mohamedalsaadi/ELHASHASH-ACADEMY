@@ -38,6 +38,9 @@ const ICONS: Record<string, { ink: string; pen: string }> = {
 /** Keys accepted by `Subject.icon`; the admin catalog offers these. */
 export const SUBJECT_ICONS = Object.keys(ICONS);
 
+/** The raw paths on the 48 grid, for drawing an icon on a canvas (the student home ride). */
+export const subjectPaths = (icon: string) => ICONS[icon] ?? ICONS.book;
+
 /** `muted` draws the whole icon in pencil grey: the "coming soon" state. */
 export function SubjectIcon({ icon, size = 48, muted = false }: { icon: string; size?: number; muted?: boolean }) {
   const { ink, pen } = ICONS[icon] ?? ICONS.book;

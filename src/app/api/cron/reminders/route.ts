@@ -155,11 +155,9 @@ export async function GET(req: Request) {
 async function ownerBriefing(now: Date) {
   const since = new Date(now.getTime() - DAY);
   const stale = new Date(now.getTime() - 2 * DAY);
-  const [revenue, signups, transfers, bankQueue, requests, tickets, homework, questions] = await Promise.all([
+  const [revenue, signups, requests, tickets, homework, questions] = await Promise.all([
     db.ledgerEntry.groupBy({ by: ["currency"], where: { createdAt: { gte: since } }, _sum: { gross: true } }),
     db.user.count({ where: { role: { in: ["STUDENT", "PARENT"] }, createdAt: { gte: since } } }),
-    db.order.count({ where: { status: "PENDING", gateway: "MANUAL" } }),
-    db.bankEmail.count({ where: { status: "NEEDS_REVIEW" } }),
     db.specialRequest.count({ where: { status: "OPEN" } }),
     db.supportTicket.count({ where: { status: "OPEN" } }),
     db.submission.count({ where: { status: "SUBMITTED", submittedAt: { lt: stale } } }),
@@ -171,8 +169,8 @@ async function ownerBriefing(now: Date) {
     kind: "SYSTEM",
     titleAr: "ملخص الصباح",
     titleEn: "Morning briefing",
-    bodyAr: `آخر 24 ساعة: مبيعات ${money("ar")}، ${signups} حساب جديد. بانتظارك: ${transfers + bankQueue} تحويل، ${requests} طلب، ${tickets} رسالة دعم. متأخر أكثر من يومين: ${homework} واجب بدون تصحيح، ${questions} سؤال بدون رد.`,
-    bodyEn: `Last 24 hours: sales ${money("en")}, ${signups} new accounts. Waiting for you: ${transfers + bankQueue} transfers, ${requests} requests, ${tickets} support messages. Over two days old: ${homework} homework ungraded, ${questions} questions unanswered.`,
+    bodyAr: `آخر 24 ساعة: مبيعات ${money("ar")}، ${signups} حساب جديد. بانتظارك: ${requests} طلب، ${tickets} رسالة دعم. متأخر أكثر من يومين: ${homework} واجب بدون تصحيح، ${questions} سؤال بدون رد.`,
+    bodyEn: `Last 24 hours: sales ${money("en")}, ${signups} new accounts. Waiting for you: ${requests} requests, ${tickets} support messages. Over two days old: ${homework} homework ungraded, ${questions} questions unanswered.`,
     href: "/admin",
     dedupeKey: `brief:${now.toISOString().slice(0, 10)}`,
   });

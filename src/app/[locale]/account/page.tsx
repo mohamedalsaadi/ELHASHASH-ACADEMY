@@ -2,9 +2,11 @@ import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { GradePicker } from "@/components/GradePicker";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
+import { gradeGroups } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
 import { sendVerification, unlinkParent } from "./actions";
@@ -74,6 +76,14 @@ export default async function AccountPage({
         <h2 className="font-display text-h3 font-semibold">{t("passwordTitle")}</h2>
         <PasswordForm />
       </section>
+
+      {u.role === "STUDENT" && (
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("gradeTitle")}</h2>
+          <p className="text-small text-ink-muted">{t("gradeHint")}</p>
+          <GradePicker groups={await gradeGroups(locale)} current={u.gradeId} label={t("grade")} save={t("save")} />
+        </section>
+      )}
 
       {u.role === "STUDENT" && (
         <section className={panel}>

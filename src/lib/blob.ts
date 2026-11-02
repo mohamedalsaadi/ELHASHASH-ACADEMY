@@ -17,16 +17,11 @@ export const MAX_FILES = 5;
 export const COVER_CONTENT_TYPES = ["image/png", "image/jpeg", "image/webp"];
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-/** A transfer receipt is a screenshot or the bank's PDF, and is read by a human. */
-export const RECEIPT_CONTENT_TYPES = [...COVER_CONTENT_TYPES, "application/pdf"];
-export const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
-
 /** Path prefixes: an assignment file lives under its course, a submission under its assignment and student. */
 export const homeworkPrefix = (courseId: string) => `homework/${courseId}/`;
 export const submissionPrefix = (assignmentId: string, studentId: string) => `submissions/${assignmentId}/${studentId}/`;
 export const coverPrefix = (courseId: string) => `covers/${courseId}/`;
 export const avatarPrefix = (userId: string) => `avatars/${userId}/`;
-export const receiptPrefix = (orderId: string) => `receipts/${orderId}/`;
 
 /** The browser's filename is only a label. Strip anything that could break a header or escape the store. */
 export function safeDownloadName(name: string): string {

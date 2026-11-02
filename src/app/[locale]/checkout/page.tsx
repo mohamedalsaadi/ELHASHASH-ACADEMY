@@ -80,6 +80,9 @@ export default async function CheckoutPage({
     }
   }
 
+  // A 100% code needs no gateway (the API settles it without one), so the button still shows.
+  const gateway = activeGateway(priced.currency) ?? (priced.total === 0 ? { gateway: "ZIINA" as const, methods: ["CARD" as const] } : null);
+
   // A parent pays for a linked child; with no child linked yet there is nobody to give the access to.
   const children =
     user.role === "PARENT"
@@ -158,7 +161,13 @@ export default async function CheckoutPage({
           </p>
         )}
       </section>
-      <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} learners={children ?? undefined} {...activeGateway(priced.currency)} />
+      {gateway ? (
+        <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} learners={children ?? undefined} {...gateway} />
+      ) : (
+        <p role="status" className="rounded-md border border-hairline bg-surface p-4 text-small text-ink-muted">
+          {t("errors.payments_unavailable")}
+        </p>
+      )}
       <p className="text-small text-ink-muted">
         {t.rich("agree", {
           terms: (c) => <Link href="/terms" className="text-pen underline">{c}</Link>,

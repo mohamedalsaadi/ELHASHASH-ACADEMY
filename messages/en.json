@@ -254,8 +254,9 @@
       "coupon_used_by_you": "You have already used that discount code.",
       "coupon_currency": "That discount code can't be used with this currency.",
       "method_unavailable": "That payment method isn’t available right now. Pick another one.",
-      "cap_reached": "Card payments have reached this month's limit. Pay by bank transfer instead, or try again next month.",
-      "child_required": "Choose one of the children linked to your account."
+      "cap_reached": "Card payments have reached this month's limit. Try again next month, or contact us.",
+      "child_required": "Choose one of the children linked to your account.",
+      "payments_unavailable": "Online payment is not open for this course yet. Contact us and we will help you enrol."
     },
     "couponErrors": {
       "invalid": "That code isn't valid.",
@@ -281,21 +282,6 @@
         "REFUNDED": "The amount went back to your original payment method."
       },
       "kioskRef": "Reference number:",
-      "transfer": {
-        "title": "Pay by bank transfer",
-        "hint": "Transfer {amount} to the account below, then upload the receipt. Your access opens once we review the transfer.",
-        "bank": "Bank",
-        "account": "Account name",
-        "iban": "IBAN",
-        "reference": "Reference (put it in the transfer note)",
-        "receiptTitle": "Transfer receipt",
-        "receiptHint": "An image or PDF, up to 10 MB.",
-        "receiptFile": "Attach the receipt",
-        "uploading": "Uploading…",
-        "receiptSaved": "Receipt attached. We'll review it shortly.",
-        "receiptFailed": "The receipt could not be attached. Try another file.",
-        "receiptReplace": "Replace the receipt"
-      },
       "receipt": "View the receipt",
       "reference": "Order reference",
       "refresh": "Check the payment now",
@@ -328,16 +314,6 @@
     "noSubjects": "No subjects are open for this grade yet.",
     "noUnits": "The lessons are being prepared.",
     "noPackages": "Subscriptions for this course are being prepared. Contact support if you need access now.",
-    "transfer": {
-      "title": "Pay by bank transfer",
-      "hint": "Pick the plan, and we'll show the account to transfer to before you upload the receipt.",
-      "plan": "Plan",
-      "submit": "Request to pay by transfer",
-      "errors": {
-        "too_many": "Too many requests in a short time. Try again shortly.",
-        "unavailable": "This plan cannot be paid by transfer right now."
-      }
-    },
     "search": "Search courses",
     "searchPlaceholder": "Subject, grade or course name",
     "searchButton": "Search",
@@ -894,7 +870,6 @@
       "courses": "Courses & prices",
       "catalog": "Catalog",
       "orders": "Orders",
-      "transfers": "Transfers",
       "live": "Live",
       "questions": "Questions",
       "marketing": "Marketing",
@@ -973,7 +948,7 @@
     "extension": "Manual change, no items",
     "actions": "Actions",
     "markPaid": "Confirm payment",
-    "markPaidHint": "Use after cash or a transfer arrives. It grants access and records the operation.",
+    "markPaidHint": "Use after cash arrives. It grants access and records the operation.",
     "refund": "Refund",
     "confirmRefund": "Refund this order and end its access?",
     "confirmMarkPaid": "Mark this order as paid and grant access?",
@@ -1008,39 +983,6 @@
     "confirmDisable": "Disable {name} as a teacher?",
     "ownerLocked": "This is the owner's account; it can't be reset or disabled here.",
     "exportTeachers": "Download the teacher report (CSV)",
-    "transferReceipt": "Transfer receipt",
-    "transferReceiptHint": "The student attached this with the request. Check it before confirming the payment.",
-    "downloadReceipt": "Download the receipt",
-    "withReceipt": "Orders with a receipt",
-    "receiptBadge": "receipt",
-    "bank": "Bank transfer details",
-    "bankHint": "Shown to students as a payment option. Leave the IBAN empty to hide transfer.",
-    "bankName": "Bank name",
-    "bankAccountName": "Account holder",
-    "bankIban": "IBAN",
-    "bankInstructionsAr": "Instructions in Arabic",
-    "bankInstructionsEn": "Instructions in English",
-    "bankAutoApprove": "Approve transfers automatically when they match exactly",
-    "bankAutoApproveHint": "Only works once the bank-alert inbox is connected and BANK_AUTO_APPROVE=1. Anything uncertain stays in the review queue.",
-    "transfers": {
-      "queue": "Transfers needing review",
-      "emptyQueue": "No transfers are waiting for review.",
-      "audit": "Transfer log",
-      "emptyAudit": "No transfers recorded yet.",
-      "received": "Received",
-      "status": "Status",
-      "amount": "Amount",
-      "from": "From",
-      "order": "Order",
-      "reference": "Reference",
-      "reason": "Reason",
-      "body": "Alert text",
-      "suggested": "Possible orders",
-      "match": "Approve",
-      "dismiss": "Dismiss",
-      "pickOrder": "Pick the order",
-      "noSubject": "Transfer alert"
-    },
     "slots": "Allowed grades and subjects",
     "slotsHint": "The teacher cannot create a course outside this list.",
     "noSlots": "This teacher has no allowed grade and subject yet.",
@@ -1061,7 +1003,6 @@
     "hours": "{n} h",
     "days": "{n, plural, one {# day} other {# days}}",
     "noQuestions": "No questions yet.",
-    "pendingTransfers": "Transfers to review",
     "openRequests": "Open requests",
     "openTickets": "Open support messages",
     "support": {
@@ -1121,7 +1062,10 @@
     "childrenTitle": "My children",
     "noChildren": "No children are linked yet.",
     "openParent": "Open the parent dashboard",
-    "openStaff": "Open the staff dashboard"
+    "openStaff": "Open the staff dashboard",
+    "gradeTitle": "My grade",
+    "gradeHint": "Your grade and country decide which subjects and courses your home page shows. What you already bought stays yours.",
+    "grade": "Grade"
   },
   "forgot": {
     "title": "Forgot your password?",
@@ -1416,5 +1360,34 @@
     "course": "New course",
     "discount": "Discount",
     "offer": "Offer"
+  },
+  "me": {
+    "hello": "Welcome back, {name}",
+    "title": "Your {grade}, {country}",
+    "lede": "{count, plural, one {# subject} other {# subjects}} in your grade, every teacher in one place. Turn the ride and pick one.",
+    "subjects": "Subjects in your grade",
+    "hint": "Drag the ride or pick a subject.",
+    "yours": "Yours",
+    "courses": "{count, plural, one {# course} other {# courses}}",
+    "soon": "Coming soon",
+    "from": "from {price}",
+    "see": "See {subject} courses",
+    "continue": "Continue learning",
+    "dashboard": "My learning",
+    "bundle": {
+      "k": "Bundle offer",
+      "title": "Take {subjects} together",
+      "save": "You save {amount}.",
+      "cta": "Get the bundle"
+    },
+    "live": "Live this week",
+    "liveOpen": "Open",
+    "notYours": "Not your grade?",
+    "change": "Change it in your account",
+    "pickTitle": "Pick your grade",
+    "pickHint": "Tell us your grade and we will show every subject and course for it.",
+    "grade": "Grade",
+    "pickSave": "Show my subjects",
+    "noneYet": "Teachers are still adding courses for your grade. Check back soon."
   }
 }

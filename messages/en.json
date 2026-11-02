@@ -12,7 +12,7 @@
     "backToTeacher": "Back to teacher dashboard"
   },
   "meta": {
-    "title": "A+ Academy",
+    "title": "Sabboura",
     "description": "Grade 10–12 lessons for students across the GCC and Egypt, with your real scores in front of you."
   },
   "pwa": {
@@ -109,11 +109,11 @@
       "pay": "Secure card payment",
       "lang": "In Arabic and English"
     },
-    "headline": "Your <a>A+</a> starts here.",
+    "headline": "Your teacher at the <a>board</a>, wherever you are.",
     "lede": "Your country's best teachers in one place. Pick your grade and subject, and see every course, its sessions and price before you enrol.",
     "ctaStart": "Find your course",
     "ctaParent": "I’m a parent",
-    "mapLabel": "Course map: one line per country, all meeting at A+",
+    "mapLabel": "Course map: one line per country",
     "legend": {
       "title": "Map legend",
       "caption": "Counted from the catalogue today",
@@ -134,7 +134,7 @@
     "how": {
       "title": "How the trip works",
       "s1": {
-        "t": "Find your line",
+        "t": "Pick your grade",
         "b": "Your country, then your grade, then the subject."
       },
       "s2": {
@@ -177,7 +177,7 @@
       }
     },
     "final": {
-      "title": "Ready for your A+?",
+      "title": "The board is ready. Are you?",
       "body": "Pick your grade's course and start today."
     },
     "statsLabel": "Real numbers from today's catalogue"
@@ -727,8 +727,8 @@
     "faq": "FAQ",
     "legalNav": "Help and legal",
     "contact": "Contact us",
-    "rights": "A+ Academy, United Arab Emirates",
-    "tagline": "Every lesson builds confidence."
+    "rights": "Sabboura, United Arab Emirates",
+    "tagline": "Every lesson starts at the board."
   },
   "teacher": {
     "hello": "Hello, {name}",
@@ -1092,8 +1092,8 @@
     "invalid": "This link is invalid or has expired."
   },
   "invite": {
-    "metaTitle": "An invitation to teach at A+ Academy",
-    "title": "An invitation to teach at A+ Academy, {name}",
+    "metaTitle": "An invitation to teach at Sabboura",
+    "title": "An invitation to teach at Sabboura, {name}",
     "lede": "You have been invited to teach the subjects below. Choose a password for your account to continue.",
     "password": "Password",
     "confirm": "Confirm password",

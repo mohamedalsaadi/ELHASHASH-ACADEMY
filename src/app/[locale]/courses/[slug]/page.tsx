@@ -194,7 +194,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     "@type": "Course",
     name: courseTitle,
     description: (ar ? course.descAr : course.descEn) ?? undefined,
-    provider: { "@type": "Organization", name: "A+ Academy", sameAs: siteUrl },
+    provider: { "@type": "Organization", name: "Sabboura", sameAs: siteUrl },
     url: courseUrl,
     offers: course.skus.map((s) => ({
       "@type": "Offer",

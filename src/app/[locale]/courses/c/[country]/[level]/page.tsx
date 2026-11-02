@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const name = locale === "ar" ? grade.nameAr : grade.nameEn;
   return {
     title: name,
-    description: locale === "ar" ? `مواد ${name} وكورساتها على A+ Academy.` : `${name} subjects and courses on A+ Academy.`,
+    description: locale === "ar" ? `مواد ${name} وكورساتها على سبّورة.` : `${name} subjects and courses on Sabboura.`,
     alternates: alternates(locale, `/courses/c/${slug.toLowerCase()}/${level}`),
   };
 }

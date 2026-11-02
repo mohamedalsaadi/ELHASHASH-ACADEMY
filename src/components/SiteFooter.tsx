@@ -8,8 +8,8 @@ export async function SiteFooter() {
   const [t, locale] = await Promise.all([getTranslations("footer"), getLocale()]);
   return (
     <footer className="mt-16 bg-surface print:hidden">
-      {/* A thin aurora rule: the brand's one ornament, closing every page. */}
-      <div aria-hidden="true" className="h-px bg-linear-to-r from-aurora-1 via-aurora-4 to-aurora-6" />
+      {/* The chalk tray: a thin line of coloured chalk closing every page. */}
+      <div aria-hidden="true" className="h-px bg-linear-to-r from-chalk-1 via-chalk-3 to-chalk-4" />
       <div className="mx-auto flex max-w-(--container-page) flex-wrap items-center justify-between gap-x-6 gap-y-5 px-4 py-8 text-small text-ink-muted">
         <div className="grid gap-2">
           <span className="justify-self-start text-ink">

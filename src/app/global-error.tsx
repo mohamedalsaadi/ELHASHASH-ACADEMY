@@ -7,7 +7,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
   return (
     <html lang="en">
       <head>
-        <title>Error · A+ Academy</title>
+        <title>Error · Sabboura</title>
         <meta name="robots" content="noindex" />
       </head>
       <body style={{ margin: 0, background: "#F6F7FB", color: "#0D1030", fontFamily: "Tahoma, Arial, sans-serif" }}>

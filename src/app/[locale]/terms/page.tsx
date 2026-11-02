@@ -12,7 +12,7 @@ const ar: Section[] = [
     h: "من نحن",
     body: (
       <p>
-        A+ Academy منصة تعليمية في الإمارات العربية المتحدة تقدم شروحات فيديو للمناهج الدراسية. باستخدامك للموقع أو شرائك
+        سبّورة (Sabboura) منصة تعليمية في الإمارات العربية المتحدة تقدم شروحات فيديو للمناهج الدراسية. باستخدامك للموقع أو شرائك
         لأي باقة فأنت توافق على هذه الشروط. للتواصل: <Mail />.
       </p>
     ),
@@ -90,7 +90,7 @@ const en: Section[] = [
     h: "Who we are",
     body: (
       <p>
-        A+ Academy is an education platform in the United Arab Emirates offering video lessons for school
+        Sabboura is an education platform in the United Arab Emirates offering video lessons for school
         curricula. By using the site or buying any package you agree to these terms. Contact: <Mail />.
       </p>
     ),

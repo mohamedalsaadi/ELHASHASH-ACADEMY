@@ -12,7 +12,7 @@ export function InstallApp() {
 
   useEffect(() => {
     try {
-      if (localStorage.getItem("aplusacademy-install-dismissed") === "1") return;
+      if (localStorage.getItem("sabboura-install-dismissed") === "1") return;
     } catch {
       // Private mode: still offer install, just without the remembered dismissal.
     }
@@ -31,7 +31,7 @@ export function InstallApp() {
   const dismiss = () => {
     setHidden(true);
     try {
-      localStorage.setItem("aplusacademy-install-dismissed", "1");
+      localStorage.setItem("sabboura-install-dismissed", "1");
     } catch {
       // Ignore storage failures.
     }

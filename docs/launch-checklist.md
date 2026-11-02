@@ -1,4 +1,4 @@
-# A+ Academy launch checklist
+# Sabboura launch checklist
 
 Last updated: 2026-10-30 · live commit `22d5f76`.
 
@@ -22,10 +22,10 @@ This is the single place for: **what has not been verified**, **what only the ow
 **Gate 0 — prove the database is the same one.**
 - [ ] Vercel → Settings → Environment Variables → `DATABASE_URL`. The host must be `ep-twilight-feather-b97jpk23-pooler.c-7.eu-central-1.aws.neon.tech`. If it is a different database, run `npx prisma migrate deploy` against it and re-run `npx tsx prisma/seed-uae-prices.ts --apply` first. Without this, every signed-in screen errors on missing tables.
 
-**Domain and handles (owner).** The canonical domain is `aplusacademy.ae` (no free "academy" .com exists).
-- [ ] Reserve `@aplusacademy` on Instagram (free); open `tiktok.com/@aplusacademy` by hand to check it.
-- [ ] Buy `aplusacademy.ae` at an aeDA-accredited registrar (Vercel cannot register .ae); point its nameservers at `ns1.vercel-dns.com` / `ns2.vercel-dns.com`.
-- [ ] Once it resolves with a valid certificate: `MAIL_FROM=A+ Academy <no-reply@aplusacademy.ae>` after Resend verifies SPF, DKIM and DMARC.
+**Domain and handles (owner).** The trade name is Sabboura (licence registered 2026-11-02). On 2026-11-02 `sabbouraacademy` was free as .com, .net, .org and .ae (the .ae by DNS only) and on Instagram and TikTok; plain `sabboura.com` was taken.
+- [ ] Reserve `@sabbouraacademy` on Instagram and TikTok the same day the domains are bought.
+- [ ] Buy `sabbouraacademy.com` (and .net/.org to protect it) and `sabbouraacademy.ae` at an aeDA-accredited registrar (Vercel cannot register .ae); point the nameservers at `ns1.vercel-dns.com` / `ns2.vercel-dns.com`.
+- [ ] Once it resolves with a valid certificate: `MAIL_FROM=Sabboura <no-reply@<domain>>` after Resend verifies SPF, DKIM and DMARC. `src/lib/paymob.ts` falls back to `no-reply@sabbouraacademy.ae`; change it if a different domain is bought.
 
 **Then, in this order**
 1. [ ] Add the domain in Vercel → Domains; `A 76.76.21.21` for the apex, `CNAME cname.vercel-dns.com` for `www`; 308 `www` → apex. Wait for *Valid Configuration*.
@@ -113,7 +113,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 
 ### Product and legal
 
-- [ ] **Legal entity and address** in `/terms`, `/privacy`, `/refund` — they still read "A+ Academy, UAE".
+- [ ] **Legal entity and address** in `/terms`, `/privacy`, `/refund` — they read "Sabboura (سبّورة), UAE"; add the licence number and address.
 - [ ] **Privacy review** by the owner's advisor.
 - [ ] **Branded support address** — `SUPPORT_EMAIL` falls back to `chemical.mohammed@gmail.com`.
 - [ ] **New-country art.** New countries get a code badge until flag/landmark art exists.

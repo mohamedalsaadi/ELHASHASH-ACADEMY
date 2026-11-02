@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "name": "Sabboura · Chalkboard",
+    "version": "1.0",
+    "date": "2026-11-02",
+    "references": [
+      "Described style, no image reference: the classroom blackboard (سبّورة) of a GCC or Egyptian secondary school",
+      "Ruqʿah: the everyday handwriting script Arab teachers write on the board",
+      "Kept from Aurora (docs/brand/aurora-dna.json): layout, spacing, radii, motion timing, the two 3D heroes"
+    ],
+    "audience": "Arabic-speaking secondary students (grades 10-12) across the GCC and Egypt, the parents who pay, and the teachers who sell",
+    "notes": "Colours are chosen, not measured (no reference image), so there is no measured_palette and no verify step. Contrast ratios are WCAG 2.x and listed in DESIGN.md §0."
+  },
+  "design_system": {
+    "color": {
+      "surface": { "background": "#F5F2EA", "card": "#FFFFFF", "raised": "#EFEBE1", "usage": "Warm exercise-book paper for every page; white cards on it" },
+      "primary": { "hex": "#1F6B4F", "name": "board green", "usage": "Actions, links, focus ring. White on it 6.4:1" },
+      "secondary": { "hex": "#15251F", "name": "slate", "usage": "The board: home hero, closing band, student-tile stage" },
+      "accent": { "hex": "#F2D06B", "name": "yellow chalk", "usage": "The one highlight per heading (underline), the board's primary button, what a student earned" },
+      "chalk": {
+        "1": "#F2D06B",
+        "2": "#F4A261",
+        "3": "#F2A6B8",
+        "4": "#8CC4E8",
+        "5": "#A9DDB3",
+        "6": "#EEF1EA",
+        "usage": "Coloured chalk: drawings on the board, the footer rule, the ride's rail. Never body text on paper"
+      },
+      "neutral": {
+        "scale": ["#FFFFFF", "#F5F2EA", "#EFEBE1", "#E6E1D5", "#CFC8B8", "#8A8576", "#5C6660", "#16211D"],
+        "usage": "Lightest to darkest. #16211D is ink on paper; #EEF1EA (chalk white) is text on the board, #A7B7AE muted text on the board"
+      },
+      "semantic": { "success": "#16834A", "error": "#C8343E", "warning": "#F2D06B", "info": "#1F6B4F" },
+      "wood": { "hex": "#8A5A36", "usage": "The board's ledge in the mark and the chalk tray; nowhere else" }
+    },
+    "typography": {
+      "families": {
+        "display": "Readex Pro (Arabic + Latin), 500-700",
+        "body": "IBM Plex Sans Arabic, 400-700",
+        "hand": "Aref Ruqaa, 400/700: the Arabic wordmark, words chalked on the board, short handwritten notes. Never body text, never in app pages"
+      },
+      "scale_ratio": "1.25 (fluid, unchanged from Aurora)",
+      "weights": [400, 500, 600, 700],
+      "letter_spacing": "Latin display -0.02em; none on Arabic",
+      "line_height": { "arabic_body": 1.85, "latin_body": 1.65, "display": 1.05 }
+    },
+    "spacing": { "base": "4px", "density": "airy on marketing, compact on app pages", "rhythm": "sections 80-128px apart on marketing" },
+    "layout": { "max_width": "78rem", "grid": "12 columns, asymmetric hero: copy on the start side, the board drawing on the end side", "direction": "RTL first, logical properties only" },
+    "shape": { "radius": { "sm": "10px", "md": "14px", "lg": "24px", "full": "pill" }, "borders": "1px hairline on paper; chalk-white at 25% on the board" },
+    "elevation": { "approach": "Paper on a desk: a soft two-layer shadow tinted with slate", "paper": "0 1px 2px rgb(22 33 29 / .06), 0 8px 24px -12px rgb(22 33 29 / .12)", "float": "0 2px 4px rgb(22 33 29 / .06), 0 24px 48px -16px rgb(22 33 29 / .22)" },
+    "iconography": { "set": "Lucide, stroke 1.75", "subject_icons": "Own 48-grid line icons (SubjectIcon), drawn in chalk on the ride" },
+    "motion": { "easing": "cubic-bezier(.16, 1, .3, 1)", "durations": { "fast": "160ms", "base": "280ms", "reveal": "700ms" }, "principle": "Chalk is written, never animated for its own sake: strokes draw once at the speed of a hand, then hold still" },
+    "components": {
+      "button_primary": "Board-green pill, white text",
+      "button_on_board": "Yellow-chalk pill, slate text, a dusty glow",
+      "card": "White paper, warm hairline, slate-tinted shadow, 24px radius",
+      "highlight": ".marker: a hand-drawn yellow chalk underline under one word per heading"
+    }
+  },
+  "design_style": {
+    "aesthetic": "The classroom, quietly: a real slate board for the hero and the closing call, exercise-book paper for everything you read",
+    "visual_language": "Chalk strokes with grain and uneven pressure, coloured chalk for subjects, Ruqʿah handwriting for the name. Everything else is a clean modern sans",
+    "composition": "One board per page at most at the top (home, student home) and one at the end; paper between",
+    "imagery": "No photos. Drawings are chalk diagrams a teacher would actually draw: axes and a parabola, a wave, a benzene ring, a right triangle",
+    "interaction_feel": "Calm and tactile. Hover lifts paper 3px. The board responds to the pointer with a slight parallax, nothing more",
+    "brand_voice_in_ui": "A good teacher at the board: plain, warm, exam-literate Arabic, no hype"
+  },
+  "visual_effects": {
+    "overview": { "effect_intensity": "medium", "performance_tier": "mid-range Android first: capped DPR, paused off-screen, still frame under reduced motion" },
+    "background_effects": { "enabled": true, "description": "The board: slate gradient lighter at the centre, faint horizontal eraser smears and chalk dust (CSS on .stage; canvas in the hero)" },
+    "particle_systems": { "enabled": true, "description": "Chalk dust: fine motes shed from the chalk tip while it writes, falling and fading; a few idle motes drift in the light" },
+    "3d_elements": { "enabled": true, "description": "Home hero: the board as a lit plane with the chalk layer just in front, pointer parallax, dust in depth (src/components/three/board-scene.ts). Student home: the subject ride with a chalk rail" },
+    "shader_effects": { "enabled": false, "description": "Not needed: chalk grain is drawn on a 2D canvas texture" },
+    "scroll_effects": { "enabled": true, "description": "Sections rise 16px once with CSS view timelines; nothing scroll-jacked" },
+    "text_effects": { "enabled": true, "description": "The name is chalked in Ruqʿah on the board as the last stroke of the intro, revealed in writing direction" },
+    "cursor_effects": { "enabled": false, "description": "None" },
+    "image_effects": { "enabled": false, "description": "None" },
+    "glassmorphism_neumorphism": { "enabled": true, "description": "Only the sticky header keeps its blur" },
+    "canvas_drawings": { "enabled": true, "description": "Chalk strokes: several jittered passes per segment with varying alpha, grain knocked out with destination-out specks, seeded so redraws match" },
+    "svg_animations": { "enabled": false, "description": "None" },
+    "composite_notes": "Intro 4.2 s once per tab session: the chalk draws four subject diagrams, then writes سبّورة / Sabboura and underlines it; the hero copy rises at 3.2 s. Any input finishes the drawing at once."
+  }
+}

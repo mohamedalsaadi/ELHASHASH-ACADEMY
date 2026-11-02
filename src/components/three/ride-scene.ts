@@ -1,6 +1,6 @@
-// The student home ride: one car per subject on a looping aurora rail. The cars move only when the student
+// The student home ride: one card per subject on a looping rail of coloured chalk. The cars move only when the student
 // moves them (drag, sideways wheel, the subject buttons); the nearest car eases into the front "station".
-// Timing follows the Aurora DNA: settle in about 700 ms on an ease-out, no bounce, no autoplay.
+// Timing follows the brand DNA: settle in about 700 ms on an ease-out, no bounce, no autoplay.
 import type * as Three from "three";
 import { subjectPaths } from "@/components/brand/SubjectIcon";
 
@@ -86,7 +86,7 @@ export function createRide(
   });
   const curve = new THREE.CatmullRomCurve3(points, true, "centripetal");
 
-  // The rail: a thin tube shaded along its length through the aurora, plus a soft wider glow tube.
+  // The rail: a thin tube shaded along its length through the coloured chalk, plus a soft wider glow tube.
   const TUBE = small ? 220 : 400;
   const railGeo = keep(new THREE.TubeGeometry(curve, TUBE, 0.035, 8, true));
   const ramp = colors.rail.map((c) => new THREE.Color(c));
@@ -110,7 +110,7 @@ export function createRide(
     ),
   );
 
-  // Sleepers: dots under the rail, the planet's dotted language.
+  // Sleepers: chalk dots under the rail.
   const SLEEPERS = small ? 90 : 160;
   const dots = new Float32Array(SLEEPERS * 3);
   for (let i = 0; i < SLEEPERS; i++) curve.getPointAt(i / SLEEPERS).add(new THREE.Vector3(0, -0.12, 0)).toArray(dots, i * 3);

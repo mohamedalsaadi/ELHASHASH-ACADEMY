@@ -1,31 +1,31 @@
-/* Brand motion (DESIGN.md "Aurora"). Marketing only: the night stage, the intro, scroll reveals and the route loader. */
+/* Brand motion (DESIGN.md "Chalkboard"). Marketing only: the board stage, the intro, scroll reveals and the route loader. */
 
-/* The night stage: deep navy with aurora light rising from below. The home hero and the closing band. */
+/* The board: slate, a little lighter where the classroom light falls, with the ghosts of erased lessons (wide faint
+   eraser smears) and a fine chalk-dust grain. Still: a board does not move. The home hero and the closing band. */
 .stage {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: radial-gradient(120% 80% at 70% 10%, var(--color-night-2), var(--color-night) 60%);
+  background:
+    radial-gradient(90% 70% at 62% 30%, rgb(255 255 255 / .06), transparent 70%),
+    radial-gradient(120% 90% at 50% 40%, var(--color-night-2), var(--color-night) 75%);
   color: var(--color-night-text);
 }
 .stage::before {
   content: "";
   position: absolute;
-  inset: auto -20% -40% -20%;
+  inset: 0;
   z-index: -1;
-  height: 70%;
   background:
-    radial-gradient(closest-side, rgb(161 109 243 / .45), transparent),
-    radial-gradient(closest-side at 30% 60%, rgb(252 143 39 / .35), transparent),
-    radial-gradient(closest-side at 75% 50%, rgb(47 211 201 / .25), transparent);
-  filter: blur(40px);
+    radial-gradient(38% 9% at 30% 22%, rgb(238 241 234 / .05), transparent),
+    radial-gradient(46% 7% at 72% 64%, rgb(238 241 234 / .045), transparent),
+    radial-gradient(30% 6% at 20% 82%, rgb(238 241 234 / .04), transparent),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   pointer-events: none;
-  animation: as-aurora 20s ease-in-out infinite alternate;
 }
-@keyframes as-aurora { to { transform: translateX(6%) scale(1.08); } }
 
-/* Intro, 4.2 s, once per tab session (guard in Intro.tsx). Dawn sweeps across the planet and the capitals light; the hero
-   copy waits off-stage and rises at 3.2 s. Skipping shows the copy at once. */
+/* Intro, 4.2 s, once per tab session (guard in Intro.tsx). The chalk draws four lessons on the board and writes the name;
+   the hero copy waits off-stage and rises at 3.2 s. Skipping shows the copy at once. */
 .as-intro-skip { display: none; }
 html[data-intro="play"] .as-intro-skip { display: inline-flex; }
 html[data-intro="play"] .as-hero-copy > * {
@@ -46,11 +46,11 @@ html[data-intro="skip"] .as-hero-copy > * { animation-delay: 0ms; }
   }
 }
 
-/* Route loader: an aurora line draws across the top only while a page is really loading. */
+/* Route loader: a line of coloured chalk draws across the top only while a page is really loading. */
 .as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 3px; overflow: hidden; }
 .as-loader::after {
   content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 100%;
-  background: linear-gradient(90deg, var(--color-aurora-1), var(--color-aurora-4), var(--color-aurora-6));
+  background: linear-gradient(90deg, var(--color-chalk-1), var(--color-chalk-3), var(--color-chalk-4), var(--color-chalk-5));
   transform-origin: var(--as-origin, right);
   animation: as-load 1400ms var(--ease-out) infinite;
 }
@@ -65,7 +65,6 @@ html[data-intro="skip"] .as-hero-copy > * { animation-delay: 0ms; }
 @media (max-width: 40rem) { .net-label { font-size: 34px; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage::before { animation: none; }
   .reveal { animation: none; }
   html[data-intro] .as-hero-copy > * { opacity: 1; animation: none; }
   .as-loader::after { animation: none; transform: scaleX(.4); }

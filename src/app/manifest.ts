@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "A+ Academy",
-    short_name: "A+ Academy",
+    name: "Sabboura",
+    short_name: "Sabboura",
     description: "Secondary-school lessons, live classes and real scores for students across the GCC and Egypt.",
     id: "/",
     start_url: "/ar",
@@ -12,8 +12,8 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     dir: "rtl",
     lang: "ar",
-    background_color: "#FFFFFF",
-    theme_color: "#111418",
+    background_color: "#F5F2EA",
+    theme_color: "#15251F",
     icons: [
       { src: "/pwa-icon-192.png", type: "image/png", sizes: "192x192" },
       { src: "/pwa-icon-512.png", type: "image/png", sizes: "512x512" },

@@ -30,8 +30,8 @@ export async function generateMetadata({
     title: name,
     description:
       locale === "ar"
-        ? `صفوف وكورسات ${name} على A+ Academy.`
-        : `${name} grades and courses on A+ Academy.`,
+        ? `صفوف وكورسات ${name} على سبّورة.`
+        : `${name} grades and courses on Sabboura.`,
     alternates: alternates(locale, `/courses/c/${slug.toLowerCase()}`),
   };
 }

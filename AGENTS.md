@@ -1,6 +1,6 @@
-# A+ Academy: rules for every agent
+# Sabboura: rules for every agent
 
-Brand: **A+ Academy**, written in Latin in both locales. Audience: Arabic-speaking secondary students and parents across the whole GCC plus Egypt. The owner talks only to the Manager agent; specialists report to the Manager.
+Brand: **Sabboura** (سبّورة, "blackboard"; the registered trade name). The Arabic locale writes سبّورة, the English locale Sabboura. Audience: Arabic-speaking secondary students and parents across the whole GCC plus Egypt. The owner talks only to the Manager agent; specialists report to the Manager.
 
 Start with `docs/WORKLOG.md`: the running log of what changed, why, and what is open. Add an entry when you finish a piece of work.
 

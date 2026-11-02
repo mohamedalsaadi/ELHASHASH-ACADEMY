@@ -6,8 +6,9 @@ Git history has the rest (`git log --oneline`).
 
 ## Standing facts
 
-- **Brand:** A+ Academy, since 2026-11-01 (`a4affc9`). The domain `aplusacademy.ae`, the social handles and the
-  Resend DNS are owner actions and are not done yet.
+- **Brand:** Sabboura (سبّورة), since 2026-11-02, when the owner registered the trade licence under it (ADDED had
+  refused AAcademy and A+ Academy). Identity "Chalkboard" (DESIGN.md §0). Domains (`sabbouraacademy.*`), the social
+  handles and the Resend DNS are owner actions and are not done yet.
 - **Live site:** https://elhashash-academy.vercel.app. It is behind HTTP Basic auth (`SITE_PASSWORD` in
   `src/middleware.ts`). The Claude desktop browser pane cannot show the Basic-auth prompt, so use Claude in
   Chrome; the owner types the password. On 2026-11-01 the live site ran the pre-redesign code (old look, old intro).
@@ -23,6 +24,29 @@ Git history has the rest (`git log --oneline`).
   - Teachers publish their own courses, sessions, prices and cover picture per country, grade and subject.
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
+
+## 2026-11-02: Rebrand to Sabboura, identity "Chalkboard"
+
+- **Why:** the owner registered the trade licence as Sabboura (سبّورة, the classroom blackboard) and asked for the
+  whole site, intro included, to follow the name.
+- **Direction:** `docs/brand/sabboura-dna.json` (design-dna profile from a described style) and DESIGN.md §0-§1.
+  Slate board for the heroes, exercise-book paper for pages, coloured chalk as the one ornament, board-green actions,
+  Ruqʿah (Aref Ruqaa, `--font-hand`) for the Arabic wordmark and chalked words only. Token names are unchanged
+  (`aurora-*` became `chalk-*`, `planet-*` became `wood`), so app pages re-skin without edits.
+- **Mark:** a slate board on a wooden ledge with a stick of yellow chalk, one chalk stroke writing س
+  (`src/app/brand-svg.ts`, `Mark.tsx`, `icon.svg`). Generated icons and share images use the same geometry on paper.
+- **Intro:** the planet is gone (`Planet.tsx`, `planet-scene.ts`, `land.ts` deleted). `src/components/three/Board.tsx`
+  + `board-scene.ts`: chalk draws axes and a parabola, a wave, a benzene ring, then writes سبّورة / Sabboura and
+  underlines it, shedding dust; idle motes drift in three depth layers with pointer parallax. Same 4.2 s contract,
+  guard and skip as before; reduced motion gets the finished board. Diagrams are not mirrored in Arabic.
+- **Copy:** every "A+ Academy" became سبّورة (Arabic) or Sabboura (English); legal lines read "سبّورة (Sabboura)".
+  New home headline ("مدرّسك على السبّورة، أينما كنت." / "Your teacher at the board, wherever you are."), closing
+  title and footer tagline. Emails, AI support prompt, Basic-auth realm, manifest, service-worker cache (old caches
+  are now deleted on activate), package name.
+- **Checked:** browser pane, ar and en, desktop and phone; home intro, courses page, footer, OG image, PWA icon.
+- **Open:** buy the domains and handles; licence number and address in the legal pages; the student home (`/me`)
+  was not viewed signed in as a student (its colours come from the same tokens). `docs/brand/brand-book.html` and
+  `aurora-dna.json` are kept as history.
 
 ## 2026-11-02: Student home ("your grade") with the subject ride
 

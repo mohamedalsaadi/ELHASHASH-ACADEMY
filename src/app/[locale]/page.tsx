@@ -7,7 +7,7 @@ import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
 import { JsonLd } from "@/components/JsonLd";
 import { PromoBand } from "@/components/PromoBand";
-import { Planet } from "@/components/three/Planet";
+import { Board } from "@/components/three/Board";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -72,17 +72,17 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   ] as const;
 
   const jsonLd = [
-    { "@context": "https://schema.org", "@type": "Organization", name: "A+ Academy", url: siteUrl, logo: `${siteUrl}/icon.svg` },
-    { "@context": "https://schema.org", "@type": "WebSite", name: "A+ Academy", url: siteUrl, inLanguage: ["ar", "en"] },
+    { "@context": "https://schema.org", "@type": "Organization", name: "Sabboura", url: siteUrl, logo: `${siteUrl}/icon.svg` },
+    { "@context": "https://schema.org", "@type": "WebSite", name: "Sabboura", url: siteUrl, inLanguage: ["ar", "en"] },
   ];
 
   return (
     <main>
       <JsonLd data={jsonLd} />
 
-      {/* The night stage: the planet behind, the copy on the start side. On a phone the globe sits above the copy. */}
+      {/* The board: the chalk drawings on the end side, the copy on the start side. On a phone the drawings sit above the copy. */}
       <section className="stage">
-        <Planet codes={countries.map((c) => c.code)} rtl={ar} />
+        <Board rtl={ar} word={ar ? "سبّورة" : "Sabboura"} />
         <Intro skipLabel={t("skipIntro")} />
         <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(52vw,20rem)] pb-14 md:pt-28 md:pb-20">
           <div className="as-hero-copy grid max-w-[38rem] gap-6">
@@ -92,9 +92,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <h1 className="font-display text-hero leading-[1.05] font-bold" style={{ "--i": 1 } as React.CSSProperties}>
               {t.rich("headline", {
                 a: (chunks) => (
-                  <bdi dir="ltr" className="marker">
-                    {chunks}
-                  </bdi>
+                  <span className="marker">{chunks}</span>
                 ),
               })}
             </h1>
@@ -156,7 +154,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   i === 0 ? "stage md:col-span-4" : "card md:col-span-2"
                 }`}
               >
-                <Icon aria-hidden="true" className={`size-7 ${i === 0 ? "text-aurora-3" : "text-primary"}`} strokeWidth={1.75} />
+                <Icon aria-hidden="true" className={`size-7 ${i === 0 ? "text-chalk-1" : "text-primary"}`} strokeWidth={1.75} />
                 <span className={`text-label font-medium tracking-wide ${i === 0 ? "text-night-muted" : "text-ink-muted"}`}>{t(`roles.${key}.k`)}</span>
                 <h3 className={`font-display font-bold ${i === 0 ? "text-display leading-tight" : "text-h2"}`}>{t(`roles.${key}.t`)}</h3>
                 <p className={`max-w-[44ch] ${i === 0 ? "text-[1.125rem] text-night-muted" : "text-ink-muted"}`}>{t(`roles.${key}.b`)}</p>

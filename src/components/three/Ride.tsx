@@ -45,13 +45,13 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
         small,
         font,
         colors: {
-          rail: ["aurora-1", "aurora-3", "aurora-4", "aurora-5", "aurora-6"].map(token),
+          rail: ["chalk-1", "chalk-2", "chalk-3", "chalk-4", "chalk-5"].map(token),
           card: token("night-2"),
-          cardEdge: token("aurora-4"),
+          cardEdge: token("chalk-6"),
           ink: token("night-text"),
           muted: token("night-muted"),
-          pen: token(`line-${countryCode.toLowerCase()}`) || token("aurora-1"),
-          glow: token("aurora-5"),
+          pen: token(`line-${countryCode.toLowerCase()}`) || token("chalk-1"),
+          glow: token("chalk-1"),
         },
       });
 

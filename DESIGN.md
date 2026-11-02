@@ -1,28 +1,44 @@
-# A+ ACADEMY · Design DNA ("Aurora", branch `redesign-aurora`)
+# SABBOURA · Design DNA ("Chalkboard", branch `redesign-aurora`)
 
 The single source of truth for every screen. Every colour, size, radius and duration in code comes from this file through `tokens.css`. No raw hex, px or ms values in components.
 
-Audience: secondary students across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, the parents who pay, and the teachers who sell. Identity "Aurora" (2026-11-01, competing with "Curriculum Metro" on `redesign-curriculum-metro`): Stripe/Apple-style light, airy surfaces with one night stage and an aurora gradient. The measured palette and effects are in `docs/brand/aurora-dna.json`. Arabic first (RTL), English second.
+Audience: secondary students across the GCC (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) and Egypt, the parents who pay, and the teachers who sell. Identity "Chalkboard" (2026-11-02, when the trade licence was registered as Sabboura). It keeps Aurora's layout, spacing, radii, motion timing and the two 3D heroes, and replaces its colour, ornament, mark and intro. The full profile is `docs/brand/sabboura-dna.json`. Arabic first (RTL), English second.
 
 > Sections 2 to 8 below were written for Metro. Where they conflict with this section and `tokens.css`, this section and the tokens win. The token names are unchanged, so components did not need renaming.
 
 ## 0. Brand
 
-**Idea.** One night sky over the region. The home hero is a planet: real continents as dots (Natural Earth), Egypt and the GCC warm in their own borders, a beam on each capital and arcs of light from Cairo and Abu Dhabi. The intro is a dawn: the planet starts back-lit with a crescent on its rim, turns to the Gulf as day sweeps across it, then the capitals light and connect. After that the site is daylight: white cards on a cool grey ground.
+**Name.** Sabboura, سبّورة: the classroom blackboard, the one object every student in Cairo, Riyadh and Dubai shares. Arabic copy writes سبّورة; English copy writes Sabboura; legal lines write "سبّورة (Sabboura)".
 
-**Mark.** Same geometry (`src/app/brand-svg.ts`); the + strokes take `aurora-1` and `aurora-4`.
+**Idea.** The best teacher's board, brought home. The heroes are a real slate; everything you read sits on warm exercise-book paper. Coloured chalk is the one ornament, and chalk is written, never animated for its own sake: it draws once at the speed of a hand, then stays.
 
-**Wordmark.** Latin only in both locales. Display face Readex Pro, body IBM Plex Sans Arabic (both via `next/font`).
+**Mark.** A slate board on its wooden ledge, a stick of yellow chalk on the ledge, and one chalk stroke writing س, the first letter of the name (its three teeth also read as a handwriting squiggle). 64 × 48 grid, geometry in `src/app/brand-svg.ts`, component `src/components/brand/Mark.tsx`, favicon `src/app/icon.svg`; the PWA icons, Apple icon and share images are generated from the same geometry.
 
-## 1. Theses (validated 2026-11-01; planet and dawn intro approved 2026-11-02)
+**Wordmark.** The mark plus سبّورة in **Aref Ruqaa** (Ruqʿah, the script Arab teachers actually write on the board) in Arabic, or Sabboura in Readex Pro in English. Ruqʿah (`--font-hand`, `font-hand`) is only for the wordmark and words chalked on the board, never for reading text or app pages. Display face Readex Pro, body IBM Plex Sans Arabic (all via `next/font`).
 
-**Visual.** Cool grey ground (`--color-ground`), white cards with a hairline and a soft shadow, large radii, pill buttons. Indigo primary (`--color-primary`), orange earned accent (`--color-marker`). One dark stage (`.stage`, `--color-night`) for the home hero and the final call to action, lit by the aurora gradient (`--color-aurora-1..6`). Gradient text (`.marker`) on one word per heading at most. Country colours survive as a dot or a corner glow.
+**Palette.**
+| Token | Hex | Use |
+|---|---|---|
+| `--color-ground` | `#F5F2EA` | exercise-book paper, every page |
+| `--color-surface` | `#FFFFFF` | cards, header, footer |
+| `--color-ink` | `#16211D` | text on paper (16.5:1 on white) |
+| `--color-ink-muted` | `#5C6660` | meta, labels (6.0:1 on white, 5.3:1 on paper) |
+| `--color-primary` / `pen` / `focus` | `#1F6B4F` | board green: actions, links, focus ring (white on it 6.4:1) |
+| `--color-night` / `night-2` | `#15251F` / `#1E352C` | the slate (`.stage`) |
+| `--color-night-text` / `night-muted` | `#EEF1EA` / `#A7B7AE` | chalk white and muted text on the board (14.0:1 / 7.6:1) |
+| `--color-marker` / `chalk-1` | `#F2D06B` | yellow chalk: the board's button, the heading underline, what a student earned. Never text on paper; slate on it 10.6:1 |
+| `--color-chalk-2..6` | `#F4A261` `#F2A6B8` `#8CC4E8` `#A9DDB3` `#EEF1EA` | orange, pink, blue, green, white chalk: board drawings, the ride's rail, the footer rule |
+| `--color-wood` | `#8A5A36` | the board's ledge (mark, share images) |
 
-**Interaction.** Calm and smooth: 160 / 280 / 700 ms on `cubic-bezier(.16,1,.3,1)`. Cards lift 3 px on hover. Sections reveal on scroll with CSS `animation-timeline: view()`. The three.js planet (`src/components/three/Planet.tsx`, scene in `planet-scene.ts`, dot masks in `land.ts`) runs only in the home hero: 4.2 s story, copy rises at 3.2 s, on the first visit per tab, any input skips, a still frame under reduced motion, paused off-screen. The signed-in student home (`/` rewritten to `/me`) has its own hero, the subject ride (`Ride.tsx`, scene in `ride-scene.ts`): one car per subject with courses on a looping aurora rail, moved only by the student (drag, sideways wheel, the subject buttons, arrow keys); the nearest car settles at the front station in about 700 ms, frames are drawn only while something moves, and reduced motion jumps straight there. Forbidden: 3D outside those two heroes, autoplay carousels, bounce, scroll-jacking (the ride never takes the vertical wheel).
+## 1. Theses (validated with the trade name, 2026-11-02)
 
-**Marketing vs app.** Marketing pages get the stage, the gradient and reveal motion. The student home counts as a store page. App pages (dashboard, lessons, teacher, admin, parent, checkout) get cards, pills and state transitions only.
+**Visual.** Paper ground, white cards with a warm hairline and a slate-tinted soft shadow, large radii, pill buttons. Board-green primary. One slate stage (`.stage`) for the home hero, the student-home hero and the closing call: slate lighter where the classroom light falls, the faint smears of erased lessons and a fine chalk grain, all still. `.marker` underlines one word per heading by hand in yellow chalk; on the board the word itself turns chalk yellow. On the board the primary button is a stick of yellow chalk (`.btn-glow`). The footer closes every page with a thin rule of coloured chalk.
 
-**Allowed patterns:** the night stage, the aurora gradient, gradient text on one word, glass sticky header (the one place blur is allowed), white hairline cards, pill buttons and segmented pill navs, a country-colour dot or glow, scroll reveal, the session-once dawn intro.
+**Interaction.** Calm and smooth: 160 / 280 / 700 ms on `cubic-bezier(.16,1,.3,1)`. Cards lift 3 px on hover. Sections reveal on scroll with CSS `animation-timeline: view()`. The home hero is the board (`src/components/three/Board.tsx`, scene in `board-scene.ts`): a 4.2 s chalk story on the first visit per tab (axes and a parabola in yellow, a wave in blue with its wavelength in pink, a benzene ring in green, then the name written in Ruqʿah and underlined in yellow), dust shed from the chalk tip, then idle motes drifting in three depth layers with a slight pointer parallax. The copy rises at 3.2 s; any input finishes the drawing at once; reduced motion gets the finished board with no dust; it pauses off-screen. Diagrams are never mirrored in Arabic (an x axis points right in every language): only their two columns swap so the name sits beside the copy. The signed-in student home has the subject ride (`Ride.tsx`, scene in `ride-scene.ts`): one card per subject with courses on a looping rail of coloured chalk, moved only by the student (drag, sideways wheel, the subject buttons, arrow keys), settling in about 700 ms. Forbidden: 3D outside those two heroes, autoplay carousels, bounce, scroll-jacking.
+
+**Marketing vs app.** Marketing pages get the board, the chalk and reveal motion. The student home counts as a store page. App pages (dashboard, lessons, teacher, admin, parent, checkout) get paper cards, pills and state transitions only, and never Ruqʿah.
+
+**Allowed patterns:** the slate stage, coloured chalk, the yellow chalk underline on one word, Ruqʿah for the name only, glass sticky header (the one place blur is allowed), white paper cards, pill buttons and segmented pill navs, a country-colour dot or glow, scroll reveal, the session-once chalk intro.
 
 ## 2. Genjitsu directives
 

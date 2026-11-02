@@ -512,13 +512,13 @@ export async function inviteTeacher(_: InviteState, form: FormData): Promise<Inv
     const ar = locale === "ar";
     await sendMail({
       to: email,
-      subject: ar ? "دعوة للتدريس في A+ Academy" : "An invitation to teach at A+ Academy",
+      subject: ar ? "دعوة للتدريس في سبّورة" : "An invitation to teach at Sabboura",
       html: emailLayout(
-        ar ? "دعوة للتدريس في A+ Academy" : "An invitation to teach at A+ Academy",
+        ar ? "دعوة للتدريس في سبّورة" : "An invitation to teach at Sabboura",
         [
           ar
-            ? `مرحبًا ${base.data.name}، تمت دعوتك للانضمام إلى A+ Academy كمدرّس. الرابط صالح لسبعة أيام ولمرة واحدة.`
-            : `Hello ${base.data.name}, you have been invited to teach at A+ Academy. The link is valid for seven days and works once.`,
+            ? `مرحبًا ${base.data.name}، تمت دعوتك للانضمام إلى سبّورة كمدرّس. الرابط صالح لسبعة أيام ولمرة واحدة.`
+            : `Hello ${base.data.name}, you have been invited to teach at Sabboura. The link is valid for seven days and works once.`,
         ],
         { href: link, label: ar ? "قبول الدعوة" : "Accept the invitation" },
         locale,

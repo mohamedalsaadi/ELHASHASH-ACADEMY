@@ -25,6 +25,16 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-03: New minimalist intro, "Hop"
+
+- The owner rejected the 3D logo intro (not minimal, not the logo, poor motion) and asked for two Apple/Pixar options.
+- **Hop**: `src/components/three/hop-scene.ts`, flat SVG, the mark exactly as in the header. The ridges
+  draw out from the peak; the gold point hops in, lands on the outer ridge, the ridges spring it up to its place.
+  Test: `hop-scene.test.ts` (ends on the exact mark; hops from the start side in both directions).
+- A second option, B "Light" (the mark in relief revealed by a raking 3D light), was shown; the owner chose A, so
+  B and `summit-scene.ts` were deleted. The home hero no longer loads three.js.
+- The hero copy padding now switches at `lg`, so below lg the mark sits in the band above the copy.
+
 ## 2026-11-03: Teachers by country, teacher self-registration, country-first student ride
 
 - **Why:** the owner asked that teachers choose their country and create subjects (another country needs approval),

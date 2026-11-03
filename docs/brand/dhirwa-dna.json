@@ -72,7 +72,7 @@
     "particle_systems": { "enabled": false },
     "3d_elements": {
       "enabled": true,
-      "home_intro": "Summit (src/components/three/summit-scene.ts): the brand logo itself, drawn in 3D (owner's choice, 2026-11-03). The three ridge lines are the mark's own paths from brand-svg.ts (RIDGES, RIDGE_WIDTH, SUMMIT), built as round, softly lit snow-white tubes with round caps, so the final frame is the logo. 0.15–1.35 s the outer ridge draws foot to foot, then the middle ridge 0.3 s later, then the inner · 2.0–2.8 s one soft glow passes over the lines · 2.4–3.5 s the gold sphere is born at the outer peak, stretches up to the mark's summit point with a hair of overshoot and a small squash on landing (Pixar squash and stretch) · the camera starts a quarter turn off-axis and settles to the front by about 2.4 s; the hero copy rises from 3.2 s. Fits itself into the free space beside the hero copy on any screen. SUMMIT_END 4.0s. Any input jumps to the end; once per tab session.",
+      "home_intro": "Hop (src/components/three/hop-scene.ts, owner's choice 2026-11-03): the flat brand mark, exactly as in the header, SVG only. The three ridges draw out from the peak; the gold point hops in from the start side, lands on the outer ridge, the ridges give like a springboard and launch it to its place; one soft ring, then it floats. 4.0 s, copy rises at 3.2 s; reduced motion shows the finished mark.",
       "student_home": "The ride keeps its mechanics; its track becomes a trail with waypoints, coloured with the contour ramp and the country line"
     },
     "shader_effects": { "enabled": false },

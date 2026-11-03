@@ -84,7 +84,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       <section className="stage">
         <Summit rtl={ar} />
         <Intro skipLabel={t("skipIntro")} />
-        <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(80vw,20rem)] pb-14 md:pt-28 md:pb-20">
+        <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(80vw,20rem)] pb-14 md:pb-20 lg:pt-28">
           <div className="as-hero-copy grid max-w-[38rem] gap-6">
             <span className="text-label font-medium text-night-muted ltr:tracking-wide" style={{ "--i": 0 } as React.CSSProperties}>
               {t("eyebrow")}

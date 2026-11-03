@@ -25,8 +25,8 @@
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   pointer-events: none;
 }
-/* Behind the summit the still field steps back, so the mountain is the only drawing in the hero. */
-.stage:has(> canvas)::before { opacity: .18; }
+/* Behind the intro mark the still field steps back, so the mark is the only drawing in the hero. */
+.stage:has(> svg)::before { opacity: .18; }
 
 /* The footer's closing rule: three contour lines rising to one summit-gold point. */
 .contour-rule {
@@ -44,8 +44,8 @@
   background: var(--color-summit);
 }
 
-/* Intro, 4 s, once per tab session (guard in Intro.tsx). The contour lines rise into the summit, a gold trail climbs it
-   and a flag lands; the hero copy waits off-stage and rises at 3.2 s. Skipping shows the copy at once. */
+/* Intro, 4 s, once per tab session (guard in Intro.tsx). The mark draws and its gold point hops onto the peak,
+   and the hero copy waits off-stage and rises at 3.2 s. Skipping shows the copy at once. */
 .as-intro-skip { display: none; }
 html[data-intro="play"] .as-intro-skip { display: inline-flex; }
 html[data-intro="play"] .as-hero-copy > * {

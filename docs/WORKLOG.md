@@ -25,6 +25,15 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-03: The intro is the brand logo, drawn in 3D
+
+- **Why:** the owner wanted the intro to be the logo itself: the ridge lines drawn exactly like the brand, then the
+  yellow sphere comes out on top, Pixar-minimal. It replaces the solid mountain and the flag.
+- **What:** `summit-scene.ts` builds the three ridges from `RIDGES` in `brand-svg.ts` (the same paths as `Mark.tsx` and
+  every icon) as round, softly lit tubes, draws them outer to inner, then the gold sphere is born at the outer peak,
+  stretches up to the mark's summit point and settles with a small squash. Colours come from tokens (`contour-6`,
+  `summit`); timings, framing, skip, reduced motion and pausing are unchanged.
+
 ## 2026-11-03: Summit intro redrawn as a sculpted mountain with a flag
 
 - **Why:** the owner found the line-only version unclear ("not the mountain, not the animation to the top") and asked

@@ -47,8 +47,11 @@
 /* Intro, 4 s, once per tab session (guard in Intro.tsx). The mark draws and its gold point hops onto the peak,
    and the hero copy waits off-stage and rises at 3.2 s. Skipping shows the copy at once. */
 .as-intro-skip { display: none; }
-html[data-intro="play"] .as-intro-skip { display: inline-flex; }
-html[data-intro="play"] .as-hero-copy > * {
+html[data-intro="play"] .as-intro-skip, html[data-intro="run"] .as-intro-skip { display: inline-flex; }
+/* "play": waiting for the scene, mark and copy hidden. "run": the scene started the clock; the copy rises 3.2 s later. */
+html[data-intro="play"] .as-hop { visibility: hidden; }
+html[data-intro="play"] .as-hero-copy > * { opacity: 0; }
+html[data-intro="run"] .as-hero-copy > * {
   opacity: 0;
   animation: as-rise var(--dur-reveal) var(--ease-out) forwards;
   animation-delay: calc(3200ms + var(--i, 0) * var(--stagger));
@@ -87,5 +90,6 @@ html[data-intro="skip"] .as-hero-copy > * { animation-delay: 0ms; }
 @media (prefers-reduced-motion: reduce) {
   .reveal { animation: none; }
   html[data-intro] .as-hero-copy > * { opacity: 1; animation: none; }
+  html[data-intro] .as-hop { visibility: visible; }
   .as-loader::after { animation: none; transform: scaleX(.4); }
 }

@@ -24,24 +24,43 @@ export function Summit({ rtl }: { rtl: boolean }) {
       return;
     }
 
-    // Play from the top only when the intro guard asked for it, timed from page load like the guard and the copy;
-    // any input jumps to the finished mark.
-    let t0 = root.dataset.intro === "play" ? 0 : performance.now() - SUMMIT_END * 1000;
+    // Play from the top only when the intro guard asked for it. The clock starts once the page has loaded (at most
+    // 1.5 s after this code arrives), not at navigation, so loading never eats the start; "run" starts the copy with
+    // it. Any input jumps to the finished mark.
+    const end = () => performance.now() - SUMMIT_END * 1000;
+    let t0 = root.dataset.intro === "play" ? -1 : end();
+    let wait = 0, clear = 0;
+    const start = () => {
+      removeEventListener("load", start);
+      clearTimeout(wait);
+      if (root.dataset.intro !== "play") return void (t0 = end());
+      hop.render(0);
+      root.dataset.intro = "run";
+      t0 = performance.now();
+      clear = window.setTimeout(() => root.dataset.intro === "run" && delete root.dataset.intro, (SUMMIT_END + 0.4) * 1000);
+    };
+    if (t0 < 0) {
+      if (document.readyState === "complete") start();
+      else (addEventListener("load", start), (wait = window.setTimeout(start, 1500)));
+    }
     const skip = () => {
-      if ((performance.now() - t0) / 1000 < SUMMIT_END) t0 = performance.now() - SUMMIT_END * 1000;
+      if (t0 < 0 || (performance.now() - t0) / 1000 < SUMMIT_END) t0 = end();
     };
     let visible = true, raf = 0;
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; });
     io.observe(svg);
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (!visible || document.hidden) return;
+      if (!visible || document.hidden || t0 < 0) return;
       hop.render((now - t0) / 1000, now / 1000);
     };
     raf = requestAnimationFrame(frame);
     const inputs = ["pointerdown", "keydown", "wheel", "touchmove"];
     inputs.forEach((e) => addEventListener(e, skip, { once: true, passive: true }));
     return () => {
+      removeEventListener("load", start);
+      clearTimeout(wait);
+      clearTimeout(clear);
       cancelAnimationFrame(raf);
       io.disconnect();
       inputs.forEach((e) => removeEventListener(e, skip));
@@ -55,7 +74,7 @@ export function Summit({ rtl }: { rtl: boolean }) {
       viewBox={HOP_VIEWBOX}
       aria-hidden="true"
       fill="none"
-      className="absolute inset-x-0 top-[6vw] mx-auto w-[min(84vw,24rem)] overflow-visible text-contour-6 lg:inset-x-auto lg:end-[4%] lg:top-1/2 lg:mx-0 lg:w-[min(46vw,40rem)] lg:-translate-y-1/2"
+      className="as-hop absolute inset-x-0 top-[6vw] mx-auto w-[min(84vw,24rem)] overflow-visible text-contour-6 lg:inset-x-auto lg:end-[4%] lg:top-1/2 lg:mx-0 lg:w-[min(46vw,40rem)] lg:-translate-y-1/2"
     >
       <g stroke="currentColor" strokeWidth={RIDGE_WIDTH} strokeLinecap="round">
         {HALVES.map((d) => (

@@ -692,7 +692,7 @@
       "too_many": "Too many new accounts from this network. Try again in an hour."
     },
     "teacherQ": "A teacher who wants to join?",
-    "teacherLink": "Contact us"
+    "teacherLink": "Register as a teacher"
   },
   "dashboard": {
     "title": "Student dashboard",
@@ -756,6 +756,29 @@
   "teacher": {
     "hello": "Hello, {name}",
     "navHome": "Overview",
+    "navSubjects": "Subjects",
+    "subjectsTitle": "Subjects and countries",
+    "subjectsHint": "Choose a country, see its grades and subjects, and add a subject of your own. A new subject shows at once. To teach in another country, request it and the owner approves.",
+    "country": "Country",
+    "show": "Show",
+    "gradesIn": "Grades and subjects in {country}",
+    "noCountry": "You have no country yet. Ask the owner to approve one.",
+    "newSubject": "Add a subject",
+    "newSubjectHint": "It is visible at once. If a subject with the same English name exists, the grades you tick are added to it.",
+    "nameAr": "Name in Arabic",
+    "nameEn": "Name in English",
+    "icon": "Icon",
+    "tickGrades": "Add it to these grades",
+    "addSubject": "Add subject",
+    "anotherCountry": "Teach in another country",
+    "anotherCountryHint": "Pick a country to see its grades and subjects. Adding it needs the owner's approval.",
+    "noOtherCountry": "There is no other country to request.",
+    "requestNote": "Note to the owner (optional)",
+    "requestAccess": "Request access",
+    "pending": "Waiting for the owner's approval.",
+    "reqPENDING": "Waiting for approval",
+    "reqAPPROVED": "Approved",
+    "reqREJECTED": "Rejected",
     "navProfile": "My account",
     "publicProfile": "Public profile",
     "publicProfileHint": "This is shown to your students and parents on your public page, opened from the course page.",
@@ -911,6 +934,11 @@
       "teacher": "Teachers",
       "engagement": "Engagement"
     },
+    "applications": "Teacher applications",
+    "countryRequests": "Country requests",
+    "approve": "Approve",
+    "reject": "Reject",
+    "rejectReason": "Reason (optional)",
     "finance": "Commission and VAT",
     "financeHint": "The platform share is taken from the net price after discounts; the teacher receives the rest. VAT is added on top at checkout.",
     "mailTest": "Email check",
@@ -1410,6 +1438,11 @@
     "liveOpen": "Open",
     "notYours": "Not your grade?",
     "change": "Change it in your account",
+    "pickCountryTitle": "Which country are you studying in?",
+    "pickCountryHint": "Choose your country and we show only its subjects. You can change it any time.",
+    "gradeCount": "{count} grades",
+    "pickGradeIn": "Pick your grade in {country}",
+    "changeCountry": "Change country",
     "pickTitle": "Pick your grade",
     "pickHint": "Tell us your grade and we will show every subject and course for it.",
     "grade": "Grade",
@@ -1418,5 +1451,27 @@
   },
   "auth": {
     "panel": "Every lesson is a step toward the peak."
+  },
+  "teach": {
+    "title": "Teach on Dhirwa",
+    "intro": "Register, tell us the countries of the subjects you will teach, and the owner reviews your request. Nothing is created until you are approved.",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Mobile number",
+    "countries": "Countries of your subjects",
+    "countriesHint": "Tick every country whose students you want to teach.",
+    "subjects": "Subjects and grades you will teach",
+    "bio": "About you (optional)",
+    "password": "Password",
+    "passwordHint": "At least 8 characters.",
+    "submit": "Send my application",
+    "submitting": "Sending...",
+    "sent": "We received your application. We will review it and reply by email.",
+    "errors": {
+      "invalid": "Please check the fields, and tick at least one country.",
+      "taken": "This email or phone already has an account or a pending application.",
+      "limited": "Too many attempts. Try again in an hour.",
+      "sent": "Application sent."
+    }
   }
 }

@@ -107,56 +107,61 @@ model User {
   bioEn           String?
   createdAt       DateTime  @default(now())
 
-  grade               Grade?                @relation(fields: [gradeId], references: [id], onDelete: SetNull)
-  courses             Course[]              @relation("Instructor")
-  orders              Order[]               @relation("OrderBuyer")
+  grade               Grade?                  @relation(fields: [gradeId], references: [id], onDelete: SetNull)
+  courses             Course[]                @relation("Instructor")
+  orders              Order[]                 @relation("OrderBuyer")
   /// Orders a linked parent paid for this student.
-  ordersReceived      Order[]               @relation("OrderBeneficiary")
+  ordersReceived      Order[]                 @relation("OrderBeneficiary")
   entitlements        Entitlement[]
   device              DeviceSession?
   progress            StudentProgress?
   attempts            QuizAttempt[]
   views               LessonView[]
-  recorded            Lesson[]              @relation("LessonInstructor")
-  questions           Question[]            @relation("Asker")
-  answers             Question[]            @relation("Answerer")
+  recorded            Lesson[]                @relation("LessonInstructor")
+  questions           Question[]              @relation("Asker")
+  answers             Question[]              @relation("Answerer")
   tokens              Token[]
   notifications       Notification[]
   parentCode          ParentCode?
-  parentLinks         ParentLink[]          @relation("Parent")
-  childLinks          ParentLink[]          @relation("Student")
+  parentLinks         ParentLink[]            @relation("Parent")
+  childLinks          ParentLink[]            @relation("Student")
   attendance          LiveAttendance[]
-  authoredAssignments Assignment[]          @relation("AssignmentAuthor")
-  submissions         Submission[]          @relation("Submitter")
-  gradedSubmissions   Submission[]          @relation("Grader")
-  specialRequests     SpecialRequest[]      @relation("Requester")
-  requestsAboutMe     SpecialRequest[]      @relation("RequestStudent")
-  requestReplies      SpecialRequestReply[] @relation("RequestReplier")
-  authoredQuestions   QuestionItem[]        @relation("QuestionAuthor")
+  authoredAssignments Assignment[]            @relation("AssignmentAuthor")
+  submissions         Submission[]            @relation("Submitter")
+  gradedSubmissions   Submission[]            @relation("Grader")
+  specialRequests     SpecialRequest[]        @relation("Requester")
+  requestsAboutMe     SpecialRequest[]        @relation("RequestStudent")
+  requestReplies      SpecialRequestReply[]   @relation("RequestReplier")
+  authoredQuestions   QuestionItem[]          @relation("QuestionAuthor")
   practiceAttempts    PracticeAttempt[]
   reviewSchedules     ReviewSchedule[]
-  authoredExams       ExamPaper[]           @relation("ExamAuthor")
+  authoredExams       ExamPaper[]             @relation("ExamAuthor")
   examAttempts        ExamAttempt[]
-  gradedExams         ExamAttempt[]         @relation("ExamGrader")
+  gradedExams         ExamAttempt[]           @relation("ExamGrader")
   teacherSlots        TeacherSlot[]
+  teacherCountries    TeacherCountry[]
+  countryRequests     TeacherCountryRequest[]
   ledger              LedgerEntry[]
 }
 
 model Country {
-  id       String   @id @default(cuid())
+  id           String                      @id @default(cuid())
   /// ISO-style two-letter code; owner-managed, not an enum.
-  code     String   @unique
-  nameAr   String
-  nameEn   String
-  currency Currency
+  code         String                      @unique
+  nameAr       String
+  nameEn       String
+  currency     Currency
   /// IANA zone used for live and course dates in this country.
-  timeZone String   @default("Asia/Dubai")
+  timeZone     String                      @default("Asia/Dubai")
   /// Owner-controlled visibility; inactive countries are hidden from students.
-  active   Boolean  @default(true)
+  active       Boolean                     @default(true)
   /// Display order on /courses.
-  order    Int      @default(0)
-  grades   Grade[]
-  stages   Stage[]
+  order        Int                         @default(0)
+  grades       Grade[]
+  stages       Stage[]
+  teachers     TeacherCountry[]
+  requests     TeacherCountryRequest[]
+  applications TeacherApplicationCountry[]
 }
 
 /// How a country groups its grade levels (Primary, Cycle 1, …). Owner-managed.
@@ -188,7 +193,7 @@ model Grade {
   active     Boolean    @default(true)
   order      Int        @default(0)
 
-  country      Country            @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  country      Country             @relation(fields: [countryId], references: [id], onDelete: Cascade)
   courses      Course[]
   users        User[]
   subjects     GradeSubject[]
@@ -199,14 +204,14 @@ model Grade {
 }
 
 model Subject {
-  id       String         @id @default(cuid())
-  slug     String         @unique
-  nameAr   String
-  nameEn   String
+  id           String              @id @default(cuid())
+  slug         String              @unique
+  nameAr       String
+  nameEn       String
   /// Key into the subject icon set (src/components/brand/SubjectIcon.tsx).
-  icon     String         @default("book")
+  icon         String              @default("book")
   /// Owner-controlled visibility; inactive subjects are hidden from students.
-  active   Boolean        @default(true)
+  active       Boolean             @default(true)
   grades       GradeSubject[]
   courses      Course[]
   concepts     Concept[]
@@ -466,8 +471,8 @@ model OrderItem {
   skuId   String
   price   Int
 
-  order  Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  sku    Sku          @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  order  Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku    Sku           @relation(fields: [skuId], references: [id], onDelete: Restrict)
   ledger LedgerEntry[]
 }
 
@@ -1097,6 +1102,80 @@ model TeacherSlot {
   @@index([gradeId, subjectId])
 }
 
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// A country a teacher is approved to teach in. Slots say which grade and subject; this says which country, so a teacher
+/// can choose a country and create subjects there before any slot exists. Back-filled from existing slots.
+model TeacherCountry {
+  id           String   @id @default(cuid())
+  userId       String
+  countryId    String
+  approvedById String?
+  createdAt    DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, countryId])
+  @@index([countryId])
+}
+
+/// A teacher's request to also teach in another country; the owner approves or rejects it.
+model TeacherCountryRequest {
+  id          String         @id @default(cuid())
+  userId      String
+  countryId   String
+  note        String?
+  status      ApprovalStatus @default(PENDING)
+  decidedById String?
+  decidedAt   DateTime?
+  createdAt   DateTime       @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([userId, countryId])
+}
+
+/// A teacher who registered themselves. The password hash is kept here until the owner approves; no User exists before.
+model TeacherApplication {
+  id           String         @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  passwordHash String
+  locale       String         @default("ar")
+  bio          String?
+  subjectsNote String?
+  status       ApprovalStatus @default(PENDING)
+  rejectReason String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime       @default(now())
+
+  countries TeacherApplicationCountry[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([phone])
+}
+
+/// The countries of the subjects an applicant intends to teach.
+model TeacherApplicationCountry {
+  applicationId String
+  countryId     String
+
+  application TeacherApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  country     Country            @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@id([applicationId, countryId])
+}
+
 enum LedgerKind {
   SALE
   REFUND
@@ -1130,12 +1209,12 @@ model LedgerEntry {
   platformShareBp Int @default(3000)
 
   /// Set only on REFUND rows: the SALE row reversed. At most one reversal per sale.
-  reversalOfId String? @unique
+  reversalOfId String?  @unique
   createdAt    DateTime @default(now())
 
-  order     Order      @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  orderItem OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
-  instructor User?     @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+  order      Order      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderItem  OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+  instructor User?      @relation(fields: [instructorId], references: [id], onDelete: SetNull)
 
   @@unique([orderItemId, kind])
   @@index([orderId])
@@ -1146,24 +1225,24 @@ model LedgerEntry {
 
 /// Singleton row. A missing row means the defaults in lib/finance.ts: VAT off, 30% platform share.
 model PlatformSetting {
-  id              String   @id @default("singleton")
-  vatEnabled      Boolean  @default(false)
+  id                 String   @id @default("singleton")
+  vatEnabled         Boolean  @default(false)
   /// Basis points: 500 = 5.00%.
-  vatRateBp       Int      @default(500)
+  vatRateBp          Int      @default(500)
   /// Tax registration number shown on receipts once VAT is live.
-  vatTrn          String?
+  vatTrn             String?
   /// Basis points: 3000 = 30.00%.
-  platformShareBp Int      @default(3000)
+  platformShareBp    Int      @default(3000)
   /// Bank details shown to a student paying by transfer. No IBAN means transfer is not offered.
-  bankName            String?
-  bankAccountName     String?
-  bankIban            String?
-  bankInstructionsAr  String?
-  bankInstructionsEn  String?
+  bankName           String?
+  bankAccountName    String?
+  bankIban           String?
+  bankInstructionsAr String?
+  bankInstructionsEn String?
   /// When on, an authenticated bank alert that matches an order exactly approves it without the owner.
-  bankAutoApprove     Boolean  @default(false)
-  updatedAt       DateTime @updatedAt
-  updatedById     String?
+  bankAutoApprove    Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+  updatedById        String?
 }
 
 /// A behaviour event. No foreign keys on purpose: inserts stay cheap and user deletion never blocks.

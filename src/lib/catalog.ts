@@ -90,7 +90,7 @@ export async function gradeGroups(locale: string) {
     orderBy: { order: "asc" },
     include: { grades: { where: { active: true }, orderBy: [{ order: "asc" }, { level: "asc" }] } },
   });
-  return countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, grades: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })) }));
+  return countries.map((c) => ({ countryId: c.id, label: ar ? c.nameAr : c.nameEn, grades: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })) }));
 }
 
 export function cardInclude(now: Date) {

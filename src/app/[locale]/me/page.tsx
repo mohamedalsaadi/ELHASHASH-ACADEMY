@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { cookies } from "next/headers";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { CourseCard } from "@/components/CourseCard";
@@ -7,10 +8,13 @@ import { GradePicker } from "@/components/GradePicker";
 import { Ride, type RideSubject } from "@/components/three/Ride";
 import { Link } from "@/i18n/navigation";
 import { gradeGroups } from "@/lib/catalog";
+import { db } from "@/lib/db";
 import { formatMoney, formatWhen } from "@/lib/format";
 import { getStudentHome } from "@/lib/student-home-server";
+import { resolveCountry, RIDE_COUNTRY } from "@/lib/student-home";
 import { alternates } from "@/lib/seo";
 import PublicHome from "../page";
+import { clearCountry, setCountry } from "./actions";
 
 // Reached by a rewrite of "/" when a session cookie is present (src/middleware.ts); the address stays "/".
 export const dynamic = "force-dynamic";
@@ -28,16 +32,60 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
   if (session?.user?.role !== "STUDENT") return <PublicHome params={params} />;
 
   const now = new Date();
-  const [t, home] = await Promise.all([getTranslations("me"), getStudentHome(session.user.id, now)]);
+  const t = await getTranslations("me");
   const ar = locale === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
 
+  // The country comes first: ask once, remember it, and only then show that country's subjects.
+  const countries = await db.country.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    include: { _count: { select: { grades: { where: { active: true } } } } },
+  });
+  const chosen = (await cookies()).get(RIDE_COUNTRY)?.value;
+  const pick = resolveCountry(chosen, countries.map((c) => c.id));
+
+  if (pick.mode === "ask") {
+    return (
+      <main className="mx-auto grid max-w-3xl gap-6 px-4 py-16">
+        <h1 className="font-display text-h1 font-bold">{t("pickCountryTitle")}</h1>
+        <p className="text-ink-muted">{t("pickCountryHint")}</p>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {countries.map((c) => (
+            <li key={c.id}>
+              <form action={setCountry}>
+                <input type="hidden" name="id" value={c.id} />
+                <button className="card hover-lift flex min-h-11 w-full items-center gap-4 p-5 text-start">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/flags/${c.code.toLowerCase()}.svg`} alt="" className="h-7 w-auto rounded-sm" />
+                  <span className="grid gap-0.5">
+                    <span className="font-display text-h3 font-bold">{ar ? c.nameAr : c.nameEn}</span>
+                    <span className="text-small text-ink-muted">{t("gradeCount", { count: c._count.grades })}</span>
+                  </span>
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      </main>
+    );
+  }
+
+  const country = countries.find((c) => c.id === pick.countryId)!;
+  const me = await db.user.findUnique({ where: { id: session.user.id }, select: { gradeId: true, grade: { select: { countryId: true } } } });
+  const gradeId = me?.grade?.countryId === country.id ? (me.gradeId ?? undefined) : undefined;
+  const home = gradeId ? await getStudentHome(session.user.id, now, gradeId) : null;
+
   if (!home) {
+    const groups = (await gradeGroups(locale)).filter((g) => g.countryId === country.id);
     return (
       <main className="mx-auto grid max-w-xl gap-5 px-4 py-20">
-        <h1 className="font-display text-h1 font-bold">{t("pickTitle")}</h1>
+        <h1 className="font-display text-h1 font-bold">{t("pickGradeIn", { country: ar ? country.nameAr : country.nameEn })}</h1>
         <p className="text-ink-muted">{t("pickHint")}</p>
-        <GradePicker groups={await gradeGroups(locale)} current={null} label={t("grade")} save={t("pickSave")} />
+        <GradePicker groups={groups} current={null} label={t("grade")} save={t("pickSave")} />
+        <form action={clearCountry}>
+          <button className="text-small text-ink-muted underline underline-offset-4">{t("changeCountry")}</button>
+        </form>
       </main>
     );
   }
@@ -53,7 +101,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
   // What can be bought comes first, then what the student already has; empty subjects only get a "coming soon" line.
   const ready = [...subjects.filter((s) => s.courses.length && !s.owned), ...subjects.filter((s) => s.courses.length && s.owned)];
   const empty = subjects.filter((s) => s.courses.length === 0);
-  const ride: RideSubject[] = ready.map((s) => ({
+  const ride: RideSubject[] = ready.slice(0, 8).map((s) => ({
     id: s.id,
     anchor: `subject-${s.slug}`,
     name: name(s),
@@ -76,7 +124,10 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
               <img src={`/flags/${code}.svg`} alt="" className="h-7 w-auto rounded-sm" />
               {t("title", { grade: gradeName, country: countryName })}
             </h1>
-            <p className="text-night-muted">{t("lede", { count: subjects.length })}</p>
+            <p className="text-night-muted">{t("lede", { count: ready.length })}</p>
+            <form action={clearCountry}>
+              <button className="min-h-11 text-small text-night-muted underline underline-offset-4">{t("changeCountry")}</button>
+            </form>
           </div>
           <Ride subjects={ride} rtl={ar} countryCode={grade.country.code} label={t("subjects")} />
           {ride.length > 0 ? (

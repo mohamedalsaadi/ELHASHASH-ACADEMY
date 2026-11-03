@@ -37,13 +37,13 @@ export async function assertCourse(
     notFound();
 }
 
-/** The countries a teacher works in: those of the grades the owner granted them (at invite or by hand). */
+/** The countries a teacher works in: the ones the owner approved, plus those of any grade they were granted (invite or by hand). */
 export async function teacherCountryIds(userId: string): Promise<string[]> {
-  const slots = await db.teacherSlot.findMany({
-    where: { userId },
-    select: { grade: { select: { countryId: true } } },
-  });
-  return [...new Set(slots.map((s) => s.grade.countryId))];
+  const [granted, slots] = await Promise.all([
+    db.teacherCountry.findMany({ where: { userId }, select: { countryId: true } }),
+    db.teacherSlot.findMany({ where: { userId }, select: { grade: { select: { countryId: true } } } }),
+  ]);
+  return [...new Set([...granted.map((g) => g.countryId), ...slots.map((s) => s.grade.countryId)])];
 }
 
 /**

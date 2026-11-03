@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/staff";
 import { teacherStats } from "@/lib/teachers";
 import { cancelInvite } from "../actions";
 import { AdminNav, panel, table } from "../AdminNav";
+import { Reviews } from "./Reviews";
 import { DeleteButton, InviteTeacherForm, type SlotOption, TeacherForm } from "../ui";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +57,8 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
   return (
     <main className="mx-auto grid max-w-5xl gap-6 px-4 py-12">
       <AdminNav current="teachers" />
+
+      <Reviews locale={locale} />
 
       <div className="flex justify-end">
         <Link href="/admin/teachers/export" prefetch={false} className="text-small text-pen underline underline-offset-4">

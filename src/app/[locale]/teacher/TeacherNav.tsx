@@ -10,6 +10,7 @@ export async function TeacherNav({
   current:
     | "home"
     | "courses"
+    | "subjects"
     | "live"
     | "assignments"
     | "bank"
@@ -24,6 +25,7 @@ export async function TeacherNav({
   const items = [
     { key: "home", href: "/teacher", label: t("navHome") },
     { key: "courses", href: "/teacher#courses", label: t("navCourses") },
+    { key: "subjects", href: "/teacher/subjects", label: t("navSubjects") },
     {
       key: "assignments",
       href: "/teacher/assignments",

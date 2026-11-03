@@ -3,8 +3,8 @@ import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { buildHome } from "@/lib/student-home";
 
-/** Null when the user has no grade yet: the page then asks for one. */
-export async function getStudentHome(userId: string, now = new Date()) {
+/** Null when there is no grade to show: the page then asks for one. `gradeId` overrides the saved grade (the ride shows the grade of the chosen country). */
+export async function getStudentHome(userId: string, now = new Date(), gradeId?: string) {
   const user = await db.user.findUnique({
     where: { id: userId },
     select: {
@@ -21,8 +21,21 @@ export async function getStudentHome(userId: string, now = new Date()) {
       },
     },
   });
-  const grade = user?.grade;
-  if (!grade) return null;
+  const grade =
+    gradeId && gradeId !== user?.grade?.id
+      ? await db.grade.findUnique({
+          where: { id: gradeId },
+          include: {
+            country: { select: { code: true, nameAr: true, nameEn: true, timeZone: true } },
+            subjects: {
+              where: { subject: { active: true } },
+              orderBy: { order: "asc" },
+              include: { subject: { select: { id: true, slug: true, nameAr: true, nameEn: true, icon: true } } },
+            },
+          },
+        })
+      : user?.grade;
+  if (!user || !grade) return null;
 
   const weekAhead = new Date(now.getTime() + 7 * 86_400_000);
   const [courses, rules, live] = await Promise.all([

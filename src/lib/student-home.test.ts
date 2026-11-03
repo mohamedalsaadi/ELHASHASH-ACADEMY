@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHome } from "./student-home";
+import { buildHome, resolveCountry } from "./student-home";
 
 const now = new Date("2026-11-02T10:00:00Z");
 const subject = (id: string) => ({ id, slug: id, nameAr: id, nameEn: id, icon: "book" });
@@ -39,5 +39,18 @@ describe("buildHome", () => {
   it("ignores bundle rules for subjects outside the grade", () => {
     const rules = [{ id: "r", subjectIds: ["chemistry", "biology"], percentOff: 20 }];
     expect(buildHome({ subjects, courses, ownedCourseIds: [], rules, now }).bundle).toBeNull();
+  });
+});
+
+describe("resolveCountry", () => {
+  it("asks first when nothing is remembered and there is a choice", () => {
+    expect(resolveCountry(undefined, ["ae", "eg"])).toEqual({ mode: "ask" });
+  });
+  it("uses the remembered country, but only while it is still active", () => {
+    expect(resolveCountry("eg", ["ae", "eg"])).toEqual({ mode: "use", countryId: "eg" });
+    expect(resolveCountry("sa", ["ae", "eg"])).toEqual({ mode: "ask" });
+  });
+  it("skips the question when only one country is active", () => {
+    expect(resolveCountry(undefined, ["ae"])).toEqual({ mode: "use", countryId: "ae" });
   });
 });

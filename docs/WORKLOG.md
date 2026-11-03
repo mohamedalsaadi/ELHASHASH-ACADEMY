@@ -25,6 +25,24 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-03: Teachers by country, teacher self-registration, country-first student ride
+
+- **Why:** the owner asked that teachers choose their country and create subjects (another country needs approval),
+  that teachers register themselves with the owner only approving, and that the student ride ask the country first.
+- **Data (additive migration `20261106120000_teacher_countries`, not yet applied to production):** `TeacherCountry` (a
+  stored country grant, back-filled from existing `TeacherSlot` rows), `TeacherCountryRequest`, `TeacherApplication`,
+  `TeacherApplicationCountry`, enum `ApprovalStatus`. `teacherCountryIds` now unions grants and slot-derived countries.
+- **Teacher:** new `/teacher/subjects` page: country first, the country's grades and subjects, add a subject (instant,
+  slug from the English name, existing subject of the same name is reused, grades added without the delete-all of
+  `setGradeSubjects`), and request another country (sees its subjects first, owner is notified).
+- **Self-registration:** public `/teach` (linked from sign-up). Creates only a `TeacherApplication`; the owner approves
+  or rejects on `/admin/teachers`; approval creates the INSTRUCTOR account and country grants in one transaction and
+  emails the applicant. Invites still work.
+- **Student ride:** `/me` asks the country first (cookie `ride_country`, one year, "Change country" link), shows only
+  that country's grades and subjects, caps the ride at 8 cars, fixes the lede count, recomputes the phone layout on
+  rotation, and softens back cars. Pure helper `resolveCountry` is tested.
+- **Deploy order:** apply the migration to the production database first, then deploy; the new code reads the new tables.
+
 ## 2026-11-03: The intro is the brand logo, drawn in 3D
 
 - **Why:** the owner wanted the intro to be the logo itself: the ridge lines drawn exactly like the brand, then the

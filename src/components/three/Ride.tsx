@@ -16,6 +16,15 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
   const ref = useRef<HTMLCanvasElement>(null);
   const scene = useRef<{ s: Scene; kick: () => void } | null>(null);
   const [selected, setSelected] = useState(0);
+  // The phone layout follows the screen, including a rotation, not just the width at first paint.
+  const [small, setSmall] = useState(false);
+  useEffect(() => {
+    const mq = matchMedia("(max-width: 699px)");
+    const on = () => setSmall(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const chips = useRef<(HTMLButtonElement | null)[]>([]);
   const current = subjects[selected];
   const Arrow = rtl ? ArrowLeft : ArrowRight;
@@ -38,7 +47,6 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
       probe.remove();
 
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const small = innerWidth < 700;
       const s = createRide(THREE, canvas, {
         cars: subjects,
         rtl,
@@ -150,7 +158,7 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
       disposed = true;
       cleanup();
     };
-  }, [subjects, rtl, countryCode]);
+  }, [subjects, rtl, countryCode, small]);
 
   useEffect(() => {
     scene.current?.s.select(selected);
@@ -171,7 +179,7 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
   return (
     <div className="grid gap-5">
       <canvas ref={ref} aria-hidden="true" className="h-[19rem] w-full cursor-grab touch-pan-y active:cursor-grabbing sm:h-[24rem] lg:h-[28rem]" />
-      <div role="group" aria-label={label} onKeyDown={onKey} className="flex flex-wrap justify-center gap-2">
+      <div role="group" aria-label={label} onKeyDown={onKey} className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:justify-center sm:overflow-visible">
         {subjects.map((s, i) => (
           <button
             key={s.id}
@@ -182,7 +190,7 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
             tabIndex={i === selected ? 0 : -1}
             aria-pressed={i === selected}
             onClick={() => setSelected(i)}
-            className={`min-h-11 rounded-full border px-4 text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out) ${
+            className={`min-h-11 shrink-0 rounded-full border px-4 text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out) ${
               i === selected ? "border-night-text bg-night-text text-night" : "border-night-muted/40 text-night-text hover:border-night-text"
             }`}
           >

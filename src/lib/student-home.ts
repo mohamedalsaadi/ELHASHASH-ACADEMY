@@ -76,3 +76,13 @@ export function buildHome(input: {
 
   return { subjects, owned: input.courses.filter((c) => owned.has(c.id)), bundle };
 }
+
+/** Which country the ride shows: the one the student chose (remembered), the only active one, or none yet, so it asks first. */
+export function resolveCountry(chosen: string | undefined, activeIds: string[]): { mode: "use"; countryId: string } | { mode: "ask" } {
+  if (activeIds.length === 1) return { mode: "use", countryId: activeIds[0] };
+  if (chosen && activeIds.includes(chosen)) return { mode: "use", countryId: chosen };
+  return { mode: "ask" };
+}
+
+/** The cookie that remembers the chosen country. */
+export const RIDE_COUNTRY = "ride_country";

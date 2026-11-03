@@ -85,7 +85,7 @@ export function createRide(
 
   // The loop: wide and shallow, climbing to a hill on each side and dropping back to the station, like a ride.
   // u = 0 is the front-centre point nearest the camera: the station.
-  const rx = small ? 3.1 : 5.4, rz = small ? 2.2 : 2.7;
+  const rx = small ? 3.6 : 5.4, rz = small ? 2.6 : 2.7;
   const points = Array.from({ length: 16 }, (_, k) => {
     const a = (k / 16) * Math.PI * 2;
     return new THREE.Vector3(rx * Math.sin(a) * (rtl ? -1 : 1), 0.85 * (1 - Math.cos(2 * a)) + 0.35 * Math.sin(3 * a), rz * Math.cos(a));
@@ -189,7 +189,7 @@ export function createRide(
       pins[i].position.copy(p);
       p.toArray(stems, i * 6);
       stems.set([p.x, p.y + 0.95 - 0.9 * scale, p.z], i * 6 + 3);
-      (m.material as Three.MeshBasicMaterial).opacity = 0.45 + 0.55 * front;
+      (m.material as Three.MeshBasicMaterial).opacity = 0.3 + 0.7 * front;
       m.renderOrder = Math.round(front * 100);
     });
     stemGeo.attributes.position.needsUpdate = true;

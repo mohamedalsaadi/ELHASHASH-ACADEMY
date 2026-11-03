@@ -25,6 +25,20 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-03: Gap audit, session re-check, health check, smoke test, CI
+
+- `docs/platform-gap-plan.md`: what is missing and the six-phase order (switch on keys, full testing, live sessions,
+  lesson embeds, AI employees, product gaps).
+- **Stale sessions closed:** `src/auth.ts` now re-checks the account against the database at most every 5 minutes; a
+  deleted account loses its session, a demoted one its role. (Staff pages already read the role on every call.)
+- `/api/health` (app plus database) for uptime checks; `scripts/smoke.mjs <url>` is a black-box check of public pages,
+  protected pages and secret endpoints (all pass locally; on the live site only /api/health fails until deployed).
+- `.github/workflows/ci.yml` (types, tests, build on every push) and `reminders.yml` (calls the reminder cron every 10
+  minutes; needs repo secrets `APP_URL` and `CRON_SECRET`).
+- Knowledge graph built with graphify into `graphify-out/` (git-ignored): 1,483 nodes, 80 communities. Rebuild with
+  `python -m graphify update .`. The auto-rebuild commit hook was not installed (blocked); owner can allow it.
+- Still the owner's: `CRON_SECRET`, `GEMINI_API_KEY`, Blob token in Vercel; GitHub secrets above. Not deployed.
+
 ## 2026-11-03: New minimalist intro, "Hop"
 
 - The owner rejected the 3D logo intro (not minimal, not the logo, poor motion) and asked for two Apple/Pixar options.

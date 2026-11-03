@@ -49,3 +49,6 @@ next-env.d.ts
 
 .bunshin/
 .impeccable/
+
+# graphify output, rebuilt locally
+graphify-out/

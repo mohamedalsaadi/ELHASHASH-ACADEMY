@@ -6,6 +6,12 @@ import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { signInSchema } from "@/lib/schemas/auth";
 import type { Role } from "@/generated/prisma/client";
 
+declare module "@auth/core/jwt" {
+  interface JWT {
+    checkedAt?: number;
+  }
+}
+
 declare module "next-auth" {
   interface User {
     role: Role;
@@ -16,9 +22,11 @@ declare module "next-auth" {
 }
 
 // Credentials sign-in requires the JWT strategy; the token lives in an HttpOnly, SameSite=Lax cookie (Auth.js default).
-// A session cannot be revoked server-side while it is valid: the role and id ride in the token, so a demoted or
-// deleted account keeps its access until the cookie expires. Seven days bounds that window. Real revocation needs
-// a sessionVersion check against the database on every request — a separate security batch.
+// The role and id ride in the token, so the token is re-checked against the database at most every five minutes:
+// a deleted account loses its session and a demoted one its old role within that window (requireStaff reads the
+// database on every call, so staff pages and actions lose access at once). Seven days bounds an offline token.
+export const RECHECK_MS = 5 * 60_000;
+
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -44,11 +52,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
         token.role = user.role;
+        token.checkedAt = Date.now();
+        return token;
       }
+      if (typeof token.checkedAt === "number" && Date.now() - token.checkedAt < RECHECK_MS) return token;
+      const row = await db.user.findUnique({ where: { id: token.sub! }, select: { role: true } });
+      if (!row) return null;
+      token.role = row.role;
+      token.checkedAt = Date.now();
       return token;
     },
     session({ session, token }) {

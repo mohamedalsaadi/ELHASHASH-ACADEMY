@@ -12,10 +12,14 @@ export async function requestReset(_: unknown, form: FormData): Promise<"ok"> {
   if (!d.success) return "ok";
 
   const key = `forgot:${d.data.email}`;
-  if (await isLimited(key, 5, 3_600_000)) return "ok";
+  if (await isLimited(key, 5, 3_600_000)) {
+    console.info("[mail] reset not sent: rate limited");
+    return "ok";
+  }
   await recordAttempt(key);
 
   const user = await db.user.findUnique({ where: { email: d.data.email }, select: { id: true, email: true, locale: true } });
+  if (!user?.email) console.info("[mail] reset not sent: no account with this email");
   if (user?.email) {
     const token = await issueToken(user.id, "RESET", RESET_TTL);
     const ar = user.locale === "ar";

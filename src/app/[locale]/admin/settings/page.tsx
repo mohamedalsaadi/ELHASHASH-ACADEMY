@@ -6,6 +6,7 @@ import { saveFinanceSettings } from "../actions";
 import { AdminNav, panel } from "../AdminNav";
 import { field, label } from "../styles";
 import { SaveButton } from "../ui";
+import { MailTest } from "./MailTest";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
           <SaveButton />
         </div>
       </form>
+
+      <div className={panel}>
+        <MailTest title={t("mailTest")} hint={t("mailTestHint")} button={t("mailTestButton")} />
+      </div>
     </main>
   );
 }

@@ -34,25 +34,43 @@ export function emailLayout(title: string, lines: string[], cta: { href: string;
 </body></html>`;
 }
 
-export async function sendMail({ to, subject, html, replyTo }: { to: string; subject: string; html: string; replyTo?: string }): Promise<boolean> {
+/** A plain-text twin of the HTML: mail with no text part is more likely to be filtered. */
+const toText = (html: string) =>
+  html
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g, "$2: $1")
+    .replace(/<\/(p|h1|div)>/g, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+/** Sends one message and says what Resend answered: `ok` with its message id, or the reason it was refused. */
+export async function sendMailDetailed({ to, subject, html, replyTo }: { to: string; subject: string; html: string; replyTo?: string }): Promise<{ ok: boolean; detail: string }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn(`[mail] skipped (no RESEND_API_KEY): ${subject}`);
-    return false;
+    return { ok: false, detail: "RESEND_API_KEY is not set" };
   }
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM, to, subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
+      body: JSON.stringify({ from: FROM, to, subject, html, text: toText(html), ...(replyTo ? { reply_to: replyTo } : {}) }),
     });
+    const body = await res.text();
     if (!res.ok) {
-      console.error("[mail] failed", res.status, await res.text());
-      return false;
+      console.error("[mail] failed", res.status, body);
+      return { ok: false, detail: `${res.status} ${body}` };
     }
-    return true;
+    const id = (JSON.parse(body) as { id?: string }).id ?? "?";
+    console.info(`[mail] sent ${id} from ${FROM.replace(/^.*@/, "").replace(">", "")} to ${to.replace(/^.*@/, "@")}`);
+    return { ok: true, detail: id };
   } catch (e) {
     console.error("[mail] failed", e);
-    return false;
+    return { ok: false, detail: String(e) };
   }
+}
+
+export async function sendMail(m: { to: string; subject: string; html: string; replyTo?: string }): Promise<boolean> {
+  return (await sendMailDetailed(m)).ok;
 }

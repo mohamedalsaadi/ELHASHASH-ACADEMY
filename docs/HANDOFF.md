@@ -16,10 +16,11 @@ For whoever continues next (another AI or tool). Newest line at the bottom of "D
 ## Done
 - 2026-11-04 e2e suite on a throwaway Postgres (d2a1909), plans saved under docs/plans (f42eb34), pushed.
 - 2026-11-04 added `e2e` job to .github/workflows/ci.yml (not yet run on GitHub).
+- 2026-11-04 e2e/checkout.spec.ts: sign-in redirect keeps cart, priced total, unknown SKU page (passes en-desktop, ar-phone). No gateway key in e2e, so the Ziina step itself is not exercised.
 
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
-2. e2e: checkout up to the Ziina step
+2. (done) e2e checkout
 3. e2e: password reset, lesson page
 4. e2e: exam and homework
 5. money tests (30/70 split, refund, webhook replay), load test, a11y pass, Sentry/uptime, restore drill

@@ -25,6 +25,21 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: One-tap confidence after each lesson
+
+- Wave-1 item #2. `LessonConfidence` enum (`GOT_IT | SHAKY | LOST`), nullable on `LessonView`
+  (migration `20261105140000_lesson_confidence`). Null means "not answered", never "lost", so
+  existing rows keep their meaning.
+- After a lesson is completed, three small buttons appear under it; one tap stores the answer and
+  the current one shows pressed (`aria-pressed`). No text box, no reminder, no streak pressure, and
+  the answer is overwritten rather than kept as history — it is the student's current feeling.
+- Access is re-checked in the action (`hasLessonAccess`), the same guard `markLessonComplete` uses,
+  so a lesson cannot be rated by someone who cannot open it.
+- This is the keystone for the readiness index (#1) and the teacher's class pulse (#11), both of
+  which read this column.
+- Verified: 229 unit tests, `npx tsc --noEmit`, `npm run build`, and
+  `e2e/lessons.spec.ts` (3 tests, ar-desktop) including the new tap-then-pressed check.
+
 ## 2026-11-05: Innovations roadmap, and Arabic-tolerant catalogue search
 
 - `docs/plans/innovations.md`: 28 ideas across student, teacher, parent, owner and platform, each

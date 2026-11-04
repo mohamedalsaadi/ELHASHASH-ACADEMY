@@ -17,7 +17,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { AskForm } from "./AskForm";
-import { markLessonComplete } from "./actions";
+import { markLessonComplete, setConfidence } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -136,7 +136,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
     userId
       ? db.question.findMany({ where: { lessonId: lesson.id, userId }, orderBy: { createdAt: "desc" }, include: { answeredBy: { select: { name: true } } } })
       : [],
-    userId ? db.lessonView.findUnique({ where: { userId_lessonId: { userId, lessonId: lesson.id } }, select: { completedAt: true } }) : null,
+    userId ? db.lessonView.findUnique({ where: { userId_lessonId: { userId, lessonId: lesson.id } }, select: { completedAt: true, confidence: true } }) : null,
     userId
       ? db.lessonView.findMany({ where: { userId, lessonId: { in: outlineLessonIds }, completedAt: { not: null } }, select: { lessonId: true } })
       : [],
@@ -219,6 +219,26 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
             ) : (
               <SubmitButton className="btn btn-outline w-fit px-4 py-2 text-small">{tp("markComplete")}</SubmitButton>
             )}
+          </form>
+        )}
+
+        {/* One tap, once the lesson is finished. No text box, no streak pressure: it only feeds
+            the readiness index and the teacher's class pulse. */}
+        {userId && view?.completedAt && (
+          <form action={setConfidence} className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="lessonId" value={lesson.id} />
+            <span className="text-small text-ink-muted">{tp("confidenceQuestion")}</span>
+            {(["GOT_IT", "SHAKY", "LOST"] as const).map((c) => (
+              <button
+                key={c}
+                name="confidence"
+                value={c}
+                aria-pressed={view.confidence === c}
+                className={`btn px-3 py-2 text-small ${view.confidence === c ? "btn-primary" : "btn-outline"}`}
+              >
+                {tp(`confidenceChoice.${c}`)}
+              </button>
+            ))}
           </form>
         )}
 

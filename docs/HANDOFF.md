@@ -37,6 +37,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 innovations roadmap saved to `docs/plans/innovations.md` (28 ideas, waves). Wave-1 item shipped: Arabic-tolerant catalogue search — `src/lib/arabic-search.ts` folds hamza forms, taa marbuta, alef maqsura, diacritics, tatweel and Arabic-Indic digits, with the article optional; `/courses` folds in memory (cap 500). 12 new unit tests, `e2e/search.spec.ts` scoped to `#results` because the header banner also links to the seeded course. 229 tests, tsc, build green.
 
+- 2026-11-05 one-tap confidence after a finished lesson (`LessonConfidence` enum on `LessonView`, additive migration). Three buttons, one write, `aria-pressed` reflects the current answer; access re-checked in the action. This is the input for the readiness index and class pulse, neither built yet. `e2e/lessons.spec.ts` covers the tap. 229 tests, tsc, build green.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

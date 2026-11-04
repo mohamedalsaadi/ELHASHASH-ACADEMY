@@ -701,11 +701,21 @@ model QuizAttempt {
 }
 
 /// Attendance: watched seconds per lesson.
+/// How well the student felt they followed a lesson, asked once after they finish it.
+/// Read by the readiness index and the teacher's class pulse; never shown to other students.
+enum LessonConfidence {
+  GOT_IT
+  SHAKY
+  LOST
+}
+
 model LessonView {
   userId      String
   lessonId    String
   watchedSec  Int       @default(0)
   completedAt DateTime?
+  /// The student's own one-tap answer after finishing. Null until they answer.
+  confidence  LessonConfidence?
   /// Last time the lesson was opened; drives "continue learning".
   lastSeenAt  DateTime  @default(now())
 

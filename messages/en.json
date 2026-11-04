@@ -461,7 +461,13 @@
     "locked": "Locked",
     "pdfUnavailable": "This lesson file is not available to view yet. Contact support.",
     "nextAfterComplete": "Go to the next lesson",
-    "lastLesson": "This is the last available lesson. Return to the course to review."
+    "lastLesson": "This is the last available lesson. Return to the course to review.",
+    "confidenceQuestion": "How did that lesson feel?",
+    "confidenceChoice": {
+      "GOT_IT": "Got it",
+      "SHAKY": "Shaky",
+      "LOST": "Lost"
+    }
   },
   "admin": {
     "title": "Admin",

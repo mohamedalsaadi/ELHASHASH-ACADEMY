@@ -47,3 +47,26 @@ export async function markLessonComplete(form: FormData) {
   revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
   revalidatePath("/[locale]/dashboard", "page");
 }
+
+/**
+ * The one-tap confidence answer after a finished lesson. Overwrites freely: it is the student's
+ * current feeling, not a historical record, and it is what the readiness index reads.
+ */
+export async function setConfidence(form: FormData) {
+  const session = await auth();
+  if (!session?.user) notFound();
+  const { lessonId, confidence } = z
+    .object({ lessonId: z.string(), confidence: z.enum(["GOT_IT", "SHAKY", "LOST"]) })
+    .parse(Object.fromEntries(form));
+  const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { unit: true } });
+  if (!lesson) notFound();
+  if (!lesson.unit.isFree && !(await hasLessonAccess(session.user.id, lesson.unit.courseId, lessonScope(lesson)))) notFound();
+
+  await db.lessonView.upsert({
+    where: { userId_lessonId: { userId: session.user.id, lessonId } },
+    create: { userId: session.user.id, lessonId, confidence },
+    update: { confidence, lastSeenAt: new Date() },
+  });
+  revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
+  revalidatePath("/[locale]/dashboard", "page");
+}

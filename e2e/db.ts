@@ -80,6 +80,16 @@ export async function setLiveApproved(phone: string, on: boolean) {
   await sql(`UPDATE "User" SET "liveApproved" = $2 WHERE phone = $1`, [phone, on]);
 }
 
+/** Marks a lesson finished, so the post-lesson confidence row appears. */
+export async function completeLesson(userId: string, lessonId: string) {
+  await sql(
+    `INSERT INTO "LessonView" ("userId","lessonId","completedAt","lastSeenAt")
+     VALUES ($1,$2,(now() at time zone 'utc'),(now() at time zone 'utc'))
+     ON CONFLICT ("userId","lessonId") DO UPDATE SET "completedAt" = (now() at time zone 'utc')`,
+    [userId, lessonId],
+  );
+}
+
 export async function grantCourse(userId: string, courseId: string) {  await sql(`INSERT INTO "Entitlement" (id, "userId", "courseId", "accessType", "startsAt", "endsAt") VALUES ($1,$2,$3,'YEARLY',(now() at time zone 'utc') - interval '1 minute',(now() at time zone 'utc') + interval '1 year')`, [
     randomUUID(), userId, courseId,
   ]);

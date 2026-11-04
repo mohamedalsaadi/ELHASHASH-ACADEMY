@@ -25,6 +25,26 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-04: Phase 2 started, end-to-end suite on a throwaway database
+
+- `npm run e2e` (`scripts/e2e.mjs`): starts a local Postgres 18 (`embedded-postgres`, UTF-8) in a temp folder,
+  applies every migration, runs `prisma/seed.ts` and `e2e/seed.ts`, runs Playwright against `next dev` on port 3200,
+  then deletes the database. It never reads the production `DATABASE_URL`, and blanks every service key (mail, Daily,
+  Gemini, Ziina, Stripe, Blob), so nothing leaves the machine. `e2e/seed.ts` refuses any other database.
+- Personas (`e2e/personas.ts`, password `e2e-pass-1234`, test database only): admin, a teacher in Egypt and one in the
+  UAE, a student in each country, a parent linked to the Egypt student.
+- `playwright.config.ts`: the installed Chrome (no browser download), four projects: ar and en, desktop and Pixel 7.
+- Specs: public pages (lang/dir, intro mark, no retired names, no sideways scroll, catalogue, price, health, cron
+  401); role boundaries (every role against admin, teacher and parent areas, signed out, wrong password); student home
+  scoped to its country; parent sees the linked child; `/teach` application, refused sign-in while pending, admin
+  approval, then sign-in (desktop only: 3 applications an hour per address).
+- Result: 66 passed, 2 skipped (the phone runs of `/teach`), about 13 minutes.
+- `vitest.config.ts` excludes `e2e/`; the not-found page carries `data-not-found` for the tests.
+- Finding, not changed: the sitewide "New" bar (`NewsBanner`, in the shared layout) shows the newest courses of every
+  country, so an Egypt student sees UAE courses there. Scoping it per country would make the layout dynamic; owner call.
+- Open in Phase 2: payment and refund tests, load test, accessibility pass, Sentry and uptime, restore drill, and the
+  e2e job in GitHub Actions.
+
 ## 2026-11-03: Gap audit, session re-check, health check, smoke test, CI
 
 - `docs/platform-gap-plan.md`: what is missing and the six-phase order (switch on keys, full testing, live sessions,

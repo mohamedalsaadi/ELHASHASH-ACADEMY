@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { teacherStats } from "@/lib/teachers";
-import { addTeacherSlot, disableTeacher, removeTeacherSlot } from "../../actions";
+import { addTeacherSlot, disableTeacher, removeTeacherSlot, setTeacherLive } from "../../actions";
 import { AdminNav, panel, stat } from "../../AdminNav";
 import { field, label } from "../../styles";
 import { DeleteButton, ResetPasswordForm, SaveButton } from "../../ui";
@@ -33,6 +33,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
       phone: true,
       email: true,
       role: true,
+      liveApproved: true,
       courses: { orderBy: { slug: "asc" }, select: { id: true, titleAr: true, titleEn: true, published: true } },
       teacherSlots: {
         orderBy: { createdAt: "asc" },
@@ -127,6 +128,19 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
           <section className={panel}>
             <h2 className="font-display text-h3 font-semibold">{t("resetPassword")}</h2>
             <ResetPasswordForm userId={x.id} />
+          </section>
+          <section className={panel}>
+            <h2 className="font-display text-h3 font-semibold">{t("liveStreaming")}</h2>
+            <p className="text-small text-ink-muted">{t("liveHint")}</p>
+            <p className="text-small font-medium">
+              {x.liveApproved ? t("liveOn", { name: x.name }) : t("liveOff", { name: x.name })}
+            </p>
+            <form action={setTeacherLive}>
+              <input type="hidden" name="id" value={x.id} />
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="live" value={x.liveApproved ? "off" : "on"} />
+              <SaveButton>{x.liveApproved ? t("liveTurnOff") : t("liveTurnOn")}</SaveButton>
+            </form>
           </section>
           <section className={panel}>
             <h2 className="font-display text-h3 font-semibold">{t("disableTeacher")}</h2>

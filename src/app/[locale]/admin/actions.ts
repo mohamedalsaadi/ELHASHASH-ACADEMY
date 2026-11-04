@@ -834,3 +834,16 @@ export async function disableTeacher(form: FormData) {
   done();
   redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/teachers`);
 }
+
+/**
+ * Live streaming is hidden until an admin approves a teacher, one teacher at a time. Turning it off
+ * again hides their live sessions everywhere without touching the sessions themselves.
+ */
+export async function setTeacherLive(form: FormData) {
+  await requireAdmin();
+  const id = z.string().parse(form.get("id"));
+  const on = form.get("live") === "on";
+  await db.user.updateMany({ where: { id, role: { in: ["INSTRUCTOR", "ADMIN"] } }, data: { liveApproved: on } });
+  done();
+  redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/teachers/${id}`);
+}

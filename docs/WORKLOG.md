@@ -25,6 +25,22 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-04: Live streaming hidden, scheduled reminders switched off
+
+- Owner decision: hide live streaming for now, keep recorded lessons, and re-enable live per teacher
+  once an admin approves them. Nothing was deleted; the model, routes and pages all stay.
+- `User.liveApproved` (`Boolean @default(false)`) with an additive migration. Because the default is
+  false, shipping it hides live for every existing teacher without touching their data.
+- `src/lib/live.ts`: `liveApprovedFor(instructorId)` for single lookups and `liveApprovedOn(course)`
+  for pages that can read it through the relation.
+- Admin toggle on `admin/teachers/[id]` (`setTeacherLive` in `admin/actions.ts`), with Arabic and
+  English copy. Admin can turn one teacher on and off again.
+- Scheduled reminders off: `vercel.json` crons emptied and `reminders.yml` lost its `schedule:`, so
+  nothing calls `/api/cron/reminders` on its own. The route and the workflow file are kept; a manual
+  dispatch still works once `CRON_SECRET` matches Vercel. Owner is handling the 401 separately.
+- **Still open:** the gate is not wired into the UI yet, so live remains visible. Surfaces to gate:
+  course page, checkout, `/live/[id]`, dashboard, student home, teacher live, parent pages.
+
 ## 2026-11-04: Reminders workflow could not be parsed at all
 
 - `.github/workflows/reminders.yml` held its curl command inline after `run:`, and that command contains

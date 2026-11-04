@@ -27,6 +27,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-04 `reminders.yml` fixed: `run:` held `Authorization: Bearer …` unquoted, and a colon-space inside a plain YAML scalar is a mapping separator, so GitHub could not parse the workflow at all — that is the "run #4 failed in 0s with no jobs" cause. Moved the command into a `|` block. Verified with a YAML parser (before: ScannerError, after: parses). Owner must push and re-run the workflow by hand; secrets still need to be right.
 
+- 2026-11-04 owner decision: hide live streaming and switch off scheduled reminders, deleting nothing. Landed so far: `User.liveApproved` (default false, additive migration `20261107120000_teacher_live_approval`), `src/lib/live.ts` gates, an admin toggle on `admin/teachers/[id]`, `vercel.json` crons emptied, `reminders.yml` schedule removed (manual dispatch only). **NOT DONE YET: nothing reads the gate, so live is still visible on the site.** Remaining surfaces: course page, checkout, `/live/[id]`, dashboard, student home, teacher live, parent pages.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

@@ -129,10 +129,10 @@ export async function GET(req: Request) {
           continue;
         }
         ar.push(
-          `${link.student.name}: ${done} حصة مكتملة، ${attended} حصة مباشرة، ${avg ? `متوسط الواجبات ${avg.avg}%` : "لا درجات واجبات بعد"}، ${streak} يوم متتالي`,
+          `${link.student.name}: ${done} حصة مكتملة، ${attended} رابط حصة مباشرة، ${avg ? `متوسط الواجبات ${avg.avg}%` : "لا درجات واجبات بعد"}، ${streak} يوم متتالي`,
         );
         en.push(
-          `${link.student.name}: ${done} lessons completed, ${attended} live sessions, ${avg ? `homework average ${avg.avg}%` : "no graded homework yet"}, ${streak}-day streak`,
+          `${link.student.name}: ${done} lessons completed, ${attended} live links opened, ${avg ? `homework average ${avg.avg}%` : "no graded homework yet"}, ${streak}-day streak`,
         );
       }
       await createNotification({

@@ -50,6 +50,10 @@ Git history has the rest (`git log --oneline`).
 - `e2e/live.spec.ts`: 7 tests, green on `en-desktop` and `ar-desktop`. They cover the consent gate, the
   join link (href, `target=_blank`, `rel=noopener`, no iframe), the parent recording consent, a
   student with no seat, a cancelled lecture, and both sides of the teacher approval gate.
+- Attendance wording now matches what is actually recorded: `office.attendees`,
+  `parent.attendedMonth`, `homework.liveTitle` / `homework.noLive` and the weekly parent digest all
+  say "opened the link" in English, and "رابط حصة مباشرة" / "روابط … فُتحت" in Arabic. No English
+  string claims attendance any more; the remaining Arabic matches are "محاضرة", not a claim.
 - Open: stale `daily.co` URLs in `LiveSession.roomUrl` need a
   one-off owner-approved cleanup; attendance copy in parent/admin still says "attended".
 

@@ -1067,7 +1067,7 @@
     "noEvents": "No payment events.",
     "cancelled": "Cancelled",
     "seatsSold": "{count, plural, one {# seat sold} other {# seats sold}}",
-    "attendees": "{count, plural, one {# attendee} other {# attendees}}",
+    "attendees": "{count, plural, =0 {nobody opened the link} one {# opened the link} other {# opened the link}}",
     "questionsHint": "Questions on each teacher's courses over the last 90 days, plus any still waiting.",
     "answered": "Answered",
     "unanswered": "Waiting",
@@ -1225,7 +1225,7 @@
     "confirmUnlink": "Remove this student link?",
     "courses": "Active courses",
     "completedWeek": "Lessons completed this week",
-    "attendedMonth": "Live sessions this month",
+    "attendedMonth": "Live links opened this month",
     "nextExpiry": "Next expiry",
     "noExpiry": "None",
     "lastPayment": "Last payment",
@@ -1346,8 +1346,8 @@
     "examsTitle": "Exams",
     "noExams": "No exams taken yet.",
     "awaitingMark": "Awaiting a mark",
-    "liveTitle": "Live class attendance",
-    "noLive": "No live classes attended yet."
+    "liveTitle": "Live lecture links opened",
+    "noLive": "No live lecture link opened yet."
   },
   "practice": {
     "title": "Practice",

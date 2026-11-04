@@ -33,6 +33,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 `e2e/live.spec.ts` added (7 tests, pass on en-desktop and ar-desktop): no consent → no link; consent → the link appears with `target=_blank` and `rel=noopener` and no iframe; a parent records consent from `/parent`; no seat → no link; cancelled → no link; an unapproved teacher gets no schedule form and an approved one does; an unapproved teacher's session is not reachable. Seed gained two sessions (one live in 2 minutes, one cancelled), a SEMESTER grant for the UAE student, a second parent link, and `teacherAe.liveApproved`. Helpers in `e2e/db.ts`: `liveOf`, `consentLive`, `clearConsent`, `setLiveApproved`. Observed, not caused by us: `Unexpected end of JSON input` printed by the Next dev server the first time `/parent` compiles; the page renders and the tests pass, and the production build is clean.
 
+- 2026-11-05 attendance wording fixed everywhere it still claimed attendance: `office.attendees` (admin live), `parent.attendedMonth` (parent home), `homework.liveTitle` / `noLive` (parent child page) and the weekly parent digest in `/api/cron/reminders`, in Arabic and English. Copy only; the underlying `LiveAttendance` row is unchanged. 217 tests, tsc, build and `e2e/live.spec.ts` green.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

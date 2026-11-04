@@ -1,6 +1,7 @@
 // Loads the student home from the database; the shaping lives in student-home.ts so it can be tested.
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { liveInstructor } from "@/lib/live";
 import { buildHome } from "@/lib/student-home";
 
 /** Null when there is no grade to show: the page then asks for one. `gradeId` overrides the saved grade (the ride shows the grade of the chosen country). */
@@ -42,7 +43,11 @@ export async function getStudentHome(userId: string, now = new Date(), gradeId?:
     db.course.findMany({ where: { published: true, gradeId: grade.id }, orderBy: { createdAt: "desc" }, include: cardInclude(now) }),
     db.bundleRule.findMany({ where: { active: true }, include: { subjects: { select: { id: true } } } }),
     db.liveSession.findMany({
-      where: { cancelledAt: null, startsAt: { gte: now, lt: weekAhead }, course: { published: true, gradeId: grade.id } },
+      where: {
+        cancelledAt: null,
+        startsAt: { gte: now, lt: weekAhead },
+        course: { published: true, gradeId: grade.id, ...liveInstructor },
+      },
       orderBy: { startsAt: "asc" },
       take: 6,
       include: { course: { select: { slug: true, titleAr: true, titleEn: true } } },

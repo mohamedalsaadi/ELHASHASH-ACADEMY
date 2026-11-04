@@ -25,6 +25,31 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Live lectures by external meeting link, with guardian consent
+
+- Owner decision: no integrated video vendor. The teacher hosts on Zoom / Teams / Google Meet and
+  pastes the link per session. The app decides who sees it and when; the video is someone else's
+  product. Recording was declined, so nothing is stored from a session.
+- `LiveSession.roomUrl` keeps its column and now carries the teacher's link. `scheduleLive` and
+  `updateLive` validate it through `src/lib/live-rules.ts`: https only, host allow-list
+  (`zoom.us`, `teams.microsoft.com`, `teams.live.com`, `meet.google.com`). A bad host redirects to
+  `?error=link`. `closeRoom`/`deleteRoom` are no longer called anywhere.
+- Join page: the Daily iframe is gone. The ladder (cancelled → ended → signed-out → no seat →
+  consent → countdown → no link → one device) ends in an external link with `noopener`. The
+  attendance row is still written on load and now means "opened the link", not "attended".
+- `GuardianConsent` (additive migration `20261105120000_guardian_consent`): one row per student,
+  written only by a linked parent from `/parent`, never overwritten, stamped with `rulesVersion`.
+  Every `STUDENT` account is treated as under 18 because no birth date is collected anywhere. This
+  closes a gap where `privacy/page.tsx:158` already claimed guardian consent was required.
+- `liveApproved` is finally wired: `liveInstructor` / `liveOffered` / `liveApprovedOn` gate the
+  course page, dashboard, student home, join page, cron reminders and checkout. `canPublishLive`
+  gates `scheduleLive`, `updateLive` and `setSeatPrice`. Default false, so live is hidden until an
+  admin approves a teacher.
+- Daily is dead but present: `src/lib/daily.ts` is unreferenced, and the CSP still allows it.
+- Verified: 217 unit tests (7 new in `live-rules.test.ts`), `npx tsc --noEmit`, `npm run build`.
+- Open: no Playwright spec for the new flow; stale `daily.co` URLs in `LiveSession.roomUrl` need a
+  one-off owner-approved cleanup; attendance copy in parent/admin still says "attended".
+
 ## 2026-11-04: Live streaming hidden, scheduled reminders switched off
 
 - Owner decision: hide live streaming for now, keep recorded lessons, and re-enable live per teacher

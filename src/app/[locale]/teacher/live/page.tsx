@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { toTimeInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { courseZone, formatWhen, minorPerUnit } from "@/lib/format";
+import { canPublishLive } from "@/lib/live";
 import { requireStaff } from "@/lib/staff";
 import { field, label } from "../../admin/styles";
 import { DeleteButton, SaveButton } from "../../admin/ui";
@@ -35,6 +36,7 @@ export default async function TeacherLivePage({
   const ar = locale === "ar";
   const now = new Date();
   const admin = me.role === "ADMIN";
+  const approved = await canPublishLive(me);
 
   const courses = await db.course.findMany({
     where: admin ? {} : { instructorId: me.id },
@@ -57,8 +59,7 @@ export default async function TeacherLivePage({
       <input name={name} defaultValue={value} required maxLength={200} dir={name === "titleAr" ? "rtl" : "ltr"} className={field} />
     </label>
   );
-  const timing = (zone: string | null, start = "", duration = 60) => (
-    <>
+  const timing = (zone: string | null, start = "", duration = 60) => (    <>
       <label className={label}>
         {zone ? t("startsAtIn", { zone: t(`zone.${zone.split("/")[1]}`) }) : t("startsAt")}
         <input name="startsAt" type="datetime-local" defaultValue={start} required dir="ltr" className={`${field} num`} />
@@ -68,6 +69,23 @@ export default async function TeacherLivePage({
         <input name="durationMin" type="number" min="15" max="300" step="5" defaultValue={duration} required dir="ltr" className={`${field} num w-28`} />
       </label>
     </>
+  );
+  const meetingLink = (value = "") => (
+    <label className={label}>
+      {t("meetingUrl")}
+      <input
+        name="meetingUrl"
+        type="url"
+        defaultValue={value}
+        placeholder="https://…"
+        dir="ltr"
+        className={`${field} text-small`}
+        aria-describedby="meeting-url-hint"
+      />
+      <span id="meeting-url-hint" className="text-small text-ink-muted">
+        {t("meetingUrlHint")}
+      </span>
+    </label>
   );
 
   return (
@@ -82,13 +100,24 @@ export default async function TeacherLivePage({
           <p className="text-ink-muted">{t("noCourses")}</p>
         </EmptyState>
       )}
-      {courses.length > 0 && (
+      {!approved && (
+        <p role="status" className="rounded-lg border border-hairline bg-raised p-4 text-small text-ink-muted">
+          {t("notApproved")}
+        </p>
+      )}
+
+      {approved && courses.length > 0 && (
         <form action={scheduleLive} className={card}>
           <h2 className="font-display text-h2 font-semibold">{t("schedule")}</h2>
           <input type="hidden" name="locale" value={locale} />
           {error === "past" && (
             <p role="alert" className="text-small text-down">
               {t("pastError")}
+            </p>
+          )}
+          {error === "link" && (
+            <p role="alert" className="text-small text-down">
+              {t("linkError")}
             </p>
           )}
           <label className={label}>
@@ -106,6 +135,7 @@ export default async function TeacherLivePage({
             {text("titleEn")}
           </div>
           <div className={row}>{timing(null)}</div>
+          {meetingLink()}
           <p className="text-small text-ink-muted">{t("zoneHint")}</p>
           <div>
             <SaveButton>{t("scheduleCta")}</SaveButton>
@@ -141,19 +171,27 @@ export default async function TeacherLivePage({
                 </div>
                 <form action={updateLive} className="grid gap-3">
                   <input type="hidden" name="id" value={s.id} />
-                  <div className={row}>
-                    {text("titleAr", s.titleAr)}
-                    {text("titleEn", s.titleEn)}
-                  </div>
-                  <div className={row}>{timing(zone, toTimeInput(s.startsAt, zone), s.durationMin)}</div>
+                  <input type="hidden" name="locale" value={locale} />
+                  {approved && (
+                    <>
+                      <div className={row}>
+                        {text("titleAr", s.titleAr)}
+                        {text("titleEn", s.titleEn)}
+                      </div>
+                      <div className={row}>{timing(zone, toTimeInput(s.startsAt, zone), s.durationMin)}</div>
+                      {meetingLink(s.roomUrl ?? "")}
+                    </>
+                  )}
+                  {approved && !s.roomUrl && <p className="text-small text-down">{t("noLinkShort")}</p>}
                   <div className="flex flex-wrap gap-3">
-                    <SaveButton />
+                    {approved && <SaveButton />}
                     <DeleteButton action={cancelLive} label={t("cancel")} confirmText={t("confirmCancel")} />
                   </div>
                 </form>
-                {s.sku && (
+                {approved && s.sku && (
                   <form action={setSeatPrice} className="flex flex-wrap items-end gap-3 border-t border-hairline pt-4">
                     <input type="hidden" name="id" value={s.sku.id} />
+                    <input type="hidden" name="locale" value={locale} />
                     <label className={label}>
                       {t("seatPrice", { currency: s.sku.currency })}
                       <input name="price" type="number" min="0" step="0.01" defaultValue={s.sku.price / minorPerUnit(s.sku.currency)} required dir="ltr" className={`${field} num w-28`} />

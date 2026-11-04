@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import { grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
+import { liveApprovedOn } from "@/lib/live";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
@@ -115,7 +116,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     include: {
       grade: { include: { country: true } },
       liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
-      instructor: { select: { id: true, name: true, photoUrl: true } },
+      instructor: { select: { id: true, name: true, photoUrl: true, liveApproved: true } },
       units: {
         orderBy: { order: "asc" },
         include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now) } } } },
@@ -186,7 +187,10 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   };
   const zone = courseZone(course);
   const lessonHref = (id: string) => `/courses/${course.slug}/lessons/${id}`;
-  const live = course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime());
+  // Live is offered only for a teacher an admin approved for it.
+  const live = liveApprovedOn(course)
+    ? course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime())
+    : [];
   const courseTitle = ar ? course.titleAr : course.titleEn;
   const courseUrl = `${siteUrl}/${locale}/courses/${course.slug}`;
   const jsonLd = {

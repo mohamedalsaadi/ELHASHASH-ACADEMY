@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { CONSENT_VERSION } from "@/lib/live-rules";
 import { phoneSchema } from "@/lib/schemas/auth";
 import { hashToken } from "@/lib/token-utils";
 
@@ -35,4 +36,35 @@ export async function linkChild(_: unknown, form: FormData): Promise<"ok" | "not
   revalidatePath("/[locale]/parent", "page");
   revalidatePath("/[locale]/account", "page");
   return "ok";
+}
+
+/**
+ * A linked parent consents, once, to their child joining live lectures. Only a parent account can
+ * write this row, so its existence is evidence that a guardian acted. Never overwritten: the first
+ * consent stands, with the wording version that was shown at the time.
+ */
+export async function recordChildConsent(form: FormData) {
+  const session = await auth();
+  if (!session?.user) notFound();
+  if (session.user.role !== "PARENT") notFound();
+
+  const studentId = z.string().min(1).parse(form.get("studentId"));
+  const link = await db.parentLink.findUnique({
+    where: { parentId_studentId: { parentId: session.user.id, studentId } },
+    include: { parent: { select: { name: true } } },
+  });
+  if (!link) notFound();
+
+  await db.guardianConsent.upsert({
+    where: { studentId },
+    create: {
+      studentId,
+      parentId: session.user.id,
+      guardianName: link.parent.name,
+      rulesVersion: CONSENT_VERSION,
+    },
+    update: {},
+  });
+  revalidatePath("/[locale]/parent", "page");
+  revalidatePath("/[locale]/live", "layout");
 }

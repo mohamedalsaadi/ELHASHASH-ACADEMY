@@ -4,7 +4,16 @@ import { effectivePrice, price } from "@/lib/pricing-engine";
 /** Loads purchasable SKUs and active bundle rules, then prices them. Throws PricingError on an invalid cart. */
 export async function priceSkus(skuIds: string[], now = new Date()) {
   const [skus, rules] = await Promise.all([
-    db.sku.findMany({ where: { id: { in: skuIds }, active: true, course: { published: true } }, include: { course: true, lesson: true, liveSession: true } }),
+    // A live seat is only purchasable while its teacher is approved for live.
+    db.sku.findMany({
+      where: {
+        id: { in: skuIds },
+        active: true,
+        course: { published: true },
+        AND: [{ OR: [{ liveSessionId: null }, { liveSession: { course: { instructor: { liveApproved: true } } } }] }],
+      },
+      include: { course: true, lesson: true, liveSession: true },
+    }),
     db.bundleRule.findMany({ where: { active: true }, include: { subjects: { select: { id: true } } } }),
   ]);
   const unique = new Set(skuIds);

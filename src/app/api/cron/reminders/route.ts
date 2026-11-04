@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { average } from "@/lib/grades";
 import { formatMoney } from "@/lib/format";
+import { liveOffered } from "@/lib/live";
 import { createNotification, notifyAdmins } from "@/lib/notify";
 import { writeWeeklyNote } from "@/lib/parent-report";
 
@@ -54,7 +55,8 @@ export async function GET(req: Request) {
     const from = new Date(now.getTime() + (w.targetMin - w.halfMin) * 60_000);
     const to = new Date(now.getTime() + (w.targetMin + w.halfMin) * 60_000);
     const sessions = await db.liveSession.findMany({
-      where: { cancelledAt: null, startsAt: { gte: from, lt: to } },
+      // Never remind anyone about a teacher an admin has not approved for live.
+      where: { ...liveOffered, startsAt: { gte: from, lt: to } },
       select: { id: true, courseId: true, titleAr: true, titleEn: true },
     });
     for (const s of sessions) {

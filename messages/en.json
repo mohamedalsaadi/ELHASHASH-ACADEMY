@@ -884,7 +884,20 @@
     "later": "Later",
     "details": "Details",
     "backToCourse": "Back to course",
-    "backToDashboard": "Student dashboard"
+    "backToDashboard": "Student dashboard",
+    "meetingUrl": "Meeting link (Zoom, Teams or Google Meet)",
+    "meetingUrlHint": "Paste the link you created yourself. Only students who hold a seat or a plan see it, from ten minutes before the start.",
+    "linkError": "That link is not accepted. Paste an https link from Zoom, Microsoft Teams or Google Meet.",
+    "notApproved": "Live lectures are not enabled for your account. Ask the admin to enable them before scheduling.",
+    "noLinkShort": "No link yet",
+    "joinCta": "Open the lecture on {provider}",
+    "joinCtaHost": "Open the meeting on {provider}",
+    "joinExternal": "This lecture runs outside Dhirwa on {provider}, in a new tab. Never share your password or a sign-in code with anyone.",
+    "joinHonest": "We record only that you opened the link. We do not know how long you stayed.",
+    "noLinkYet": "The teacher has not added the meeting link yet. It appears here before the start.",
+    "consentTitle": "Guardian consent",
+    "consentBody": "Live lectures open an external meeting link outside Dhirwa. We need the guardian's consent once per student, before the first live lecture.",
+    "consentParent": "Your guardian is linked to your account. Ask them to approve from the parent page, then come back here."
   },
   "questions": {
     "title": "Questions",
@@ -1221,7 +1234,10 @@
     "navChildren": "My children",
     "navRequests": "Messages",
     "navCourses": "Courses",
-    "buyFor": "Buy a course for {name}"
+    "buyFor": "Buy a course for {name}",
+    "consentBody": "Live lectures open an external link outside Dhirwa. Your one consent lets {name} join every lecture they hold a seat or plan for.",
+    "consentCta": "I consent to {name} joining live lectures",
+    "consentDone": "Your consent is recorded on {date}."
   },
   "homework": {
     "title": "Homework",

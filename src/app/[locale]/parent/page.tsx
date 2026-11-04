@@ -9,6 +9,7 @@ import { ParentNav } from "./ParentNav";
 import { courseZone, formatMoney } from "@/lib/format";
 import { average } from "@/lib/grades";
 import { unlinkParent } from "../account/actions";
+import { recordChildConsent } from "./actions";
 import { LinkChildForm } from "./LinkChildForm";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
 
   const links = await db.parentLink.findMany({
     where: { parentId: session.user.id },
-    include: { student: { select: { id: true, name: true, phone: true } } },
+    include: { student: { select: { id: true, name: true, phone: true, guardianConsent: { select: { consentedAt: true } } } } },
     orderBy: { createdAt: "asc" },
   });
 
@@ -150,6 +151,20 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
                 <dt>{t("lastPayment")}</dt>
                 <dd>{lastOrder?.paidAt ? `${formatMoney(lastOrder.total, lastOrder.currency, locale)} · ${date.format(lastOrder.paidAt)}` : t("noPayment")}</dd>
               </dl>
+              {/* Live lectures open an external meeting, so a guardian consents once per child. */}
+              {link.student.guardianConsent ? (
+                <p className="text-small text-ink-muted">
+                  {t("consentDone", { date: date.format(link.student.guardianConsent.consentedAt) })}
+                </p>
+              ) : (
+                <form action={recordChildConsent} className="grid gap-2 rounded-lg border border-hairline bg-raised p-3">
+                  <input type="hidden" name="studentId" value={link.student.id} />
+                  <p className="text-small text-ink-muted">{t("consentBody", { name: link.student.name })}</p>
+                  <button type="submit" className="btn btn-outline justify-self-start">
+                    {t("consentCta", { name: link.student.name })}
+                  </button>
+                </form>
+              )}
               <div className="flex flex-wrap gap-4 text-small">
                 <Link href={`/parent/children/${link.student.id}`} className="text-pen underline underline-offset-4">
                   {th("viewChild")}

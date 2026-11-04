@@ -10,6 +10,7 @@ import { courseZone, currencyZone, formatDate, formatMoney, formatWhen } from "@
 import { opensAssignment } from "@/lib/assignments";
 import { average } from "@/lib/grades";
 import { courseProgress, groupLive, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
+import { liveOffered } from "@/lib/live";
 import { opensLesson, type Grant } from "@/lib/plans";
 import { ProgressBar } from "@/components/ui/progress";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -161,7 +162,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     }),
     db.liveSession.findMany({
       where: {
-        cancelledAt: null,
+        // Only approved teachers' sessions are offered; the seat rule below is unchanged.
+        ...liveOffered,
         startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) },
         OR: [
           { courseId: { in: liveCourses.filter((c) => c.active && c.active.accessType !== "MONTHLY").map((c) => c.courseId) } },

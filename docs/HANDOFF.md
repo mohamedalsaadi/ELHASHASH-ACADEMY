@@ -29,6 +29,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-04 owner decision: hide live streaming and switch off scheduled reminders, deleting nothing. Landed so far: `User.liveApproved` (default false, additive migration `20261107120000_teacher_live_approval`), `src/lib/live.ts` gates, an admin toggle on `admin/teachers/[id]`, `vercel.json` crons emptied, `reminders.yml` schedule removed (manual dispatch only). **NOT DONE YET: nothing reads the gate, so live is still visible on the site.** Remaining surfaces: course page, checkout, `/live/[id]`, dashboard, student home, teacher live, parent pages.
 
+- 2026-11-05 live lectures now use a teacher-hosted meeting link (Zoom / Teams / Meet) instead of the Daily iframe. `LiveSession.roomUrl` keeps its column and now holds the pasted link; `src/lib/live-rules.ts` validates https + a host allow-list; the join page keeps its ladder and ends in a consent gate + a plain external link; `liveAttendance` now means "opened the link". `GuardianConsent` (new, additive) can only be written by a linked parent, from `/parent`. `liveOffered` / `liveInstructor` / `liveApprovedOn` now gate the course page, dashboard, student home, join page, teacher form and checkout. Daily is unused but present. 217 unit tests, tsc and build green. NOT done: e2e spec for the new flow, and the owner-approved cleanup of stale `daily.co` rows.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

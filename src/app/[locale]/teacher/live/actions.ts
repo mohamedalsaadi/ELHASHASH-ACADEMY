@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { wallTime } from "@/lib/admin-input";
-import { deleteRoom } from "@/lib/daily";
 import { db } from "@/lib/db";
 import { courseZone, toMinor } from "@/lib/format";
+import { canPublishLive } from "@/lib/live";
+import { meetingUrlError } from "@/lib/live-rules";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
 // Teachers schedule sessions and set the seat price in their own courses.
@@ -28,12 +29,20 @@ function done() {
   revalidatePath("/[locale]/live", "layout");
 }
 
-/** Closes the Daily room, if one was made, so the next join builds it again with the new times. */
-async function closeRoom(s: { id: string; roomUrl: string | null }) {
-  if (!s.roomUrl) return;
-  await deleteRoom(s.id).catch((e) => console.error(e));
-  await db.liveSession.update({ where: { id: s.id }, data: { roomUrl: null } });
+/** The teacher's own meeting link, or null. An empty field clears it; a bad host is refused. */
+function meetingLink(form: FormData, locale: string): string | null {
+  const raw = String(form.get("meetingUrl") ?? "");
+  if (meetingUrlError(raw) === "invalid") redirect(`/${locale}/teacher/live?error=link`);
+  return raw.trim() || null;
 }
+
+/** Admins always may; a teacher only after an admin turned live on for them. */
+async function assertCanPublish(me: { id: string; role: string }, locale: string) {
+  if (!(await canPublishLive(me))) redirect(`/${locale}/teacher/live?error=notApproved`);
+}
+
+/** setSeatPrice is also posted from the admin screen, which carries no locale field. */
+const readLocale = (form: FormData) => (form.get("locale") === "en" ? "en" : "ar");
 
 async function ownSession(id: string) {
   const me = await requireStaff();
@@ -46,6 +55,8 @@ export async function scheduleLive(form: FormData) {
   const me = await requireStaff();
   const d = z.object({ courseId: z.string(), locale: z.enum(["ar", "en"]), ...fields }).parse(Object.fromEntries(form));
   await assertCourse(me, d.courseId);
+  await assertCanPublish(me, d.locale);
+  const roomUrl = meetingLink(form, d.locale);
   const course = await zoneOf(d.courseId);
   const startsAt = wallTime(d.startsAt, courseZone(course))!;
   if (startsAt <= new Date()) redirect(`/${d.locale}/teacher/live?error=past`);
@@ -58,6 +69,7 @@ export async function scheduleLive(form: FormData) {
       titleEn: d.titleEn,
       startsAt,
       durationMin: d.durationMin,
+      roomUrl,
       sku: {
         create: {
           courseId: d.courseId,
@@ -76,28 +88,32 @@ export async function scheduleLive(form: FormData) {
 }
 
 export async function updateLive(form: FormData) {
-  const d = z.object({ id: z.string(), ...fields }).parse(Object.fromEntries(form));
+  const d = z.object({ id: z.string(), locale: z.enum(["ar", "en"]), ...fields }).parse(Object.fromEntries(form));
+  const me = await requireStaff();
   const s = await ownSession(d.id);
+  await assertCanPublish(me, d.locale);
+  const roomUrl = meetingLink(form, d.locale);
   const startsAt = wallTime(d.startsAt, courseZone(await zoneOf(s.courseId)))!;
   const endsAt = end(startsAt, d.durationMin);
   await db.$transaction([
-    db.liveSession.update({ where: { id: s.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, startsAt, durationMin: d.durationMin } }),
+    db.liveSession.update({
+      where: { id: s.id },
+      data: { titleAr: d.titleAr, titleEn: d.titleEn, startsAt, durationMin: d.durationMin, roomUrl },
+    }),
     db.sku.updateMany({ where: { liveSessionId: s.id }, data: { saleTo: endsAt, accessEndsAt: endsAt } }),
     // Seats already sold move with the session.
     db.entitlement.updateMany({ where: { liveSessionId: s.id }, data: { endsAt } }),
   ]);
-  if (startsAt.getTime() !== s.startsAt.getTime() || d.durationMin !== s.durationMin) await closeRoom(s);
   done();
 }
 
-/** Keeps the session and its sold seats on record (for refunds) but stops sales and closes the room. */
+/** Keeps the session and its sold seats on record (for refunds) but stops sales. */
 export async function cancelLive(form: FormData) {
   const s = await ownSession(z.string().parse(form.get("id")));
   await db.$transaction([
     db.liveSession.update({ where: { id: s.id }, data: { cancelledAt: new Date() } }),
     db.sku.updateMany({ where: { liveSessionId: s.id }, data: { active: false } }),
   ]);
-  await closeRoom(s);
   done();
 }
 
@@ -108,6 +124,7 @@ export async function setSeatPrice(form: FormData) {
     .parse(Object.fromEntries(form));
   const sku = await db.sku.findFirstOrThrow({ where: { id: d.id, accessType: "LIVE" }, select: { currency: true, courseId: true } });
   await assertCourse(me, sku.courseId);
+  await assertCanPublish(me, readLocale(form));
   await db.sku.updateMany({
     where: { id: d.id, accessType: "LIVE", liveSession: { cancelledAt: null } },
     data: { price: toMinor(d.price, sku.currency), active: d.active },

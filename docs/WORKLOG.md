@@ -25,6 +25,24 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Exam readiness index on the course page
+
+- Wave-1 item #1. `src/lib/readiness.ts` is pure and unit-tested (10 tests): coverage of openable
+  lessons (35), practice accuracy from `PracticeAttempt.marks/maxMarks` (35), the one-tap confidence
+  share (15) and recency decayed over 14 days (15), with the weights renormalised over the signals a
+  student has actually produced.
+- **Honesty rules baked into the maths:** no practice means the score is capped at 55 — watching is
+  not readiness — and the card says exactly that. A unit is only named as the gap when it has at
+  least three marked attempts and sits under 80%; otherwise the gap is the unit with the most
+  unfinished lessons. Nothing predicts a grade the teacher has not given.
+- Rendered as one card under the progress bar on `courses/[slug]`, carrying `data-readiness` for the
+  tests. Readiness is only computed for a signed-in non-staff student.
+- Caught while wiring: the page already declares a **local** `opens` helper, so importing the
+  `opens` of the same name from `lib/learning` shadowed it and used it before its declaration — a
+  temporal-dead-zone crash. The import was dropped and the local helper reused.
+- Verified: 239 unit tests, `npx tsc --noEmit`, `npm run build`, and `e2e/lessons.spec.ts` (4 tests,
+  ar-desktop) asserting the score is an integer in range and stays capped without practice.
+
 ## 2026-11-05: One-tap confidence after each lesson
 
 - Wave-1 item #2. `LessonConfidence` enum (`GOT_IT | SHAKY | LOST`), nullable on `LessonView`

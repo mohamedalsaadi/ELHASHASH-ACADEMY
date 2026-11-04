@@ -39,6 +39,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 one-tap confidence after a finished lesson (`LessonConfidence` enum on `LessonView`, additive migration). Three buttons, one write, `aria-pressed` reflects the current answer; access re-checked in the action. This is the input for the readiness index and class pulse, neither built yet. `e2e/lessons.spec.ts` covers the tap. 229 tests, tsc, build green.
 
+- 2026-11-05 exam readiness index, `src/lib/readiness.ts` (pure, 10 unit tests), rendered as a card on `courses/[slug]` with `data-readiness`. Coverage 35 / accuracy 35 / confidence 15 / recency 15, renormalised over available signals; no practice caps the score at 55 by design. Gap names the weakest unit (≥3 marked attempts, <80%) else the unit with most unfinished lessons. WARNING for later: `courses/[slug]/page.tsx` has a local `opens` helper — do not import `opens` from `lib/learning` there. 239 tests, tsc, build, `e2e/lessons.spec.ts` green.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

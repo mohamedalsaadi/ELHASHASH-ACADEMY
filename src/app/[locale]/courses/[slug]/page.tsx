@@ -13,6 +13,7 @@ import { grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
 import { liveApprovedOn } from "@/lib/live";
+import { readiness } from "@/lib/readiness";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
@@ -135,24 +136,52 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const lessonIds = course.units.flatMap((u) => u.lessons.map((l) => l.id));
   const homeworkCount = session?.user ? await db.assignment.count({ where: { courseId: course.id } }) : 0;
   const examCount = session?.user ? await db.examPaper.count({ where: { courseId: course.id, published: true } }) : 0;
-  const [completedRows, currentView] = session?.user
+  const [completedRows, currentView, attempts] = session?.user
     ? await Promise.all([
-        db.lessonView.findMany({ where: { userId: session.user.id, lessonId: { in: lessonIds }, completedAt: { not: null } }, select: { lessonId: true } }),
+        db.lessonView.findMany({
+          where: { userId: session.user.id, lessonId: { in: lessonIds }, completedAt: { not: null } },
+          select: { lessonId: true, confidence: true, lastSeenAt: true },
+        }),
         db.lessonView.findFirst({
           where: { userId: session.user.id, completedAt: null, lesson: { unit: { courseId: course.id } } },
           orderBy: { lastSeenAt: "desc" },
           select: { lessonId: true },
         }),
+        db.practiceAttempt.findMany({
+          where: { userId: session.user.id, lessonId: { in: lessonIds } },
+          select: { lessonId: true, marks: true, maxMarks: true, createdAt: true },
+        }),
       ])
-    : [[], null];
+    : [[], null, []];
   const completed = new Set(completedRows.map((v) => v.lessonId));
+
 
   const entries = lessonEntries(course.units);
   const scopeOf = (e: (typeof entries)[number]) => ({ id: e.lesson.id, month: e.lesson.month, term: e.term });
   const opens = (e: (typeof entries)[number]) => staff || e.isFree || active.some((g) => opensLesson(g, scopeOf(e), now));
 
-  const paidEntries = entries.filter((e) => !e.isFree);
-  const openPaid = paidEntries.filter(opens).length;
+  // Readiness is built only from what was actually recorded: finished lessons, practice marks,
+  // the one-tap confidence answers, and when the student was last here.
+  const ready =
+    session?.user && !staff
+      ? readiness({
+          units: course.units.map((u) => ({
+            id: u.id,
+            title: ar ? u.titleAr : u.titleEn,
+            lessonIds: lessonEntries([u]).filter(opens).map((e) => e.lesson.id),
+          })),
+          completed,
+          confidence: new Map(completedRows.filter((r) => r.confidence).map((r) => [r.lessonId, r.confidence!] as const)),
+          attempts,
+          lastActivity: [...completedRows.map((r) => r.lastSeenAt), ...attempts.map((a) => a.createdAt)].reduce<Date | null>(
+            (latest, d) => (!latest || d > latest ? d : latest),
+            null,
+          ),
+          now,
+        })
+      : null;
+
+  const paidEntries = entries.filter((e) => !e.isFree);  const openPaid = paidEntries.filter(opens).length;
   // A course with no paid lessons is not "owned" by everyone: only a real whole-course grant makes it full.
   const holdsWholeCourse = active.some((g) => !g.lessonId && !g.liveSessionId);
   const level: "full" | "partial" | "none" =
@@ -326,6 +355,31 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
 
       {session?.user && !staff && level !== "none" && progress.total > 0 && (
         <ProgressBar done={progress.done} total={progress.total} label={t("progressLabel")} />
+      )}
+
+      {ready && (
+        <section className="card grid gap-2 p-4" aria-label={t("readiness.title")} data-readiness={ready.score}>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="font-display text-h3 font-bold">{t("readiness.title")}</span>
+            <span className="font-display text-h2 font-bold num">
+              {ready.score}
+              <span className="text-small font-normal text-ink-muted">/100</span>
+            </span>
+          </div>
+          {ready.capped ? (
+            <p className="text-small text-ink-muted">{t("readiness.noPractice")}</p>
+          ) : ready.gap?.kind === "accuracy" ? (
+            <p className="text-small text-ink-muted">
+              {t("readiness.gapAccuracy", { unit: ready.gap.title, percent: Math.round(ready.gap.accuracy * 100) })}
+            </p>
+          ) : ready.gap?.kind === "unfinished" ? (
+            <p className="text-small text-ink-muted">
+              {t("readiness.gapUnfinished", { unit: ready.gap.title, count: ready.gap.remaining })}
+            </p>
+          ) : (
+            <p className="text-small text-ink-muted">{t("readiness.allGood")}</p>
+          )}
+        </section>
       )}
 
       {homeworkCount > 0 && (

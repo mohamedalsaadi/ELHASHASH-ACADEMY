@@ -442,7 +442,14 @@
     "subjectLede": "{count, plural, =0 {No teacher has released a course in this subject yet.} one {One course, with the sessions and price its teacher set.} other {# courses, each with the sessions and price its teacher set.}}",
     "subjectEmpty": "No courses in this subject yet. Check back soon.",
     "mapLabel": "Trail map: one trail per country, climbing to the summit",
-    "aboutTeacher": "The teacher"
+    "aboutTeacher": "The teacher",
+    "readiness": {
+      "title": "Exam readiness",
+      "noPractice": "No practice yet. Practice raises this number; watching does not.",
+      "gapAccuracy": "Weakest unit: {unit} ({percent}% of marks earned).",
+      "gapUnfinished": "Biggest gap: {unit} — {count} lessons unfinished.",
+      "allGood": "No clear gap right now. Keep going."
+    }
   },
   "player": {
     "title": "Lesson",

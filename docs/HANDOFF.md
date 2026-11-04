@@ -2,6 +2,7 @@
 
 For whoever continues next (another AI or tool). Newest line at the bottom of "Done". Read `AGENTS.md`, then
 `docs/WORKLOG.md`, then `docs/platform-gap-plan.md` (status table). Each line below is one finished, committed step.
+Everything still open, in order: `docs/plans/remaining.md`.
 
 ## How to work
 - Run all e2e: `npm run e2e` (about 13 min). One spec: `npm run e2e -- e2e/roles.spec.ts --project=en-phone`.

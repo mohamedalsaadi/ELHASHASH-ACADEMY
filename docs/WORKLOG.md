@@ -25,6 +25,15 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-04: Reminders workflow could not be parsed at all
+
+- `.github/workflows/reminders.yml` held its curl command inline after `run:`, and that command contains
+  `Authorization: Bearer …`. A colon followed by a space inside a plain YAML scalar marks a mapping, so the
+  file was invalid and GitHub created no jobs — this is why run #4 showed "Failure in 0s". Moved the command
+  into a `|` block scalar. The only such occurrence in `.github/`; `ci.yml` is unaffected.
+- Checked with a YAML parser: the committed version raises `ScannerError: mapping values are not allowed
+  here`, the fixed one parses to one step. Still needs the owner's push and a manual re-run.
+
 ## 2026-11-04: Money tests — settlement, replay and the double-grant guard
 
 - `src/lib/ziina.test.ts` (9 tests) drives `syncPaymentIntent` with a stubbed `fetch`, so the real

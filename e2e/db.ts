@@ -52,8 +52,35 @@ export async function lessonsOf(courseSlug: string) {
   return { free: rows.find((r) => r.isFree)!.id, paid: rows.find((r) => !r.isFree)!.id, courseId: rows[0].courseId };
 }
 
-export async function grantCourse(userId: string, courseId: string) {
-  await sql(`INSERT INTO "Entitlement" (id, "userId", "courseId", "accessType", "startsAt", "endsAt") VALUES ($1,$2,$3,'YEARLY',(now() at time zone 'utc') - interval '1 minute',(now() at time zone 'utc') + interval '1 year')`, [
+/** The seeded live sessions of a course: the one still running, and the cancelled one. */
+export async function liveOf(courseSlug: string) {
+  const rows = await sql<{ id: string; cancelledAt: string | null }>(
+    `SELECT s.id, s."cancelledAt" FROM "LiveSession" s JOIN "Course" c ON c.id = s."courseId" WHERE c.slug = $1`,
+    [courseSlug],
+  );
+  return { live: rows.find((r) => !r.cancelledAt)!.id, cancelled: rows.find((r) => r.cancelledAt)!.id };
+}
+
+/** Records guardian consent for a student, as the linked parent would. */
+export async function consentLive(studentPhone: string) {
+  await sql(
+    `INSERT INTO "GuardianConsent" ("studentId","parentId","guardianName","rulesVersion")
+     SELECT s.id, p.id, p.name, 'e2e' FROM "User" s, "User" p
+     WHERE s.phone = $1 AND p.role = 'PARENT'
+     ON CONFLICT ("studentId") DO NOTHING`,
+    [studentPhone],
+  );
+}
+
+export async function clearConsent(studentPhone: string) {
+  await sql(`DELETE FROM "GuardianConsent" WHERE "studentId" = (SELECT id FROM "User" WHERE phone = $1)`, [studentPhone]);
+}
+
+export async function setLiveApproved(phone: string, on: boolean) {
+  await sql(`UPDATE "User" SET "liveApproved" = $2 WHERE phone = $1`, [phone, on]);
+}
+
+export async function grantCourse(userId: string, courseId: string) {  await sql(`INSERT INTO "Entitlement" (id, "userId", "courseId", "accessType", "startsAt", "endsAt") VALUES ($1,$2,$3,'YEARLY',(now() at time zone 'utc') - interval '1 minute',(now() at time zone 'utc') + interval '1 year')`, [
     randomUUID(), userId, courseId,
   ]);
 }

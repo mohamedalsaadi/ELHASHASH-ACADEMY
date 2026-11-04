@@ -44,7 +44,7 @@ async function main() {
   const teacherEg = await user(PERSONAS.teacherEg);
   const teacherAe = await user(PERSONAS.teacherAe);
   const studentEg = await user(PERSONAS.studentEg, eg12.id);
-  await user(PERSONAS.studentAe, ae12.id);
+  const studentAe = await user(PERSONAS.studentAe, ae12.id);
   const parent = await user(PERSONAS.parent);
 
   for (const [t, c] of [[teacherEg, eg], [teacherAe, ae]] as const) {
@@ -78,6 +78,51 @@ async function main() {
     where: { parentId_studentId: { parentId: parent.id, studentId: studentEg.id } },
     update: {},
     create: { parentId: parent.id, studentId: studentEg.id },
+  });
+  // The UAE student too, so the parent can record consent for the student who holds a live seat.
+  await db.parentLink.upsert({
+    where: { parentId_studentId: { parentId: parent.id, studentId: studentAe.id } },
+    update: {},
+    create: { parentId: parent.id, studentId: studentAe.id },
+  });
+
+  // Live lectures: the UAE teacher is approved, the Egypt teacher keeps the default (not approved).
+  // The live session starts in two minutes, so the student's join window (start - 10 min) is open.
+  await db.user.update({ where: { id: teacherAe.id }, data: { liveApproved: true } });
+  const course = await db.course.findUniqueOrThrow({ where: { slug: "ae-12-math-e2e" } });
+  await db.liveSession.deleteMany({ where: { courseId: course.id } });
+  const start = new Date(Date.now() + 2 * 60_000);
+  await db.liveSession.createMany({
+    data: [
+      {
+        courseId: course.id,
+        titleAr: "حصة مباشرة للتجربة",
+        titleEn: "E2E live lecture",
+        startsAt: start,
+        durationMin: 60,
+        roomUrl: "https://meet.google.com/e2e-live",
+      },
+      {
+        courseId: course.id,
+        titleAr: "حصة ملغاة للتجربة",
+        titleEn: "E2E cancelled lecture",
+        startsAt: start,
+        durationMin: 60,
+        roomUrl: "https://meet.google.com/e2e-cancelled",
+        cancelledAt: new Date(),
+      },
+    ],
+  });
+  // A whole-course grant, which is what opens live for a non-MONTHLY, non-rental entitlement.
+  await db.entitlement.deleteMany({ where: { userId: studentAe.id, courseId: course.id } });
+  await db.entitlement.create({
+    data: {
+      userId: studentAe.id,
+      courseId: course.id,
+      accessType: "SEMESTER",
+      startsAt: new Date(Date.now() - 60_000),
+      endsAt: new Date(Date.now() + 30 * 86_400_000),
+    },
   });
   // The seeded Egypt teacher (01000000000) owns the Egypt courses; give it the same password.
   await db.user.update({ where: { phone: "01000000000" }, data: { passwordHash: hash } });

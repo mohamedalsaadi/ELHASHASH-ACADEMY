@@ -47,7 +47,10 @@ Git history has the rest (`git log --oneline`).
   admin approves a teacher.
 - Daily is dead but present: `src/lib/daily.ts` is unreferenced, and the CSP still allows it.
 - Verified: 217 unit tests (7 new in `live-rules.test.ts`), `npx tsc --noEmit`, `npm run build`.
-- Open: no Playwright spec for the new flow; stale `daily.co` URLs in `LiveSession.roomUrl` need a
+- `e2e/live.spec.ts`: 7 tests, green on `en-desktop` and `ar-desktop`. They cover the consent gate, the
+  join link (href, `target=_blank`, `rel=noopener`, no iframe), the parent recording consent, a
+  student with no seat, a cancelled lecture, and both sides of the teacher approval gate.
+- Open: stale `daily.co` URLs in `LiveSession.roomUrl` need a
   one-off owner-approved cleanup; attendance copy in parent/admin still says "attended".
 
 ## 2026-11-04: Live streaming hidden, scheduled reminders switched off

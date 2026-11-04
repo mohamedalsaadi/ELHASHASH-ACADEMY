@@ -1,7 +1,19 @@
 # Platform gap plan (2026-11-03)
 
 What is built, what is missing, and the order to close it. Read with `docs/launch-checklist.md` (unverified items and
-owner actions) and `docs/WORKLOG.md`. Nothing here is started; every phase needs the owner's yes.
+owner actions) and `docs/WORKLOG.md`. Every phase needs the owner's yes.
+
+## 0. Status (updated 2026-11-04, for the next agent)
+
+| Phase | State |
+|---|---|
+| 1 Switch on and prove | **Waiting on the owner.** `CRON_SECRET` (Vercel + GitHub secret) and `GEMINI_API_KEY` are still not set; the GitHub secrets `APP_URL` and `CRON_SECRET` feed `.github/workflows/reminders.yml`. Live session, playback, Ziina test, refund and reset are not yet run. |
+| 2 Simulation and testing | **Started.** Done: item 1 (as a local throwaway DB instead of a Neon branch: `npm run e2e`, `scripts/e2e.mjs`, `e2e/seed.ts`), most of item 2 and item 3 (`e2e/*.spec.ts`, 66 pass in ar/en, phone/desktop). Next, in order: item 2 remainder (checkout to the Ziina step, lesson playback, practice, exam, homework, live join, password reset), item 4 money tests, item 8 (add `npm run e2e` to `.github/workflows/ci.yml`; Chrome is on the GitHub ubuntu runner, embedded-postgres has a linux build), item 7, item 5, item 6. |
+| 3 to 6 | Not started. |
+
+How to run: `npm run e2e` (about 13 minutes, all four projects) or `npm run e2e -- e2e/roles.spec.ts --project=en-phone`.
+Rules for the suite: never point it at the production `DATABASE_URL`; `e2e/seed.ts` refuses any database but the
+throwaway one. Open finding for the owner: the sitewide "New" bar (`NewsBanner`) shows every country's courses.
 
 ## 1. Where it stands (from the code and Vercel, not memory)
 

@@ -23,6 +23,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 - 2026-11-04 full suite: 98 passed, 2 skipped (16.8 min). Pushed to main.
 - 2026-11-04 CI failed on GitHub (both jobs, ~9s): Node 22 ships npm 10, which rejected package-lock.json ("Missing: @swc/helpers"); local npm 11 did not. Fixed by regenerating the lock with `npx npm@10 install --package-lock-only`. ALWAYS check lockfile changes with `npx npm@10 ci --dry-run`. Reminders workflow run #4 also showed Failure in 0s with no jobs: cause unknown (secrets not set yet?), check its log in the Actions tab.
 
+- 2026-11-04 money tests: `src/lib/ziina.test.ts` (settlement decisions, stable event id) and `src/lib/payments.test.ts` (replay drops, no double grant, 30/70 row, failed/expired). Added the `@/*` alias to `vitest.config.ts` — without it no module importing `@/…` was unit-testable. 210 tests, tsc and build green. NOTE: `payments.test.ts` fakes the transaction, so it models the database contract rather than proving it; a real double-delivery check still wants Postgres.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

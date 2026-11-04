@@ -25,6 +25,29 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-04: Money tests — settlement, replay and the double-grant guard
+
+- `src/lib/ziina.test.ts` (9 tests) drives `syncPaymentIntent` with a stubbed `fetch`, so the real
+  decide-from-Ziina's-answer path runs: settles only a `completed` intent whose amount equals
+  `total + vat` and whose currency matches; a short, long or foreign-currency amount sets `mismatch`
+  and writes nothing; `failed` → failed, `canceled` → expired, an open intent records nothing; an
+  order with no intent makes no outbound call. One test pins the event id (`ziina:<id>:<status>`) as
+  identical across three deliveries — that id is what makes a replay a no-op downstream.
+- `src/lib/payments.test.ts` (8 tests) drives `applyPaymentOutcome` against a fake transaction that
+  models the two database guarantees it leans on: unique `gatewayEventId`, and a PAID transition
+  that only counts when the order was not already PAID. Covers: one payment grants one entitlement
+  and one 30/70 ledger row (9000 / 21000 on a 30000 net, VAT off); a replay returns `false` and
+  grants nothing; a fresh event id on an already-paid order still grants nothing; a mismatched
+  amount throws and leaves the order PENDING; failed and canceled grant nothing; a parent's payment
+  grants the child. This is the first unit test in the repo to touch `payments.ts`, which the
+  codebase had kept out of unit tests on purpose — the fake models the contract, it does not prove
+  the database enforces it. The end-to-end proof still needs a real Postgres.
+- `vitest.config.ts`: added the `@/*` → `src/*` alias. Without it no module importing `@/…` could be
+  unit tested at all, which is why every earlier test covered only alias-free helpers.
+- Not covered yet: refund reversal on the ledger end to end, and the webhook route's own guards
+  (`not_configured`, `too_large`, unknown id) — cheap to add next.
+- Verified: `npx tsc --noEmit` clean, `npm test` 210 passed (28 files), `npm run build` green.
+
 ## 2026-11-04: Phase 2 started, end-to-end suite on a throwaway database
 
 - `npm run e2e` (`scripts/e2e.mjs`): starts a local Postgres 18 (`embedded-postgres`, UTF-8) in a temp folder,

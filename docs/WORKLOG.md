@@ -42,7 +42,10 @@ Git history has the rest (`git log --oneline`).
 - `vitest.config.ts` excludes `e2e/`; the not-found page carries `data-not-found` for the tests.
 - Finding, not changed: the sitewide "New" bar (`NewsBanner`, in the shared layout) shows the newest courses of every
   country, so an Egypt student sees UAE courses there. Scoping it per country would make the layout dynamic; owner call.
-- Open in Phase 2: payment and refund tests, load test, accessibility pass, Sentry and uptime, restore drill, and the
+- Added later the same day: checkout (`checkout.spec.ts`), password reset (`reset.spec.ts`), lesson access
+  (`lessons.spec.ts`), helpers in `e2e/db.ts`, and an `e2e` job in `.github/workflows/ci.yml` (not yet seen green on
+  GitHub). Live step-by-step state for the next agent: `docs/HANDOFF.md`.
+- Open in Phase 2: exam and homework e2e, payment and refund tests, load test, accessibility pass, Sentry and uptime, restore drill, and the
   e2e job in GitHub Actions.
 
 ## 2026-11-03: Gap audit, session re-check, health check, smoke test, CI

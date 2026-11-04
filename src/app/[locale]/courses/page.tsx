@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/brand/Mark";
 import { Network } from "@/components/brand/Network";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
+import { matchesQuery } from "@/lib/arabic-search";
 import { db } from "@/lib/db";
 import { alternates } from "@/lib/seo";
 
@@ -38,24 +39,36 @@ export default async function CoursesPage({
     }),
     db.course.findMany({ where: { kind: "SKILL", published: true }, orderBy: { titleEn: "asc" }, include: cardInclude(now) }),
     q.length >= 2
-      ? db.course.findMany({
-          where: {
-            published: true,
-            OR: [
-              { titleAr: { contains: q, mode: "insensitive" } },
-              { titleEn: { contains: q, mode: "insensitive" } },
-              { descAr: { contains: q, mode: "insensitive" } },
-              { descEn: { contains: q, mode: "insensitive" } },
-              { subject: { is: { nameAr: { contains: q, mode: "insensitive" } } } },
-              { subject: { is: { nameEn: { contains: q, mode: "insensitive" } } } },
-              { grade: { is: { nameAr: { contains: q, mode: "insensitive" } } } },
-              { grade: { is: { nameEn: { contains: q, mode: "insensitive" } } } },
-            ],
-          },
-          orderBy: { createdAt: "desc" },
-          take: 24,
-          include: cardInclude(now),
-        })
+      ? db.course
+          .findMany({
+            where: { published: true },
+            orderBy: { createdAt: "desc" },
+            // Folded in memory rather than in SQL: Postgres `contains` cannot see through the
+            // alef/taa-marbuta/tatweel variants an Arabic query is written with.
+            // ponytail: fine while the catalogue is small; add a normalised column or pg_trgm past a few thousand rows.
+            take: 500,
+            include: cardInclude(now),
+          })
+          .then((rows) =>
+            rows
+              .filter((c) =>
+                matchesQuery(
+                  [
+                    c.titleAr,
+                    c.titleEn,
+                    c.descAr,
+                    c.descEn,
+                    c.subject?.nameAr,
+                    c.subject?.nameEn,
+                    c.grade?.nameAr,
+                    c.grade?.nameEn,
+                    c.instructor?.name,
+                  ],
+                  q,
+                ),
+              )
+              .slice(0, 24),
+          )
       : Promise.resolve([]),
   ]);
   const tab = "btn btn-outline font-display";

@@ -25,6 +25,26 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Innovations roadmap, and Arabic-tolerant catalogue search
+
+- `docs/plans/innovations.md`: 28 ideas across student, teacher, parent, owner and platform, each
+  chosen because the data already exists. Owner rules applied throughout: algorithm-first, AI drafts
+  only, no leaderboards or invented social proof, nothing exposing a minor's data to another minor.
+- Shipped wave-1 item: **Arabic-tolerant search** (`src/lib/arabic-search.ts`). Postgres `contains`
+  could not see through أ/إ/آ/ا, ة/ه, ى/ي, diacritics, tatweel or Arabic-Indic digits, so real
+  Arabic queries missed. `normalizeSearch` folds both sides; `matchesQuery` requires every token and
+  also matches when one side carries "ال" and the other does not. `/courses` now loads published
+  courses and folds in memory (capped at 500 — see the `ponytail:` note).
+- `e2e/search.spec.ts` covers five spellings including diacritics and tatweel, plus a no-match case.
+  Its selector is scoped to `#results` because the sitewide "new course" banner also links to that
+  course and would have made the test pass with search broken.
+- Bugs found while inventorying, not yet fixed (recorded in the roadmap): `PracticeAttempt.xp` stores
+  the cumulative total rather than the run's XP, so the weekly leaderboard re-counts prior XP;
+  `LessonView.watchedSec` is read by admin but never written; exam marks never reach the homework
+  average or the review schedule; `masteryOf` and `QuizAttempt` have no callers.
+- Verified: 229 unit tests (12 new), `npx tsc --noEmit`, `npm run build`, `e2e/search.spec.ts` green
+  on ar-desktop and en-desktop.
+
 ## 2026-11-05: Live lectures by external meeting link, with guardian consent
 
 - Owner decision: no integrated video vendor. The teacher hosts on Zoom / Teams / Google Meet and

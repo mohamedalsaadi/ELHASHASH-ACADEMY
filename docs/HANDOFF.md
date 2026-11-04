@@ -20,6 +20,7 @@ For whoever continues next (another AI or tool). Newest line at the bottom of "D
 - 2026-11-04 e2e/reset.spec.ts + e2e/db.ts (plain-pg helper: Playwright cannot import the generated Prisma client, it uses import.meta): reset link, single use, short password, no email enumeration. Passes en-desktop, ar-phone.
 - 2026-11-04 e2e/lessons.spec.ts: free unit open, paid unit closed until an entitlement is granted, signed out refused. GOTCHA for SQL helpers in e2e/db.ts: Prisma stores UTC in timestamp columns, so raw SQL must use (now() at time zone 'utc'), plain now() is +4h on this machine.
 - 2026-11-04 full suite: 98 passed, 2 skipped (16.8 min). Pushed to main.
+- 2026-11-04 CI failed on GitHub (both jobs, ~9s): Node 22 ships npm 10, which rejected package-lock.json ("Missing: @swc/helpers"); local npm 11 did not. Fixed by regenerating the lock with `npx npm@10 install --package-lock-only`. ALWAYS check lockfile changes with `npx npm@10 ci --dry-run`. Reminders workflow run #4 also showed Failure in 0s with no jobs: cause unknown (secrets not set yet?), check its log in the Actions tab.
 
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root

@@ -15,9 +15,10 @@ For whoever continues next (another AI or tool). Newest line at the bottom of "D
 
 ## Done
 - 2026-11-04 e2e suite on a throwaway Postgres (d2a1909), plans saved under docs/plans (f42eb34), pushed.
+- 2026-11-04 added `e2e` job to .github/workflows/ci.yml (not yet run on GitHub).
 
 ## Next (in order)
-1. e2e job in `.github/workflows/ci.yml`
+1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. e2e: checkout up to the Ziina step
 3. e2e: password reset, lesson page
 4. e2e: exam and homework

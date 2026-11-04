@@ -21,3 +21,23 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm test
       - run: npm run build
+  e2e:
+    # Browser tests on a throwaway local Postgres (scripts/e2e.mjs); uses the Chrome already on the runner.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results

@@ -67,7 +67,6 @@ Each line says what was checked instead, and how to close it.
 - [ ] **New-country visuals and time zones.** The path is built; no new country was created.
 - [ ] **Sitemap, canonical and OG in production.** Set `APP_URL`, then re-check `/sitemap.xml`, a course `<head>` and a share card.
 - [ ] **Course OG image.** Deliberately English-titled: Satori's default font has no Arabic shaping.
-- [ ] **CRON reminders.** `CRON_SECRET` is now set, so Vercel's daily run authenticates; it still has not been watched send real email.
 - [ ] **Currencies beyond the seven.** EGP, SAR, AED, KWD, QAR, BHD and OMR only.
 - [ ] **Privacy policy legal review.** Draft complete; needs the owner's advisor.
 - [ ] **Search at scale.** `contains` only; add a trigram index if the catalog grows.
@@ -94,7 +93,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 |---|---|---|
 | `APP_URL` | yes | canonical, sitemap, OG, email links, Paymob callback |
 | `AUTH_SECRET` | yes | session signing; generate per environment |
-| `DATABASE_URL` | yes | Neon; see gate 0 |
+| `DATABASE_URL` | yes | Neon; see gate 0. End it with `sslmode=verify-full`, not `sslmode=require` (see the SSL note below) |
 | `SITE_PASSWORD` | set empty | non-empty puts the whole site behind basic auth |
 | `CRON_SECRET` | no | the cron route was removed on 2026-11-05 |
 | `RESEND_API_KEY`, `MAIL_FROM` | yes | all transactional email |
@@ -108,7 +107,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
 
 - [x] **Vercel Blob store** — created private in `cdg1`; `BLOB_READ_WRITE_TOKEN` is set for Production and Preview. The upload and download paths still need a teacher-session test.
-- [ ] **Reminder schedule.** The 15-minute live reminder needs a job that runs every 10 minutes, which Vercel Hobby cannot do. Create a free external scheduler (cron-job.org, GitHub Actions, or similar) calling `GET https://<domain>/api/cron/reminders` every 10 minutes with `Authorization: Bearer <CRON_SECRET>`. Leave `vercel.json` as it is: its daily 05:00 run is harmless and the external calls supply the cadence. The route returns 401 without the secret, and repeated runs inside a window collapse on the notification's dedupe key.
+- [ ] **`sslmode=verify-full` in `DATABASE_URL`** (audit #47). Production logs carry `SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'`, emitted by `pg-connection-string` 8.x. `.env.local` and Neon's default both say `sslmode=require`. Change that one parameter to `verify-full` in Vercel (Production and Preview) and locally. Behaviour does not change under `pg` 8.23 — `require` is already treated as `verify-full` — but the warning stops and the intent becomes explicit. No code change: the value lives in the environment.
 - [ ] **Renames.** Vercel project, GitHub repo and the local folder can be renamed by the owner; code identifiers were left alone.
 
 ### Product and legal

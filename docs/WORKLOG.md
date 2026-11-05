@@ -25,6 +25,32 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Audit items 31, 29, 56, 46 and 55 (last five code items)
+
+**Why.** These were the last five code items in `docs/audit.md`; #47 is left and it is an environment string.
+
+**What changed.**
+- **#31, the language fallback.** `pick(ar, arabic, english)` already existed but reached only three files. A codemod
+  (`ar ? xAr : xEn` → `pick(ar, xAr, xEn)`) moved 161 call sites in 56 files. Four icon ternaries (`ar ? ArrowLeft :
+  ArrowRight`) and the deliberate bilingual subtitle on `courses/c/[country]/[level]` stay as they are. `pick()` has a
+  new unit test.
+- **#29, subscriber dates.** `admin/subscribers` formatted every end date in `Africa/Cairo`. Access ends on a day
+  boundary in the course country's zone, so a Kuwaiti student's last day could read a day early. Both pages now format
+  per course zone; the detail page's live-session start does too. Account-level events (signup, last seen, orders) keep
+  the office day.
+- **#56, scoped search.** `matchesQuery` from `src/lib/arabic-search.ts` now powers three more boxes: the course page
+  narrows its unit trail (`filterUnits`, new and tested), the teacher questions page filters by question, student or
+  lesson, and the teacher roster filters by name, phone, course or lesson. New keys in `common`, `catalog`, `teacher` and
+  `questions`.
+- **#46, dedupe.** `generateMetadata` and the page body each queried `courses/[slug]` and `teachers/[id]`. Both now share
+  a React `cache()`d loader. `now` is captured inside the loader so the two callers cannot key differently.
+- **#55, tap targets.** Measured live with a new `e2e/tap-targets.spec.ts` rather than trusting the 2026-11-01 count.
+  Three remained: the wordmark link (37px tall), short footer links (26px wide) and the visually-hidden skip link, which
+  is exempt by design. The first two are fixed. The spec runs in both locales at phone and desktop width.
+
+**Open.** #47: set `sslmode=verify-full` in `DATABASE_URL` (Vercel and `.env.local`). That silences the
+`pg-connection-string` 8.x warning; behaviour is unchanged under `pg` 8.23. Steps are in `docs/launch-checklist.md`.
+
 ## 2026-11-05: Reminders removed from the system
 
 Owner decision, taken deliberately after the earlier "switch it off" step was reversed: remove it

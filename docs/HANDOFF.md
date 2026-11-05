@@ -49,13 +49,15 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 reminders removed entirely at the owner's decision: cron route, workflow and vercel.json entry deleted, along with the parent weekly digest, owner briefing and analytics purge that shared the route. `EXPIRING`/`LIVE_SOON` stay in the DB enum, unused. Audit items 9, 17, 23, 33 declined.
 
+- 2026-11-05 audit items 31, 29, 56, 46 and 55. 161 `ar ? xAr : xEn` sites now call `pick()`, with a test for the fallback; subscriber dates and live-session starts format in the course's zone; the course units, teacher questions and teacher roster gained scoped search reusing `matchesQuery`; `generateMetadata` and the page share one query via `cache()`; the wordmark and short footer links reached 44px and `e2e/tap-targets.spec.ts` guards it. 256 unit tests, tsc, build and the new e2e spec green. Deleted two stale launch-checklist lines that still told the owner to schedule the removed reminders route.
+
 ## Where things stand (2026-11-05, end of session)
 
 Read this first; the "Done" list above is history.
 
 ### Audit work
 `docs/audit.md` holds 66 numbered items plus 10 service recommendations (G1–G10).
-**52 done · 4 declined by the owner · 10 service items are the owner's · 6 code items remain.**
+**57 done · 1 left and it is an environment change · 4 declined by the owner · 10 service items are the owner's.**
 
 - **Declined by the owner, do not re-propose:** #9 (email verification enforcement), #17 (`/api`
   behind the launch gate), #23 (dependency bumps for zod/next/@vercel/blob), #33 (drop the dead
@@ -63,20 +65,14 @@ Read this first; the "Done" list above is history.
 - **Removed by the owner's decision:** reminders are gone entirely — the cron route, its workflow, the
   Vercel cron, the weekly parent digest, the owner briefing and the analytics purge that shared the
   route. `EXPIRING`/`LIVE_SOON` remain in the DB enum, unused. `CRON_SECRET` is no longer read.
-- **Remaining code items, in the order I would take them:**
-  1. **#31 finish the language fallback** — `pick(ar, a, b)` is in `src/lib/content.ts` and applied to
-     `CourseCard`, the course page and its units. About 80 `ar ? xAr : xEn` sites remain across the
-     app; the pattern is mechanical, but check each one — a few compare rather than display.
-  2. **#29 admin subscriber dates** — `admin/subscribers/page.tsx` and `[id]/page.tsx` format in
-     `Africa/Cairo` while access ends in the course country's zone. The list page's query needs the
-     course's zone joined in; the detail page already has it.
-  3. **#56 scoped search** — students cannot search their own lessons or questions, teachers cannot
-     search their roster. Largest remaining item.
-  4. **#46 `cache()` dedupe** — `generateMetadata` and the page each query the course on
-     `courses/[slug]` and `teachers/[id]`.
-  5. **#55 tap targets** — 11 elements under 44px on the home page (measured 2026-11-01).
-  6. **#47 `sslmode`** — the Postgres SSL warning in production logs; may be an environment string,
-     so ask the owner before changing code.
+- **Done in the 2026-11-05 follow-up session:** #31 (161 call sites moved to `pick()`; only four icon
+  ternaries and one deliberate bilingual subtitle remain), #29 (subscriber end dates now format in the
+  course's zone, live-session starts too), #56 (scoped search on the course units, teacher questions
+  and teacher roster), #46 (`cache()` on `courses/[slug]` and `teachers/[id]`), #55 (home controls are
+  44px; `e2e/tap-targets.spec.ts` now measures them in both locales at both widths).
+- **#47 is the last one and it is not code.** `DATABASE_URL` ends in `sslmode=require`, which
+  `pg-connection-string` 8.x warns about. Change it to `sslmode=verify-full` in Vercel and locally;
+  behaviour is identical under `pg` 8.23. Steps are in `docs/launch-checklist.md` under Deployment.
 - **#45 is wrong as written** and should not be "fixed": `/courses` reads `searchParams.q`, which
   forces dynamic rendering regardless of `revalidate`.
 

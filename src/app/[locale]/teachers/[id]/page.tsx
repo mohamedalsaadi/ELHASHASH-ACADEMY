@@ -43,7 +43,7 @@ export default async function PublicTeacherPage({ params }: { params: Promise<{ 
 
   // A bio written in one language only still shows on the other locale's page.
   const bio = pick(ar, user.bioAr, user.bioEn).trim();
-  const subjects = [...new Set(user.courses.map((c) => (ar ? c.subject?.nameAr : c.subject?.nameEn)).filter(Boolean))];
+  const subjects = [...new Set(user.courses.map((c) => pick(ar, c.subject?.nameAr, c.subject?.nameEn)).filter(Boolean))];
 
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">

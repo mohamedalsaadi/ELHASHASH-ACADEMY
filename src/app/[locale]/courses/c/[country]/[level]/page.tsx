@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     select: { nameAr: true, nameEn: true },
   });
   if (!grade) return {};
-  const name = locale === "ar" ? grade.nameAr : grade.nameEn;
+  const name = pick(locale === "ar", grade.nameAr, grade.nameEn);
   return {
     title: name,
     description: locale === "ar" ? `مواد ${name} وكورساتها على ذروة.` : `${name} subjects and courses on Dhirwa.`,

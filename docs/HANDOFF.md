@@ -66,8 +66,9 @@ Read this first; the "Done" list above is history.
 - **Removed by the owner's decision:** reminders are gone entirely — the cron route, its workflow, the
   Vercel cron, the weekly parent digest, the owner briefing and the analytics purge that shared the
   route. `EXPIRING`/`LIVE_SOON` remain in the DB enum, unused. `CRON_SECRET` is no longer read.
-- **Done in the 2026-11-05 follow-up session:** #31 (161 call sites moved to `pick()`; only four icon
-  ternaries and one deliberate bilingual subtitle remain), #29 (subscriber end dates now format in the
+- **Done in the 2026-11-05 follow-up session:** #31 (161 call sites moved to `pick()`, then the nine the
+  first sweep missed — operands with `!`, `?.` or method calls, and `locale === "ar"` sites — were
+  converted in the review follow-up), #29 (subscriber end dates now format in the
   course's zone, live-session starts too), #56 (scoped search on the course units, teacher questions
   and teacher roster), #46 (`cache()` on `courses/[slug]` and `teachers/[id]`), #55 (home controls are
   44px; `e2e/tap-targets.spec.ts` now measures them in both locales at both widths).

@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
+import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { minorPerUnit } from "@/lib/format";
 import { lecturesIn } from "@/lib/plans";
@@ -357,10 +358,10 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
             .filter((u) => !u.isFree)
             .map((u) => (
               <div key={u.id} className={card}>
-                <h3 className="font-display text-h3 font-semibold">{locale === "ar" ? u.titleAr : u.titleEn}</h3>
+                <h3 className="font-display text-h3 font-semibold">{pick(locale === "ar", u.titleAr, u.titleEn)}</h3>
                 {u.lessons.map((l) => {
                   const s = rentalOf.get(l.id);
-                  const title = <span className="font-semibold">{locale === "ar" ? l.titleAr : l.titleEn}</span>;
+                  const title = <span className="font-semibold">{pick(locale === "ar", l.titleAr, l.titleEn)}</span>;
                   return s ? (
                     <form key={`${s.id}:${renderedAt}`} action={updateSku} className={`${tile} sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end`}>
                       <input type="hidden" name="id" value={s.id} />
@@ -402,7 +403,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <DeleteButton
             action={deleteCourse}
             label={t("deleteCourse")}
-            confirmText={t("confirmDeleteCourse", { title: locale === "ar" ? course.titleAr : course.titleEn })}
+            confirmText={t("confirmDeleteCourse", { title: pick(locale === "ar", course.titleAr, course.titleEn) })}
           />
         </form>
       </section>

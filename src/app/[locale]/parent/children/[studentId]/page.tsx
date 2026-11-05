@@ -84,7 +84,7 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
   ];
   const avg = average(scores);
   const unitNames = new Map(
-    submissions.map((s) => [s.assignment.lesson?.unit.id, ar ? s.assignment.lesson?.unit.titleAr : s.assignment.lesson?.unit.titleEn] as const),
+    submissions.map((s) => [s.assignment.lesson?.unit.id, pick(ar, s.assignment.lesson?.unit.titleAr, s.assignment.lesson?.unit.titleEn)] as const),
   );
   const shape = strengths(scores);
 

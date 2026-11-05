@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Link } from "@/i18n/navigation";
 import { priceSkus } from "@/lib/checkout";
+import { pick } from "@/lib/content";
 import { resolveCoupon } from "@/lib/coupon-resolve";
 import { activeGateway } from "@/lib/gateway";
 import { formatMoney } from "@/lib/format";
@@ -106,7 +107,7 @@ export default async function CheckoutPage({
   const title = (id: string) => {
     const s = skus.get(id)!;
     const name = s.liveSession ?? s.lesson ?? s.course;
-    return `${locale === "ar" ? name.titleAr : name.titleEn} · ${t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}`;
+    return `${pick(locale === "ar", name.titleAr, name.titleEn)} · ${t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}`;
   };
 
   return (

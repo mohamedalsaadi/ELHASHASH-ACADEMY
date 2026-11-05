@@ -26,7 +26,7 @@ export async function generateMetadata({
     select: { nameAr: true, nameEn: true },
   });
   if (!country) return {};
-  const name = locale === "ar" ? country.nameAr : country.nameEn;
+  const name = pick(locale === "ar", country.nameAr, country.nameEn);
   return {
     title: name,
     description:
@@ -202,7 +202,7 @@ export default async function CountryPage({
                       </span>
                       {/* The big numeral already says "grade", so the station drops the leading الصف. */}
                       <span className="text-small leading-snug font-medium">
-                        {ar ? g.nameAr.replace(/^الصف /, "") : g.nameEn}
+                        {pick(ar, g.nameAr.replace(/^الصف /, ""), g.nameEn)}
                       </span>
                       {g.isTerminal && (
                         <span className="rounded-full bg-marker px-2 font-display text-label font-bold text-ink">

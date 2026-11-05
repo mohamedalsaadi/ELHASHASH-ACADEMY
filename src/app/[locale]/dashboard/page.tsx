@@ -503,7 +503,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   className="flex flex-wrap items-center justify-between gap-3 card p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   <span className="grid min-w-0 gap-1">
-                    <span className="font-display font-semibold">{ar ? e.lesson!.titleAr : e.lesson!.titleEn}</span>
+                    <span className="font-display font-semibold">{pick(ar, e.lesson!.titleAr, e.lesson!.titleEn)}</span>
                     <span className="text-small text-ink-muted">{e.course ? (pick(ar, e.course.titleAr, e.course.titleEn)) : ""}</span>
                   </span>
                   <span className="text-small text-up">

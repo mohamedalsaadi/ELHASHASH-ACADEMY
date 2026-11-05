@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -25,12 +26,27 @@ import { StatusChip } from "@/components/ui/StatusChip";
 
 export const dynamic = "force-dynamic";
 
+/** generateMetadata and the page share one query per request instead of hitting the database twice. */
+const getCourse = cache((slug: string) => {
+  const at = new Date();
+  return db.course.findUnique({
+    where: { slug, published: true },
+    include: {
+      grade: { include: { country: true } },
+      liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(at.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
+      instructor: { select: { id: true, name: true, photoUrl: true, liveApproved: true } },
+      units: {
+        orderBy: { order: "asc" },
+        include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(at) } } } },
+      },
+      skus: { where: { ...onSale(at), lessonId: null, liveSessionId: null }, orderBy: { price: "asc" } },
+    },
+  });
+});
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
-  const course = await db.course.findUnique({
-    where: { slug, published: true },
-    select: { titleAr: true, titleEn: true, descAr: true, descEn: true },
-  });
+  const course = await getCourse(slug);
   if (!course) return {};
   const title = pick(locale === "ar", course.titleAr, course.titleEn);
   const description = pick(locale === "ar", course.descAr, course.descEn) || undefined;
@@ -122,19 +138,7 @@ export default async function CoursePage({
   const Arrow = ar ? ArrowLeft : ArrowRight;
   const now = new Date();
 
-  const course = await db.course.findUnique({
-    where: { slug, published: true },
-    include: {
-      grade: { include: { country: true } },
-      liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(now.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
-      instructor: { select: { id: true, name: true, photoUrl: true, liveApproved: true } },
-      units: {
-        orderBy: { order: "asc" },
-        include: { lessons: { orderBy: { order: "asc" }, include: { skus: { where: onSale(now) } } } },
-      },
-      skus: { where: { ...onSale(now), lessonId: null, liveSessionId: null }, orderBy: { price: "asc" } },
-    },
-  });
+  const course = await getCourse(slug);
   if (!course) notFound();
 
   const session = await auth();

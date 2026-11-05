@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CourseCard } from "@/components/CourseCard";
@@ -8,20 +9,9 @@ import { alternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const { locale, id } = await params;
-  const user = await db.user.findUnique({ where: { id }, select: { name: true } });
-  if (!user) return {};
-  return { title: user.name, robots: { index: true }, alternates: alternates(locale, `/teachers/${id}`) };
-}
-
-export default async function PublicTeacherPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const { locale, id } = await params;
-  setRequestLocale(locale);
-  const t = await getTranslations("teacher");
-  const ar = locale === "ar";
-
-  const user = await db.user.findUnique({
+/** generateMetadata and the page share one query per request instead of hitting the database twice. */
+const getTeacher = cache((id: string) =>
+  db.user.findUnique({
     where: { id },
     select: {
       id: true,
@@ -32,7 +22,23 @@ export default async function PublicTeacherPage({ params }: { params: Promise<{ 
       photoUrl: true,
       courses: { where: { published: true }, orderBy: { createdAt: "desc" }, include: cardInclude(new Date()) },
     },
-  });
+  }),
+);
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const { locale, id } = await params;
+  const user = await getTeacher(id);
+  if (!user) return {};
+  return { title: user.name, robots: { index: true }, alternates: alternates(locale, `/teachers/${id}`) };
+}
+
+export default async function PublicTeacherPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const { locale, id } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("teacher");
+  const ar = locale === "ar";
+
+  const user = await getTeacher(id);
   if (!user || (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") || user.courses.length === 0) notFound();
 
   // A bio written in one language only still shows on the other locale's page.

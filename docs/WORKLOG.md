@@ -57,9 +57,12 @@ Daily path and the dead `masteryOf` are gone. `docs/HANDOFF.md`, `AGENTS.md`, th
 the launch checklist and the privacy processor list no longer describe Daily, a Basic-auth gate or a
 reminders cron.
 
-**Verification.** 262 unit tests, `tsc`, `npm run build`, and the full Playwright suite (see HANDOFF for the
-count). New specs: `e2e/signup.spec.ts` (consent recorded; no consent, no account) and
-`e2e/retention.spec.ts` (the job refuses callers without the secret).
+**Verification.** 262 unit tests, `tsc` and `npm run build` green. The full Playwright suite ran 190 passed
+and 4 failed, and all four were the same case: the new consent checkbox on `/signup` (16px input, label on
+one line at Arabic desktop width). The row now has a 44px height and the tap-target spec treats a wrapped
+checkbox's label as its target; that spec then passed 12/12 and `e2e/signup.spec.ts` 8/8. New specs:
+`e2e/signup.spec.ts` (consent recorded; no consent, no account) and `e2e/retention.spec.ts` (the job
+refuses callers without the secret).
 
 **Deliberately not done.** Moving the unread-badge query out of `SiteHeader`. The header calls `auth()` and
 a notification count in the shared layout, which is what makes every route dynamic, so the home page's

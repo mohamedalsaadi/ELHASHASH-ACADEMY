@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { db } from "@/lib/db";
+import { dbRole } from "@/lib/staff";
 import { courseZone, formatDate } from "@/lib/format";
 import { average, strengths, tierOf, type Score } from "@/lib/grades";
 
@@ -21,7 +22,7 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
   setRequestLocale(locale);
   const session = await auth();
   if (!session?.user) redirect(`/${locale}/signin`);
-  if (session.user.role !== "PARENT") redirect(`/${locale}/dashboard`);
+  if ((await dbRole(session.user.id)) !== "PARENT") redirect(`/${locale}/dashboard`);
 
   const link = await db.parentLink.findFirst({ where: { parentId: session.user.id, studentId }, select: { id: true } });
   if (!link) notFound();
@@ -70,9 +71,16 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
     }),
   ]);
 
-  const scores: Score[] = submissions
-    .filter((s) => s.status === "GRADED" && s.score !== null)
-    .map((s) => ({ value: s.score!, max: s.assignment.maxScore, unitId: s.assignment.lesson?.unit.id ?? null }));
+  const scores: Score[] = [
+    ...submissions
+      .filter((s) => s.status === "GRADED" && s.score !== null)
+      .map((s) => ({ value: s.score!, max: s.assignment.maxScore, unitId: s.assignment.lesson?.unit.id ?? null })),
+    // Exam papers are course-level, so they carry no unit — but they absolutely belong in the average.
+    // Leaving them out made a child who sits exams look worse than their work says.
+    ...exams
+      .filter((e) => e.status === "GRADED" && e.marks !== null)
+      .map((e) => ({ value: e.marks!, max: e.maxMarks, unitId: null })),
+  ];
   const avg = average(scores);
   const unitNames = new Map(
     submissions.map((s) => [s.assignment.lesson?.unit.id, ar ? s.assignment.lesson?.unit.titleAr : s.assignment.lesson?.unit.titleEn] as const),

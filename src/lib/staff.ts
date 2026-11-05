@@ -18,6 +18,12 @@ export async function requireStaff() {
   return { ...session.user, role: user.role };
 }
 
+/** The role as stored now, for pages that redirect rather than 404 after a demotion. */
+export async function dbRole(userId: string) {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { role: true } });
+  return user?.role ?? null;
+}
+
 // Teachers run their own courses (prices included); only the owner manages teachers, slots, promotions and money.
 export async function requireAdmin() {
   const me = await requireStaff();

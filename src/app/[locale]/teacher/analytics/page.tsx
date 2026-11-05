@@ -43,6 +43,13 @@ export default async function TeacherAnalyticsPage({ params }: { params: Promise
     },
   });
 
+  // Exam papers are course-level work and were missing from every figure here. They carry no unit,
+  // so they join the class and per-student averages but not the per-unit breakdown.
+  const examMarks = await db.examAttempt.findMany({
+    where: { status: "GRADED", marks: { not: null }, paper: { courseId: { in: courseIds } } },
+    select: { marks: true, maxMarks: true, userId: true, user: { select: { id: true, name: true } } },
+  });
+
   // Per student, the average across everything graded.
   const byStudent = new Map<string, { name: string; scores: Score[] }>();
   // Per assignment, the average and how many are in.
@@ -74,10 +81,19 @@ export default async function TeacherAnalyticsPage({ params }: { params: Promise
     }
   }
 
+  for (const e of examMarks) {
+    const st = byStudent.get(e.userId) ?? { name: e.user.name, scores: [] };
+    st.scores.push({ value: e.marks!, max: e.maxMarks });
+    byStudent.set(e.userId, st);
+  }
+
   const students = [...byStudent.entries()]
     .map(([id, v]) => ({ id, name: v.name, ...average(v.scores)! }))
     .sort((a, b) => b.avg - a.avg);
-  const classAverage = average(graded.filter((s) => s.score !== null).map((s) => ({ value: s.score!, max: s.assignment.maxScore })));
+  const classAverage = average([
+    ...graded.filter((s) => s.score !== null).map((s) => ({ value: s.score!, max: s.assignment.maxScore })),
+    ...examMarks.map((e) => ({ value: e.marks!, max: e.maxMarks })),
+  ]);
 
   // Units with at least three graded marks, weakest first: the honest "where the class struggles".
   const units = [...unitScores.entries()]

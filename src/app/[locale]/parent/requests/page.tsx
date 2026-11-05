@@ -6,6 +6,7 @@ import { ReplyForm } from "@/components/requests/ReplyForm";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { db } from "@/lib/db";
+import { dbRole } from "@/lib/staff";
 import { ParentNav } from "../ParentNav";
 import { parentReply } from "@/lib/request-actions";
 import { RequestForm } from "./RequestForm";
@@ -21,7 +22,7 @@ export default async function ParentRequestsPage({ params }: { params: Promise<{
   setRequestLocale(locale);
   const session = await auth();
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/parent/requests`)}`);
-  if (session.user.role !== "PARENT") redirect(`/${locale}/dashboard`);
+  if ((await dbRole(session.user.id)) !== "PARENT") redirect(`/${locale}/dashboard`);
 
   const t = await getTranslations("homework");
   const ar = locale === "ar";

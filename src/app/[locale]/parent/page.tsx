@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
+import { dbRole } from "@/lib/staff";
 import { ParentNav } from "./ParentNav";
 import { courseZone, formatMoney } from "@/lib/format";
 import { average } from "@/lib/grades";
@@ -27,9 +28,11 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
   setRequestLocale(locale);
   const session = await auth();
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/parent`)}`);
-  if (session.user.role !== "PARENT") {
-    if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
-    if (session.user.role === "ADMIN") redirect(`/${locale}/admin`);
+  // The role is read from the database: the cookie can be five minutes stale after a demotion.
+  const role = await dbRole(session.user.id);
+  if (role !== "PARENT") {
+    if (role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
+    if (role === "ADMIN") redirect(`/${locale}/admin`);
     redirect(`/${locale}/dashboard`);
   }
 

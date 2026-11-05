@@ -24,6 +24,17 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: Migrations run in the production build
+
+The outage on 2026-11-05 happened because code shipped ahead of its schema. The fix that stops it repeating is
+now in the build: `npm run build` runs `node scripts/migrate-if-production.mjs` before `next build`, and that
+script runs `prisma migrate deploy` only when `VERCEL_ENV=production`. Preview builds run branch code, and a
+branch can carry an unreviewed migration while Preview points at the same Neon project, so previews must never
+migrate. Locally `VERCEL_ENV` is unset, so `npm run build` never touches production.
+
+Verified: preview and unset print "skipping migrations" and contact no database; the production path was run by
+hand against Neon and reported "No pending migrations to apply"; a local `npm run build` skipped and compiled.
+
 ## 2026-11-05: Release deployed, health endpoint hardened
 
 `main` was 27 commits ahead of `origin`; the live site was still `32b8c01`. Pushed (`0a17396`) and Vercel built

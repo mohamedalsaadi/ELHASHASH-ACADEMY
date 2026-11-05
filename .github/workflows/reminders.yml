@@ -1,10 +1,10 @@
-# Vercel Hobby runs crons once a day; live-session reminders need every 10 minutes.
-# Needs two repository secrets: APP_URL (https://dhirwa.ae) and CRON_SECRET (the same value as in Vercel).
 name: Reminders
-# Scheduled reminders are switched off for now: `vercel.json` has no crons and this workflow has
-# no schedule, so nothing calls /api/cron/reminders on its own. The route is kept for when they
-# come back; manual dispatch still works once CRON_SECRET matches Vercel.
+# Every ten minutes, because the live-lecture reminder is a 5–25 minute window and Vercel Hobby can
+# only run a daily cron. Both need CRON_SECRET to match Vercel's value; without it the route answers
+# 401 and this job goes red, which is the visible signal that the secret is wrong.
 on:
+  schedule:
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 jobs:
   ping:

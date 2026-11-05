@@ -109,6 +109,10 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <input type="checkbox" name="published" defaultChecked={course.published} className="size-4" />
           {t("publishedHint")}
         </label>
+        <label className={check}>
+          <input type="checkbox" name="aiGrading" defaultChecked={course.aiGrading} className="size-4" />
+          {t("aiGradingHint")}
+        </label>
         <div>
           <SaveButton />
         </div>

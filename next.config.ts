@@ -19,13 +19,11 @@ const nextConfig: NextConfig = {
           ...(isProduction
             ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]
             : []),
-          // Camera, microphone and screen sharing only for the Daily live-lecture frame.
-          { key: "Permissions-Policy", value: 'camera=("https://*.daily.co"), microphone=("https://*.daily.co"), display-capture=("https://*.daily.co"), geolocation=()' },
-          // Only framing rules for now: nobody may embed the site, and it embeds only the two video players and Daily.
-          {
-            key: "Content-Security-Policy",
-            value: "frame-ancestors 'none'; frame-src https://www.youtube-nocookie.com https://player.vdocipher.com https://*.daily.co",
-          },
+          // Camera, microphone and screen sharing are not granted to anyone: live lectures open an
+          // external meeting, so this page never needs them.
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), display-capture=(), payment=(), usb=(), geolocation=()" },
+          // The Content-Security-Policy is set per request in src/middleware.ts, where the
+          // development server's needs can differ from production's.
         ],
       },
     ];

@@ -677,7 +677,8 @@
       "bad_timezone": "That time zone is not valid.",
       "bad_range": "The end level is before the start level.",
       "bad_slug": "The slug may contain lowercase letters, digits and dashes only."
-    }
+    },
+    "aiGradingHint": "Suggested AI grading: each submission is sent to an AI service for a suggested mark the teacher confirms. Leave it off unless the academy has agreed."
   },
   "signup": {
     "title": "Create an account",

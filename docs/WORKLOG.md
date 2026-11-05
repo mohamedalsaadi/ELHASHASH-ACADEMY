@@ -25,6 +25,32 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Audit items 6, 34, 35, 40 — CSP, AI disclosure, honest privacy copy, schedulers on
+
+- **#6 A script policy that actually blocks.** `src/middleware.ts` now issues a per-document nonce and
+  sets `default-src 'self'`, `script-src 'self' 'nonce-…'`, `object-src 'none'`, `base-uri 'self'`,
+  `form-action 'self'`, `frame-ancestors 'none'`, plus the three player origins in `frame-src`. The
+  nonce goes on the request too, because that is how Next stamps its own streamed inline scripts.
+  `'unsafe-inline'`/`'unsafe-eval'` and websockets are dev-only. The one hand-written inline script
+  (the intro guard) moved to `public/intro-guard.js` so nothing needs an inline exception; `'strict-dynamic'`
+  is deliberately avoided because it would block that non-nonced file. Verified in **production mode**:
+  header strict, all 30 script tags nonced, a real browser loaded `/ar/privacy` with zero CSP
+  violations. `e2e/public.spec.ts` asserts the header and the guard file.
+- **#34 Automatic AI grading is opt-in per course.** New `Course.aiGrading` (additive migration,
+  default false) with a toggle in the admin course form; the submit action only queues a suggestion
+  when the course opted in. The privacy policy now names Google (Gemini) as a processor and says what
+  is sent, in Arabic and English.
+- **#35 The privacy policy now describes the analytics that exist.** The cookies section claimed
+  "strictly necessary only, no analytics" while `AnalyticsEvent` rows are written per account and per
+  device id. Rewritten in both languages: first-party events in our own database, no third-party
+  tracker, no sale of data, consent banner promised if an external tracker is ever added.
+- **#40 The scheduled jobs are on again.** `vercel.json` runs the daily 05:00 cron and
+  `reminders.yml` runs every ten minutes. **This will go red until `CRON_SECRET` matches between
+  GitHub and Vercel** — that failure is the signal, not a regression.
+- Verified: 248 unit tests, `npx tsc --noEmit`, `npm run build`, `e2e/public.spec.ts` 7/7 (ar).
+  Deploy note: three new columns (`Course.aiGrading` and the earlier two) exist only in migrations —
+  a deployment that skips `prisma migrate` will fail every course query.
+
 ## 2026-11-05: First five audit fixes (items 1, 2, 3, 5, 24)
 
 Chosen from `docs/audit.md`: the four S1/S2 items that were small, plus the leaderboard bug.

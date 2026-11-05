@@ -65,6 +65,7 @@ export async function updateCourse(form: FormData) {
       descAr: optionalText,
       descEn: optionalText,
       published: checkbox,
+      aiGrading: checkbox,
       coverKey: z.string().trim().max(500).default(""),
     })
     .parse(Object.fromEntries(form));

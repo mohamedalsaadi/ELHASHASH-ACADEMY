@@ -5,8 +5,19 @@ test("home renders in the right language and direction, with the intro mark", as
   await expect(page.locator("html")).toHaveAttribute("lang", loc);
   await expect(page.locator("html")).toHaveAttribute("dir", loc === "ar" ? "rtl" : "ltr");
   await expect(page.locator(".as-hop [data-dot]")).toHaveCount(1);
+  // The intro guard is a same-origin file, not an inline script, so the CSP can forbid inline script.
+  await expect(page.locator('script[src="/intro-guard.js"]')).toHaveCount(1);
   const text = await page.locator("body").innerText();
   expect(text).not.toMatch(/sabboura|aacademy|a\+ academy|alsaadi/i);
+});
+
+test("the document is served with a script policy that needs a nonce", async ({ page, loc }) => {
+  const res = await page.goto(`/${loc}`);
+  const csp = (await res?.headerValue("content-security-policy")) ?? "";
+  expect(csp).toContain("script-src 'self'");
+  expect(csp).toContain("nonce-");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("base-uri 'self'");
 });
 
 test("catalogue lists the seeded courses", async ({ page, loc }) => {

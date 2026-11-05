@@ -51,7 +51,7 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
       title: true,
       allowResubmit: true,
       lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } },
-      course: { select: { slug: true, instructorId: true } },
+      course: { select: { slug: true, instructorId: true, aiGrading: true } },
     },
   });
   if (!assignment) notFound();
@@ -107,12 +107,16 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   }
 
   await recordAttempt(`submit:${studentId}`);
-  // A first mark is waiting when the teacher opens it. Capped per course so one class cannot run up the bill.
-  after(async () => {
-    const key = `ai-auto:${assignment.courseId}`;
-    if (await isLimited(key, 300, 86_400_000)) return;
-    if (await suggestGrade(submissionId).catch(() => false)) await recordAttempt(key);
-  });
+  // A first mark is waiting when the teacher opens it — only for a course that opted in, because
+  // the submission (and any photo of handwritten work) leaves our servers for an AI provider.
+  // Capped per course so one class cannot run up the bill.
+  if (assignment.course.aiGrading) {
+    after(async () => {
+      const key = `ai-auto:${assignment.courseId}`;
+      if (await isLimited(key, 300, 86_400_000)) return;
+      if (await suggestGrade(submissionId).catch(() => false)) await recordAttempt(key);
+    });
+  }
   await db.notification
     .create({
       data: {

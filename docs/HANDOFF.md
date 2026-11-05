@@ -45,6 +45,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 audit items 1, 2, 3, 5, 24 done. Exams now require staff or a plan (page + startExam); parent-link code limited to 10 tries/15 min with `timingSafeEqual`; `User.passwordChangedAt` + JWT stamp ends sessions on any password change (4 write paths); CSV formula injection defused; `awardPractice` returns the attempt's XP instead of the running total, fixing the leaderboard and both "XP earned" labels. 241 tests, build, `e2e/exam-access` + `reset` + `lessons` green. Gap: no automated test yet for #2 or #3.
 
+- 2026-11-05 audit items 6, 34, 35, 40. Nonce-based CSP in `middleware.ts` (verified strict in a production build: every script tag nonced, no violations in a browser); the intro guard moved to `public/intro-guard.js` to keep inline script banned. `Course.aiGrading` default false with an admin toggle — automatic AI grading is now opt-in and the privacy page names Google. Privacy cookies section rewritten to match the analytics that really run. `vercel.json` + `reminders.yml` schedulers re-enabled (will be red until CRON_SECRET matches). IMPORTANT: new columns exist only in migrations; deploy must run `prisma migrate`.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

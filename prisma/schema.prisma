@@ -258,6 +258,9 @@ model Course {
   coverKey     String?
   coverType    String?
   published    Boolean    @default(false)
+  /// When on, every submission is sent to an AI grader for a suggested mark the teacher must confirm.
+  /// Off by default: the work belongs to a minor, so the teacher opts in per course.
+  aiGrading    Boolean    @default(false)
   /// When on, the course shows a weekly XP leaderboard to its own students.
   leaderboard  Boolean    @default(false)
   createdAt    DateTime   @default(now())

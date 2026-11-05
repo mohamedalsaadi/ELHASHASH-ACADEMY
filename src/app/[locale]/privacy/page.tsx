@@ -44,7 +44,8 @@ const ar: Section[] = [
     body: (
       <p>
         نستخدم مزودين يعالجون البيانات نيابة عنا: Neon (قاعدة البيانات)، Vercel (الاستضافة)، Ziina (الدفع)،
-        VdoCipher (حماية الفيديو)، Resend (البريد)، وDaily (الحصص المباشرة). لا نبيع بياناتك.
+        VdoCipher (حماية الفيديو)، Resend (البريد)، وDaily (الحصص المباشرة). وعند تفعيل التصحيح الآلي لكورس، يُرسل
+        نص إجابة الطالب والصور التي يرفعها إلى Google (Gemini) لاقتراح درجة يراجعها المدرّس. لا نبيع بياناتك.
       </p>
     ),
   },
@@ -52,8 +53,10 @@ const ar: Section[] = [
     h: "ملفات الكوكيز",
     body: (
       <p>
-        نستخدم كوكيز ضرورية فقط: جلسة تسجيل الدخول، وكوكي الجهاز لتطبيق قاعدة الجهاز الواحد. لا نستخدم إعلانات أو
-        تحليلات الآن، لذلك لا نعرض بانر موافقة. إذا أضفنا تحليلات لاحقًا سنضيف البانر ونحدّث هذه السياسة.
+        نستخدم كوكيز ضرورية فقط: جلسة تسجيل الدخول، وكوكي الجهاز لتطبيق قاعدة الجهاز الواحد، وكوكي اختيار الدولة.
+        ونسجّل أحداث استخدام داخلية في قاعدتنا (مثل فتح درس أو إتمام شراء) لقياس ما يعمل وما لا يعمل، مربوطة بحسابك
+        أو بمعرّف جهازك. لا نستخدم أي متتبع إعلاني أو خدمة تحليلات من طرف ثالث، ولا نبيع هذه البيانات. وإذا أضفنا
+        متتبعًا خارجيًا لاحقًا سنضيف بانر موافقة ونحدّث هذه السياسة.
       </p>
     ),
   },
@@ -127,7 +130,9 @@ const en: Section[] = [
     body: (
       <p>
         We use providers that process data on our behalf: Neon (database), Vercel (hosting), Ziina (payments),
-        VdoCipher (video protection), Resend (email), and Daily (live sessions). We do not sell your data.
+        VdoCipher (video protection), Resend (email), and Daily (live sessions). When automatic grading is switched on
+        for a course, the written answer a student submits and any uploaded photos are sent to Google (Gemini) for a suggested
+        mark that the teacher reviews. We do not sell your data.
       </p>
     ),
   },
@@ -135,9 +140,11 @@ const en: Section[] = [
     h: "Cookies",
     body: (
       <p>
-        We use strictly necessary cookies only: the sign-in session and the device cookie for the one-device rule. There is no
-        advertising or analytics today, so there is no consent banner. If analytics is added later, we will add the banner and
-        update this policy.
+        We use strictly necessary cookies only: the sign-in session, the device cookie for the one-device rule, and the
+        country you picked. We also record first-party usage events in our own database (for example a lesson opened or a
+        purchase completed) to see what works, tied to your account or your device id. There is no advertising tracker and
+        no third-party analytics service, and we do not sell this data. If an external tracker is added later, we will add
+        a consent banner and update this policy.
       </p>
     ),
   },

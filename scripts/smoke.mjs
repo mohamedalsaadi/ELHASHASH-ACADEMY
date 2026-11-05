@@ -7,7 +7,6 @@ const open = ["/ar", "/en", "/ar/courses", "/en/courses", "/ar/signin", "/ar/sig
 // streams behind a loading boundary (status already 200), as Next's redirect / not-found marker in the body.
 const closed = ["/ar/admin", "/ar/admin/teachers", "/ar/admin/settings", "/ar/teacher", "/ar/teacher/subjects", "/ar/dashboard", "/ar/account", "/ar/parent", "/ar/orders"];
 const refused = [
-  ["/api/cron/reminders", "GET", 401],
   ["/api/webhooks/ziina", "POST", [200, 400, 401, 403, 500]], // trigger-only: an empty body is ignored (500 = key not set)
   ["/api/webhooks/stripe", "POST", [400, 401, 403, 404]],
 ];

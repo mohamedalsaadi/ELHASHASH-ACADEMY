@@ -50,7 +50,7 @@ Each line says what was checked instead, and how to close it.
 - [ ] **Spaced review.** A finished practice run schedules its lesson for tomorrow; the next day `/review` offers it and the dashboard shows the card.
 - [ ] **Exams.** Teacher builds a paper from the bank, publishes it, a student sits it. Verify the countdown auto-submits at zero, objective items mark instantly, written answers wait for the teacher, and the attempt limit blocks a second attempt.
 - [ ] **Assignment resubmission.** Return a submission — the student must be able to resubmit. With the switch off and no return, they must be blocked.
-- [ ] **Parent digest and the teacher check-on list.** Run `/api/cron/reminders` on a preview with a test parent; check the digest carries lessons, live, homework average and streak.
+- [x] **Reminders removed (2026-11-05).** The cron route, its scheduler and the expiry/live reminders are gone. The weekly parent digest and the owner's morning briefing lived in the same route and went with it.
 
 ### Carried over
 
@@ -96,7 +96,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `AUTH_SECRET` | yes | session signing; generate per environment |
 | `DATABASE_URL` | yes | Neon; see gate 0 |
 | `SITE_PASSWORD` | set empty | non-empty puts the whole site behind basic auth |
-| `CRON_SECRET` | yes | `/api/cron/reminders` rejects calls without it |
+| `CRON_SECRET` | no | the cron route was removed on 2026-11-05 |
 | `RESEND_API_KEY`, `MAIL_FROM` | yes | all transactional email |
 | `BLOB_READ_WRITE_TOKEN` | yes | homework and exam file uploads |
 | `VDOCIPHER_API_SECRET` | yes | paid video playback |
@@ -138,7 +138,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | **YouTube (nocookie)** | Free lesson embeds | `www.youtube-nocookie.com` | none | lesson player, CSP `frame-src` |
 | **GitHub** | Source and Vercel integration | `<owner>/<repo>` | none | owner rename pending |
 | **npm registry** | Dependencies | `registry.npmjs.org` | none | `package.json`, `package-lock.json` |
-| **Vercel Cron** | `/api/cron/reminders` | internal | `CRON_SECRET` | `vercel.json` |
+| **Vercel Cron** | none | — | — | `vercel.json` has no crons |
 | **Analytics / Sentry** | Not installed | — | — | deferred |
 
 ### Build notes

@@ -47,6 +47,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 audit items 6, 34, 35, 40. Nonce-based CSP in `middleware.ts` (verified strict in a production build: every script tag nonced, no violations in a browser); the intro guard moved to `public/intro-guard.js` to keep inline script banned. `Course.aiGrading` default false with an admin toggle — automatic AI grading is now opt-in and the privacy page names Google. Privacy cookies section rewritten to match the analytics that really run. `vercel.json` + `reminders.yml` schedulers re-enabled (will be red until CRON_SECRET matches). IMPORTANT: new columns exist only in migrations; deploy must run `prisma migrate`.
 
+- 2026-11-05 reminders removed entirely at the owner's decision: cron route, workflow and vercel.json entry deleted, along with the parent weekly digest, owner briefing and analytics purge that shared the route. `EXPIRING`/`LIVE_SOON` stay in the DB enum, unused. Audit items 9, 17, 23, 33 declined.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

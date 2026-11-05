@@ -35,10 +35,6 @@ test("health check answers ok", async ({ request }) => {
   expect(await (await request.get("/api/health")).json()).toEqual({ ok: true });
 });
 
-test("cron refuses a call without the secret", async ({ request }) => {
-  expect((await request.get("/api/cron/reminders")).status()).toBe(401);
-});
-
 test("no horizontal scroll on the home page", async ({ page, loc }) => {
   await page.goto(`/${loc}`);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

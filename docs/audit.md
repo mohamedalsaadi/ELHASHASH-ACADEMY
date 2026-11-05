@@ -1,5 +1,15 @@
 # Dhirwa: the 60-item hardening and improvement list
 
+## Owner decisions (2026-11-05)
+
+- **#9 (email verification enforcement) — declined.** Sign-in stays open to unverified addresses.
+- **#17 (/api behind the pre-launch gate) — declined.** API routes stay outside the password gate.
+- **#23 (dependency bumps for zod/next/@vercel/blob) — declined.** The advisories stay open.
+- **#33 (drop the `Concept` and `QuizAttempt` tables) — declined.** The dead models stay.
+- **Reminders — being removed from the system** (scope confirmed before deletion).
+
+Everything else in this document stands as written.
+
 ## Context
 
 A full audit of security, data correctness, privacy, reliability, UX, SEO and documentation, plus a

@@ -25,6 +25,24 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Reminders removed from the system
+
+Owner decision, taken deliberately after the earlier "switch it off" step was reversed: remove it
+rather than keep it dormant.
+
+- Deleted `src/app/api/cron/reminders/route.ts`, `.github/workflows/reminders.yml`, the
+  `vercel.json` cron entry, and the two assertions that expected the route to answer 401
+  (`e2e/public.spec.ts`, `scripts/smoke.mjs`).
+- **This also ends the weekly parent digest, the owner's morning briefing and the 180-day analytics
+  purge**, because all three lived in the same route. Nothing calls them now.
+- The `EXPIRING` and `LIVE_SOON` values remain in the `NotificationKind` enum in the database. The
+  code no longer writes them, but shrinking a Postgres enum means recreating the type on a live
+  table — not worth the risk for two unused labels. Existing rows with those kinds are harmless.
+- The owner can clear them whenever they choose:
+  `DELETE FROM "Notification" WHERE kind IN ('EXPIRING','LIVE_SOON');`
+- Also recorded: audit items **9, 17, 23 and 33 are declined** at the owner's decision.
+- Verified: 250 unit tests, `npx tsc --noEmit`, `npm run lint` (0 errors), `npm run build`.
+
 ## 2026-11-05: Audit items 6, 34, 35, 40 — CSP, AI disclosure, honest privacy copy, schedulers on
 
 - **#6 A script policy that actually blocks.** `src/middleware.ts` now issues a per-document nonce and

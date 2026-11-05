@@ -61,7 +61,7 @@ Each line says what was checked instead, and how to close it.
 - [ ] **Arabic headings across every page.** A visual pass at phone and desktop widths.
 - [ ] **Stripe refund.** Not exercised against a paid test order.
 - [ ] **Paymob card / wallet / kiosk / valU.** Not exercised in this release. Refunds are manual: refund in the Paymob dashboard, then "Mark refunded" in the admin order page.
-- [ ] **Daily live sessions and attendance.** Room creation, token minting and attendance writes not re-tested.
+- [ ] **Teacher-hosted live lectures.** Link validation, the consent gate and the join page are covered by `e2e/live.spec.ts`; a real Zoom/Meet link pasted by a teacher has not been clicked by a person.
 - [ ] **VdoCipher and YouTube playback.** Not re-tested.
 - [ ] **Parent linking with two real accounts.** Code generation, linking, dashboard and unlink not exercised.
 - [ ] **New-country visuals and time zones.** The path is built; no new country was created.
@@ -99,7 +99,6 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `RESEND_API_KEY`, `MAIL_FROM` | yes | all transactional email |
 | `BLOB_READ_WRITE_TOKEN` | yes | homework and exam file uploads |
 | `VDOCIPHER_API_SECRET` | yes | paid video playback |
-| `DAILY_API_KEY` | yes | live lectures |
 | `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_{CARD,WALLET,KIOSK,VALU}` | for Egypt | without them EGP checkout falls back to Stripe |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | yes | test keys |
 | `ZIINA_API_KEY` | beta | AED card payments; `ZIINA_ENABLED=0` switches them off |
@@ -131,7 +130,6 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | **Stripe** | Card payments, Checkout, refunds, webhook | `api.stripe.com` | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | `src/lib/stripe.ts`, `/api/checkout`, `/api/webhooks/stripe` |
 | **Paymob** | EGP card, wallet, kiosk cash, valU | `accept.paymob.com` | `PAYMOB_*` | `src/lib/paymob.ts`, `/api/webhooks/paymob` |
 | **VdoCipher** | DRM video OTP and player | `dev.vdocipher.com`, `player.vdocipher.com` | `VDOCIPHER_API_SECRET` | `src/lib/vdocipher.ts`, CSP `frame-src` |
-| **Daily.co** | Live rooms and tokens | `api.daily.co`, `*.daily.co` | `DAILY_API_KEY` | `src/lib/daily.ts`, CSP and Permissions-Policy |
 | **Resend** | Transactional email | `api.resend.com/emails`, `/emails/receiving` | `RESEND_API_KEY`, `MAIL_FROM` | `src/lib/mail.ts`, `src/lib/notify.ts` |
 | **Google Fonts** | Readex Pro, IBM Plex Sans Arabic and Reem Kufi at build | `fonts.googleapis.com` | none | `layout.tsx`, `next/font` |
 | **YouTube (nocookie)** | Free lesson embeds | `www.youtube-nocookie.com` | none | lesson player, CSP `frame-src` |

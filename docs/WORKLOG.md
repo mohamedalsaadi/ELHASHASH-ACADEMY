@@ -8,10 +8,9 @@ Git history has the rest (`git log --oneline`).
 
 - **Brand:** Dhirwa (ذروة, "the peak"), since 2026-11-02, when the owner reserved the trade name. Sabboura was
   dropped the same day (a Dubai "Saboura" and an existing trademark). Identity "Contour" (DESIGN.md §0,
-  `docs/brand/dhirwa-dna.json`). No domain or handle is bought yet; `APP_URL`, `MAIL_FROM` and callbacks are unchanged.
-- **Live site:** https://elhashash-academy.vercel.app. It is behind HTTP Basic auth (`SITE_PASSWORD` in
-  `src/middleware.ts`). The Claude desktop browser pane cannot show the Basic-auth prompt, so use Claude in
-  Chrome; the owner types the password. On 2026-11-01 the live site ran the pre-redesign code (old look, old intro).
+  `docs/brand/dhirwa-dna.json`). `dhirwa.ae` is live, with its DNS on Vercel; `APP_URL`, `MAIL_FROM` and callbacks point at it.
+- **Live site:** https://dhirwa.ae, public. `SITE_PASSWORD` is empty, so the pre-launch gate in
+  `src/middleware.ts` is off.
 - **Payments (owner decision, 2026-11-02): Ziina only.**
   - `activeGateway` in `src/lib/gateway.ts` returns Ziina for AED and nothing else. Stripe and Paymob code stays but is
     hidden until the owner allows it: `STRIPE_ENABLED=1` / `PAYMOB_ENABLED=1`. With no gateway, checkout says payment

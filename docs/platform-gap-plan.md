@@ -19,12 +19,12 @@ throwaway one. Open finding for the owner: the sitewide "New" bar (`NewsBanner`)
 
 | Area | State |
 |---|---|
-| Live sessions | Built on Daily.co: rooms and meeting tokens (`src/lib/daily.ts`), a join page with countdown (`live/[id]`), attendance rows, teacher scheduling, 15-minute and 1-hour reminders. **Not verified end to end**, and `DAILY_API_KEY` is set in production. No recording or replay: `LiveSession` has no recording field. |
+| Live sessions | A teacher-hosted meeting link (Zoom, Teams or Meet), validated against a host allow-list in `src/lib/live-rules.ts`; a join page with countdown and a guardian-consent gate (`live/[id]`); `LiveAttendance` records that the page was opened. Daily was removed: `src/lib/daily.ts` is deleted and nothing reads `DAILY_API_KEY`. No recording or replay. |
 | Video | VdoCipher (DRM) and YouTube embeds. Playback not re-tested since the rebrand. |
 | In-lesson tools (embedded software) | None. No whiteboard, graphing, equation or simulation tool inside lessons or live rooms. |
 | AI | `src/lib/ai.ts` (one Gemini call, kill switch), homework grading suggestion, AI-written parent report, AI draft replies to contact tickets. **`GEMINI_API_KEY` is not in the production variable list I could read, so none of it runs.** No `AiRun` log, no approval queue, no tutor, no question generator, no daily briefing. |
-| Scheduled jobs | One daily Vercel cron. **`CRON_SECRET` is not in the production list either, so `/api/cron/reminders` answers 401: live reminders, expiry notices and the parent digest are not running.** (The checklist says it is set; check in Vercel.) |
-| Tests | 26 unit test files (pricing, access, exams, schemas). **No browser, end-to-end, load, accessibility or restore tests.** The signed-in screens (teacher, admin, student, parent, checkout) have never been clicked through by a script, and the seeded accounts are locked. |
+| Scheduled jobs | None. The reminders cron route, its workflow and the Vercel cron were removed by the owner on 2026-11-05, along with the parent digest, the owner briefing and the analytics purge that shared the route. `CRON_SECRET` is no longer read. |
+| Tests | 260 vitest tests across 34 files, and a Playwright suite (174 passing, 2 skipped) that signs in as each role on a throwaway Postgres: `npm run e2e`. No load, no restore drill. |
 | Monitoring | Server-side behaviour events only (`analytics.ts`). No error tracking, no uptime alert, no log alerts. |
 | Open security item | Deleted or demoted accounts keep access until the 7-day cookie expires. |
 | Not built | Certificates, reviews and ratings on courses, a student mobile app (the PWA exists), phone-only password recovery, referral or affiliate. |

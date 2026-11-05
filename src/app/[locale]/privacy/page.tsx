@@ -44,7 +44,7 @@ const ar: Section[] = [
     body: (
       <p>
         نستخدم مزودين يعالجون البيانات نيابة عنا: Neon (قاعدة البيانات)، Vercel (الاستضافة)، Ziina (الدفع)،
-        VdoCipher (حماية الفيديو)، Resend (البريد)، وDaily (الحصص المباشرة). وعند تفعيل التصحيح الآلي لكورس، يُرسل
+        VdoCipher (حماية الفيديو)، وResend (البريد). وعند تفعيل التصحيح الآلي لكورس، يُرسل
         نص إجابة الطالب والصور التي يرفعها إلى Google (Gemini) لاقتراح درجة يراجعها المدرّس. لا نبيع بياناتك.
       </p>
     ),
@@ -130,7 +130,7 @@ const en: Section[] = [
     body: (
       <p>
         We use providers that process data on our behalf: Neon (database), Vercel (hosting), Ziina (payments),
-        VdoCipher (video protection), Resend (email), and Daily (live sessions). When automatic grading is switched on
+        VdoCipher (video protection) and Resend (email). When automatic grading is switched on
         for a course, the written answer a student submits and any uploaded photos are sent to Google (Gemini) for a suggested
         mark that the teacher reviews. We do not sell your data.
       </p>

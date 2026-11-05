@@ -12,11 +12,11 @@ Dhirwa (ذروة) is live at https://dhirwa.ae. Done so far: rebrand, Hop intro,
 ## Step 0: unblock CI (first, small)
 1. Commit `c787d17` (lockfile regenerated for npm 10) is local and unpushed. Ask the owner, push to `main`.
 2. Watch the `CI` run (repo Actions tab; the repo is private so the API needs auth; the owner screenshots or pastes). If `check` passes but `e2e` fails, download the `playwright-report` artifact. Likely causes, in order: embedded-postgres Linux binary or initdb flags (`--locale=C` may need `C.UTF-8` on Linux), Chrome channel missing (use `npx playwright install --with-deps chromium` and drop `channel: "chrome"` in CI only), port 3200/54329 in use, 45-minute timeout (shard by project if slow).
-3. Re-run the `Reminders` workflow by hand (Actions, Reminders, Run workflow). Run #4 failed in 0s with no jobs before the secrets existed. Expected now: a green run, and `curl -i -H "Authorization: Bearer <secret>" https://dhirwa.ae/api/cron/reminders` answering 200 (owner runs this, never paste the secret). If 401: the Vercel `CRON_SECRET` differs or Vercel was not redeployed after adding it (owner: Vercel, Settings, Environment Variables, Production, then Redeploy). Then check `npx vercel logs --environment production --since 15m --query "level:error" --json` (CLI linked in `$TEMP/vl`).
+3. ~~Re-run the `Reminders` workflow.~~ Moot: the reminders route, its workflow and the Vercel cron were deleted on 2026-11-05 by the owner's decision. There is nothing to run.
 4. Owner still to set in Vercel Production: `GEMINI_API_KEY` (AI is off without it) and confirm `BLOB_READ_WRITE_TOKEN`.
 
 ## Phase 1: prove what already exists (owner plus agent, no new features)
-- One real live session with a test teacher and student on Daily: schedule, 15-minute and 1-hour reminders (now possible), join, attendance, leave. Fix what breaks.
+- One real live session through a teacher-hosted link: schedule, join, the guardian-consent gate, the link opening. Reminders are gone by the owner's decision.
 - Lesson playback on VdoCipher and YouTube after the rebrand.
 - Ziina test purchase on a preview (`ZIINA_TEST=1` only off production; production refuses it), then a refund, then a reset email to a real inbox. Owner: add the DMARC TXT record `_dmarc` (`v=DMARC1; p=none; rua=mailto:<inbox you read>`) in Vercel DNS; consider a real support mailbox (root MX currently points at Resend inbound).
 - Verify a real signed-in session after the auth change (JWT re-check) and the intro on a slow phone connection (both unverified).

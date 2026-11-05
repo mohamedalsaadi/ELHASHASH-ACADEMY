@@ -8,7 +8,8 @@ Start with `docs/WORKLOG.md`: the running log of what changed, why, and what is 
 - Next.js 15.5 App Router, React 19, TypeScript. Dev server: `npm run dev` (port 3000).
 - Tailwind v4. All tokens in `src/app/tokens.css` (`@theme`), brand motion in `src/app/brand.css`. No raw hex/px/ms in components.
 - next-intl: locales `ar` (default) and `en`, strings in `messages/{ar,en}.json`. Arabic first, RTL: use logical properties (`inset-inline`, `ms-`/`me-`, `start`/`end`), never left/right.
-- Prisma 7 on Neon Postgres. Auth: next-auth v5. Payments: Stripe and Paymob.
+- Prisma 7 on Neon Postgres. Auth: next-auth v5. Payments: Ziina is the only live gateway; Stripe and
+  Paymob stay in the code behind env flags and on test keys.
 - Tests: `npm test` (vitest). Before handing work back: `npx tsc --noEmit`, `npm test`, `npm run build`.
 
 ## Hard rules

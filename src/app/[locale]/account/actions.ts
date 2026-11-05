@@ -65,7 +65,7 @@ export async function changeOwnPassword(_: unknown, form: FormData): Promise<"ok
   if (next.length < 8) return "short";
   const row = await db.user.findUniqueOrThrow({ where: { id: user.id } });
   if (!(await bcrypt.compare(current, row.passwordHash))) return "wrong";
-  await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10) } });
+  await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });
   return "ok";
 }
 

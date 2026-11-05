@@ -43,6 +43,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 instructor comparison block on the subject page: one card per teacher above the course list (photo/initial, name, bio, live chip, summed lesson count, open-course and profile links). One card per teacher even with several courses. Nothing about students is shown, by design. `cardInclude` now selects the instructor's photo and bios. New spec `e2e/instructors.spec.ts` (3 tests) green on ar and en; seed gained a second teacher's course on ae/12/math.
 
+- 2026-11-05 audit items 1, 2, 3, 5, 24 done. Exams now require staff or a plan (page + startExam); parent-link code limited to 10 tries/15 min with `timingSafeEqual`; `User.passwordChangedAt` + JWT stamp ends sessions on any password change (4 write paths); CSV formula injection defused; `awardPractice` returns the attempt's XP instead of the running total, fixing the leaderboard and both "XP earned" labels. 241 tests, build, `e2e/exam-access` + `reset` + `lessons` green. Gap: no automated test yet for #2 or #3.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

@@ -25,6 +25,32 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: First five audit fixes (items 1, 2, 3, 5, 24)
+
+Chosen from `docs/audit.md`: the four S1/S2 items that were small, plus the leaderboard bug.
+
+- **#1 Exams no longer open for free.** `courses/[slug]/exams/[examId]/page.tsx` and `startExam`
+  now require the course's staff or a running plan (`hasPlan`), the same rule course-level homework
+  uses. Before this, any signed-in account could read a whole paper and sit it. Covered by
+  `e2e/exam-access.spec.ts` (no plan → redirected; with a plan → opens), which fails without the fix.
+- **#2 The parent-link code is no longer brute-forceable.** `linkChild` now allows ten tries per
+  parent per 15 minutes and counts every failure, including an unknown phone, and compares the stored
+  hash with `timingSafeEqual`. Six digits is a million-wide space; the window is what closes it.
+  No automated test yet — an e2e needs eleven UI submissions, noted as a follow-up.
+- **#3 A password reset now ends existing sessions.** New `User.passwordChangedAt` (additive
+  migration), stamped by all four existing-user password writes (self change, admin change, admin
+  reset, token reset). The JWT carries the value from sign-in and the 5-minute database re-check
+  refuses a token whose stamp no longer matches. Worst case an old session survives five minutes
+  instead of seven days.
+- **#5 CSV exports can no longer carry a formula.** `csvCell` prefixes values starting with
+  `= + - @` or a control character with an apostrophe. Covered by two new cases in `csv.test.ts`.
+- **#24 The leaderboard no longer double-counts XP.** `awardPractice` returned the running total
+  (`saved.xp`) and both callers stored it on the attempt while the leaderboard sums attempts; five
+  5-XP runs counted as 75. It now returns the XP earned by that attempt. This also fixes the "XP
+  earned" label on both result screens (#25).
+- Verified: 241 unit tests, `npx tsc --noEmit`, `npm run build`, and e2e `exam-access`,
+  `reset`, `lessons` all green on ar-desktop.
+
 ## 2026-11-05: Instructor comparison block on the subject page
 
 - When several teachers publish a course for the same grade and subject, the catalogue used to list

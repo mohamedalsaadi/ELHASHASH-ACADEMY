@@ -4,6 +4,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { hasPlan } from "@/lib/assignments";
+import { grantsFor, isCourseStaff } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { startExam } from "../actions";
 import { ExamForm } from "../ExamForm";
@@ -30,7 +32,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
       title: true,
       durationMin: true,
       maxAttempts: true,
-      course: { select: { slug: true, titleAr: true, titleEn: true } },
+      course: { select: { id: true, slug: true, titleAr: true, titleEn: true, instructorId: true } },
       items: {
         orderBy: { order: "asc" },
         select: { item: { select: { id: true, kind: true, prompt: true, marks: true, answer: true, explanation: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true } } } } },
@@ -51,6 +53,13 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
     },
   });
   if (!paper || paper.course.slug !== slug) notFound();
+
+  // An exam is course-level work: it opens for the course's staff, or for a student with a running
+  // plan. Without this, any signed-in account could read a whole paper and sit it for free.
+  if (!isCourseStaff(session.user, paper.course)) {
+    const grants = await grantsFor(session.user.id, paper.course.id);
+    if (!hasPlan(grants, new Date())) redirect(`/${locale}/courses/${slug}#packages`);
+  }
 
   const used = await db.examAttempt.count({ where: { paperId: paper.id, userId: session.user.id } });
   const canRetake = used < paper.maxAttempts;

@@ -9,12 +9,15 @@ import type { Role } from "@/generated/prisma/client";
 declare module "@auth/core/jwt" {
   interface JWT {
     checkedAt?: number;
+    /// The user's passwordChangedAt when this token was issued, in ms. A different value now means the password changed.
+    pwdAt?: number;
   }
 }
 
 declare module "next-auth" {
   interface User {
     role: Role;
+    pwdAt?: number;
   }
   interface Session {
     user: { id: string; name: string; role: Role };
@@ -47,7 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await recordAttempt(key);
           return null;
         }
-        return { id: user.id, name: user.name, role: user.role };
+        return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };
       },
     }),
   ],
@@ -56,12 +59,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.sub = user.id;
         token.role = user.role;
+        token.pwdAt = user.pwdAt ?? 0;
         token.checkedAt = Date.now();
         return token;
       }
       if (typeof token.checkedAt === "number" && Date.now() - token.checkedAt < RECHECK_MS) return token;
-      const row = await db.user.findUnique({ where: { id: token.sub! }, select: { role: true } });
+      const row = await db.user.findUnique({ where: { id: token.sub! }, select: { role: true, passwordChangedAt: true } });
       if (!row) return null;
+      // A reset or password change after this token was issued ends the session, at the next re-check.
+      if ((row.passwordChangedAt?.getTime() ?? 0) !== (token.pwdAt ?? 0)) return null;
       token.role = row.role;
       token.checkedAt = Date.now();
       return token;

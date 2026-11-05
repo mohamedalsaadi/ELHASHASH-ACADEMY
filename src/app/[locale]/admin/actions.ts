@@ -444,7 +444,7 @@ export async function changePassword(_: unknown, form: FormData): Promise<"ok" |
   if (next.length < 10) return "short";
   const user = await db.user.findUniqueOrThrow({ where: { id: me.id } });
   if (!(await bcrypt.compare(current, user.passwordHash))) return "wrong";
-  await db.user.update({ where: { id: me.id }, data: { passwordHash: await bcrypt.hash(next, 10) } });
+  await db.user.update({ where: { id: me.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });
   return "ok";
 }
 
@@ -821,7 +821,7 @@ export async function resetPassword(_: unknown, form: FormData): Promise<"ok" | 
   if (!d.success) return "invalid";
   const { count } = await db.user.updateMany({
     where: { id: d.data.userId, role: { not: "ADMIN" } },
-    data: { passwordHash: await bcrypt.hash(d.data.password, 10) },
+    data: { passwordHash: await bcrypt.hash(d.data.password, 10), passwordChangedAt: new Date() },
   });
   return count ? "ok" : "invalid";
 }

@@ -117,6 +117,39 @@ async function main() {
     create: { parentId: parent.id, studentId: studentAe.id },
   });
 
+  // A published exam on the main UAE course, so the "an exam needs a plan" rule has something to
+  // protect. Fresh database each run, so plain creates are safe here.
+  const aeCourse = await db.course.findUniqueOrThrow({ where: { slug: "ae-12-math-e2e" } });
+  await db.examPaper.deleteMany({ where: { courseId: aeCourse.id } });
+  await db.unit.deleteMany({ where: { courseId: aeCourse.id } });
+  const examUnit = await db.unit.create({
+    data: { courseId: aeCourse.id, order: 1, titleAr: "الوحدة الأولى", titleEn: "Unit 1", term: 1 },
+  });
+  const examLesson = await db.lesson.create({
+    data: { unitId: examUnit.id, order: 1, kind: "VIDEO", titleAr: "درس", titleEn: "Lesson" },
+  });
+  const examItem = await db.questionItem.create({
+    data: {
+      lessonId: examLesson.id,
+      createdById: teacherAe.id,
+      kind: "MCQ",
+      prompt: "2 + 2 = ?",
+      marks: 1,
+      choices: { create: [{ label: "4", correct: true, order: 1 }, { label: "5", correct: false, order: 2 }] },
+    },
+  });
+  await db.examPaper.create({
+    data: {
+      courseId: aeCourse.id,
+      createdById: teacherAe.id,
+      title: "E2E exam",
+      durationMin: 30,
+      maxAttempts: 1,
+      published: true,
+      items: { create: [{ itemId: examItem.id, order: 0 }] },
+    },
+  });
+
   // Live lectures: the UAE teacher is approved, the Egypt teacher keeps the default (not approved).
   // The live session starts in two minutes, so the student's join window (start - 10 min) is open.
   await db.user.update({ where: { id: teacherAe.id }, data: { liveApproved: true } });

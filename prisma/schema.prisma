@@ -97,6 +97,8 @@ model User {
   /// Null until the address is confirmed through a verification token.
   emailVerifiedAt DateTime?
   passwordHash    String
+  /// Set whenever the password is replaced (reset or change). A session issued before this instant is refused.
+  passwordChangedAt DateTime?
   role            Role      @default(STUDENT)
   locale          String    @default("ar")
   gradeId         String?

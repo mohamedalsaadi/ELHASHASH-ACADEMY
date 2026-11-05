@@ -15,7 +15,7 @@ export async function resetPassword(_: unknown, form: FormData): Promise<"invali
   const consumed = await consumeToken(token, "RESET");
   if (!consumed) return "invalid";
 
-  await db.user.update({ where: { id: consumed.userId }, data: { passwordHash: await bcrypt.hash(password, 10) } });
+  await db.user.update({ where: { id: consumed.userId }, data: { passwordHash: await bcrypt.hash(password, 10), passwordChangedAt: new Date() } });
   // Any other outstanding reset links stop working once the password changes.
   await db.token.updateMany({ where: { userId: consumed.userId, kind: "RESET", usedAt: null }, data: { usedAt: new Date() } });
   redirect(`/${locale}/signin?reset=1`);

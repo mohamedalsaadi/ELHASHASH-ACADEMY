@@ -18,6 +18,15 @@ export async function sql<T = unknown>(text: string, params: unknown[] = []) {
   }
 }
 
+/** The seeded published exam paper of a course. */
+export async function examOf(courseSlug: string) {
+  const rows = await sql<{ id: string }>(
+    `SELECT p.id FROM "ExamPaper" p JOIN "Course" c ON c.id = p."courseId" WHERE c.slug = $1 AND p.published = true LIMIT 1`,
+    [courseSlug],
+  );
+  return rows[0].id;
+}
+
 /** A fresh student with an email, plus a valid password-reset token for it (the raw value the email would carry). */
 export async function userWithResetToken(tag: string) {
   const id = randomUUID();

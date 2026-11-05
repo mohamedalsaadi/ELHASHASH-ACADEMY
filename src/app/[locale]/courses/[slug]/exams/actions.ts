@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { grantsFor } from "@/lib/catalog";
+import { hasPlan } from "@/lib/assignments";
+import { grantsFor, isCourseStaff } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { markExam } from "@/lib/exams";
 import { opensLesson } from "@/lib/plans";
@@ -19,10 +20,17 @@ export async function startExam(form: FormData) {
 
   const paper = await db.examPaper.findUnique({
     where: { id: d.paperId, published: true },
-    select: { id: true, durationMin: true, maxAttempts: true, courseId: true, course: { select: { slug: true } }, items: { select: { item: { select: { marks: true } } } } },
+    select: { id: true, durationMin: true, maxAttempts: true, courseId: true, course: { select: { slug: true, instructorId: true } }, items: { select: { item: { select: { marks: true } } } } },
   });
   if (!paper) notFound();
   if (paper.items.length === 0) notFound();
+
+  // Same rule as the paper page: staff, or a student with a running plan. Checked here too so a
+  // direct POST cannot create an attempt the page would have refused.
+  if (!isCourseStaff(session.user, paper.course)) {
+    const grants = await grantsFor(session.user.id, paper.courseId);
+    if (!hasPlan(grants, new Date())) redirect(`/courses/${paper.course.slug}#packages`);
+  }
 
   const [existing, used] = await Promise.all([
     db.examAttempt.findFirst({ where: { paperId: paper.id, userId: session.user.id, status: "IN_PROGRESS" }, select: { id: true } }),

@@ -2,7 +2,11 @@
 import { db } from "./db";
 import { nextStreak, practiceXp } from "./progress";
 
-/** Adds XP and advances the streak in one write. Returns the new totals for the result screen. */
+/**
+ * Adds XP and advances the streak in one write.
+ * Returns the XP **earned by this attempt**, not the running total: the attempt row stores it and the
+ * leaderboard sums those rows, so a cumulative value there would count earlier XP again on every run.
+ */
 export async function awardPractice(userId: string, correct: number, total: number) {
   const xp = practiceXp(correct, total);
   if (xp <= 0) return null;
@@ -16,5 +20,5 @@ export async function awardPractice(userId: string, correct: number, total: numb
     create: { userId, xp, currentStreak: streak, longestStreak: longest, lastActiveDate: now },
     update: { xp: { increment: xp }, currentStreak: streak, longestStreak: longest, lastActiveDate: now },
   });
-  return { xp: saved.xp, streak: saved.currentStreak };
+  return { xp, streak: saved.currentStreak };
 }

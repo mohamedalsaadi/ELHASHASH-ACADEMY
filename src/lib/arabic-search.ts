@@ -47,3 +47,18 @@ export function matchesQuery(fields: (string | null | undefined)[], query: strin
   const haystack = normalizeSearch(fields.filter((f): f is string => !!f).join(" "));
   return tokens.every((token) => tokenMatches(haystack, token));
 }
+
+type Titled = { titleAr: string | null; titleEn: string | null };
+
+/**
+ * Narrows a course to the units a query finds. A unit whose own title matches keeps all its
+ * lessons; otherwise only the lessons that match survive, and units left with nothing drop out.
+ */
+export function filterUnits<U extends Titled & { lessons: Titled[] }>(units: U[], query: string): { unit: U; lessons: U["lessons"] }[] {
+  return units
+    .map((unit) => ({
+      unit,
+      lessons: matchesQuery([unit.titleAr, unit.titleEn], query) ? unit.lessons : unit.lessons.filter((l) => matchesQuery([l.titleAr, l.titleEn], query)),
+    }))
+    .filter((x) => x.lessons.length > 0);
+}

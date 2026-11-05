@@ -36,7 +36,9 @@
     "hidePassword": "إخفاء كلمة المرور",
     "retry": "إعادة المحاولة",
     "back": "رجوع",
-    "lessonProgress": "تقدّم الحصص: {done} من {total}"
+    "lessonProgress": "تقدّم الحصص: {done} من {total}",
+    "search": "بحث",
+    "searchNoMatch": "لا شيء يطابق بحثك."
   },
   "contactForm": {
     "title": "أرسل لنا رسالة",
@@ -337,6 +339,7 @@
     "noPackages": "باقات هذا الكورس قيد التجهيز. تواصل مع الدعم إذا كنت تحتاج الوصول الآن.",
     "search": "ابحث في الكورسات",
     "searchPlaceholder": "اسم المادة أو الصف أو الكورس",
+    "lessonSearchPlaceholder": "ابحث في دروس هذا الكورس",
     "searchButton": "بحث",
     "searchResults": "{count, plural, =0 {لا نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
     "searchEmpty": "لا يوجد تطابق. جرّب اسم المادة أو الصف، أو تصفّح الدول بالأسفل.",
@@ -822,6 +825,7 @@
     "hidden": "مخفي",
     "edit": "تعديل الدروس",
     "myStudents": "طلابي",
+    "studentsSearchPlaceholder": "الاسم أو الهاتف",
     "noStudents": "لا يوجد طلاب مشتركون الآن.",
     "until": "حتى {date}",
     "forever": "وصول دائم",
@@ -921,6 +925,7 @@
   },
   "questions": {
     "title": "الأسئلة",
+    "searchPlaceholder": "سؤال أو طالب أو درس",
     "ask": "اسأل معلمك عن هذه الحصة",
     "askHint": "حتى 5 أسئلة في اليوم. يجيبك المعلم هنا وفي لوحتك.",
     "contactRule": "لسلامة الجميع، نخفي أرقام الهواتف والروابط وحسابات التواصل. تواصل مع الأكاديمية عبر القنوات الرسمية.",

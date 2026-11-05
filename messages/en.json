@@ -36,7 +36,9 @@
     "hidePassword": "Hide password",
     "retry": "Try again",
     "back": "Back",
-    "lessonProgress": "Lesson progress: {done} of {total}"
+    "lessonProgress": "Lesson progress: {done} of {total}",
+    "search": "Search",
+    "searchNoMatch": "Nothing matches your search."
   },
   "contactForm": {
     "title": "Send us a message",
@@ -337,6 +339,7 @@
     "noPackages": "Subscriptions for this course are being prepared. Contact support if you need access now.",
     "search": "Search courses",
     "searchPlaceholder": "Subject, grade or course name",
+    "lessonSearchPlaceholder": "Search this course's lessons",
     "searchButton": "Search",
     "searchResults": "{count, plural, =0 {No results} one {# result} other {# results}}",
     "searchEmpty": "Nothing matched. Try the subject or grade name, or browse the countries below.",
@@ -822,6 +825,7 @@
     "hidden": "Hidden",
     "edit": "Edit lessons",
     "myStudents": "My students",
+    "studentsSearchPlaceholder": "Name or phone",
     "noStudents": "No students are subscribed right now.",
     "until": "Until {date}",
     "forever": "Lifetime access",
@@ -921,6 +925,7 @@
   },
   "questions": {
     "title": "Questions",
+    "searchPlaceholder": "Question, student or lesson",
     "ask": "Ask your teacher about this lecture",
     "askHint": "Up to 5 questions a day. Your teacher answers here and on your dashboard.",
     "contactRule": "For everyone's safety, phone numbers, links and social handles are hidden. Contact the academy through the official channels.",

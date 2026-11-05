@@ -3,6 +3,7 @@ import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
+import { matchesQuery } from "@/lib/arabic-search";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/staff";
 import { field } from "../../admin/styles";
@@ -17,12 +18,20 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/teacher/questions", "questions", { key: "title", noindex: true });
 }
 
-export default async function TeacherQuestionsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function TeacherQuestionsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { locale } = await params;
+  const q = (await searchParams).q?.trim() ?? "";
   setRequestLocale(locale);
   const me = await requireStaff();
   const t = await getTranslations("questions");
   const tt = await getTranslations("teacher");
+  const tcommon = await getTranslations("common");
   const ar = locale === "ar";
   const mine = me.role === "ADMIN" ? {} : { lesson: { unit: { course: { instructorId: me.id } } } };
   const include = {
@@ -35,6 +44,10 @@ export default async function TeacherQuestionsPage({ params }: { params: Promise
     db.question.findMany({ where: { ...mine, answeredAt: { not: null } }, orderBy: { answeredAt: "desc" }, take: 20, include }),
   ]);
   const when = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Dubai" });
+  const hit = (x: (typeof open)[number]) =>
+    matchesQuery([x.body, x.user.name, x.lesson.titleAr, x.lesson.titleEn, x.lesson.unit.course.titleAr, x.lesson.unit.course.titleEn], q);
+  const shownOpen = q.length >= 2 ? open.filter(hit) : open;
+  const shownAnswered = q.length >= 2 ? answered.filter(hit) : answered;
 
   const item = (q: (typeof open)[number]) => (
     <li key={q.id} className="grid gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4">
@@ -65,14 +78,33 @@ export default async function TeacherQuestionsPage({ params }: { params: Promise
         <h1 className="font-display text-h1 font-semibold">{tt("navQuestions")}</h1>
         <TeacherNav current="questions" />
       </div>
+      <form method="get" role="search" className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          minLength={2}
+          maxLength={80}
+          placeholder={t("searchPlaceholder")}
+          aria-label={t("searchPlaceholder")}
+          className={`${field} min-h-11 min-w-0 flex-1`}
+        />
+        <button className="btn btn-primary font-display">{tcommon("search")}</button>
+      </form>
       <section className="grid gap-3">
-        <h2 className="font-display text-h2 font-semibold">{t("unanswered", { count: open.length })}</h2>
-        {open.length ? <ul className="grid gap-3">{open.map(item)}</ul> : <EmptyState><p className="text-ink-muted">{t("allAnswered")}</p></EmptyState>}
+        <h2 className="font-display text-h2 font-semibold">{t("unanswered", { count: shownOpen.length })}</h2>
+        {shownOpen.length ? (
+          <ul className="grid gap-3">{shownOpen.map(item)}</ul>
+        ) : (
+          <EmptyState>
+            <p className="text-ink-muted">{q.length >= 2 ? tcommon("searchNoMatch") : t("allAnswered")}</p>
+          </EmptyState>
+        )}
       </section>
-      {answered.length > 0 && (
+      {shownAnswered.length > 0 && (
         <section className="grid gap-3">
           <h2 className="font-display text-h2 font-semibold">{t("recent")}</h2>
-          <ul className="grid gap-3">{answered.map(item)}</ul>
+          <ul className="grid gap-3">{shownAnswered.map(item)}</ul>
         </section>
       )}
     </main>

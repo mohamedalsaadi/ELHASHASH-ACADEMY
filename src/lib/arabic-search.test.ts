@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesQuery, normalizeSearch } from "./arabic-search";
+import { filterUnits, matchesQuery, normalizeSearch } from "./arabic-search";
 
 describe("normalizeSearch", () => {
   it("folds the alef forms, so أ إ آ ا all match", () => {
@@ -66,5 +66,35 @@ describe("matchesQuery", () => {
     expect(matchesQuery(fields, "")).toBe(false);
     expect(matchesQuery(fields, "   ")).toBe(false);
     expect(matchesQuery([null, undefined, ""], "رياضيات")).toBe(false);
+  });
+});
+
+describe("filterUnits", () => {
+  const units = [
+    { titleAr: "الوحدة الأولى", titleEn: "Unit one", lessons: [
+      { titleAr: "المعادلات التربيعية", titleEn: "Quadratic equations" },
+      { titleAr: "المتباينات", titleEn: "Inequalities" },
+    ] },
+    { titleAr: "الوحدة الثانية", titleEn: "Unit two", lessons: [
+      { titleAr: "الهندسة", titleEn: "Geometry" },
+    ] },
+  ];
+
+  it("keeps every lesson of a unit whose own title matches", () => {
+    const shown = filterUnits(units, "Unit one");
+    expect(shown).toHaveLength(1);
+    expect(shown[0].lessons).toHaveLength(2);
+  });
+
+  it("keeps only the matching lessons and drops units left empty", () => {
+    const shown = filterUnits(units, "احياء");
+    expect(shown).toHaveLength(0);
+    expect(filterUnits(units, "الهندسة")).toHaveLength(1);
+    expect(filterUnits(units, "الهندسة")[0].lessons).toHaveLength(1);
+  });
+
+  it("folds the query the same way the catalogue does", () => {
+    expect(filterUnits(units, "المعادلات")).toHaveLength(1);
+    expect(filterUnits(units, "geometry")[0].lessons[0].titleAr).toBe("الهندسة");
   });
 });

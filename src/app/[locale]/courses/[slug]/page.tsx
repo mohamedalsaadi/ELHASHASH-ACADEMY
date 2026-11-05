@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { logEventLater } from "@/lib/analytics";
+import { filterUnits } from "@/lib/arabic-search";
 import { EmptyState } from "@/components/brand/Mark";
 import { JsonLd } from "@/components/JsonLd";
 import { LiveRow } from "@/components/learning/LiveRow";
@@ -100,10 +101,18 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
   );
 }
 
-export default async function CoursePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+export default async function CoursePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { locale, slug } = await params;
+  const q = (await searchParams).q?.trim() ?? "";
   setRequestLocale(locale);
   const t = await getTranslations("catalog");
+  const tcommon = await getTranslations("common");
   const tp = await getTranslations("catalog.plans");
   const tl = await getTranslations("live");
   const th = await getTranslations("homework");
@@ -251,6 +260,10 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const buyFrom = showPlans && level === "none" && !lapsed ? cheapestSku(single ? [...course.skus, single] : course.skus, now) : null;
   const headline = pick(ar, course.headlineAr, course.headlineEn);
   const desc = pick(ar, course.descAr, course.descEn);
+
+  // Scoped search: a course can hold hundreds of lessons, so narrow the trail to the units and
+  // lessons that match. A unit whose own title matches keeps all of its lessons.
+  const shownUnits = q.length < 2 ? course.units.map((u) => ({ unit: u, lessons: u.lessons })) : filterUnits(course.units, q);
 
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
@@ -409,19 +422,32 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
 
       <section id="units" className="grid scroll-mt-6 gap-4">
         <h2 className="font-display text-h2 font-bold">{t("units")}</h2>
-        {course.units.length === 0 && (
+        <form method="get" role="search" className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            name="q"
+            defaultValue={q}
+            minLength={2}
+            maxLength={80}
+            placeholder={t("lessonSearchPlaceholder")}
+            aria-label={t("lessonSearchPlaceholder")}
+            className="min-h-11 min-w-0 flex-1 rounded-full border border-field bg-surface px-5 text-body text-ink"
+          />
+          <button className="btn btn-primary font-display">{tcommon("search")}</button>
+        </form>
+        {shownUnits.length === 0 && (
           <EmptyState>
-            <p className="text-ink-muted">{t("noUnits")}</p>
+            <p className="text-ink-muted">{q.length >= 2 ? tcommon("searchNoMatch") : t("noUnits")}</p>
           </EmptyState>
         )}
         {/* The units as waypoints up one trail in the course's colour, ending at the summit point. */}
         <ol className="grid">
-          {course.units.map((u, i) => {
-            const unitEntries = u.lessons.map((l) => ({ lesson: l, term: u.term, isFree: u.isFree }));
-            const done = u.lessons.filter((l) => completed.has(l.id)).length;
-            const hasCurrent = u.lessons.some((l) => l.id === currentView?.lessonId);
-            const cleared = u.lessons.length > 0 && done === u.lessons.length;
-            const last = i === course.units.length - 1;
+          {shownUnits.map(({ unit: u, lessons }, i) => {
+            const unitEntries = lessons.map((l) => ({ lesson: l, term: u.term, isFree: u.isFree }));
+            const done = lessons.filter((l) => completed.has(l.id)).length;
+            const hasCurrent = lessons.some((l) => l.id === currentView?.lessonId);
+            const cleared = lessons.length > 0 && done === lessons.length;
+            const last = i === shownUnits.length - 1;
             return (
               <li key={u.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 sm:gap-x-4">
                 <span aria-hidden="true" className="flex flex-col items-center pt-3">
@@ -434,13 +460,13 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                   <i className="w-1 flex-1 rounded-full" style={{ background: line }} />
                   {last && <i className="mb-4 size-4 shrink-0 rounded-full bg-summit shadow-glow" />}
                 </span>
-                <details open={hasCurrent || (u === course.units[0] && !currentView)} className="card mb-4 overflow-hidden">
+                <details open={q.length >= 2 || hasCurrent || (shownUnits[0]?.unit === u && !currentView)} className="card mb-4 overflow-hidden">
                   <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
                     <span className="font-display text-h3 font-bold">{pick(ar, u.titleAr, u.titleEn)}</span>
-                    <span className="num text-label text-ink-muted">{t("unitCount", { done, total: u.lessons.length })}</span>
+                    <span className="num text-label text-ink-muted">{t("unitCount", { done, total: lessons.length })}</span>
                   </summary>
                   <ul className="px-2 pb-2">
-                    {u.lessons.map((l) => {
+                    {lessons.map((l) => {
                       const entry = unitEntries.find((e) => e.lesson.id === l.id)!;
                       const open = opens(entry);
                       const done = completed.has(l.id);

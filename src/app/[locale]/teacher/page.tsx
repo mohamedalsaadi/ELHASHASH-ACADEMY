@@ -3,6 +3,7 @@ import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
+import { matchesQuery } from "@/lib/arabic-search";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import type { Currency } from "@/lib/pricing-engine";
@@ -28,14 +29,18 @@ export function generateMetadata({
 
 export default async function TeacherPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const { locale } = await params;
+  const q = (await searchParams).q?.trim() ?? "";
   setRequestLocale(locale);
   const me = await requireStaff();
   const t = await getTranslations("teacher");
   const tc = await getTranslations("catalog");
+  const tcommon = await getTranslations("common");
   const ar = locale === "ar";
   const now = new Date();
   const monthStart = new Date(
@@ -166,6 +171,13 @@ export default async function TeacherPage({
   const drifting = [...seen.values()]
     .filter((x) => !x.lastSeen || x.lastSeen < idleCutoff)
     .slice(0, 10);
+  // Scoped search over the roster: a name, a phone, or the course and lesson they are subscribed to.
+  const shownSubs =
+    q.length < 2
+      ? subs
+      : subs.filter((s) =>
+          matchesQuery([s.user.name, s.user.phone, s.user.email, s.course.titleAr, s.course.titleEn, s.lesson?.titleAr, s.lesson?.titleEn], q),
+        );
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", {
     dateStyle: "medium",
     timeZone: "Asia/Dubai",
@@ -313,13 +325,32 @@ export default async function TeacherPage({
         <h2 className="font-display text-h2 font-semibold">
           {t("myStudents")}
         </h2>
+        {subs.length > 0 && (
+          <form method="get" action={`/${locale}/teacher`} className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              name="q"
+              defaultValue={q}
+              minLength={2}
+              maxLength={80}
+              placeholder={t("studentsSearchPlaceholder")}
+              aria-label={t("studentsSearchPlaceholder")}
+              className="min-h-11 min-w-0 flex-1 rounded-full border border-field bg-surface px-5 text-body text-ink"
+            />
+            <button className="btn btn-primary font-display">{tcommon("search")}</button>
+          </form>
+        )}
         {subs.length === 0 ? (
           <EmptyState>
             <p className="text-ink-muted">{t("noStudents")}</p>
           </EmptyState>
+        ) : shownSubs.length === 0 ? (
+          <EmptyState>
+            <p className="text-ink-muted">{tcommon("searchNoMatch")}</p>
+          </EmptyState>
         ) : (
           <ul className="grid gap-2">
-            {subs.map((s) => {
+            {shownSubs.map((s) => {
               const sku = s.order?.items.find(
                 (i) =>
                   i.sku.courseId === s.courseId &&

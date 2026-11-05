@@ -22,8 +22,19 @@ describe("phoneSchema", () => {
   });
 });
 
+describe("password policy", () => {
+  const base = { name: "طالب", phone: "01012345678", gradeId: "g1", email: "s@example.com" };
+  it("rejects under 12 characters", () => {
+    expect(signUpSchema.safeParse({ ...base, password: "short123" }).success).toBe(false);
+  });
+  it("rejects past 72 characters, which bcrypt would silently truncate", () => {
+    expect(signUpSchema.safeParse({ ...base, password: "a".repeat(73) }).success).toBe(false);
+    expect(signUpSchema.safeParse({ ...base, password: "a".repeat(72) }).success).toBe(true);
+  });
+});
+
 describe("signUpSchema", () => {
-  const base = { name: "طالب", phone: "01012345678", password: "password123", gradeId: "g1" };
+  const base = { name: "طالب", phone: "01012345678", password: "password1234", gradeId: "g1" };
 
   it("requires a valid email and lowercases it", () => {
     const r = signUpSchema.safeParse({ ...base, email: "Student@Example.COM" });
@@ -37,7 +48,7 @@ describe("signUpSchema", () => {
   });
 
   it("requires a grade for a student but not for a parent", () => {
-    const parent = { type: "PARENT" as const, name: "ولي", email: "parent@example.com", phone: "01012345678", password: "password123" };
+    const parent = { type: "PARENT" as const, name: "ولي", email: "parent@example.com", phone: "01012345678", password: "password1234" };
     expect(signUpSchema.safeParse(parent).success).toBe(true);
     expect(signUpSchema.safeParse({ ...parent, type: "STUDENT" as const }).success).toBe(false);
   });

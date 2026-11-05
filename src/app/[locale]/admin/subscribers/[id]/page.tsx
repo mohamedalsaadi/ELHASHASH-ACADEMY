@@ -5,7 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
-import { formatMoney } from "@/lib/format";
+import { courseZone, formatMoney } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { isCurrent } from "@/lib/subscribers";
 import { extendAccess, grantAccess } from "../../actions";
@@ -54,7 +54,9 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
   ]);
   if (!u || u.role === "ADMIN") notFound();
 
-  const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "Africa/Cairo" }); // access ends on Cairo days (cairoDay)
+  // Account events (signup, last seen, orders) use the office day; anything tied to a course uses that course's zone.
+  const dateIn = (timeZone: string) => new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone });
+  const date = dateIn("Africa/Cairo");
   const name = (x: { titleAr: string; titleEn: string }) => (pick(ar, x.titleAr, x.titleEn));
   const plan = (a: string | null, days?: number | null) => (a ? tc(`access.${a}`, { days: days ?? 0 }) : t("wholeCourse"));
   const access = u.entitlements.filter((e) => !e.liveSessionId);
@@ -167,7 +169,7 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
             {seats.map((e) => (
               <li key={e.id} className="flex justify-between gap-3">
                 <span>{e.liveSession ? name(e.liveSession) : name(e.course)}</span>
-                <span className="num text-ink-muted">{e.liveSession && date.format(e.liveSession.startsAt)}</span>
+                <span className="num text-ink-muted">{e.liveSession && dateIn(courseZone(e.course)).format(e.liveSession.startsAt)}</span>
               </li>
             ))}
           </ul>

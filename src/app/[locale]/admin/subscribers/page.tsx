@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
+import { courseZone } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { findSubscribers, isCurrent, PAGE_SIZE, subscriberWhere, type SubscriberFilter } from "@/lib/subscribers";
 import { AdminNav, panel, table } from "../AdminNav";
@@ -34,7 +35,8 @@ export default async function SubscribersPage({ params, searchParams }: { params
     findSubscribers(f),
     db.user.count({ where: subscriberWhere(f, now) }),
   ]);
-  const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "Africa/Cairo" }); // access ends on Cairo days (cairoDay)
+  // Access ends on a day boundary in the course country's zone, so a Kuwaiti student's end date is a Kuwaiti day.
+  const dateIn = (timeZone: string) => new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone });
   const query = (extra: Record<string, string>) => new URLSearchParams({ ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)), ...extra }).toString();
 
   return (
@@ -139,7 +141,7 @@ export default async function SubscribersPage({ params, searchParams }: { params
                       )}
                     </td>
                     <td className={`font-semibold ${active ? "text-up" : "text-ink-muted"}`}>{latest ? t(active ? "active" : "expired") : t("none")}</td>
-                    <td className="num">{latest?.endsAt ? date.format(latest.endsAt) : latest ? t("noEnd") : "—"}</td>
+                    <td className="num">{latest?.endsAt ? dateIn(courseZone(latest.course)).format(latest.endsAt) : latest ? t("noEnd") : "—"}</td>
                   </tr>
                 );
               })}

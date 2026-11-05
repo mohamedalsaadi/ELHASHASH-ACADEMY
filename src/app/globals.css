@@ -145,6 +145,16 @@ textarea:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Hover lift is motion too: keep the colour change, drop the movement. */
+  .btn-primary:hover,
+  .btn-glow:hover,
+  .hover-lift:hover,
+  .hover-lift:focus-visible {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }

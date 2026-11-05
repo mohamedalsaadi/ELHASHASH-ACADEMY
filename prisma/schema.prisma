@@ -836,7 +836,7 @@ model Submission {
   feedback     String?          @db.VarChar(4000)
   gradedAt     DateTime?
   gradedById   String?
-  /// Reserved for AI-assisted grading. Nothing writes these yet.
+  /// Written by src/lib/ai-grading.ts when the course opted into AI grading; the teacher still decides.
   aiScore      Int?
   aiFeedback   String?          @db.VarChar(4000)
   createdAt    DateTime         @default(now())

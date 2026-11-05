@@ -56,7 +56,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
                 <input type="hidden" name="id" value={c.id} />
                 <button className="card hover-lift flex min-h-11 w-full items-center gap-4 p-5 text-start">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/flags/${c.code.toLowerCase()}.svg`} alt="" className="h-7 w-auto rounded-sm" />
+                  <img src={`/flags/${c.code.toLowerCase()}.svg`} alt="" width={28} height={20} loading="lazy" decoding="async" className="h-7 w-auto rounded-sm" />
                   <span className="grid gap-0.5">
                     <span className="font-display text-h3 font-bold">{ar ? c.nameAr : c.nameEn}</span>
                     <span className="text-small text-ink-muted">{t("gradeCount", { count: c._count.grades })}</span>
@@ -120,7 +120,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
             <span className="text-label font-medium text-night-muted">{t("hello", { name: home.name.split(" ")[0] })}</span>
             <h1 className="flex flex-wrap items-center gap-3 font-display text-display leading-tight font-bold">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/flags/${code}.svg`} alt="" className="h-7 w-auto rounded-sm" />
+              <img src={`/flags/${code}.svg`} alt="" width={28} height={20} loading="lazy" decoding="async" className="h-7 w-auto rounded-sm" />
               {t("title", { grade: gradeName, country: countryName })}
             </h1>
             <p className="text-night-muted">{t("lede", { count: ready.length })}</p>

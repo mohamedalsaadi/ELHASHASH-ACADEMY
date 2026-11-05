@@ -23,7 +23,7 @@ export function CourseCard({ course: c, locale }: { course: CardCourse; locale: 
       {/* The picture headline: the teacher's cover, or the subject's icon on survey paper until one is uploaded. */}
       {c.coverKey ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" className="aspect-[16/9] w-full object-cover" />
+        <img src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" width={640} height={360} loading="lazy" decoding="async" className="aspect-[16/9] w-full object-cover" />
       ) : (
         <span aria-hidden="true" className="grid aspect-[16/9] w-full place-items-center bg-raised">
           <SubjectIcon icon={c.subject?.icon ?? "book"} size={56} muted />

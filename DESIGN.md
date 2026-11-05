@@ -67,28 +67,31 @@ Light only (`color-scheme: light`). Contrast ratios are WCAG 2.x, measured again
 
 | Token | Hex | Use | Contrast |
 |---|---|---|---|
-| `--color-ground` | `#F4F5F6` | page background | |
+| `--color-ground` | `#F6F3EC` | page background (survey paper) | |
 | `--color-surface` | `#FFFFFF` | header, hero, cards, footer | |
-| `--color-raised` | `#ECEEF0` | hover on tiles, inner groups | |
-| `--color-hairline` | `#E3E5E8` | decorative dividers | |
-| `--color-rule` | `#D5D8DC` | card borders on app pages, dashed rules | |
-| `--color-field` | `#6B717A` | input borders, dashed "under construction" stations | 4.9 |
-| `--color-ink` | `#111418` | text, heavy rules, sign borders | 18.5 |
-| `--color-ink-muted` | `#4D535C` | labels, meta | 7.8 |
-| `--color-primary` / `--color-pen` | `#1F6FD1` | the primary sign, links, icons (the UAE line's blue) | white on it 4.9 |
+| `--color-raised` | `#EEEAE0` | hover on tiles, inner groups | |
+| `--color-hairline` | `#E4DFD3` | decorative dividers | |
+| `--color-rule` | `#CBC4B4` | card borders on app pages, dashed rules | |
+| `--color-field` | `#888272` | input borders, muted icons | 4.0 |
+| `--color-ink` | `#13202F` | text, heavy rules, sign borders | 16.8 |
+| `--color-ink-muted` | `#586273` | labels, meta | 6.9 |
+| `--color-primary` / `--color-pen` | `#1F7356` | the primary sign, links, icons (trail green) | white on it 5.9 |
 | `--color-on-primary` | `#FFFFFF` | text on primary, ink, night and line colours | |
-| `--color-night` | `#10223F` | the parents panel, offer cards | white 15.9 · `night-text` 11.1 · `night-muted` 6.8 |
-| `--color-marker` | `#E8B23A` | signal yellow: free badge, discount, "best value", the banner label, earned progress. Never text on light | ink on it 9.6 |
-| `--color-up` | `#1A7F3C` | improvement, correct | 5.1 |
-| `--color-down` | `#C8262E` | decline, wrong, errors | 5.6 |
-| `--color-focus` | `#1F6FD1` | 2px focus ring, 2px offset | |
+| `--color-night` | `#0F1B2D` | the map, `.stage` heroes, the sign-in aside | night-text 13.9 · night-muted 6.4 |
+| `--color-night-2` | `#172840` | the map's second tier | |
+| `--color-marker` / `--color-summit` | `#E8B04B` | summit gold: one accent per viewport, the summit point, earned progress. Never body text | ink on it 8.4 |
+| `--color-up` | `#16834A` | improvement, correct | 5.2 |
+| `--color-down` | `#C8343E` | decline, wrong, errors | 5.8 |
+| `--color-focus` | `#1F7356` | 2px focus ring, 2px offset; summit gold on `.stage` | |
+
+`src/app/tokens.css` is authoritative: if this table and the file disagree, the file wins.
 
 **Country lines.** One colour each, Egypt first. The same values are in `brand-svg.ts` (`LINES`) for generated images. Line signs (`LineBadge`) carry white type on every line except Bahrain, which carries ink.
 
 | Token | Hex | Country | White on it | Ink on it |
 |---|---|---|---|---|
-| `--color-line-eg` | `#D7262E` | Egypt | 5.0 | |
-| `--color-line-sa` | `#1A7F3C` | Saudi Arabia | 5.1 | |
+| `--color-line-eg` | `#D1293D` | Egypt | 5.5 | |
+| `--color-line-sa` | `#16834A` | Saudi Arabia | 5.2 | |
 | `--color-line-ae` | `#1F6FD1` | UAE | 4.9 | |
 | `--color-line-kw` | `#00807E` | Kuwait | 4.8 | |
 | `--color-line-qa` | `#8A1538` | Qatar | 9.4 | |

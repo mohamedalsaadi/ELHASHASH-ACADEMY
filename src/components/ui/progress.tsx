@@ -35,17 +35,22 @@ export function ProgressBar({
 export type MarkState = "done" | "current" | "ahead";
 
 /** One lesson as a small peak: done trail green, current trail green and taller (state in form, not colour alone), ahead faint. */
-export function LessonMark({ state }: { state: MarkState }) {
+export function LessonMark({ state, label }: { state: MarkState; label?: string }) {
   const tone = state === "done" ? "h-4 bg-pen" : state === "current" ? "h-5 bg-pen" : "h-4 bg-field/35";
-  return <span aria-hidden="true" className={`inline-block w-3 shrink-0 [clip-path:polygon(50%_0,100%_100%,0_100%)] ${tone}`} />;
+  return (
+    <>
+      <span aria-hidden="true" className={`inline-block w-3 shrink-0 [clip-path:polygon(50%_0,100%_100%,0_100%)] ${tone}`} />
+      {label && <span className="sr-only">{label}</span>}
+    </>
+  );
 }
 
-export function LessonMarks({ states, label }: { states: MarkState[]; label: string }) {
+export function LessonMarks({ states, label, markLabels }: { states: MarkState[]; label: string; markLabels?: Record<MarkState, string> }) {
   return (
     <ol aria-label={label} className="flex flex-wrap items-end gap-1">
       {states.map((state, i) => (
         <li key={i}>
-          <LessonMark state={state} />
+          <LessonMark state={state} label={markLabels?.[state]} />
         </li>
       ))}
     </ol>

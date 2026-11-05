@@ -75,6 +75,8 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
               <span className="flex min-w-0 items-center gap-3">
                 <span className="num w-6 text-ink-muted">{i + 1}</span>
                 <span className="truncate">{row.name}</span>
+                {/* State in words, not just the border colour. */}
+                {row.id === session.user.id && <span className="shrink-0 rounded-full bg-raised px-2 text-label font-semibold">{t("you")}</span>}
                 {/* The summit point: the week's first place, earned. */}
                 {i === 0 && row.xp > 0 && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-summit" />}
               </span>

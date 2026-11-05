@@ -1416,7 +1416,8 @@
     "reviewTitle": "Review",
     "reviewStart": "Start reviewing",
     "reviewDue": "{count, plural, =0 {Nothing to review today} one {# lesson to review} other {# lessons to review}}",
-    "reviewNone": "Nothing to review today. Come back tomorrow."
+    "reviewNone": "Nothing to review today. Come back tomorrow.",
+    "you": "You"
   },
   "exam": {
     "title": "Exams",

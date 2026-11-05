@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dhirwa
 
-## Getting Started
+Arabic-first tutoring platform for secondary students across the GCC and Egypt. Live at
+https://dhirwa.ae.
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local     # then fill it in; nothing works without a database
+npm run dev                    # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Check it
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx tsc --noEmit               # types
+npm run lint                   # eslint
+npm test                       # vitest, pure logic only
+npm run build                  # production build
+npm run e2e                    # Playwright on a throwaway Postgres (about 17 minutes)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`npm run e2e` starts its own database, applies every migration, seeds it and deletes it afterwards.
+It never reads the real `DATABASE_URL`, and it blanks every service key.
 
-## Learn More
+## Before you change anything
 
-To learn more about Next.js, take a look at the following resources:
+Read, in this order: `AGENTS.md` (rules), `DESIGN.md` (visual system, tokens in
+`src/app/tokens.css`), `docs/WORKLOG.md` (what changed and why), `docs/HANDOFF.md` (live state),
+`docs/audit.md` (known gaps).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Two rules that are easy to break: the Stripe keys stay on test, and `.env.local`'s `DATABASE_URL` is
+production — never run a migration or a destructive query against it without the owner's approval.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Layout
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/[locale]/` — pages, `ar` and `en`; Arabic is the default locale and the site is RTL.
+- `src/components/` — shared UI; `src/lib/` — logic, with pure modules kept free of database imports
+  so they are unit-testable.
+- `prisma/` — schema and additive migrations.
+- `messages/{ar,en}.json` — every string, both languages, same keys.
+- `e2e/` — Playwright specs and their seeding helpers.

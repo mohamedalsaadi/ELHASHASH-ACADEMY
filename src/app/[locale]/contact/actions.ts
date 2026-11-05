@@ -9,7 +9,7 @@ import { emailLayout, sendMail } from "@/lib/mail";
 import { notifyAdmins } from "@/lib/notify";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { CONTACT_EMAIL } from "@/lib/site";
-import { draftTicket } from "@/lib/support";
+import { draftTicket, mayDraft } from "@/lib/support";
 
 export async function sendSupportMessage(_: unknown, form: FormData): Promise<"ok" | "invalid" | "limited" | "unavailable"> {
   // A bot fills the hidden field; answer as if it worked so it does not retry.
@@ -37,7 +37,8 @@ export async function sendSupportMessage(_: unknown, form: FormData): Promise<"o
     .catch(() => null);
   if (ticket) {
     after(async () => {
-      await draftTicket(ticket.id);
+      // Privacy requests go to a human unread: a model must never see "delete my child's data".
+      if (mayDraft(d.data.topic)) await draftTicket(ticket.id);
       await notifyAdmins({
         kind: "SYSTEM",
         titleAr: `رسالة دعم جديدة: ${d.data.name}`,

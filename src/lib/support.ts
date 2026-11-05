@@ -10,7 +10,7 @@ import { db } from "./db";
  */
 const POLICY = `
 Dhirwa (ذروة, "the peak"): online secondary-school lessons for the GCC and Egypt, Arabic first.
-Plans: a semester plan opens the term's lessons, a monthly plan opens one month, a rental opens one lecture for a set number of days. Access lasts until the end date shown at purchase. There is no free unit.
+Plans: a semester plan opens the term's lessons, a monthly plan opens one month, a rental opens one lecture for a set number of days. Access lasts until the end date shown at purchase. The first unit of every course is free, so a visitor can watch it without paying.
 Devices: an account plays on one device at a time; starting on a new device stops the previous one.
 Refunds: all sales are final except the written exceptions on the refund policy page (/refund). Never promise a refund; say the owner will review it.
 Live lectures: included in term and yearly plans, a single seat can be bought, the room opens 10 minutes early.
@@ -43,6 +43,14 @@ export async function draftSupportReply(ticket: { topic: string; message: string
 }
 
 /** Runs after the response is sent; a failure leaves the ticket without a draft, nothing more. */
+/**
+ * A privacy or data-subject request ("delete my child's data") must reach a human before any model
+ * sees it, so it is never sent to the drafting service.
+ */
+export function mayDraft(topic: string): boolean {
+  return topic !== "privacy";
+}
+
 export async function draftTicket(id: string) {
   const ticket = await db.supportTicket.findUnique({ where: { id }, select: { topic: true, message: true, name: true, aiDraft: true } });
   if (!ticket || ticket.aiDraft) return;

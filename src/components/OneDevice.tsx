@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { clientIp } from "@/lib/client-ip";
 import { DEVICE_COOKIE } from "@/lib/device";
 
 export function Notice({ children }: { children: React.ReactNode }) {
@@ -43,7 +44,7 @@ export async function oneDevice(userId: string, path: string): Promise<{ ip: str
   }
 
   const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() || "";
+  const ip = clientIp(h);
   const userAgent = h.get("user-agent")?.slice(0, 300);
   await db.deviceSession.upsert({
     where: { userId },

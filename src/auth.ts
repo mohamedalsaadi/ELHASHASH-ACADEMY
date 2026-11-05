@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { clientIp } from "@/lib/client-ip";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { signInSchema } from "@/lib/schemas/auth";
 import type { Role } from "@/generated/prisma/client";
@@ -38,16 +39,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       credentials: { login: {}, password: {} },
-      async authorize(raw) {
+      async authorize(raw, request) {
         const parsed = signInSchema.safeParse(raw);
         if (!parsed.success) return null;
         const { login } = parsed.data;
+        // Two keys: one account cannot be hammered, and one host cannot spray many accounts.
+        const ipKey = `login-ip:${clientIp(request.headers)}`;
+        if (await isLimited(ipKey, 30, 15 * 60_000)) return null;
         // 10 wrong passwords per account per 15 minutes, then every attempt is refused until the window passes.
         const key = `login:${login}`;
         if (await isLimited(key, 10, 15 * 60_000)) return null;
         const user = await db.user.findUnique({ where: login.includes("@") ? { email: login } : { phone: login } });
         if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
-          await recordAttempt(key);
+          await Promise.all([recordAttempt(key), recordAttempt(ipKey)]);
           return null;
         }
         return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };

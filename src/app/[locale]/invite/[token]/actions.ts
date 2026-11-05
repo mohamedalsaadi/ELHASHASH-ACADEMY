@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { signIn } from "@/auth";
 import { logEvent } from "@/lib/analytics";
 import { db } from "@/lib/db";
+import { clientIp } from "@/lib/client-ip";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { hashToken } from "@/lib/token-utils";
 
@@ -28,7 +29,7 @@ export async function acceptInvite(_: InviteAcceptState, form: FormData): Promis
   if (password.length < 10) return { error: "weak" };
   if (password !== confirm) return { error: "password" };
 
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIp(await headers());
   const key = `invite:${ip}`;
   if (await isLimited(key, 10, 15 * 60_000)) return { error: "too_many" };
 

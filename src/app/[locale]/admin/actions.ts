@@ -264,7 +264,8 @@ const promoInput = z.object({
     .trim()
     .max(500)
     .default("")
-    .refine((h) => !h || h.startsWith("/") || h.startsWith("https://"), "bad_href"),
+    // Same-site destinations only: a promotion must not become a phishing link.
+    .refine((h) => !h || h.startsWith("/"), "bad_href"),
   startsAt: z.string().default(""),
   endsAt: z.string().default(""),
   order: z.coerce.number().int().min(0).max(999).default(0),

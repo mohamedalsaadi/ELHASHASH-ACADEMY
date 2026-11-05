@@ -8,7 +8,7 @@ export const phoneSchema = z
   .trim()
   .regex(/^(01[0125]\d{8}|05\d{8}|[569]\d{7}|[3567]\d{7}|[36]\d{7}|[79]\d{7}|\+[1-9]\d{6,14})$/, "invalid_phone");
 
-const passwordSchema = z.string().min(8, "password_too_short").max(128);
+const passwordSchema = z.string().min(12, "password_too_short").max(72);
 
 // Students sign in with their mobile; staff accounts may use an email instead.
 export const signInSchema = z.object({

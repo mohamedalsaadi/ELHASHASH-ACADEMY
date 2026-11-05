@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { avatarPrefix, blobInfo } from "@/lib/blob";
 import { db } from "@/lib/db";
+import { maskContacts } from "@/lib/contact-guard";
 import { requireStaff } from "@/lib/staff";
+
+/** A bio is public, so it follows the same contact rule as questions and support messages. */
+const maskedBio = (text: string) => (text ? maskContacts(text).text : null);
 
 /** The public half of a teacher's account: display name, avatar and the two bios. */
 export async function updateTeacherProfile(form: FormData) {
@@ -29,7 +33,7 @@ export async function updateTeacherProfile(form: FormData) {
 
   await db.user.update({
     where: { id: me.id },
-    data: { name: d.name, bioAr: d.bioAr || null, bioEn: d.bioEn || null, ...photo },
+    data: { name: d.name, bioAr: maskedBio(d.bioAr), bioEn: maskedBio(d.bioEn), ...photo },
   });
   revalidatePath("/[locale]/teacher", "layout");
   revalidatePath("/[locale]/teachers", "layout");

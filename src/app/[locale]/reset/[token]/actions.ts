@@ -10,7 +10,7 @@ export async function resetPassword(_: unknown, form: FormData): Promise<"invali
   const locale = await getLocale();
   const token = String(form.get("token") ?? "");
   const password = String(form.get("password") ?? "");
-  if (password.length < 8) return "short";
+  if (password.length < 12 || password.length > 72) return "short";
 
   const consumed = await consumeToken(token, "RESET");
   if (!consumed) return "invalid";

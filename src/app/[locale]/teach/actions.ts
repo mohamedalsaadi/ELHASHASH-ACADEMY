@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { headers } from "next/headers";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
+import { clientIp } from "@/lib/client-ip";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { notifyAdmins } from "@/lib/notify";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -17,7 +18,7 @@ export async function applyToTeach(_: TeachState, form: FormData): Promise<Teach
   if (!d.success) return { status: "invalid" };
   const a = d.data;
 
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIp(await headers());
   const key = `teach:${ip}`;
   if (await isLimited(key, 3, 60 * 60_000)) return { status: "limited" };
 

@@ -8,6 +8,7 @@ import { auth } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
+import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { newCode, hashToken } from "@/lib/token-utils";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
@@ -60,9 +61,11 @@ export async function updateProfile(_: unknown, form: FormData): Promise<"ok" | 
 
 export async function changeOwnPassword(_: unknown, form: FormData): Promise<"ok" | "wrong" | "short"> {
   const user = await me();
+  // A stolen session must not brute-force the current password at full speed.
+  if (await isLimited(`chpw:${user.id}`, 5, 15 * 60_000)) return "wrong";
   const current = String(form.get("current") ?? "");
   const next = String(form.get("next") ?? "");
-  if (next.length < 8) return "short";
+  if (next.length < 12 || next.length > 72) return "short";
   const row = await db.user.findUniqueOrThrow({ where: { id: user.id } });
   if (!(await bcrypt.compare(current, row.passwordHash))) return "wrong";
   await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });
@@ -71,6 +74,8 @@ export async function changeOwnPassword(_: unknown, form: FormData): Promise<"ok
 
 export async function sendVerification() {
   const user = await me();
+  // Three per hour, so the button cannot be used to flood an inbox or burn the mail quota.
+  if (await isLimited(`verify:${user.id}`, 3, 3_600_000)) return;
   const row = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { email: true, emailVerifiedAt: true, locale: true } });
   if (row.email && !row.emailVerifiedAt) await sendVerify(user.id, row.email, row.locale);
 }

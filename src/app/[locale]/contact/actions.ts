@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { clientIp } from "@/lib/client-ip";
 import { emailLayout, sendMail } from "@/lib/mail";
 import { notifyAdmins } from "@/lib/notify";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -25,7 +26,7 @@ export async function sendSupportMessage(_: unknown, form: FormData): Promise<"o
     .safeParse(Object.fromEntries(form));
   if (!d.success) return "invalid";
 
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIp(await headers());
   const key = `support:${ip}`;
   if (await isLimited(key, 5, 3_600_000)) return "limited";
   await recordAttempt(key);

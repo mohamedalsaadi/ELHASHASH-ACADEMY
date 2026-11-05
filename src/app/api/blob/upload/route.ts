@@ -14,6 +14,7 @@ import {
   submissionPrefix,
 } from "@/lib/blob";
 import { db } from "@/lib/db";
+import { isLimited } from "@/lib/rate-limit";
 import { isCourseStaffDb } from "@/lib/staff";
 
 const Purpose = z.union([
@@ -34,6 +35,8 @@ export async function POST(request: Request) {
         const session = await auth();
         if (!session?.user) throw new Error("Sign in first");
         const me = { id: session.user.id, role: session.user.role };
+        // Each token allows a 20 MB file: without a cap one account can fill the store.
+        if (await isLimited(`upload:${me.id}`, 50, 86_400_000)) throw new Error("Too many uploads today");
         const payload = Purpose.parse(JSON.parse(clientPayload ?? "{}"));
 
         let allowedContentTypes = ALLOWED_CONTENT_TYPES;

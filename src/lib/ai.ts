@@ -43,10 +43,10 @@ export async function askJson<T>(input: {
   if (!aiEnabled()) return null;
   const key = process.env.GEMINI_API_KEY!;
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent`,
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: input.system }] },
         contents: [{ role: "user", parts: input.parts }],

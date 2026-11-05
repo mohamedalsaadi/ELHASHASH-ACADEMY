@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
           ...(isProduction
-            ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]
+            ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" }]
             : []),
           // Camera, microphone and screen sharing are not granted to anyone: live lectures open an
           // external meeting, so this page never needs them.

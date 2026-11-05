@@ -6,6 +6,7 @@ import { signIn } from "@/auth";
 import { logEvent } from "@/lib/analytics";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
+import { clientIp } from "@/lib/client-ip";
 import { Prisma } from "@/generated/prisma/client";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -56,7 +57,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
   if (!isParent && !(await db.grade.findUnique({ where: { id: gradeId! } }))) return { error: "invalid_grade", values };
 
   // 5 new accounts per hour per network address.
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const ip = clientIp(await headers());
   const key = `signup:${ip}`;
   if (await isLimited(key, 5, 60 * 60_000)) return { error: "too_many", values };
 

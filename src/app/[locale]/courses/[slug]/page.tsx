@@ -10,6 +10,7 @@ import { LiveRow } from "@/components/learning/LiveRow";
 import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
 import { grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
+import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
 import { liveApprovedOn } from "@/lib/live";
@@ -30,8 +31,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     select: { titleAr: true, titleEn: true, descAr: true, descEn: true },
   });
   if (!course) return {};
-  const title = locale === "ar" ? course.titleAr : course.titleEn;
-  const description = (locale === "ar" ? course.descAr : course.descEn) ?? undefined;
+  const title = pick(locale === "ar", course.titleAr, course.titleEn);
+  const description = pick(locale === "ar", course.descAr, course.descEn) || undefined;
   return {
     title,
     description,
@@ -220,7 +221,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   const live = liveApprovedOn(course)
     ? course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime())
     : [];
-  const courseTitle = ar ? course.titleAr : course.titleEn;
+  const courseTitle = pick(ar, course.titleAr, course.titleEn);
   const courseUrl = `${siteUrl}/${locale}/courses/${course.slug}`;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -248,8 +249,8 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
   // Bahrain's red is too light for white; it carries ink (as on the map).
   const inkOnLine = course.grade?.country.code === "BH";
   const buyFrom = showPlans && level === "none" && !lapsed ? cheapestSku(single ? [...course.skus, single] : course.skus, now) : null;
-  const headline = ar ? course.headlineAr : course.headlineEn;
-  const desc = ar ? course.descAr : course.descEn;
+  const headline = pick(ar, course.headlineAr, course.headlineEn);
+  const desc = pick(ar, course.descAr, course.descEn);
 
   return (
     <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
@@ -277,7 +278,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
           <div className="grid gap-2">
             <p className="flex items-center gap-2 text-small font-medium text-ink-muted">
               <i aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ background: line }} />
-              {course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : t("skill")}
+              {course.grade ? pick(ar, course.grade.nameAr, course.grade.nameEn) : t("skill")}
             </p>
             <h1 className="font-display text-display font-bold">{courseTitle}</h1>
             {headline && <p className="max-w-[65ch] text-h3 font-semibold">{headline}</p>}
@@ -435,7 +436,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                 </span>
                 <details open={hasCurrent || (u === course.units[0] && !currentView)} className="card mb-4 overflow-hidden">
                   <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
-                    <span className="font-display text-h3 font-bold">{ar ? u.titleAr : u.titleEn}</span>
+                    <span className="font-display text-h3 font-bold">{pick(ar, u.titleAr, u.titleEn)}</span>
                     <span className="num text-label text-ink-muted">{t("unitCount", { done, total: u.lessons.length })}</span>
                   </summary>
                   <ul className="px-2 pb-2">

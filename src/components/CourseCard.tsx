@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { pick } from "@/lib/content";
 import { SubjectIcon } from "@/components/brand/SubjectIcon";
 import { Link } from "@/i18n/navigation";
 import type { cardInclude } from "@/lib/catalog";
@@ -36,10 +37,10 @@ export function CourseCard({ course: c, locale }: { course: CardCourse; locale: 
       <span className="grid content-start gap-1.5 px-5 pt-3 pb-4">
         <span className="flex items-center gap-2 text-small text-ink-muted">
           <i aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ background: line }} />
-          {c.grade ? (ar ? c.grade.nameAr : c.grade.nameEn) : t("skill")}
+          {c.grade ? pick(ar, c.grade.nameAr, c.grade.nameEn) : t("skill")}
         </span>
-        <span className="line-clamp-2 min-w-0 font-display text-h3 font-bold">{ar ? c.titleAr : c.titleEn}</span>
-        {(ar ? c.headlineAr : c.headlineEn) && <span className="line-clamp-2 text-small text-ink-muted">{ar ? c.headlineAr : c.headlineEn}</span>}
+        <span className="line-clamp-2 min-w-0 font-display text-h3 font-bold">{pick(ar, c.titleAr, c.titleEn)}</span>
+        {pick(ar, c.headlineAr, c.headlineEn) && <span className="line-clamp-2 text-small text-ink-muted">{pick(ar, c.headlineAr, c.headlineEn)}</span>}
         <span className="mt-1 flex flex-wrap gap-x-3 text-small">
           <span className="font-semibold">{c.instructor.name}</span>
           {sessions > 0 && <span className="text-ink-muted">{t("sessions", { count: sessions })}</span>}

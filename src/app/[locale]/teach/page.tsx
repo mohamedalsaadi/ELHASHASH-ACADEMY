@@ -7,7 +7,7 @@ import { TeachForm } from "./TeachForm";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  return pageMetadata(params, "/teach", "teach", { key: "title", noindex: true });
+  return pageMetadata(params, "/teach", "teach", { key: "title" });
 }
 
 export default async function TeachPage({ params }: { params: Promise<{ locale: string }> }) {

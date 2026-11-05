@@ -12,16 +12,15 @@ import { db } from "@/lib/db";
 import { formatMoney, formatWhen } from "@/lib/format";
 import { getStudentHome } from "@/lib/student-home-server";
 import { resolveCountry, RIDE_COUNTRY } from "@/lib/student-home";
-import { alternates } from "@/lib/seo";
 import PublicHome from "../page";
 import { clearCountry, setCountry } from "./actions";
 
 // Reached by a rewrite of "/" when a session cookie is present (src/middleware.ts); the address stays "/".
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
-  return { alternates: alternates(locale) };
+export async function generateMetadata(): Promise<Metadata> {
+  // Private, and reachable at "/" through a rewrite: never index it, never give it the home canonical.
+  return { robots: { index: false, follow: false } };
 }
 
 export default async function StudentHome({ params }: { params: Promise<{ locale: string }> }) {

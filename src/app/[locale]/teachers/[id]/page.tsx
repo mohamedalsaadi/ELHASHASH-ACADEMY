@@ -3,14 +3,15 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CourseCard } from "@/components/CourseCard";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { alternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const { id } = await params;
+  const { locale, id } = await params;
   const user = await db.user.findUnique({ where: { id }, select: { name: true } });
   if (!user) return {};
-  return { title: user.name, robots: { index: true } };
+  return { title: user.name, robots: { index: true }, alternates: alternates(locale, `/teachers/${id}`) };
 }
 
 export default async function PublicTeacherPage({ params }: { params: Promise<{ locale: string; id: string }> }) {

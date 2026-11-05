@@ -6,6 +6,8 @@ export type Fixtures = { loc: "ar" | "en" };
 export const test = base.extend<Fixtures & { signIn: (who: Persona) => Promise<void> }>({
   loc: ["ar", { option: true }],
   signIn: async ({ page, loc }, use) => {
+    // `use` here is Playwright's fixture callback, not a React hook.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(async (who) => {
       await signInAs(page, loc, PERSONAS[who].phone);
     });

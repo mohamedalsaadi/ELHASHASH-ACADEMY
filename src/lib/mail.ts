@@ -56,6 +56,7 @@ export async function sendMailDetailed({ to, subject, html, replyTo }: { to: str
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from: FROM, to, subject, html, text: toText(html), ...(replyTo ? { reply_to: replyTo } : {}) }),
+      signal: AbortSignal.timeout(10_000),
     });
     const body = await res.text();
     if (!res.ok) {

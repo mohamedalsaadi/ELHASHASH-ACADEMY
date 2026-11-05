@@ -47,6 +47,7 @@ export async function askJson<T>(input: {
     {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
+      signal: AbortSignal.timeout(10_000),
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: input.system }] },
         contents: [{ role: "user", parts: input.parts }],

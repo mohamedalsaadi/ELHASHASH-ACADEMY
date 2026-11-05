@@ -11,6 +11,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`Daily ${method} ${path} failed: ${res.status} ${await res.text()}`);
   return res.json();

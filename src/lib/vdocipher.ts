@@ -12,6 +12,7 @@ export async function getPlayback(videoId: string, watermark: string): Promise<P
   const res = await fetch(`https://dev.vdocipher.com/api/videos/${encodeURIComponent(videoId)}/otp`, {
     method: "POST",
     headers: { Authorization: `Apisecret ${secret}`, "Content-Type": "application/json", Accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
     body: JSON.stringify({
       ttl: 300,
       annotate: JSON.stringify([

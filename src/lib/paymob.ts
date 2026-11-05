@@ -35,6 +35,7 @@ export async function createIntention(input: {
   const res = await fetch(`${BASE}/v1/intention/`, {
     method: "POST",
     headers: { Authorization: `Token ${requireEnv("PAYMOB_SECRET_KEY")}`, "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(10_000),
     body: JSON.stringify({
       amount: input.amountCents,
       currency: input.currency,

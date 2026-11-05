@@ -20,7 +20,18 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
     if (!open) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    // Widen past the breakpoint with the dialog open and the element becomes display:none while
+    // still top-layer: the page goes inert with nothing on screen. Close it instead.
+    const wide = window.matchMedia("(min-width: 768px)");
+    const onWide = () => {
+      if (wide.matches) ref.current?.close();
+    };
+    wide.addEventListener("change", onWide);
+    onWide();
+
     return () => {
+      wide.removeEventListener("change", onWide);
       document.body.style.overflow = previous;
     };
   }, [open]);

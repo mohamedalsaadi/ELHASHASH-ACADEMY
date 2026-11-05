@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
+import { isLimited } from "@/lib/rate-limit";
 import { syncPaymentIntent } from "@/lib/ziina";
 import { intentCandidates } from "@/lib/ziina-format";
 
@@ -11,6 +13,10 @@ import { intentCandidates } from "@/lib/ziina-format";
  */
 export async function POST(req: Request) {
   if (!process.env.ZIINA_API_KEY) return NextResponse.json({ error: "not_configured" }, { status: 500 });
+  // No signature is available from Ziina, so cap the work an anonymous caller can cause:
+  // each accepted call costs one lookup and one outbound request.
+  const ip = clientIp(req.headers);
+  if (await isLimited(`ziina-hook:${ip}`, 60, 3_600_000)) return NextResponse.json({ ok: true, ignored: "rate_limited" });
 
   const text = await req.text();
   if (text.length > 50_000) return NextResponse.json({ ok: true, ignored: "too_large" });

@@ -7,6 +7,8 @@ export const PERSONAS = {
   teacherAe: { name: "E2E Teacher UAE", phone: "0500000003", role: "INSTRUCTOR" },
   studentEg: { name: "E2E Student Egypt", phone: "0500000004", role: "STUDENT" },
   studentAe: { name: "E2E Student UAE", phone: "0500000005", role: "STUDENT" },
+  // Same grade as studentAe, but holds no entitlement, so the course still shows a price to buy.
+  studentAe2: { name: "E2E Student UAE, no course", phone: "0500000007", role: "STUDENT" },
   parent: { name: "E2E Parent", phone: "0500000006", role: "PARENT" },
 } as const;
 

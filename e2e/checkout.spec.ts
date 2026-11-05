@@ -11,7 +11,8 @@ test("signed out, checkout sends you to sign-in and keeps the cart", async ({ pa
 });
 
 test("signed in, checkout lists the course with the stored price and total", async ({ page, loc, signIn }) => {
-  await signIn("studentAe");
+  // studentAe now owns this course through the live-lecture seed, so the price is shown to a student who does not.
+  await signIn("studentAe2");
   await page.goto(`/${loc}/courses/ae-12-math-e2e`);
   await page.locator('a[href*="/checkout?sku="]').first().click();
   await page.waitForURL(/\/checkout\?sku=/);

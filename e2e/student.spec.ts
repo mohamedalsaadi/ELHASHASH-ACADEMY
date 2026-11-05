@@ -15,7 +15,8 @@ test("Egypt student sees Egypt courses on the home, not UAE ones", async ({ page
 });
 
 test("checkout shows the course and its stored price before payment", async ({ page, loc, signIn }) => {
-  await signIn("studentAe");
+  // studentAe owns this course (the live spec needs that), so use the student with no entitlement.
+  await signIn("studentAe2");
   await page.goto(`/${loc}/courses/ae-12-math-e2e`);
   await expect(page.locator("body")).toContainText(/400/);
 });

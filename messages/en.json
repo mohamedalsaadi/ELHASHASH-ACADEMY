@@ -1266,6 +1266,7 @@
   },
   "homework": {
     "title": "Homework",
+    "searchPlaceholder": "Assignment title",
     "nav": "Homework",
     "new": "Add homework",
     "create": "Create homework",

@@ -45,6 +45,7 @@ async function main() {
   const teacherAe = await user(PERSONAS.teacherAe);
   const studentEg = await user(PERSONAS.studentEg, eg12.id);
   const studentAe = await user(PERSONAS.studentAe, ae12.id);
+  await user(PERSONAS.studentAe2, ae12.id);
   const parent = await user(PERSONAS.parent);
 
   for (const [t, c] of [[teacherEg, eg], [teacherAe, ae]] as const) {

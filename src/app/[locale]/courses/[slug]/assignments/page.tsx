@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
+import { matchesQuery } from "@/lib/arabic-search";
 import { opensAssignment } from "@/lib/assignments";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -18,13 +19,21 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/courses", "homework", { key: "title", noindex: true });
 }
 
-export default async function CourseAssignmentsPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+export default async function CourseAssignmentsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { locale, slug } = await params;
+  const q = (await searchParams).q?.trim() ?? "";
   setRequestLocale(locale);
   const session = await auth();
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/courses/${slug}/assignments`)}`);
 
   const t = await getTranslations("homework");
+  const tcommon = await getTranslations("common");
   const ar = locale === "ar";
   const now = new Date();
 
@@ -52,6 +61,7 @@ export default async function CourseAssignmentsPage({ params }: { params: Promis
 
   const grants = await grantsFor(session.user.id, course.id, now);
   const visible = course.assignments.filter((a) => opensAssignment({ courseId: course.id, lesson: a.lesson }, grants, now));
+  const shown = q.length >= 2 ? visible.filter((a) => matchesQuery([a.title], q)) : visible;
 
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
@@ -60,11 +70,25 @@ export default async function CourseAssignmentsPage({ params }: { params: Promis
         title={t("title")}
       />
 
-      {visible.length === 0 ? (
-        <p className="text-small text-ink-muted">{t("noAssignments")}</p>
+      <form method="get" role="search" className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          minLength={2}
+          maxLength={80}
+          placeholder={t("searchPlaceholder")}
+          aria-label={t("searchPlaceholder")}
+          className="min-h-11 min-w-0 flex-1 rounded-full border border-field bg-surface px-5 text-body text-ink"
+        />
+        <button className="btn btn-primary font-display">{tcommon("search")}</button>
+      </form>
+
+      {shown.length === 0 ? (
+        <p className="text-small text-ink-muted">{q.length >= 2 ? tcommon("searchNoMatch") : t("noAssignments")}</p>
       ) : (
         <ul className="grid gap-2">
-          {visible.map((a) => {
+          {shown.map((a) => {
             const sub = a.submissions[0];
             const late = sub ? isLate(sub.submittedAt, a.dueAt) : false;
             const overdue = isOverdue(!!sub, a.dueAt, now);

@@ -91,6 +91,11 @@ export async function clearConsent(studentPhone: string) {
   await sql(`DELETE FROM "GuardianConsent" WHERE "studentId" = (SELECT id FROM "User" WHERE phone = $1)`, [studentPhone]);
 }
 
+/** oneDevice binds an account to one browser fingerprint; a fresh browser context has to be allowed to claim it. */
+export async function clearDevice(studentPhone: string) {
+  await sql(`DELETE FROM "DeviceSession" WHERE "userId" = (SELECT id FROM "User" WHERE phone = $1)`, [studentPhone]);
+}
+
 export async function setLiveApproved(phone: string, on: boolean) {
   await sql(`UPDATE "User" SET "liveApproved" = $2 WHERE phone = $1`, [phone, on]);
 }

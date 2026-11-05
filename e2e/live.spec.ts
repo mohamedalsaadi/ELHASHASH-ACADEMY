@@ -1,7 +1,7 @@
 // Live lectures: the teacher hosts outside the app, so the only thing that can go wrong silently is
 // who sees the link. These tests cover the ladder, the guardian consent gate and the approval gate.
 import { test, expect, signInAs } from "./fixtures";
-import { clearConsent, consentLive, freshStudent, liveOf, setLiveApproved } from "./db";
+import { clearConsent, clearDevice, consentLive, freshStudent, liveOf, setLiveApproved } from "./db";
 import { PERSONAS } from "./personas";
 
 const COURSE = "ae-12-math-e2e";
@@ -22,6 +22,8 @@ test("a student with no guardian consent never sees the meeting link", async ({ 
 
 test("once consent exists the join link appears, outside the page", async ({ page, loc }) => {
   await consentLive(STUDENT);
+  // Each Playwright project signs in from a new browser context; release the account's previous device.
+  await clearDevice(STUDENT);
   const { live } = await liveOf(COURSE);
 
   await signInAs(page, loc, STUDENT);

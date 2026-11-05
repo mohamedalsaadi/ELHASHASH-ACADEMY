@@ -94,6 +94,9 @@ count (#10, #22, #31, #36) are fixed; `docs/audit.md` now carries a Status block
   stops after ten wrong tries (the correct code is then refused and no link row is written) and that a
   password reset ends a session that was already signed in. Both were shown red with the protection removed.
   The session test needs `SESSION_RECHECK_MS=0`, which `scripts/e2e.mjs` sets; production keeps five minutes.
+- **The home page's data is cached; the route is not.** `unstable_cache` covers the catalogue queries in
+  production (533 ms cold, then ~30-45 ms). The page still renders per request because of the header issue
+  below.
 - **The unread badge keeps every route dynamic.** `SiteHeader` awaits `auth()` and a notification count in
   the shared layout, so the home page's `revalidate = 300` never applies. Deliberately deferred: the fix is
   a session endpoint plus a client header, not a one-file change.

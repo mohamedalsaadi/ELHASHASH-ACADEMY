@@ -71,6 +71,12 @@ only observable if the JWT re-checks the user row on every request, so `RECHECK_
 `SESSION_RECHECK_MS` (default five minutes) and the e2e harness sets it to 0. The parent-link test waits for
 each server action's response; the first version used fixed sleeps and silently skipped attempts.
 
+**Home page data cache.** The comment said a five-minute `revalidate` kept the home page fast; it did
+nothing, because `SiteHeader` reads the session in the layout and that makes every route dynamic. The route
+now says so plainly, and the catalogue queries are wrapped in `unstable_cache` (production only) with the
+same five minutes. Measured against a throwaway database: 533 ms cold, then 44 ms and 28 ms. Making the
+page itself cacheable still means moving the session out of the header, which is unchanged below.
+
 **Deliberately not done.** Moving the unread-badge query out of `SiteHeader`. The header calls `auth()` and
 a notification count in the shared layout, which is what makes every route dynamic, so the home page's
 `revalidate = 300` never applies. Fixing it means a session endpoint plus a client header — a redesign of

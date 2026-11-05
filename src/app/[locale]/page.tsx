@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { ArrowLeft, ArrowRight, BookOpenCheck, ChartNoAxesColumnIncreasing } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -13,15 +14,17 @@ import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { alternates, siteUrl } from "@/lib/seo";
 
-// Catalog data changes rarely; a five-minute cache keeps the home page fast.
-export const revalidate = 300;
+// This route renders per request: the shared header reads the session, and any cookie read in the
+// layout opts every route under it into dynamic rendering, so `revalidate` here would be inert.
+// What can be cached is the catalogue itself, which is what the window below covers. Making the
+// page itself cacheable means moving the session out of the header; that is its own change.
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   return { alternates: alternates(locale) };
 }
 
-function getHome() {
+function loadHome() {
   const published = { published: true };
   const now = new Date();
   return Promise.all([
@@ -47,6 +50,9 @@ function getHome() {
     ]),
   ]);
 }
+
+// Production only: in dev a five-minute cache hides edits you are trying to see.
+const getHome = process.env.NODE_ENV === "production" ? unstable_cache(loadHome, ["home-catalogue"], { revalidate: 300 }) : loadHome;
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

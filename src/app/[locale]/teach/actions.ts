@@ -28,7 +28,8 @@ export async function applyToTeach(_: TeachState, form: FormData): Promise<Teach
   const taken =
     (await db.user.count({ where: { OR: [{ email: a.email }, { phone: a.phone }] } })) +
     (await db.teacherApplication.count({ where: { status: "PENDING", OR: [{ email: a.email }, { phone: a.phone }] } }));
-  if (taken) return { status: "taken" };
+  // Never say whether the address already has an account: answer exactly as for a new application.
+  if (taken) return { status: "sent" };
 
   const name = maskContacts(a.name).text;
   const app = await db.teacherApplication.create({

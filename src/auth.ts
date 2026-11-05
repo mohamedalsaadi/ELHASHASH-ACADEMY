@@ -46,12 +46,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // Two keys: one account cannot be hammered, and one host cannot spray many accounts.
         const ipKey = `login-ip:${clientIp(request.headers)}`;
         if (await isLimited(ipKey, 30, 15 * 60_000)) return null;
-        // 10 wrong passwords per account per 15 minutes, then every attempt is refused until the window passes.
+        // 10 wrong passwords per account per 15 minutes. The limit counts failures, not attempts:
+        // refusing before the comparison let anyone lock a student out with ten guesses.
         const key = `login:${login}`;
-        if (await isLimited(key, 10, 15 * 60_000)) return null;
         const user = await db.user.findUnique({ where: login.includes("@") ? { email: login } : { phone: login } });
-        if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
-          await Promise.all([recordAttempt(key), recordAttempt(ipKey)]);
+        const ok = user ? await bcrypt.compare(parsed.data.password, user.passwordHash) : false;
+        if (!ok || !user) {
+          if (!(await isLimited(key, 10, 15 * 60_000))) await recordAttempt(key);
+          await recordAttempt(ipKey);
           return null;
         }
         return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };

@@ -375,7 +375,8 @@ export async function refundOrder(form: FormData) {
   if (order.gateway === "STRIPE" && order.gatewayOrderId) {
     const session = await stripe().checkout.sessions.retrieve(order.gatewayOrderId);
     const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
-    if (paymentIntent) await stripe().refunds.create({ payment_intent: paymentIntent });
+    // Same order, same key: a retry or double-click is one refund. (Ziina derives its key the same way.)
+    if (paymentIntent) await stripe().refunds.create({ payment_intent: paymentIntent }, { idempotencyKey: `refund:${order.id}` });
   } else if (order.gateway === "ZIINA" && order.gatewayOrderId) {
     // The refund id is derived from the order, so a retry or a double-click is one refund.
     await refundIntent({ orderId: order.id, paymentIntentId: order.gatewayOrderId, amount: order.total + order.vat });

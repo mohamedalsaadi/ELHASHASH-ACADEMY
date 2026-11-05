@@ -90,6 +90,8 @@ export async function generateParentCode(): Promise<string | null> {
   if (user.role !== "STUDENT") return null;
   const code = newCode();
   const expiresAt = new Date(Date.now() + 15 * 60_000);
+  // A six-digit code hashes to a million candidates; do not keep expired rows around to be reversed.
+  await db.parentCode.deleteMany({ where: { studentId: user.id, expiresAt: { lt: new Date() } } });
   await db.parentCode.upsert({
     where: { studentId: user.id },
     create: { studentId: user.id, codeHash: hashToken(code), expiresAt },

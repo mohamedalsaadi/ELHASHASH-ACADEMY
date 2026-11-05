@@ -23,8 +23,7 @@ export type SignUpState = {
     | "password_too_short"
     | "invalid_grade"
     | "guardian_required"
-    | "phone_taken"
-    | "email_taken"
+    | "check_email"
     | "too_many";
   values?: { type: string; name: string; email: string; phone: string; gradeId: string; guardianName: string };
 } | null;
@@ -96,9 +95,20 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     userId = user.id;
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      // meta.target is an array of columns in some drivers and absent in others; the message names the constraint.
-      const target = `${String((e.meta as { target?: unknown } | undefined)?.target ?? "")} ${e.message}`.toLowerCase();
-      return { error: target.includes("email") ? "email_taken" : "phone_taken", values };
+      // Never say which field was taken: that is an account-enumeration oracle. Tell the address
+      // that was typed, and answer the form the same way a new signup would be answered.
+      const ar = form.get("locale") === "en" ? false : true;
+      await sendMail({
+        to: email,
+        subject: ar ? "لديك حساب في ذروة" : "You already have a Dhirwa account",
+        html: emailLayout(
+          ar ? "لديك حساب في ذروة" : "You already have a Dhirwa account",
+          [ar ? "سجّل الدخول، أو استخدم «نسيت كلمة المرور» إن لم تتذكرها." : "Sign in, or use \"Forgot password\" if you do not remember it."],
+          { href: `${appUrl()}/${ar ? "ar" : "en"}/signin`, label: ar ? "تسجيل الدخول" : "Sign in" },
+          ar ? "ar" : "en",
+        ),
+      }).catch(() => {});
+      return { error: "check_email", values };
     }
     throw e;
   }

@@ -64,7 +64,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
           dir="ltr"
           required
           defaultValue={v?.email}
-          aria-invalid={state?.error === "invalid_email" || state?.error === "email_taken"}
+          aria-invalid={state?.error === "invalid_email"}
           aria-describedby="signup-error"
           className={field}
         />
@@ -80,7 +80,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
           dir="ltr"
           required
           defaultValue={v?.phone}
-          aria-invalid={state?.error === "invalid_phone" || state?.error === "phone_taken"}
+          aria-invalid={state?.error === "invalid_phone"}
           aria-describedby="signup-error"
           className={field}
         />

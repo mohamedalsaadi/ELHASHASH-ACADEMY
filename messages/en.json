@@ -711,13 +711,12 @@
     "errors": {
       "invalid_name": "Enter your full name (at least 2 letters).",
       "invalid_email": "Enter a valid email address.",
-      "email_taken": "This email already has an account. Sign in instead.",
       "invalid_phone": "That mobile number isn't valid. Use your local mobile format, or an international number starting with +.",
       "password_too_short": "The password is too short. Use at least 8 characters.",
       "invalid_grade": "Choose your grade.",
-      "phone_taken": "This number already has an account. Sign in instead.",
       "too_many": "Too many new accounts from this network. Try again in an hour.",
-      "guardian_required": "A guardian's name and consent are required to create a student account."
+      "guardian_required": "A guardian's name and consent are required to create a student account.",
+      "check_email": "If that email or mobile already has an account, we sent it a sign-in note. Otherwise sign in, or reset your password."
     },
     "teacherQ": "A teacher who wants to join?",
     "teacherLink": "Register as a teacher"
@@ -922,7 +921,7 @@
     "joinCta": "Open the lecture on {provider}",
     "joinCtaHost": "Open the meeting on {provider}",
     "joinExternal": "This lecture runs outside Dhirwa on {provider}, in a new tab. Never share your password or a sign-in code with anyone.",
-    "joinHonest": "We record only that you opened the link. We do not know how long you stayed.",
+    "joinHonest": "We record only that you opened the lecture page. We do not know how long you stayed.",
     "noLinkYet": "The teacher has not added the meeting link yet. It appears here before the start.",
     "consentTitle": "Guardian consent",
     "consentBody": "Live lectures open an external meeting link outside Dhirwa. We need the guardian's consent once per student, before the first live lecture.",
@@ -1097,7 +1096,7 @@
     "noEvents": "No payment events.",
     "cancelled": "Cancelled",
     "seatsSold": "{count, plural, one {# seat sold} other {# seats sold}}",
-    "attendees": "{count, plural, =0 {nobody opened the link} one {# opened the link} other {# opened the link}}",
+    "attendees": "{count, plural, =0 {nobody opened the lecture page} one {# opened the lecture page} other {# opened the lecture page}}",
     "questionsHint": "Questions on each teacher's courses over the last 90 days, plus any still waiting.",
     "answered": "Answered",
     "unanswered": "Waiting",
@@ -1255,7 +1254,7 @@
     "confirmUnlink": "Remove this student link?",
     "courses": "Active courses",
     "completedWeek": "Lessons completed this week",
-    "attendedMonth": "Live links opened this month",
+    "attendedMonth": "Lecture pages opened this month",
     "nextExpiry": "Next expiry",
     "noExpiry": "None",
     "lastPayment": "Last payment",
@@ -1377,8 +1376,8 @@
     "examsTitle": "Exams",
     "noExams": "No exams taken yet.",
     "awaitingMark": "Awaiting a mark",
-    "liveTitle": "Live lecture links opened",
-    "noLive": "No live lecture link opened yet."
+    "liveTitle": "Live lecture pages opened",
+    "noLive": "No live lecture page opened yet."
   },
   "practice": {
     "title": "Practice",

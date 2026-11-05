@@ -56,7 +56,7 @@ const line = {
  * Models the two columns the real database leans on: gatewayEventId is unique, and the PAID
  * transition only counts when the order was not already paid.
  */
-function fakeDatabase(seed: Partial<typeof order> = {}) {
+function fakeDatabase(seed: Partial<typeof order> = {}, opts: { throwOnEntitlement?: boolean } = {}) {
   const state = { ...order, ...seed };
   const seenEvents = new Set<string>();
   const entitlements: Row[] = [];
@@ -83,7 +83,15 @@ function fakeDatabase(seed: Partial<typeof order> = {}) {
         return { count: 1 };
       },
     },
-    entitlement: { createMany: async ({ data }: { data: Row[] }) => (entitlements.push(...data), { count: data.length }) },
+    entitlement: {
+      createMany: async ({ data }: { data: Row[] }) => {
+        if (opts.throwOnEntitlement) {
+          throw new Prisma.PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002", clientVersion: "test" });
+        }
+        entitlements.push(...data);
+        return { count: data.length };
+      },
+    },
     ledgerEntry: { createMany: async ({ data }: { data: Row[] }) => (ledger.push(...data), { count: data.length }) },
     platformSetting: { findUnique: async () => null },
   };
@@ -99,6 +107,13 @@ beforeEach(() => {
 });
 
 describe("applyPaymentOutcome", () => {
+  it("rethrows a unique violation that is not the event insert", async () => {
+    // Only the event row is meant to be unique here. Anything else must fail loudly so the
+    // gateway retries instead of the caller recording a paid order as already handled.
+    fakeDatabase({}, { throwOnEntitlement: true });
+    await expect(applyPaymentOutcome("order-1", "ziina:pi_1:completed", paid, {})).rejects.toThrow(/Unique/);
+  });
+
   it("grants access and writes one 30/70 ledger row on a first payment", async () => {
     const fake = fakeDatabase();
 

@@ -9,7 +9,9 @@ import { priceSkus } from "@/lib/checkout";
 import { pick } from "@/lib/content";
 import { resolveCoupon } from "@/lib/coupon-resolve";
 import { activeGateway } from "@/lib/gateway";
+import { vatOn } from "@/lib/finance";
 import { formatMoney } from "@/lib/format";
+import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyCoupon, PricingError } from "@/lib/pricing-engine";
 import { PayForm } from "./PayForm";
 
@@ -81,6 +83,13 @@ export default async function CheckoutPage({
     }
   }
 
+  // The gateway charges total + VAT (src/app/api/checkout/route.ts), so the page must show the same
+  // amount. Showing the ex-VAT total and charging more is both a consumer-protection problem and the
+  // commonest complaint a payment provider sees.
+  const finance = await getFinanceConfig();
+  const vat = vatOn(priced.total, finance);
+  const payable = priced.total + vat;
+
   // A 100% code needs no gateway (the API settles it without one), so the button still shows.
   const gateway = activeGateway(priced.currency) ?? (priced.total === 0 ? { gateway: "ZIINA" as const, methods: ["CARD" as const] } : null);
 
@@ -137,8 +146,14 @@ export default async function CheckoutPage({
               <dd className="num text-up">−{money(priced.couponDiscount)}</dd>
             </>
           )}
+          {vat > 0 && (
+            <>
+              <dt className="text-ink-muted">{t("vat", { pct: (finance.vatRateBp / 100).toFixed(0) })}</dt>
+              <dd className="num">{money(vat)}</dd>
+            </>
+          )}
           <dt className="font-display font-semibold">{t("total")}</dt>
-          <dd className="num font-semibold">{money(priced.total)}</dd>
+          <dd className="num font-semibold">{money(payable)}</dd>
         </dl>
 
         <form method="get" className="flex flex-wrap items-end gap-2 border-t border-hairline pt-4">

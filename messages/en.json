@@ -226,6 +226,7 @@
     "subtotal": "Subtotal",
     "bundle": "Bundle discount",
     "total": "Total to pay",
+    "vat": "VAT ({pct}%)",
     "coupon": "Discount code",
     "apply": "Apply",
     "couponRow": "Code {code}",

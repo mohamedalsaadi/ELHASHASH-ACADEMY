@@ -11,7 +11,7 @@ Everything still open, in order: `docs/plans/remaining.md`.
 - Commit after every step (small commits), then add a line to "Done" here.
 
 ## Owner actions still open
-- Set `CRON_SECRET` in Vercel (Production) and as a GitHub Actions secret; add GitHub secret `APP_URL`=`https://dhirwa.ae`.
+- Set `CRON_SECRET` in Vercel (Production): the daily retention job at `/api/cron/retention` returns 401 without it.
 - Set `GEMINI_API_KEY` in Vercel. Confirm `BLOB_READ_WRITE_TOKEN`.
 
 ## Done
@@ -51,6 +51,7 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 audit items 31, 29, 56, 46 and 55. 161 `ar ? xAr : xEn` sites now call `pick()`, with a test for the fallback; subscriber dates and live-session starts format in the course's zone; the course units, homework, teacher questions and teacher roster gained scoped search reusing `matchesQuery`; `generateMetadata` and the page share one query via `cache()`; the wordmark and short footer links reached 44px and `e2e/tap-targets.spec.ts` guards it. 256 unit tests, tsc and build green. Deleted two stale launch-checklist lines that still told the owner to schedule the removed reminders route.
 - 2026-11-05 the e2e suite is green again. It was red before this work for two reasons, both reproduced on `060900b`: the live seed's whole-course grant broke the two checkout price tests (they now use `studentAe2`, seeded with no entitlement), and `oneDevice` blocked every Playwright project after the first on the live join page (`clearDevice` added).
+- 2026-11-05 three-agent review (critic, UI, security) and its fixes: password policy unified at 8; guardian consent at signup with a `source` column; a daily retention job behind `CRON_SECRET`; AI grading gated on consent; the remaining security and accessibility findings; the documents corrected to stop describing Daily, a Basic-auth gate and a reminders cron. 262 unit tests; full e2e green. `docs/WORKLOG.md` has the item-by-item record.
 
 ## Where things stand (2026-11-05, end of session)
 
@@ -58,20 +59,30 @@ Read this first; the "Done" list above is history.
 
 ### Audit work
 `docs/audit.md` holds 66 numbered items plus 10 service recommendations (G1–G10).
-**57 done · 1 left and it is an environment change · 4 declined by the owner · 10 service items are the owner's.**
+**Every code item is closed. #47 is an environment change for the owner; the 4 declined items stay declined;
+10 service items (G1–G10) are the owner's.** The four items the review found still open despite the earlier
+count (#10, #22, #31, #36) are fixed; `docs/audit.md` now carries a Status block saying which is which.
 
 - **Declined by the owner, do not re-propose:** #9 (email verification enforcement), #17 (`/api`
   behind the launch gate), #23 (dependency bumps for zod/next/@vercel/blob), #33 (drop the dead
   `Concept` and `QuizAttempt` tables).
 - **Removed by the owner's decision:** reminders are gone entirely — the cron route, its workflow, the
   Vercel cron, the weekly parent digest, the owner briefing and the analytics purge that shared the
-  route. `EXPIRING`/`LIVE_SOON` remain in the DB enum, unused. `CRON_SECRET` is no longer read.
+  route. `EXPIRING`/`LIVE_SOON` remain in the DB enum, unused. (`CRON_SECRET` is read again since the retention job, 2026-11-05 review.)
 - **Done in the 2026-11-05 follow-up session:** #31 (161 call sites moved to `pick()`, then the nine the
   first sweep missed — operands with `!`, `?.` or method calls, and `locale === "ar"` sites — were
   converted in the review follow-up), #29 (subscriber end dates now format in the
   course's zone, live-session starts too), #56 (scoped search on the course units, teacher questions
   and teacher roster), #46 (`cache()` on `courses/[slug]` and `teachers/[id]`), #55 (home controls are
   44px; `e2e/tap-targets.spec.ts` now measures them in both locales at both widths).
+- **Done in the 2026-11-05 review session (critic, UI, security):** one password rule at 8 with sign-in no
+  longer checking policy; guardian consent collected at signup with a `source` on `GuardianConsent`; a daily
+  retention job (`/api/cron/retention`, `CRON_SECRET`) deleting analytics at 180 days and closed tickets at
+  90; AI grading gated on consent; `opensAssignment` startsAt; the checkout and staff-password throttles;
+  `safeNext` on promotion links; checkout auth and covers; neutral signup/`/teach` answers; scoped `P2002`
+  in payments; Stripe refund idempotency; accessible assessment names; 44px password reveal; anchor
+  offsets; `.btn-outline` per `DESIGN.md` §7; spoken lesson state; AA `--color-up`; router `Link` in the
+  map; one shared form style; wrapping admin tables; the dead Daily path. Full detail in `docs/WORKLOG.md`.
 - **#47 is the last one and it is not code.** `DATABASE_URL` ends in `sslmode=require`, which
   `pg-connection-string` 8.x warns about. Change it to `sslmode=verify-full` in Vercel and locally;
   behaviour is identical under `pg` 8.23. Steps are in `docs/launch-checklist.md` under Deployment.
@@ -79,8 +90,11 @@ Read this first; the "Done" list above is history.
   forces dynamic rendering regardless of `revalidate`.
 
 ### Known weaknesses in what was shipped
-- **#2 (parent-link rate limit) and #3 (session invalidation on password change) have no automated
+- **#2 (parent-link rate limit) and #3 (session invalidation on password change) still have no automated
   test.** Verified by reading, not by a red-then-green test.
+- **The unread badge keeps every route dynamic.** `SiteHeader` awaits `auth()` and a notification count in
+  the shared layout, so the home page's `revalidate = 300` never applies. Deliberately deferred: the fix is
+  a session endpoint plus a client header, not a one-file change.
 - **The CSP was verified in a production build on `/ar/privacy` only** — a static page. DB-backed
   pages are covered by dev-mode e2e, where `unsafe-inline` is allowed, so a production-only violation
   there would not have been caught.
@@ -89,10 +103,11 @@ Read this first; the "Done" list above is history.
   next commit. Keep the exit code of `npm test` visible when chaining with `| grep`.
 
 ### Deploy steps the owner still owes (blocking)
-1. `prisma migrate` — five columns exist only in migrations: `LessonView.confidence`,
-   `GuardianConsent`, `User.passwordChangedAt`, `Course.aiGrading`, plus the live-approval column.
+1. `prisma migrate` — these exist only in migrations: `LessonView.confidence`, `GuardianConsent`
+   (now with a nullable `parentId` and a `source`), `User.passwordChangedAt`, `Course.aiGrading`, the
+   live-approval column, and `20261108120000_guardian_consent_signup`.
 2. Redeploy. The CSP, HSTS preload and Permissions-Policy only reach users on a new build.
-3. `CRON_SECRET` can be removed from GitHub and Vercel; nothing reads it.
+3. Set `CRON_SECRET` in Vercel (the retention job reads it); the GitHub Actions reminders secret can go.
 4. Confirm in Vercel Production: `GEMINI_API_KEY`, `BLOB_READ_WRITE_TOKEN`, `APP_URL`.
 5. Optional cleanups: `UPDATE "LiveSession" SET "roomUrl" = NULL WHERE "roomUrl" LIKE '%daily.co%';`
    and `DELETE FROM "Notification" WHERE kind IN ('EXPIRING','LIVE_SOON');`

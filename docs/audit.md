@@ -18,10 +18,10 @@ This file has no per-row status column, so read this block before trusting a lin
 - **Moot — the feature was removed:** #40 (schedulers). The reminders route, its workflow, the Vercel cron,
   the parent digest, the owner briefing and the analytics purge were deleted on 2026-11-05 by the owner's
   decision.
-- **Found open in the 2026-11-05 review even though the handoff counted them done:** #10 (signup/`/teach`
-  account enumeration), #22 (promotion link accepted `//evil.com`), #31 (about fifty text selections the
-  codemod never reached), #36 (guardian consent at signup). #22 and the remaining #31 sites are fixed;
-  #10 and #36 are open and scheduled.
+- **Found open in the 2026-11-05 review even though the handoff counted them done, now fixed:** #10
+  (signup/`/teach` answered "email taken"/"phone taken"; both now answer neutrally), #22 (promotion link
+  accepted `//evil.com`; it goes through `safeNext`), #31 (nine display ternaries the codemod never
+  reached), #36 (guardian consent is collected at signup and stored).
 - **Owner actions, not code:** #47 (`sslmode=verify-full` in `DATABASE_URL`), #43 (Neon restore drill).
 - **The remaining items (roughly forty) are claimed done in `docs/HANDOFF.md` with no per-item evidence
   here.** A review that sampled fourteen of them found twelve genuinely fixed and two overstated, which

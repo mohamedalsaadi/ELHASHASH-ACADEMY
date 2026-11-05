@@ -24,6 +24,50 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Three-angle review (critic, UI, security) and its fixes
+
+**Why.** The owner asked for three independent senior reviews of the whole platform: an adversarial critic,
+a UI engineer and a security engineer. Each worked read-only and returned findings with `path:line`. The
+merged plan is `~/.claude/plans/release-3-agents-one-zesty-whale.md`; this entry records what was built.
+
+**The three that mattered most.**
+
+1. **Password rules disagreed in six places, and sign-in validated policy, not credentials.** A teacher
+   approved through `/teach` (8–11 characters) or an admin who changed their own password to 10–11 could
+   never sign in again. One `PASSWORD_MIN`/`PASSWORD_MAX` now feeds every creator; sign-in only checks the
+   credential. The minimum is 8, matching the copy students already read.
+2. **The privacy policy was false in two places.** Support messages were documented as deleted after
+   handling and analytics as purged at 180 days; neither happened, because the purge died with the
+   reminders route. There is now a daily `/api/cron/retention` job (behind `CRON_SECRET`) that deletes
+   behavioural events after 180 days and closed tickets after 90, and the policy states those periods.
+3. **A minor's work went to Gemini with no consent record.** Automatic grading now requires a
+   `GuardianConsent` row, which signup collects: a guardian's name and a checkbox, written in the same
+   transaction as the account. `GuardianConsent.parentId` is nullable and rows carry a `source`.
+
+**Also shipped.** `opensAssignment` now checks `startsAt` (the bug `hasPlan` had already fixed for exams);
+malformed Basic-auth headers 401 instead of 500; unpublished covers are not served; promotion links go
+through `safeNext`; `/api/checkout` and the staff password change are throttled, and the two `chpw:`
+throttles actually record failures now. Signup and `/teach` no longer reveal which address has an account.
+`applyPaymentOutcome` only treats the event insert's unique violation as a replay. Stripe refunds carry an
+idempotency key. Exam and practice questions have accessible names; the password reveal is 44px; anchor
+targets land below the sticky header; `.btn-outline` follows `DESIGN.md` §7; lesson state is spoken;
+`--color-up` reaches AA on paper; map stations use the router `Link`; six copies of the field styles became
+one; admin tables wrap instead of scrolling sideways. Nine `pick()` sites the first sweep missed, the dead
+Daily path and the dead `masteryOf` are gone. `docs/HANDOFF.md`, `AGENTS.md`, the gap plan, `remaining.md`,
+the launch checklist and the privacy processor list no longer describe Daily, a Basic-auth gate or a
+reminders cron.
+
+**Verification.** 262 unit tests, `tsc`, `npm run build`, and the full Playwright suite (see HANDOFF for the
+count). New specs: `e2e/signup.spec.ts` (consent recorded; no consent, no account) and
+`e2e/retention.spec.ts` (the job refuses callers without the secret).
+
+**Deliberately not done.** Moving the unread-badge query out of `SiteHeader`. The header calls `auth()` and
+a notification count in the shared layout, which is what makes every route dynamic, so the home page's
+`revalidate = 300` never applies. Fixing it means a session endpoint plus a client header — a redesign of
+the auth UI, not a one-file change — and it should be its own reviewed piece. Also left alone: the local
+`panel` constant in `parent/page.tsx` (4px of padding drift), and the metadata ternaries that choose
+between two whole sentences rather than two stored fields.
+
 ## 2026-11-05: Audit items 31, 29, 56, 46 and 55 (last five code items)
 
 **Why.** These were the last five code items in `docs/audit.md`; #47 is left and it is an environment string.

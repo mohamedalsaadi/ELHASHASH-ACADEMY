@@ -95,7 +95,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `AUTH_SECRET` | yes | session signing; generate per environment |
 | `DATABASE_URL` | yes | Neon; see gate 0. End it with `sslmode=verify-full`, not `sslmode=require` (see the SSL note below) |
 | `SITE_PASSWORD` | set empty | non-empty puts the whole site behind basic auth |
-| `CRON_SECRET` | no | the cron route was removed on 2026-11-05 |
+| `CRON_SECRET` | yes | the daily retention job at `/api/cron/retention` returns 401 without it |
 | `RESEND_API_KEY`, `MAIL_FROM` | yes | all transactional email |
 | `BLOB_READ_WRITE_TOKEN` | yes | homework and exam file uploads |
 | `VDOCIPHER_API_SECRET` | yes | paid video playback |

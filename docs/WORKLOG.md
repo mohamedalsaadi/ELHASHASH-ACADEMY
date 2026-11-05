@@ -38,15 +38,21 @@ Git history has the rest (`git log --oneline`).
   boundary in the course country's zone, so a Kuwaiti student's last day could read a day early. Both pages now format
   per course zone; the detail page's live-session start does too. Account-level events (signup, last seen, orders) keep
   the office day.
-- **#56, scoped search.** `matchesQuery` from `src/lib/arabic-search.ts` now powers three more boxes: the course page
-  narrows its unit trail (`filterUnits`, new and tested), the teacher questions page filters by question, student or
-  lesson, and the teacher roster filters by name, phone, course or lesson. New keys in `common`, `catalog`, `teacher` and
-  `questions`.
+- **#56, scoped search.** `matchesQuery` from `src/lib/arabic-search.ts` now powers four more boxes: the course page
+  narrows its unit trail (`filterUnits`, new and tested), the course's homework list filters by assignment title, the
+  teacher questions page filters by question, student or lesson, and the teacher roster filters by name, phone, course
+  or lesson. New keys in `common`, `catalog`, `homework`, `teacher` and `questions`.
 - **#46, dedupe.** `generateMetadata` and the page body each queried `courses/[slug]` and `teachers/[id]`. Both now share
   a React `cache()`d loader. `now` is captured inside the loader so the two callers cannot key differently.
 - **#55, tap targets.** Measured live with a new `e2e/tap-targets.spec.ts` rather than trusting the 2026-11-01 count.
   Three remained: the wordmark link (37px tall), short footer links (26px wide) and the visually-hidden skip link, which
   is exempt by design. The first two are fixed. The spec runs in both locales at phone and desktop width.
+
+**The e2e suite was red before this work, and is green after it.** Two causes, both reproduced on `060900b`:
+the 2026-11-05 live seed gives `studentAe` a whole-course grant, so the two checkout tests that expect a 400 price
+found nothing; they now sign in as a new `studentAe2`, seeded with the same grade and no entitlement. And `oneDevice`
+binds an account to one browser fingerprint, so every Playwright project after the first was blocked on the live join
+page; the live spec now releases the account's device first (`clearDevice`).
 
 **Open.** #47: set `sslmode=verify-full` in `DATABASE_URL` (Vercel and `.env.local`). That silences the
 `pg-connection-string` 8.x warning; behaviour is unchanged under `pg` 8.23. Steps are in `docs/launch-checklist.md`.

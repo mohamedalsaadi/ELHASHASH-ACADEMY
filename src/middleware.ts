@@ -22,7 +22,7 @@ function policy(nonce: string) {
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
-    "frame-src https://www.youtube-nocookie.com https://player.vdocipher.com https://*.daily.com https://*.daily.co",
+    "frame-src https://www.youtube-nocookie.com https://player.vdocipher.com",
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",

@@ -62,19 +62,5 @@ export function scoreAttempt(items: PracticeItem[], replies: PracticeReply[]) {
   };
 }
 
-export type Mastery = "unseen" | "developing" | "secure";
-
-/**
- * Mastery from the most recent answers only, so improvement shows. Two of the last three right is
- * "developing"; three of three is "secure". A single lucky answer never earns secure.
- */
-export function masteryOf(recent: boolean[]): Mastery {
-  if (recent.length === 0) return "unseen";
-  const last = recent.slice(-3);
-  const right = last.filter(Boolean).length;
-  if (last.length >= 2 && right >= 2 && right === last.length) return "secure";
-  return "developing";
-}
-
 /** What a practice or review submission can come back with. */
 export type PracticeError = "invalid" | "closed" | "limited" | null;

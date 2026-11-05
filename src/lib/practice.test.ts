@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gradeItem, masteryOf, normalizeAnswer, scoreAttempt, type PracticeItem } from "./practice";
+import { gradeItem, normalizeAnswer, scoreAttempt, type PracticeItem } from "./practice";
 import { nextStreak, practiceXp } from "./progress";
 
 const mcq = (marks = 1): PracticeItem => ({
@@ -55,17 +55,6 @@ describe("scoreAttempt", () => {
     expect(r.maxMarks).toBe(5);
     expect(r.correct).toBe(1);
     expect(r.results[1].correct).toBe(false);
-  });
-});
-
-describe("masteryOf", () => {
-  it("starts unseen, needs a full recent run to be secure", () => {
-    expect(masteryOf([])).toBe("unseen");
-    expect(masteryOf([true])).toBe("developing");
-    expect(masteryOf([true, true])).toBe("secure");
-    expect(masteryOf([true, true, false])).toBe("developing");
-    expect(masteryOf([true, false, true, true])).toBe("developing");
-    expect(masteryOf([false, true, true, true])).toBe("secure");
   });
 });
 

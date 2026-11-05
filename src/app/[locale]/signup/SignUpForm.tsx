@@ -126,13 +126,13 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
             />
             <span className="text-label">{t("guardianHint")}</span>
           </label>
-          <label className="flex items-start gap-2 text-small">
+          <label className="flex min-h-11 items-center gap-3 text-small">
             <input
               type="checkbox"
               name="guardianConsent"
               required
               defaultChecked={false}
-              className="mt-1 size-4 shrink-0"
+              className="size-5 shrink-0"
               aria-invalid={state?.error === "guardian_required"}
               aria-describedby="signup-error"
             />

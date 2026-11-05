@@ -15,6 +15,11 @@ async function smallTargets(page: import("@playwright/test").Page): Promise<Box[
       if (r.width <= 1 || r.height <= 1) continue;
       const cs = getComputedStyle(el);
       if (cs.display === "inline" || cs.display === "contents") continue;
+      // A checkbox or radio is 16px by convention; when a label wraps it, the label is the target.
+      if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
+        const wrapped = el.closest("label")?.getBoundingClientRect();
+        if (wrapped && wrapped.height >= 44 && wrapped.width >= 44) continue;
+      }
       if (cs.visibility === "hidden" || Number(cs.opacity) === 0) continue;
       if (r.height < 44 || r.width < 44) {
         out.push({

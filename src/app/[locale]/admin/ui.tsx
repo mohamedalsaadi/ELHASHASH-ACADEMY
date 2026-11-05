@@ -45,7 +45,7 @@ export function PasswordForm() {
       </label>
       <label className={label}>
         {t("newPassword")}
-        <PasswordField name="next" autoComplete="new-password" minLength={10} required className={field} />
+        <PasswordField name="next" autoComplete="new-password" minLength={8} required className={field} />
       </label>
       {state && (
         <p role="status" className={`text-small ${state === "ok" ? "text-up" : "text-down"}`}>
@@ -74,7 +74,7 @@ export function TeacherForm() {
       </label>
       <label className={label}>
         {t("tempPassword")}
-        <input name="password" required minLength={10} dir="ltr" autoComplete="new-password" className={field} />
+        <input name="password" required minLength={8} dir="ltr" autoComplete="new-password" className={field} />
       </label>
       <p className="text-small text-ink-muted">{t("teacherHint")}</p>
       {state && (
@@ -186,7 +186,7 @@ export function ResetPasswordForm({ userId }: { userId: string }) {
       <input type="hidden" name="userId" value={userId} />
       <label className={label}>
         {t("tempPassword")}
-        <PasswordField name="password" required minLength={10} dir="ltr" autoComplete="new-password" className={field} />
+        <PasswordField name="password" required minLength={8} dir="ltr" autoComplete="new-password" className={field} />
       </label>
       <SaveButton>{to("resetPassword")}</SaveButton>
       {state && (

@@ -20,7 +20,7 @@ import { issueInvite } from "@/lib/invites";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { countryInput, gradeInput, rangesOverlap, stageInput, subjectInput } from "@/lib/schemas/catalog-admin";
-import { phoneSchema } from "@/lib/schemas/auth";
+import { PASSWORD_MIN, passwordSchema, phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, assertSlot, requireAdmin, requireStaff } from "@/lib/staff";
 import { stripe } from "@/lib/stripe";
 
@@ -443,7 +443,7 @@ export async function changePassword(_: unknown, form: FormData): Promise<"ok" |
   const me = await requireStaff();
   const current = String(form.get("current") ?? "");
   const next = String(form.get("next") ?? "");
-  if (next.length < 10) return "short";
+  if (next.length < PASSWORD_MIN) return "short";
   const user = await db.user.findUniqueOrThrow({ where: { id: me.id } });
   if (!(await bcrypt.compare(current, user.passwordHash))) return "wrong";
   await db.user.update({ where: { id: me.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });
@@ -456,7 +456,7 @@ export async function addTeacher(_: unknown, form: FormData): Promise<"ok" | "ta
     .object({
       name: z.string().trim().min(2).max(80),
       login: z.union([phoneSchema, z.email().trim().toLowerCase()]),
-      password: z.string().min(10).max(128),
+      password: passwordSchema,
     })
     .safeParse(Object.fromEntries(form));
   if (!d.success) return "invalid";
@@ -819,7 +819,7 @@ export async function extendAccess(form: FormData) {
 /** Sets a temporary password for a student or teacher. Admin accounts (the owner's) are never reset from here. */
 export async function resetPassword(_: unknown, form: FormData): Promise<"ok" | "invalid"> {
   await requireAdmin();
-  const d = z.object({ userId: z.string(), password: z.string().min(10).max(128) }).safeParse(Object.fromEntries(form));
+  const d = z.object({ userId: z.string(), password: passwordSchema }).safeParse(Object.fromEntries(form));
   if (!d.success) return "invalid";
   const { count } = await db.user.updateMany({
     where: { id: d.data.userId, role: { not: "ADMIN" } },

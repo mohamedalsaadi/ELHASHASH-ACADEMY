@@ -10,6 +10,7 @@ import { logEvent } from "@/lib/analytics";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
+import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { hashToken } from "@/lib/token-utils";
 
 export type InviteAcceptState = { error: "invalid" | "too_many" | "password" | "weak" } | null;
@@ -26,7 +27,7 @@ export async function acceptInvite(_: InviteAcceptState, form: FormData): Promis
   const password = String(form.get("password") ?? "");
   const confirm = String(form.get("confirm") ?? "");
   if (!token) return { error: "invalid" };
-  if (password.length < 10) return { error: "weak" };
+  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) return { error: "weak" };
   if (password !== confirm) return { error: "password" };
 
   const ip = clientIp(await headers());

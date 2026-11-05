@@ -9,6 +9,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
+import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { newCode, hashToken } from "@/lib/token-utils";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
@@ -65,7 +66,7 @@ export async function changeOwnPassword(_: unknown, form: FormData): Promise<"ok
   if (await isLimited(`chpw:${user.id}`, 5, 15 * 60_000)) return "wrong";
   const current = String(form.get("current") ?? "");
   const next = String(form.get("next") ?? "");
-  if (next.length < 12 || next.length > 72) return "short";
+  if (next.length < PASSWORD_MIN || next.length > PASSWORD_MAX) return "short";
   const row = await db.user.findUniqueOrThrow({ where: { id: user.id } });
   if (!(await bcrypt.compare(current, row.passwordHash))) return "wrong";
   await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });

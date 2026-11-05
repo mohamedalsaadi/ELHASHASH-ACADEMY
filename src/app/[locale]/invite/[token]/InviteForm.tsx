@@ -15,11 +15,11 @@ export function InviteForm({ token }: { token: string }) {
       <input type="hidden" name="token" value={token} />
       <label className={label}>
         {t("password")}
-        <PasswordField name="password" required minLength={10} autoComplete="new-password" dir="ltr" className={field} />
+        <PasswordField name="password" required minLength={8} autoComplete="new-password" dir="ltr" className={field} />
       </label>
       <label className={label}>
         {t("confirm")}
-        <PasswordField name="confirm" required minLength={10} autoComplete="new-password" dir="ltr" className={field} />
+        <PasswordField name="confirm" required minLength={8} autoComplete="new-password" dir="ltr" className={field} />
       </label>
       <p className="text-small text-ink-muted">{t("passwordHint")}</p>
       {state?.error && (

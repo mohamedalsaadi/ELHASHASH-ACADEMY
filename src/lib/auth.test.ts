@@ -24,8 +24,9 @@ describe("phoneSchema", () => {
 
 describe("password policy", () => {
   const base = { name: "طالب", phone: "01012345678", gradeId: "g1", email: "s@example.com" };
-  it("rejects under 12 characters", () => {
-    expect(signUpSchema.safeParse({ ...base, password: "short123" }).success).toBe(false);
+  it("rejects under 8 characters", () => {
+    expect(signUpSchema.safeParse({ ...base, password: "short12" }).success).toBe(false);
+    expect(signUpSchema.safeParse({ ...base, password: "short123" }).success).toBe(true);
   });
   it("rejects past 72 characters, which bcrypt would silently truncate", () => {
     expect(signUpSchema.safeParse({ ...base, password: "a".repeat(73) }).success).toBe(false);

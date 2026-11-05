@@ -536,17 +536,17 @@
     "confirmDelete": "Delete this lesson for good?",
     "changePassword": "Change password",
     "currentPassword": "Current password",
-    "newPassword": "New password (at least 10 characters)",
+    "newPassword": "New password (at least 8 characters)",
     "password": {
       "ok": "Password changed.",
       "wrong": "The current password is wrong.",
-      "short": "The new password is too short. Use at least 10 characters."
+      "short": "The new password is too short. Use at least 8 characters."
     },
     "teachers": "Teachers",
     "addTeacher": "Add teacher",
     "teacherName": "Teacher's name",
     "teacherLogin": "Email or mobile number",
-    "tempPassword": "Temporary password (at least 10 characters)",
+    "tempPassword": "Temporary password (at least 8 characters)",
     "teacherHint": "Hand this password to the teacher. They change it from their dashboard.",
     "teacherResult": {
       "ok": "Teacher account created.",
@@ -1063,7 +1063,7 @@
     "resetPassword": "Reset password",
     "reset": {
       "ok": "Password changed. Share it with them privately.",
-      "invalid": "Use at least 10 characters."
+      "invalid": "Use at least 8 characters."
     },
     "teacher": "Teacher",
     "lessonsRecorded": "Lessons recorded",
@@ -1195,7 +1195,7 @@
     "lede": "You have been invited to teach the subjects below. Choose a password for your account to continue.",
     "password": "Password",
     "confirm": "Confirm password",
-    "passwordHint": "Use at least 10 characters. If you already have an account, enter its current password.",
+    "passwordHint": "Use at least 8 characters. If you already have an account, enter its current password.",
     "submit": "Accept the invitation",
     "pending": "Accepting…",
     "invalidTitle": "This invitation is not valid",
@@ -1204,7 +1204,7 @@
       "invalid": "This invitation is no longer valid.",
       "too_many": "Too many attempts. Try again shortly.",
       "password": "The passwords do not match, or the existing account's password is wrong.",
-      "weak": "That password is too short. Use at least 10 characters."
+      "weak": "That password is too short. Use at least 8 characters."
     }
   },
   "notifications": {

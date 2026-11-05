@@ -76,3 +76,12 @@ export async function logEventLater(input: EventInput) {
 export function dedupeKey(name: EventName, actor: string | null, scope: string) {
   return actor ? `evt:${name}:${actor}:${scope}:${today()}` : null;
 }
+
+/**
+ * Deletes behavioural events past the window the privacy policy states. Called by the daily
+ * retention cron; the policy and the number here must move together.
+ */
+export async function purgeOldAnalytics(days = 180) {
+  const before = new Date(Date.now() - days * 86_400_000);
+  return (await db.analyticsEvent.deleteMany({ where: { createdAt: { lt: before } } })).count;
+}

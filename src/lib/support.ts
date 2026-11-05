@@ -49,3 +49,9 @@ export async function draftTicket(id: string) {
   const draft = await draftSupportReply(ticket).catch(() => null);
   if (draft) await db.supportTicket.update({ where: { id }, data: { aiDraft: draft.reply.slice(0, 4000) } });
 }
+
+/** Deletes support tickets that have been closed for longer than the retention window. */
+export async function purgeClosedTickets(days = 90) {
+  const before = new Date(Date.now() - days * 86_400_000);
+  return (await db.supportTicket.deleteMany({ where: { status: "CLOSED", updatedAt: { lt: before } } })).count;
+}

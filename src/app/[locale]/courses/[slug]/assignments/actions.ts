@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { suggestGrade } from "@/lib/ai-grading";
+import { hasGuardianConsent } from "@/lib/live";
 import { opensAssignment } from "@/lib/assignments";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, submissionPrefix } from "@/lib/blob";
 import { grantsFor } from "@/lib/catalog";
@@ -109,8 +110,8 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   await recordAttempt(`submit:${studentId}`);
   // A first mark is waiting when the teacher opens it — only for a course that opted in, because
   // the submission (and any photo of handwritten work) leaves our servers for an AI provider.
-  // Capped per course so one class cannot run up the bill.
-  if (assignment.course.aiGrading) {
+  // A guardian must have consented: every STUDENT is treated as a minor. Capped per course too.
+  if (assignment.course.aiGrading && (await hasGuardianConsent(studentId))) {
     after(async () => {
       const key = `ai-auto:${assignment.courseId}`;
       if (await isLimited(key, 300, 86_400_000)) return;

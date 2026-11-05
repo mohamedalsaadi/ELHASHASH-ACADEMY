@@ -40,7 +40,7 @@ export async function SiteHeader() {
     // Glass bar: the one place blur is allowed. Sticky so the way home is always one tap away.
     <header className="sticky top-0 z-30 border-b border-hairline/70 bg-surface/75 backdrop-blur-xl backdrop-saturate-150 print:hidden">
       <div className="mx-auto flex max-w-(--container-page) items-center justify-between gap-3 px-4 py-2">
-        <Link href="/" className="flex items-center rounded-sm py-1 text-ink">
+        <Link href="/" className="flex min-h-11 items-center rounded-sm py-1 text-ink">
           <Wordmark locale={locale} className="text-[1.65rem]" />
         </Link>
 

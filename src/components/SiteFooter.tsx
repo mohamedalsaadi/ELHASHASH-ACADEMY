@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { InstallApp } from "@/components/InstallApp";
 import { CONTACT_EMAIL } from "@/lib/site";
 
-const footLink = "inline-flex min-h-11 items-center transition-colors duration-(--dur-fast) ease-(--ease-out) hover:text-ink";
+const footLink = "inline-flex min-h-11 min-w-11 items-center justify-center transition-colors duration-(--dur-fast) ease-(--ease-out) hover:text-ink";
 
 export async function SiteFooter() {
   const [t, locale] = await Promise.all([getTranslations("footer"), getLocale()]);

@@ -705,6 +705,9 @@
     "submitting": "Creating account…",
     "haveAccount": "Already have an account?",
     "signIn": "Sign in",
+    "guardianName": "Guardian's name",
+    "guardianHint": "A parent or guardian for the student.",
+    "guardianConsent": "I am the student's parent or guardian and I agree to the terms and privacy policy on their behalf.",
     "errors": {
       "invalid_name": "Enter your full name (at least 2 letters).",
       "invalid_email": "Enter a valid email address.",
@@ -713,7 +716,8 @@
       "password_too_short": "The password is too short. Use at least 8 characters.",
       "invalid_grade": "Choose your grade.",
       "phone_taken": "This number already has an account. Sign in instead.",
-      "too_many": "Too many new accounts from this network. Try again in an hour."
+      "too_many": "Too many new accounts from this network. Try again in an hour.",
+      "guardian_required": "A guardian's name and consent are required to create a student account."
     },
     "teacherQ": "A teacher who wants to join?",
     "teacherLink": "Register as a teacher"

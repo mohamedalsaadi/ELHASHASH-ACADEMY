@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { Prisma } from "@/generated/prisma/client";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
+import { CONSENT_VERSION } from "@/lib/live-rules";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
 import { safeNext } from "@/lib/safe-redirect";
@@ -21,10 +22,11 @@ export type SignUpState = {
     | "invalid_phone"
     | "password_too_short"
     | "invalid_grade"
+    | "guardian_required"
     | "phone_taken"
     | "email_taken"
     | "too_many";
-  values?: { type: string; name: string; email: string; phone: string; gradeId: string };
+  values?: { type: string; name: string; email: string; phone: string; gradeId: string; guardianName: string };
 } | null;
 
 export async function signUp(_: SignUpState, form: FormData): Promise<SignUpState> {
@@ -34,8 +36,13 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     email: String(form.get("email") ?? ""),
     phone: String(form.get("phone") ?? ""),
     gradeId: String(form.get("gradeId") ?? ""),
+    guardianName: String(form.get("guardianName") ?? ""),
   };
-  const parsed = signUpSchema.safeParse({ ...values, password: form.get("password") });
+  const parsed = signUpSchema.safeParse({
+    ...values,
+    password: form.get("password"),
+    guardianConsent: form.get("guardianConsent") === "on",
+  });
   if (!parsed.success) {
     const field = parsed.error.issues[0].path[0];
     const error =
@@ -47,10 +54,12 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
             ? "invalid_phone"
             : field === "gradeId"
               ? "invalid_grade"
-              : "password_too_short";
+              : field === "guardianConsent" || field === "guardianName"
+                ? "guardian_required"
+                : "password_too_short";
     return { error, values };
   }
-  const { email, phone, password, gradeId, type } = parsed.data;
+  const { email, phone, password, gradeId, type, guardianName } = parsed.data;
   const isParent = type === "PARENT";
   const name = maskContacts(parsed.data.name).text;
   if (name.trim().length < 2) return { error: "invalid_name", values };
@@ -64,16 +73,25 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
   const locale = form.get("locale") === "en" ? "en" : "ar";
   let userId: string;
   try {
-    const user = await db.user.create({
-      data: {
-        name,
-        email,
-        phone,
-        gradeId: isParent ? null : gradeId,
-        role: isParent ? "PARENT" : "STUDENT",
-        locale,
-        passwordHash: await bcrypt.hash(password, 10),
-      },
+    // The account and its guardian consent land together, so a student is never left without a record.
+    const user = await db.$transaction(async (trx) => {
+      const created = await trx.user.create({
+        data: {
+          name,
+          email,
+          phone,
+          gradeId: isParent ? null : gradeId,
+          role: isParent ? "PARENT" : "STUDENT",
+          locale,
+          passwordHash: await bcrypt.hash(password, 10),
+        },
+      });
+      if (!isParent) {
+        await trx.guardianConsent.create({
+          data: { studentId: created.id, parentId: null, guardianName: guardianName!, rulesVersion: CONSENT_VERSION, source: "SIGNUP" },
+        });
+      }
+      return created;
     });
     userId = user.id;
   } catch (e) {

@@ -563,17 +563,24 @@ model LiveAttendance {
 /// A guardian's consent for one student to join live lectures, recorded by the linked parent.
 /// Only a parent account can write it, so the row is evidence that a guardian acted. There is no
 /// birth date anywhere in the schema, so every STUDENT account is treated as under 18.
+enum ConsentSource {
+  SIGNUP
+  PARENT
+}
+
 model GuardianConsent {
   studentId     String   @id
-  parentId      String
+  /// Null when a guardian agreed on the signup form, before any parent account existed.
+  parentId      String?
   /// The guardian's name at the moment of consent, copied so later edits cannot rewrite history.
   guardianName  String
+  source        ConsentSource @default(PARENT)
   /// Bumped when the wording shown at consent changes (CONSENT_VERSION in src/lib/live.ts).
   rulesVersion  String
   consentedAt   DateTime @default(now())
 
   student User @relation("ConsentStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  parent  User @relation("ConsentParent", fields: [parentId], references: [id], onDelete: Cascade)
+  parent  User? @relation("ConsentParent", fields: [parentId], references: [id], onDelete: Cascade)
 
   @@index([parentId])
 }

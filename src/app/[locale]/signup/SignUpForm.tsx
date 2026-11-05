@@ -108,6 +108,38 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
       ) : (
         <p className="text-small text-ink-muted">{t("parentHint")}</p>
       )}
+      {type === "STUDENT" && (
+        <>
+          <label className={label}>
+            {t("guardianName")}
+            <input
+              name="guardianName"
+              autoComplete="name"
+              required
+              minLength={2}
+              maxLength={80}
+              defaultValue={v?.guardianName}
+              dir="auto"
+              aria-invalid={state?.error === "guardian_required"}
+              aria-describedby="signup-error"
+              className={field}
+            />
+            <span className="text-label">{t("guardianHint")}</span>
+          </label>
+          <label className="flex items-start gap-2 text-small">
+            <input
+              type="checkbox"
+              name="guardianConsent"
+              required
+              defaultChecked={false}
+              className="mt-1 size-4 shrink-0"
+              aria-invalid={state?.error === "guardian_required"}
+              aria-describedby="signup-error"
+            />
+            <span>{t("guardianConsent")}</span>
+          </label>
+        </>
+      )}
       <label className={label}>
         {t("password")}
         <PasswordField

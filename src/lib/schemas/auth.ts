@@ -29,8 +29,15 @@ export const signUpSchema = z
     name: z.string().trim().min(2).max(80),
     /// Required for a student, absent for a parent.
     gradeId: z.string().optional(),
+    /// A student joins with a guardian's consent; the model has no birth date, so every STUDENT is a minor.
+    guardianName: z.string().trim().min(2).max(80).optional(),
+    guardianConsent: z.coerce.boolean().default(false),
   })
-  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" });
+  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" })
+  .refine((d) => d.type === "PARENT" || (d.guardianConsent && Boolean(d.guardianName)), {
+    path: ["guardianConsent"],
+    message: "guardian_required",
+  });
 
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;

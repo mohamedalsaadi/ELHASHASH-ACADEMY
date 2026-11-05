@@ -23,7 +23,7 @@ describe("phoneSchema", () => {
 });
 
 describe("password policy", () => {
-  const base = { name: "طالب", phone: "01012345678", gradeId: "g1", email: "s@example.com" };
+  const base = { name: "طالب", phone: "01012345678", gradeId: "g1", email: "s@example.com", guardianName: "ولي الأمر", guardianConsent: true };
   it("rejects under 8 characters", () => {
     expect(signUpSchema.safeParse({ ...base, password: "short12" }).success).toBe(false);
     expect(signUpSchema.safeParse({ ...base, password: "short123" }).success).toBe(true);
@@ -35,7 +35,7 @@ describe("password policy", () => {
 });
 
 describe("signUpSchema", () => {
-  const base = { name: "طالب", phone: "01012345678", password: "password1234", gradeId: "g1" };
+  const base = { name: "طالب", phone: "01012345678", password: "password1234", gradeId: "g1", guardianName: "ولي الأمر", guardianConsent: true };
 
   it("requires a valid email and lowercases it", () => {
     const r = signUpSchema.safeParse({ ...base, email: "Student@Example.COM" });
@@ -52,5 +52,12 @@ describe("signUpSchema", () => {
     const parent = { type: "PARENT" as const, name: "ولي", email: "parent@example.com", phone: "01012345678", password: "password1234" };
     expect(signUpSchema.safeParse(parent).success).toBe(true);
     expect(signUpSchema.safeParse({ ...parent, type: "STUDENT" as const }).success).toBe(false);
+  });
+
+  it("requires a guardian's name and consent for a student, and not for a parent", () => {
+    expect(signUpSchema.safeParse({ ...base, guardianConsent: false }).success).toBe(false);
+    expect(signUpSchema.safeParse({ ...base, guardianName: undefined }).success).toBe(false);
+    const parent = { type: "PARENT" as const, name: "ولي", email: "parent@example.com", phone: "01012345678", password: "password1234" };
+    expect(signUpSchema.safeParse(parent).success).toBe(true);
   });
 });

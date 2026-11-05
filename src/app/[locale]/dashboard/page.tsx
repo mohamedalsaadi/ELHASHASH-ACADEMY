@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -254,8 +255,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       ? {
           href: `/live/${nextLive.id}`,
           eyebrow: t("nextAction.eyebrow"),
-          title: ar ? nextLive.titleAr : nextLive.titleEn,
-          subtitle: ar ? nextLive.course.titleAr : nextLive.course.titleEn,
+          title: pick(ar, nextLive.titleAr, nextLive.titleEn),
+          subtitle: pick(ar, nextLive.course.titleAr, nextLive.course.titleEn),
           cta: tl("joinNow"),
         }
       : pending && !hasAccess
@@ -270,16 +271,16 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           ? {
               href: `/courses/${lastView.lesson.unit.course.slug}/lessons/${lastView.lesson.id}`,
               eyebrow: t("nextAction.eyebrow"),
-              title: ar ? lastView.lesson.titleAr : lastView.lesson.titleEn,
-              subtitle: ar ? lastView.lesson.unit.course.titleAr : lastView.lesson.unit.course.titleEn,
+              title: pick(ar, lastView.lesson.titleAr, lastView.lesson.titleEn),
+              subtitle: pick(ar, lastView.lesson.unit.course.titleAr, lastView.lesson.unit.course.titleEn),
               cta: t("resume"),
             }
           : nextByCourse?.entry
             ? {
                 href: `/courses/${nextByCourse.course.course.slug}/lessons/${nextByCourse.entry.lesson.id}`,
                 eyebrow: t("nextAction.eyebrow"),
-                title: ar ? nextByCourse.entry.lesson.titleAr : nextByCourse.entry.lesson.titleEn,
-                subtitle: ar ? nextByCourse.course.course.titleAr : nextByCourse.course.course.titleEn,
+                title: pick(ar, nextByCourse.entry.lesson.titleAr, nextByCourse.entry.lesson.titleEn),
+                subtitle: pick(ar, nextByCourse.course.course.titleAr, nextByCourse.course.course.titleEn),
                 cta: t("nextAction.start"),
               }
             : null;
@@ -416,8 +417,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                 <li key={l.id}>
                   <LiveRow
                     href={`/live/${l.id}`}
-                    title={ar ? l.titleAr : l.titleEn}
-                    subtitle={ar ? l.course.titleAr : l.course.titleEn}
+                    title={pick(ar, l.titleAr, l.titleEn)}
+                    subtitle={pick(ar, l.course.titleAr, l.course.titleEn)}
                     when={formatWhen(l.startsAt, courseZone(l.course), locale)}
                     phase={phase === "ended" ? "later" : phase}
                     phaseLabel={phase === "now" ? tl("liveNow") : phase === "soon" ? tl("startsSoon", { minutes }) : tl("later")}
@@ -451,7 +452,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   >
                     <span className="flex flex-wrap items-center justify-between gap-2">
                       <span className="flex items-center gap-2 font-display font-semibold">
-                        {ar ? course.titleAr : course.titleEn}
+                        {pick(ar, course.titleAr, course.titleEn)}
                         {/* The summit point: every lesson in the course is done. */}
                         {progress && progress.total > 0 && progress.done === progress.total && (
                           <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-summit" />
@@ -466,7 +467,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                       )}
                     </span>
                     <span className="text-small text-ink-muted">
-                      {course.grade ? (ar ? course.grade.nameAr : course.grade.nameEn) : tc("skill")}
+                      {course.grade ? (pick(ar, course.grade.nameAr, course.grade.nameEn)) : tc("skill")}
                       {active?.endsAt
                         ? ` · ${t("until", { date: formatDate(active.endsAt, courseZone(course), locale) })}`
                         : lapsed?.endsAt
@@ -503,7 +504,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                 >
                   <span className="grid min-w-0 gap-1">
                     <span className="font-display font-semibold">{ar ? e.lesson!.titleAr : e.lesson!.titleEn}</span>
-                    <span className="text-small text-ink-muted">{e.course ? (ar ? e.course.titleAr : e.course.titleEn) : ""}</span>
+                    <span className="text-small text-ink-muted">{e.course ? (pick(ar, e.course.titleAr, e.course.titleEn)) : ""}</span>
                   </span>
                   <span className="text-small text-up">
                     {e.endsAt ? t("until", { date: formatDate(e.endsAt, courseZone(e.course), locale) }) : t("forever")}
@@ -525,7 +526,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   href={`/courses/${q.lesson.unit.course.slug}/lessons/${q.lessonId}#questions`}
                   className="grid gap-1 card p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
-                  <span className="text-small text-ink-muted">{ar ? q.lesson.titleAr : q.lesson.titleEn}</span>
+                  <span className="text-small text-ink-muted">{pick(ar, q.lesson.titleAr, q.lesson.titleEn)}</span>
                   <span dir="auto" className="line-clamp-2">{q.answer}</span>
                   <span className="text-label font-semibold text-pen">{tq("answeredBy", { name: q.answeredBy?.name ?? "" })}</span>
                 </Link>

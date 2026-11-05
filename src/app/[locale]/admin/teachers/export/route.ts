@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { auth } from "@/auth";
 import { csvResponse } from "@/lib/csv";
 import { db } from "@/lib/db";
@@ -31,8 +32,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ locale: 
 
   const courseById = new Map(courses.map((c) => [c.id, c]));
   const userName = new Map(users.map((u) => [u.id, u.name]));
-  const gradeName = new Map(grades.map((g) => [g.id, ar ? g.nameAr : g.nameEn]));
-  const subjectName = new Map(subjects.map((s) => [s.id, ar ? s.nameAr : s.nameEn]));
+  const gradeName = new Map(grades.map((g) => [g.id, pick(ar, g.nameAr, g.nameEn)]));
+  const subjectName = new Map(subjects.map((s) => [s.id, pick(ar, s.nameAr, s.nameEn)]));
 
   // Distinct students per teacher, grade and subject, from the access they hold now.
   const students = new Map<string, Set<string>>();

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -75,8 +76,8 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
   });
   const options = courses.map((c) => ({
     id: c.id,
-    title: ar ? c.titleAr : c.titleEn,
-    lessons: c.units.flatMap((u) => u.lessons).map((l) => ({ id: l.id, title: ar ? l.titleAr : l.titleEn })),
+    title: pick(ar, c.titleAr, c.titleEn),
+    lessons: c.units.flatMap((u) => u.lessons).map((l) => ({ id: l.id, title: pick(ar, l.titleAr, l.titleEn) })),
   }));
 
   const waiting = assignment.submissions.filter((s) => s.status === "SUBMITTED").length;
@@ -85,7 +86,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
     <main className="mx-auto grid max-w-4xl gap-6 px-4 py-12">
       <PageHeader
         back={{ href: "/teacher/assignments", label: t("title") }}
-        eyebrow={ar ? assignment.course.titleAr : assignment.course.titleEn}
+        eyebrow={pick(ar, assignment.course.titleAr, assignment.course.titleEn)}
         title={<span dir="auto">{assignment.title}</span>}
         meta={
           <span className="num">

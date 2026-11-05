@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CourseCard } from "@/components/CourseCard";
 import { cardInclude } from "@/lib/catalog";
+import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { alternates } from "@/lib/seo";
 
@@ -35,7 +36,7 @@ export default async function PublicTeacherPage({ params }: { params: Promise<{ 
   if (!user || (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") || user.courses.length === 0) notFound();
 
   // A bio written in one language only still shows on the other locale's page.
-  const bio = (ar ? user.bioAr || user.bioEn : user.bioEn || user.bioAr)?.trim();
+  const bio = pick(ar, user.bioAr, user.bioEn).trim();
   const subjects = [...new Set(user.courses.map((c) => (ar ? c.subject?.nameAr : c.subject?.nameEn)).filter(Boolean))];
 
   return (

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -46,9 +47,9 @@ export default async function AdminLivePage({ params }: { params: Promise<{ loca
           <section key={s.id} className={panel}>
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <span className="grid gap-0.5">
-                <span className="font-display font-semibold">{ar ? s.titleAr : s.titleEn}</span>
+                <span className="font-display font-semibold">{pick(ar, s.titleAr, s.titleEn)}</span>
                 <span className="text-label text-ink-muted">
-                  {ar ? s.course.titleAr : s.course.titleEn} · {s.course.instructor.name}
+                  {pick(ar, s.course.titleAr, s.course.titleEn)} · {s.course.instructor.name}
                 </span>
               </span>
               <span className="grid gap-0.5 text-label sm:justify-items-end">

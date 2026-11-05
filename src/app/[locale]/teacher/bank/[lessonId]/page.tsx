@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -44,8 +45,8 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
       <PageHeader
         back={{ href: "/teacher/bank", label: t("bank") }}
-        eyebrow={`${ar ? lesson.unit.course.titleAr : lesson.unit.course.titleEn} · ${ar ? lesson.unit.titleAr : lesson.unit.titleEn}`}
-        title={<span dir="auto">{ar ? lesson.titleAr : lesson.titleEn}</span>}
+        eyebrow={`${pick(ar, lesson.unit.course.titleAr, lesson.unit.course.titleEn)} · ${pick(ar, lesson.unit.titleAr, lesson.unit.titleEn)}`}
+        title={<span dir="auto">{pick(ar, lesson.titleAr, lesson.titleEn)}</span>}
         actions={
           <Link href={`/courses/${lesson.unit.course.slug}/lessons/${lesson.id}/practice`} className="btn btn-outline px-4 py-2 text-small">
             {t("practice")}

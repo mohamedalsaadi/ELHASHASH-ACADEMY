@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -51,7 +52,7 @@ export default async function SubscribersPage({ params, searchParams }: { params
             <option value="">{t("all")}</option>
             {countries.map((c) => (
               <option key={c.code} value={c.code}>
-                {ar ? c.nameAr : c.nameEn}
+                {pick(ar, c.nameAr, c.nameEn)}
               </option>
             ))}
           </select>
@@ -61,10 +62,10 @@ export default async function SubscribersPage({ params, searchParams }: { params
           <select name="grade" defaultValue={f.grade ?? ""} className={field}>
             <option value="">{t("all")}</option>
             {countries.map((c) => (
-              <optgroup key={c.code} label={ar ? c.nameAr : c.nameEn}>
+              <optgroup key={c.code} label={pick(ar, c.nameAr, c.nameEn)}>
                 {c.grades.map((g) => (
                   <option key={g.id} value={g.id}>
-                    {ar ? g.nameAr : g.nameEn}
+                    {pick(ar, g.nameAr, g.nameEn)}
                   </option>
                 ))}
               </optgroup>
@@ -77,7 +78,7 @@ export default async function SubscribersPage({ params, searchParams }: { params
             <option value="">{t("all")}</option>
             {courses.map((c) => (
               <option key={c.id} value={c.id}>
-                {ar ? c.titleAr : c.titleEn}
+                {pick(ar, c.titleAr, c.titleEn)}
               </option>
             ))}
           </select>
@@ -126,11 +127,11 @@ export default async function SubscribersPage({ params, searchParams }: { params
                         </span>
                       </Link>
                     </td>
-                    <td>{u.grade ? `${ar ? u.grade.country.nameAr : u.grade.country.nameEn} · ${ar ? u.grade.nameAr : u.grade.nameEn}` : "—"}</td>
+                    <td>{u.grade ? `${pick(ar, u.grade.country.nameAr, u.grade.country.nameEn)} · ${pick(ar, u.grade.nameAr, u.grade.nameEn)}` : "—"}</td>
                     <td>
                       {latest ? (
                         <span className="grid">
-                          <span>{ar ? latest.course.titleAr : latest.course.titleEn}</span>
+                          <span>{pick(ar, latest.course.titleAr, latest.course.titleEn)}</span>
                           {latest.accessType && <span className="text-label text-ink-muted">{tc(`access.${latest.accessType}`, { days: 0 })}</span>}
                         </span>
                       ) : (

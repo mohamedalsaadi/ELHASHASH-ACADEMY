@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -38,7 +39,7 @@ export default async function ParentRequestsPage({ params }: { params: Promise<{
   for (const l of links) {
     const seen = new Map<string, { id: string; title: string }>();
     for (const e of l.student.entitlements) {
-      if (e.course) seen.set(e.course.id, { id: e.course.id, title: ar ? e.course.titleAr : e.course.titleEn });
+      if (e.course) seen.set(e.course.id, { id: e.course.id, title: pick(ar, e.course.titleAr, e.course.titleEn) });
     }
     courses[l.student.id] = [...seen.values()];
   }
@@ -102,7 +103,7 @@ export default async function ParentRequestsPage({ params }: { params: Promise<{
               </div>
               <span className="text-label text-ink-muted">
                 {r.student.name}
-                {r.course && ` · ${ar ? r.course.titleAr : r.course.titleEn}`}
+                {r.course && ` · ${pick(ar, r.course.titleAr, r.course.titleEn)}`}
               </span>
               <p dir="auto" className="text-small whitespace-pre-line break-words">{r.body}</p>
               {r.replies.length > 0 && (

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -54,7 +55,7 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
   if (!u || u.role === "ADMIN") notFound();
 
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "Africa/Cairo" }); // access ends on Cairo days (cairoDay)
-  const name = (x: { titleAr: string; titleEn: string }) => (ar ? x.titleAr : x.titleEn);
+  const name = (x: { titleAr: string; titleEn: string }) => (pick(ar, x.titleAr, x.titleEn));
   const plan = (a: string | null, days?: number | null) => (a ? tc(`access.${a}`, { days: days ?? 0 }) : t("wholeCourse"));
   const access = u.entitlements.filter((e) => !e.liveSessionId);
   const seats = u.entitlements.filter((e) => e.liveSessionId);
@@ -69,7 +70,7 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
           <dt>{t("contact")}</dt>
           <dd className="num" dir="ltr">{[u.phone, u.email].filter(Boolean).join(" · ")}</dd>
           <dt>{t("grade")}</dt>
-          <dd>{u.grade ? `${ar ? u.grade.country.nameAr : u.grade.country.nameEn} · ${ar ? u.grade.nameAr : u.grade.nameEn}` : "—"}</dd>
+          <dd>{u.grade ? `${pick(ar, u.grade.country.nameAr, u.grade.country.nameEn)} · ${pick(ar, u.grade.nameAr, u.grade.nameEn)}` : "—"}</dd>
           <dt>{t("joined")}</dt>
           <dd className="num">{date.format(u.createdAt)}</dd>
           {u.role === "INSTRUCTOR" && (

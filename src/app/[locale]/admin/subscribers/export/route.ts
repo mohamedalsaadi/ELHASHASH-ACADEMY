@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { auth } from "@/auth";
 import { toDayInput } from "@/lib/admin-input";
 import { csvResponse } from "@/lib/csv";
@@ -21,10 +22,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ locale: 
       const e = u.entitlements.find((x) => isCurrent(x, now)) ?? u.entitlements[0];
       return [
         u.name, u.phone, u.email,
-        u.grade && (ar ? u.grade.country.nameAr : u.grade.country.nameEn),
-        u.grade && (ar ? u.grade.nameAr : u.grade.nameEn),
+        u.grade && (pick(ar, u.grade.country.nameAr, u.grade.country.nameEn)),
+        u.grade && (pick(ar, u.grade.nameAr, u.grade.nameEn)),
         u.createdAt.toISOString().slice(0, 10),
-        e && (ar ? e.course.titleAr : e.course.titleEn),
+        e && (pick(ar, e.course.titleAr, e.course.titleEn)),
         e?.accessType,
         e ? (isCurrent(e, now) ? "active" : "expired") : "",
         toDayInput(e?.endsAt ?? null, e?.course.grade?.country.timeZone ?? "Asia/Dubai"),

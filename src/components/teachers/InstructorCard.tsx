@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { pick } from "@/lib/content";
 
 export type InstructorSummary = {
   id: string;
@@ -29,7 +30,7 @@ export function InstructorCard({
   const t = useTranslations("catalog");
   const ar = locale === "ar";
   // Fall back to the other language rather than showing an empty line.
-  const bio = ar ? i.bioAr || i.bioEn : i.bioEn || i.bioAr;
+  const bio = pick(ar, i.bioAr, i.bioEn);
 
   return (
     <article className="grid h-full content-start gap-3 card p-5">

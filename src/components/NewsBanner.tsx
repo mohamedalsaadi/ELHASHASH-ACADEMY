@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { unstable_cache } from "next/cache";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -77,7 +78,7 @@ export async function NewsBanner() {
             const body = (
               <>
                 <span className="text-night-muted">{t(it.kind)}</span>
-                <span className="font-semibold">{ar ? it.titleAr : it.titleEn}</span>
+                <span className="font-semibold">{pick(ar, it.titleAr, it.titleEn)}</span>
                 {it.price && (
                   <span className="num">
                     <s className="text-night-muted">{formatMoney(it.price.was, it.price.currency, locale)}</s>{" "}

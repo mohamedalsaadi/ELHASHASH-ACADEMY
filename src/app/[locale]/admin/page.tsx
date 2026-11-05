@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -114,8 +115,8 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
                     <tr key={l.id}>
                       <td>
                         <span className="grid">
-                          <span className="font-medium">{ar ? l.titleAr : l.titleEn}</span>
-                          <span className="text-label text-ink-muted">{ar ? l.course.titleAr : l.course.titleEn}</span>
+                          <span className="font-medium">{pick(ar, l.titleAr, l.titleEn)}</span>
+                          <span className="text-label text-ink-muted">{pick(ar, l.course.titleAr, l.course.titleEn)}</span>
                         </span>
                       </td>
                       <td className="text-label">{formatWhen(l.startsAt, courseZone(l.course), locale)}</td>

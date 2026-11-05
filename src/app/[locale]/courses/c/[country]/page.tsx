@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -74,7 +75,7 @@ export default async function CountryPage({
       )?.gradeId
     : null;
   const numeral = new Intl.NumberFormat(ar ? "ar-EG-u-nu-latn" : "en");
-  const name = ar ? country.nameAr : country.nameEn;
+  const name = pick(ar, country.nameAr, country.nameEn);
   // One tile per level; the URL has no curriculum segment, so the first curriculum wins.
   const grades = country.grades.filter(
     (g, i, all) => all.findIndex((x) => x.level === g.level) === i,
@@ -146,7 +147,7 @@ export default async function CountryPage({
         <section key={stage?.id ?? "other"} className="reveal grid gap-5">
           <h2 className="flex items-baseline gap-3">
             <span className="font-display text-h3 font-bold">
-              {stage ? (ar ? stage.nameAr : stage.nameEn) : t("otherGrades")}
+              {stage ? (pick(ar, stage.nameAr, stage.nameEn)) : t("otherGrades")}
             </span>
             {stage && (
               <span className="text-small text-ink-muted">
@@ -180,7 +181,7 @@ export default async function CountryPage({
                     href={`/courses/c/${slug.toLowerCase()}/${g.level}`}
                     aria-label={
                       isMine
-                        ? `${ar ? g.nameAr : g.nameEn}، ${t("yourGrade")}`
+                        ? `${pick(ar, g.nameAr, g.nameEn)}، ${t("yourGrade")}`
                         : undefined
                     }
                     className="group flex items-start gap-4 py-2 sm:grid sm:justify-items-center sm:gap-2 sm:px-1 sm:py-0 sm:text-center"

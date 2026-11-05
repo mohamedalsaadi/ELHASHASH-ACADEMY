@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { findInvite, inviteIsOpen } from "@/lib/invites";
@@ -33,8 +34,8 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
       <ul className="grid gap-1 rounded-md bg-raised p-3 text-small">
         {invite.slots.map((s) => (
           <li key={s.id}>
-            {ar ? s.subject.nameAr : s.subject.nameEn} · {ar ? s.grade.nameAr : s.grade.nameEn} ·{" "}
-            {ar ? s.grade.country.nameAr : s.grade.country.nameEn}
+            {pick(ar, s.subject.nameAr, s.subject.nameEn)} · {pick(ar, s.grade.nameAr, s.grade.nameEn)} ·{" "}
+            {pick(ar, s.grade.country.nameAr, s.grade.country.nameEn)}
           </li>
         ))}
       </ul>

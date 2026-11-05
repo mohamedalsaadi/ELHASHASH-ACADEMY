@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -81,7 +82,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
       <PageHeader
         back={{ href: `/courses/${slug}/assignments`, label: t("title") }}
-        eyebrow={ar ? assignment.course.titleAr : assignment.course.titleEn}
+        eyebrow={pick(ar, assignment.course.titleAr, assignment.course.titleEn)}
         title={<span dir="auto">{assignment.title}</span>}
         meta={
           <span className="num">

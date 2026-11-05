@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -63,7 +64,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
     <main className="mx-auto grid max-w-4xl gap-6 px-4 py-12">
       <PageHeader
         back={{ href: "/teacher/exams", label: t("title") }}
-        eyebrow={ar ? paper.course.titleAr : paper.course.titleEn}
+        eyebrow={pick(ar, paper.course.titleAr, paper.course.titleEn)}
         title={<span dir="auto">{paper.title}</span>}
       />
       <TeacherNav current="exams" />
@@ -105,7 +106,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
                 <span className="min-w-0">
                   <span className="block truncate" dir="auto">{item.prompt}</span>
                   <span className="text-label text-ink-muted">
-                    {ar ? item.lesson.titleAr : item.lesson.titleEn} · {item.kind} · <span className="num">{item.marks}</span>
+                    {pick(ar, item.lesson.titleAr, item.lesson.titleEn)} · {item.kind} · <span className="num">{item.marks}</span>
                   </span>
                 </span>
                 <form action={toggleExamItem}>

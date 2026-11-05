@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { panel } from "../AdminNav";
@@ -8,7 +9,7 @@ import { approveApplication, approveCountryRequest, rejectApplication, rejectCou
 export async function Reviews({ locale }: { locale: string }) {
   const t = await getTranslations("office");
   const ar = locale === "ar";
-  const name = (c: { nameAr: string; nameEn: string }) => (ar ? c.nameAr : c.nameEn);
+  const name = (c: { nameAr: string; nameEn: string }) => (pick(ar, c.nameAr, c.nameEn));
   const [apps, reqs] = await Promise.all([
     db.teacherApplication.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "asc" }, include: { countries: { include: { country: true } } } }),
     db.teacherCountryRequest.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "asc" }, include: { country: true, user: { select: { name: true } } } }),

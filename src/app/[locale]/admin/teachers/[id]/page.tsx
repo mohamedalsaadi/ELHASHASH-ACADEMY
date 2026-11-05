@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -75,7 +76,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
           <ul className="grid gap-1 text-small">
             {x.courses.map((c) => (
               <li key={c.id} className="flex justify-between gap-3">
-                <Link href={`/admin/courses/${c.id}`} className="text-pen underline-offset-4 hover:underline">{ar ? c.titleAr : c.titleEn}</Link>
+                <Link href={`/admin/courses/${c.id}`} className="text-pen underline-offset-4 hover:underline">{pick(ar, c.titleAr, c.titleEn)}</Link>
                 <span className={c.published ? "text-up" : "text-ink-muted"}>{ta(c.published ? "published" : "hidden")}</span>
               </li>
             ))}
@@ -93,7 +94,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
             {x.teacherSlots.map((slot) => (
               <li key={slot.id} className="flex items-center justify-between gap-3">
                 <span>
-                  {ar ? slot.subject.nameAr : slot.subject.nameEn} · {ar ? slot.grade.nameAr : slot.grade.nameEn}
+                  {pick(ar, slot.subject.nameAr, slot.subject.nameEn)} · {pick(ar, slot.grade.nameAr, slot.grade.nameEn)}
                 </span>
                 <form>
                   <input type="hidden" name="id" value={slot.id} />
@@ -113,7 +114,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
               <select name="slot" required className={field}>
                 {freeSlots.map((g) => (
                   <option key={`${g.gradeId}:${g.subjectId}`} value={`${g.gradeId}:${g.subjectId}`}>
-                    {ar ? g.grade.nameAr : g.grade.nameEn} · {ar ? g.subject.nameAr : g.subject.nameEn}
+                    {pick(ar, g.grade.nameAr, g.grade.nameEn)} · {pick(ar, g.subject.nameAr, g.subject.nameEn)}
                   </option>
                 ))}
               </select>

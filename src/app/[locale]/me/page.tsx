@@ -1,3 +1,4 @@
+import { pick as pickText } from "@/lib/content";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cookies } from "next/headers";
@@ -58,7 +59,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/flags/${c.code.toLowerCase()}.svg`} alt="" width={28} height={20} loading="lazy" decoding="async" className="h-7 w-auto rounded-sm" />
                   <span className="grid gap-0.5">
-                    <span className="font-display text-h3 font-bold">{ar ? c.nameAr : c.nameEn}</span>
+                    <span className="font-display text-h3 font-bold">{pickText(ar, c.nameAr, c.nameEn)}</span>
                     <span className="text-small text-ink-muted">{t("gradeCount", { count: c._count.grades })}</span>
                   </span>
                 </button>
@@ -79,7 +80,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
     const groups = (await gradeGroups(locale)).filter((g) => g.countryId === country.id);
     return (
       <main className="mx-auto grid max-w-xl gap-5 px-4 py-20">
-        <h1 className="font-display text-h1 font-bold">{t("pickGradeIn", { country: ar ? country.nameAr : country.nameEn })}</h1>
+        <h1 className="font-display text-h1 font-bold">{t("pickGradeIn", { country: pickText(ar, country.nameAr, country.nameEn) })}</h1>
         <p className="text-ink-muted">{t("pickHint")}</p>
         <GradePicker groups={groups} current={null} label={t("grade")} save={t("pickSave")} />
         <form action={clearCountry}>
@@ -90,12 +91,12 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
   }
 
   const { grade, subjects, owned, bundle, live } = home;
-  const gradeName = ar ? grade.nameAr : grade.nameEn;
-  const countryName = ar ? grade.country.nameAr : grade.country.nameEn;
+  const gradeName = pickText(ar, grade.nameAr, grade.nameEn);
+  const countryName = pickText(ar, grade.country.nameAr, grade.country.nameEn);
   const code = grade.country.code.toLowerCase();
   const line = `var(--color-line-${code}, var(--color-primary))`;
   const ownedIds = new Set(owned.map((c) => c.id));
-  const name = (s: { nameAr: string; nameEn: string }) => (ar ? s.nameAr : s.nameEn);
+  const name = (s: { nameAr: string; nameEn: string }) => (pickText(ar, s.nameAr, s.nameEn));
 
   // What can be bought comes first, then what the student already has; empty subjects only get a "coming soon" line.
   const ready = [...subjects.filter((s) => s.courses.length && !s.owned), ...subjects.filter((s) => s.courses.length && s.owned)];
@@ -210,9 +211,9 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
               {live.map((l) => (
                 <li key={l.id} className="card flex flex-wrap items-center justify-between gap-3 p-5">
                   <span className="grid gap-0.5">
-                    <span className="font-display font-semibold">{ar ? l.titleAr : l.titleEn}</span>
+                    <span className="font-display font-semibold">{pickText(ar, l.titleAr, l.titleEn)}</span>
                     <span className="text-small text-ink-muted">
-                      {ar ? l.course.titleAr : l.course.titleEn} · <span className="num">{formatWhen(l.startsAt, zone, locale)}</span>
+                      {pickText(ar, l.course.titleAr, l.course.titleEn)} · <span className="num">{formatWhen(l.startsAt, zone, locale)}</span>
                     </span>
                   </span>
                   <Link href={`/live/${l.id}`} className="btn btn-outline px-3 py-1.5 text-small">

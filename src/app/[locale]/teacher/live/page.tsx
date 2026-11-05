@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -125,7 +126,7 @@ export default async function TeacherLivePage({
             <select name="courseId" required className={field}>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {ar ? c.titleAr : c.titleEn}
+                  {pick(ar, c.titleAr, c.titleEn)}
                 </option>
               ))}
             </select>
@@ -157,9 +158,9 @@ export default async function TeacherLivePage({
               <div key={s.id} className={card}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="grid gap-1">
-                    <span className="font-display font-semibold">{ar ? s.titleAr : s.titleEn}</span>
+                    <span className="font-display font-semibold">{pick(ar, s.titleAr, s.titleEn)}</span>
                     <span className="text-small text-ink-muted">
-                      {ar ? course.titleAr : course.titleEn} · {formatWhen(s.startsAt, zone, locale)}
+                      {pick(ar, course.titleAr, course.titleEn)} · {formatWhen(s.startsAt, zone, locale)}
                     </span>
                   </span>
                   <span className="flex items-center gap-4 text-label">
@@ -218,7 +219,7 @@ export default async function TeacherLivePage({
               return (
                 <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4 text-small">
                   <span className="grid gap-1">
-                    <span className="font-display font-semibold">{ar ? s.titleAr : s.titleEn}</span>
+                    <span className="font-display font-semibold">{pick(ar, s.titleAr, s.titleEn)}</span>
                     <span className="text-ink-muted">{formatWhen(s.startsAt, courseZone(course), locale)}</span>
                   </span>
                   <span className={s.cancelledAt ? "text-down" : "num text-ink-muted"}>

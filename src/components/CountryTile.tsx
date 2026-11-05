@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -64,7 +65,7 @@ export function CountryTile({
         <LineBadge code={c.code} />
         <span className="grid min-w-0 flex-1 gap-0.5">
           <span className="font-display text-h3 font-bold">
-            {ar ? c.nameAr : c.nameEn}
+            {pick(ar, c.nameAr, c.nameEn)}
           </span>
           <span className="flex flex-wrap gap-x-3 text-small text-ink-muted">
             {c._count.grades > 0 && <span>{t("gradeCount", { count: c._count.grades })}</span>}

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SubjectIcon, SUBJECT_ICONS } from "@/components/brand/SubjectIcon";
@@ -29,12 +30,12 @@ function Catalog({ grades, ar }: { grades: CatalogGrade[]; ar: boolean }) {
     <ul className="grid gap-3 sm:grid-cols-2">
       {grades.map((g) => (
         <li key={g.id} className="grid gap-2 rounded-md border border-hairline p-3">
-          <strong className="text-small">{ar ? g.nameAr : g.nameEn}</strong>
+          <strong className="text-small">{pick(ar, g.nameAr, g.nameEn)}</strong>
           <ul className="flex flex-wrap gap-2">
             {g.subjects.map(({ subject: s }) => (
               <li key={s.id} className="inline-flex items-center gap-1 rounded-full bg-raised px-3 py-1 text-small">
                 <SubjectIcon icon={s.icon} size={16} />
-                {ar ? s.nameAr : s.nameEn}
+                {pick(ar, s.nameAr, s.nameEn)}
               </li>
             ))}
           </ul>
@@ -74,7 +75,7 @@ export default async function TeacherSubjectsPage({ params, searchParams }: Prop
   const requests = admin
     ? []
     : await db.teacherCountryRequest.findMany({ where: { userId: me.id }, orderBy: { createdAt: "desc" }, include: { country: true }, take: 10 });
-  const name = (c: { nameAr: string; nameEn: string }) => (ar ? c.nameAr : c.nameEn);
+  const name = (c: { nameAr: string; nameEn: string }) => (pick(ar, c.nameAr, c.nameEn));
 
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">

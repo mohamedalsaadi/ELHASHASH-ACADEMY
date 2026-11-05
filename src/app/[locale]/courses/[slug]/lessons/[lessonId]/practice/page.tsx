@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -81,7 +82,7 @@ export default async function PracticePage({
     return (
       <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
         <PageHeader
-          back={{ href: `/courses/${slug}/lessons/${lesson.id}`, label: ar ? lesson.titleAr : lesson.titleEn }}
+          back={{ href: `/courses/${slug}/lessons/${lesson.id}`, label: pick(ar, lesson.titleAr, lesson.titleEn) }}
           title={t("result")}
           meta={
             <span className="num">
@@ -136,9 +137,9 @@ export default async function PracticePage({
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
       <PageHeader
-        back={{ href: `/courses/${slug}/lessons/${lesson.id}`, label: ar ? lesson.titleAr : lesson.titleEn }}
+        back={{ href: `/courses/${slug}/lessons/${lesson.id}`, label: pick(ar, lesson.titleAr, lesson.titleEn) }}
         title={t("practice")}
-        meta={ar ? lesson.unit.course.titleAr : lesson.unit.course.titleEn}
+        meta={pick(ar, lesson.unit.course.titleAr, lesson.unit.course.titleEn)}
       />
       {lesson.questionItems.length === 0 ? (
         <p className="text-small text-ink-muted">{t("none")}</p>

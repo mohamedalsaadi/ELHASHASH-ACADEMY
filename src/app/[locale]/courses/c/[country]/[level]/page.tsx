@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -78,12 +79,12 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
           <Link href={`/courses/c/${slug.toLowerCase()}`} className="inline-flex min-h-11 items-center text-pen underline-offset-4 hover:underline">
-            {ar ? grade.country.nameAr : grade.country.nameEn}
+            {pick(ar, grade.country.nameAr, grade.country.nameEn)}
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
-          {ar ? grade.nameAr : grade.nameEn}
+          {pick(ar, grade.nameAr, grade.nameEn)}
         </p>
-        <h1 className="font-display text-h1 font-bold">{t.rich("pickSubject", { grade: ar ? grade.nameAr : grade.nameEn, m: (c) => <span className="marker">{c}</span> })}</h1>
+        <h1 className="font-display text-h1 font-bold">{t.rich("pickSubject", { grade: pick(ar, grade.nameAr, grade.nameEn), m: (c) => <span className="marker">{c}</span> })}</h1>
         <p className="text-ink-muted">{t("subjectCount", { count: tiles.length, live })}</p>
       </header>
 
@@ -98,7 +99,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
         {tiles.map(({ subject, count, from }) => {
           const label = (
             <span className="grid">
-              <span className="font-display font-bold">{ar ? subject.nameAr : subject.nameEn}</span>
+              <span className="font-display font-bold">{pick(ar, subject.nameAr, subject.nameEn)}</span>
               <span className="text-label text-ink-muted" lang={ar ? "en" : "ar"}>
                 {ar ? subject.nameEn : subject.nameAr}
               </span>

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -55,7 +56,7 @@ export default async function BankPage({ params }: { params: Promise<{ locale: s
         courses.map((c) => (
           <section key={c.id} className="grid gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-display text-h3 font-semibold">{ar ? c.titleAr : c.titleEn}</h2>
+              <h2 className="font-display text-h3 font-semibold">{pick(ar, c.titleAr, c.titleEn)}</h2>
               <form action={toggleLeaderboard} className="flex items-center gap-2 text-label text-ink-muted">
                 <input type="hidden" name="courseId" value={c.id} />
                 <input type="checkbox" name="on" defaultChecked={c.leaderboard} className="size-4" />
@@ -71,8 +72,8 @@ export default async function BankPage({ params }: { params: Promise<{ locale: s
                       className="flex flex-wrap items-center justify-between gap-2 rounded-sm px-2 py-1.5 hover:bg-raised"
                     >
                       <span className="min-w-0 truncate">
-                        <span className="text-label text-ink-muted">{ar ? u.titleAr : u.titleEn} · </span>
-                        <span dir="auto">{ar ? l.titleAr : l.titleEn}</span>
+                        <span className="text-label text-ink-muted">{pick(ar, u.titleAr, u.titleEn)} · </span>
+                        <span dir="auto">{pick(ar, l.titleAr, l.titleEn)}</span>
                       </span>
                       <span className="num text-label text-ink-muted">{l._count.questionItems}</span>
                     </Link>

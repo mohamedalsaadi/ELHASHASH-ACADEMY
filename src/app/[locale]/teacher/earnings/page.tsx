@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -32,7 +33,7 @@ export default async function EarningsPage({ params }: { params: Promise<{ local
   });
   // The ledger keeps no foreign key to courses (rows outlive them), so titles are looked up beside it.
   const courses = await db.course.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.courseId))] } }, select: { id: true, titleAr: true, titleEn: true } });
-  const titles = new Map(courses.map((c) => [c.id, ar ? c.titleAr : c.titleEn]));
+  const titles = new Map(courses.map((c) => [c.id, pick(ar, c.titleAr, c.titleEn)]));
   const byMonth = groupEarnings(rows, (r) => monthKey(r.createdAt));
   const byCourse = groupEarnings(rows, (r) => r.courseId).sort((a, b) => b.net - a.net);
   const monthName = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { month: "long", year: "numeric", timeZone: "UTC" });

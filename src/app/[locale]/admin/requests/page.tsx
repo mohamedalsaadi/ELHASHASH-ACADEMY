@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ReplyForm } from "@/components/requests/ReplyForm";
@@ -54,7 +55,7 @@ export default async function AdminRequestsPage({ params }: { params: Promise<{ 
               </div>
               <span className="text-label text-ink-muted">
                 {r.author.name} · {r.student.name}
-                {r.course && ` · ${ar ? r.course.titleAr : r.course.titleEn}`}
+                {r.course && ` · ${pick(ar, r.course.titleAr, r.course.titleEn)}`}
               </span>
               <p dir="auto" className="text-small whitespace-pre-line break-words">{r.body}</p>
               {r.replies.length > 0 && (

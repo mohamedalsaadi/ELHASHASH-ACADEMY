@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -76,8 +77,8 @@ export default async function TeacherAssignmentsPage({ params }: { params: Promi
                     )}
                   </span>
                   <span className="text-small text-ink-muted">
-                    {ar ? a.course.titleAr : a.course.titleEn}
-                    {a.lesson && ` · ${ar ? a.lesson.titleAr : a.lesson.titleEn}`}
+                    {pick(ar, a.course.titleAr, a.course.titleEn)}
+                    {a.lesson && ` · ${pick(ar, a.lesson.titleAr, a.lesson.titleEn)}`}
                   </span>
                   <span className="num text-label text-ink-muted">
                     {a.dueAt ? t("dueLabel", { date: formatDate(a.dueAt, courseZone(a.course), locale) }) : t("noDue")}

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -164,8 +165,8 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const onward = nextOpenLesson(entries, active, completed, now, lesson.id);
 
   const video = lesson.video;
-  const title = ar ? lesson.titleAr : lesson.titleEn;
-  const courseTitle = ar ? outline.titleAr : outline.titleEn;
+  const title = pick(ar, lesson.titleAr, lesson.titleEn);
+  const courseTitle = pick(ar, outline.titleAr, outline.titleEn);
   const courseHref = `/courses/${slug}`;
   const lessonHref = (id: string) => `/courses/${slug}/lessons/${id}`;
 
@@ -173,7 +174,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
     <main className="mx-auto grid max-w-5xl gap-6 px-4 py-12 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
       <div className="grid gap-6">
         <PageHeader
-          back={{ href: courseHref, label: `${courseTitle} · ${ar ? unit.titleAr : unit.titleEn}` }}
+          back={{ href: courseHref, label: `${courseTitle} · ${pick(ar, unit.titleAr, unit.titleEn)}` }}
           title={title}
           meta={`${tc(`kind.${lesson.kind}`)} · ${tc("recordedBy", { name: (lesson.instructor ?? course.instructor).name })}`}
           actions={
@@ -317,7 +318,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
         <h2 className="font-display text-h3 font-semibold">{tp("courseLessons")}</h2>
         {outline.units.map((u) => (
           <details key={u.id} open={u.id === unit.id}>
-            <summary className="cursor-pointer py-1 font-semibold">{ar ? u.titleAr : u.titleEn}</summary>
+            <summary className="cursor-pointer py-1 font-semibold">{pick(ar, u.titleAr, u.titleEn)}</summary>
             <ul className="grid">
               {u.lessons.map((l) => {
                 const open = openable(l, u.term, u.isFree);
@@ -326,7 +327,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
                   <li key={l.id}>
                     <LessonRow
                       href={open ? lessonHref(l.id) : undefined}
-                      title={ar ? l.titleAr : l.titleEn}
+                      title={pick(ar, l.titleAr, l.titleEn)}
                       state={l.id === lesson.id ? "current" : done ? "done" : open ? "open" : "locked"}
                       active={l.id === lesson.id}
                     />

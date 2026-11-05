@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -60,7 +61,7 @@ export default async function TeacherExamsPage({ params }: { params: Promise<{ l
                   <StatusChip tone={p.published ? "active" : "neutral"}>{p.published ? t("publish") : t("edit")}</StatusChip>
                 </span>
                 <span className="text-small text-ink-muted">
-                  {ar ? p.course.titleAr : p.course.titleEn}
+                  {pick(ar, p.course.titleAr, p.course.titleEn)}
                   {" · "}
                   <span className="num">{p._count.items}</span> {t("questions")}
                   {" · "}
@@ -78,7 +79,7 @@ export default async function TeacherExamsPage({ params }: { params: Promise<{ l
       {courses.length > 0 && (
         <Block title={t("new")}>
           <ExamCreateForm
-            courses={courses.map((c) => ({ id: c.id, title: ar ? c.titleAr : c.titleEn }))}
+            courses={courses.map((c) => ({ id: c.id, title: pick(ar, c.titleAr, c.titleEn) }))}
             labels={{ name: t("name"), duration: t("duration"), create: t("create"), invalid: t("invalid") }}
           />
         </Block>

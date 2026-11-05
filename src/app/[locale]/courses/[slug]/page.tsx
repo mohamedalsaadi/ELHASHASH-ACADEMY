@@ -168,7 +168,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
       ? readiness({
           units: course.units.map((u) => ({
             id: u.id,
-            title: ar ? u.titleAr : u.titleEn,
+            title: pick(ar, u.titleAr, u.titleEn),
             lessonIds: lessonEntries([u]).filter(opens).map((e) => e.lesson.id),
           })),
           completed,
@@ -227,7 +227,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     "@context": "https://schema.org",
     "@type": "Course",
     name: courseTitle,
-    description: (ar ? course.descAr : course.descEn) ?? undefined,
+    description: (pick(ar, course.descAr, course.descEn)) ?? undefined,
     provider: { "@type": "Organization", name: ar ? "ذروة" : "Dhirwa", sameAs: siteUrl },
     url: courseUrl,
     offers: course.skus.map((s) => ({
@@ -450,7 +450,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                         <li key={l.id}>
                           <LessonRow
                             href={open ? lessonHref(l.id) : undefined}
-                            title={ar ? l.titleAr : l.titleEn}
+                            title={pick(ar, l.titleAr, l.titleEn)}
                             subtitle={t(`kind.${l.kind}`)}
                             state={state}
                             trailing={
@@ -509,7 +509,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
                 <li key={l.id}>
                   <LiveRow
                     href={canJoin ? `/live/${l.id}` : undefined}
-                    title={ar ? l.titleAr : l.titleEn}
+                    title={pick(ar, l.titleAr, l.titleEn)}
                     when={formatWhen(l.startsAt, zone, locale)}
                     phase={phase === "ended" ? "later" : phase}
                     phaseLabel={phase === "now" ? tl("liveNow") : phase === "soon" ? tl("startsSoon", { minutes }) : tl("later")}

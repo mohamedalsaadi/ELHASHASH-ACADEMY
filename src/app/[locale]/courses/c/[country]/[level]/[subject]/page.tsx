@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   ]);
   if (!grade || !subject) return {};
   const ar = locale === "ar";
-  const name = `${ar ? subject.nameAr : subject.nameEn} · ${ar ? grade.nameAr : grade.nameEn}`;
+  const name = `${pick(ar, subject.nameAr, subject.nameEn)} · ${pick(ar, grade.nameAr, grade.nameEn)}`;
   return {
     title: name,
     description: ar ? `كورسات ${name} من مدرسيها على ذروة.` : `${name} courses from their teachers on Dhirwa.`,
@@ -81,14 +82,14 @@ export default async function SubjectPage({ params }: { params: Promise<Params> 
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
           <Link href={`/courses/c/${slug.toLowerCase()}`} className={crumb}>
-            {ar ? grade.country.nameAr : grade.country.nameEn}
+            {pick(ar, grade.country.nameAr, grade.country.nameEn)}
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
           <Link href={`/courses/c/${slug.toLowerCase()}/${level}`} className={crumb}>
-            {ar ? grade.nameAr : grade.nameEn}
+            {pick(ar, grade.nameAr, grade.nameEn)}
           </Link>
         </p>
-        <h1 className="font-display text-h1 font-bold">{ar ? subject.nameAr : subject.nameEn}</h1>
+        <h1 className="font-display text-h1 font-bold">{pick(ar, subject.nameAr, subject.nameEn)}</h1>
         <p className="max-w-[60ch] text-ink-muted">{t("subjectLede", { count: courses.length })}</p>
       </header>
 

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -112,7 +113,7 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
                 <span className="grid">
                   <span className="font-semibold" dir="auto">{e.paper.title}</span>
                   <span className="text-label text-ink-muted">
-                    {ar ? e.paper.course.titleAr : e.paper.course.titleEn}
+                    {pick(ar, e.paper.course.titleAr, e.paper.course.titleEn)}
                     {e.submittedAt && (
                       <>
                         {" · "}
@@ -139,7 +140,7 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
           <ul className="grid gap-2">
             {live.map((l) => (
               <li key={l.liveSession.id} className="flex flex-wrap justify-between gap-2 border-b border-hairline pb-2 last:border-0">
-                <span>{ar ? l.liveSession.titleAr : l.liveSession.titleEn}</span>
+                <span>{pick(ar, l.liveSession.titleAr, l.liveSession.titleEn)}</span>
                 <span className="num text-small text-ink-muted">{formatDate(l.joinedAt, "Asia/Dubai", locale)}</span>
               </li>
             ))}
@@ -165,7 +166,7 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
                   )}
                 </div>
                 <span className="text-label text-ink-muted">
-                  {ar ? s.assignment.course.titleAr : s.assignment.course.titleEn}
+                  {pick(ar, s.assignment.course.titleAr, s.assignment.course.titleEn)}
                   {" · "}
                   <span className="num">
                     {formatDate(s.submittedAt, courseZone(s.assignment.course), locale)}

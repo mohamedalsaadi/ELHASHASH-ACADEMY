@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { Link } from "@/i18n/navigation";
 
 type Promo = {
@@ -58,14 +59,14 @@ export function PromoBand({
       <aside aria-label={label} className="border-b border-hairline bg-night text-on-primary">
         <ul className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-4 py-3 text-small">
           {promos.map((p) => {
-            const body = ar ? p.bodyAr : p.bodyEn;
+            const body = pick(ar, p.bodyAr, p.bodyEn);
             return (
               <li key={p.id}>
                 {wrap(
                   p.href,
                   "flex flex-wrap items-center justify-center gap-2 underline-offset-4 hover:underline",
                   <>
-                    <span className="font-semibold">{ar ? p.titleAr : p.titleEn}</span>
+                    <span className="font-semibold">{pick(ar, p.titleAr, p.titleEn)}</span>
                     {body && <span className="opacity-80">{body}</span>}
                   </>,
                 )}
@@ -81,7 +82,7 @@ export function PromoBand({
   return (
     <section aria-label={label} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {promos.map((p) => {
-        const body = ar ? p.bodyAr : p.bodyEn;
+        const body = pick(ar, p.bodyAr, p.bodyEn);
         return (
           <div key={p.id}>
             {wrap(
@@ -90,7 +91,7 @@ export function PromoBand({
               <>
                 <h3 className="flex items-center gap-2 font-display text-h3 font-bold">
                   <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-summit" />
-                  {ar ? p.titleAr : p.titleEn}
+                  {pick(ar, p.titleAr, p.titleEn)}
                 </h3>
                 {body && <p className="text-small text-ink-muted">{body}</p>}
               </>,

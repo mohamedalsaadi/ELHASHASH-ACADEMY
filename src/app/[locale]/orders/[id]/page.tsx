@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -47,7 +48,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
   if (!o || (o.userId !== session.user.id && session.user.role !== "ADMIN")) notFound();
   const cfg = o.vat > 0 ? await getFinanceConfig() : null;
 
-  const name = (x: { titleAr: string; titleEn: string }) => (ar ? x.titleAr : x.titleEn);
+  const name = (x: { titleAr: string; titleEn: string }) => (pick(ar, x.titleAr, x.titleEn));
   const money = (n: number) => formatMoney(n, o.currency, locale);
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Dubai" });
 

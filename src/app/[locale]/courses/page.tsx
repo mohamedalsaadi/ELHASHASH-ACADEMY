@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CountryTile } from "@/components/CountryTile";
@@ -139,7 +140,7 @@ export default async function CoursesPage({
             lines={countries.map((c) => ({
               code: c.code,
               inService: c._count.grades > 0,
-              stations: [{ label: ar ? c.nameAr : c.nameEn, href: `/${locale}/courses/c/${c.code.toLowerCase()}` }],
+              stations: [{ label: pick(ar, c.nameAr, c.nameEn), href: `/${locale}/courses/c/${c.code.toLowerCase()}` }],
             }))}
           />
         )}

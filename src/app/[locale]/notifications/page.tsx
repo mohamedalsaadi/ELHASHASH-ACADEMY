@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -56,8 +57,8 @@ export default async function NotificationsPage({
       ) : (
         <ul className="grid gap-2">
           {items.map((n) => {
-            const title = ar ? n.titleAr : n.titleEn;
-            const body = ar ? n.bodyAr : n.bodyEn;
+            const title = pick(ar, n.titleAr, n.titleEn);
+            const body = pick(ar, n.bodyAr, n.bodyEn);
             const content = (
               <span className="grid gap-1">
                 <span className="flex items-center justify-between gap-2">

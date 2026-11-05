@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -43,8 +44,8 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
   });
   const slots: SlotOption[] = gradeSubjects.map((g) => ({
     value: `${g.gradeId}:${g.subjectId}`,
-    group: ar ? g.grade.country.nameAr : g.grade.country.nameEn,
-    label: `${ar ? g.grade.nameAr : g.grade.nameEn} · ${ar ? g.subject.nameAr : g.subject.nameEn}`,
+    group: pick(ar, g.grade.country.nameAr, g.grade.country.nameEn),
+    label: `${pick(ar, g.grade.nameAr, g.grade.nameEn)} · ${pick(ar, g.subject.nameAr, g.subject.nameEn)}`,
   }));
 
   const invites = await db.teacherInvite.findMany({
@@ -84,7 +85,7 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
                   <Link href={`/admin/teachers/${x.id}`} className="font-medium text-pen underline-offset-4 hover:underline">{x.name}</Link>
                   {x.role === "ADMIN" && <span className="ms-2 text-label text-ink-muted">{t("owner")}</span>}
                 </td>
-                <td>{x.courses.map((c) => (ar ? c.titleAr : c.titleEn)).join("، ") || "—"}</td>
+                <td>{x.courses.map((c) => (pick(ar, c.titleAr, c.titleEn))).join("، ") || "—"}</td>
                 <td className="num">{stats[i].lessons}</td>
                 <td className="num">{stats[i].students}</td>
                 <td className="num">{[...stats[i].earnings].map(([cur, n]) => formatMoney(n, cur, locale)).join(" · ") || "—"}</td>
@@ -115,7 +116,7 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
                   <span className="font-medium">{inv.name}</span>
                   <span className="num text-small text-ink-muted" dir="ltr">{inv.email ?? inv.phone}</span>
                   <span className="text-small text-ink-muted">
-                    {inv.slots.map((s) => `${ar ? s.subject.nameAr : s.subject.nameEn} · ${ar ? s.grade.nameAr : s.grade.nameEn}`).join("، ")}
+                    {inv.slots.map((s) => `${pick(ar, s.subject.nameAr, s.subject.nameEn)} · ${pick(ar, s.grade.nameAr, s.grade.nameEn)}`).join("، ")}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">

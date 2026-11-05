@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -50,7 +51,7 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
 
   const endsAt = new Date(s.startsAt.getTime() + s.durationMin * 60_000);
   const path = `/${locale}/live/${s.id}`;
-  const title = ar ? s.titleAr : s.titleEn;
+  const title = pick(ar, s.titleAr, s.titleEn);
 
   async function stage(): Promise<React.ReactNode> {
     const exits = (
@@ -170,7 +171,7 @@ export default async function LivePage({ params }: { params: Promise<{ locale: s
   return (
     <main className="mx-auto grid max-w-5xl gap-6 px-4 py-12">
       <PageHeader
-        back={{ href: `/courses/${s.course.slug}`, label: ar ? s.course.titleAr : s.course.titleEn }}
+        back={{ href: `/courses/${s.course.slug}`, label: pick(ar, s.course.titleAr, s.course.titleEn) }}
         title={title}
         meta={`${formatWhen(s.startsAt, courseZone(s.course), locale)} · ${t("minutes", { count: s.durationMin })}`}
         actions={

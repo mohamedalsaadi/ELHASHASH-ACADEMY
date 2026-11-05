@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -55,7 +56,7 @@ export default async function CourseAssignmentsPage({ params }: { params: Promis
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
       <PageHeader
-        back={{ href: `/courses/${slug}`, label: ar ? course.titleAr : course.titleEn }}
+        back={{ href: `/courses/${slug}`, label: pick(ar, course.titleAr, course.titleEn) }}
         title={t("title")}
       />
 

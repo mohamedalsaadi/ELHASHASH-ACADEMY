@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -39,7 +40,7 @@ export default async function TeacherQuestionsPage({ params }: { params: Promise
     <li key={q.id} className="grid gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2 text-small text-ink-muted">
         <Link href={`/courses/${q.lesson.unit.course.slug}/lessons/${q.lesson.id}`} className="text-pen underline-offset-4 hover:underline">
-          {ar ? q.lesson.unit.course.titleAr : q.lesson.unit.course.titleEn} · {ar ? q.lesson.titleAr : q.lesson.titleEn}
+          {pick(ar, q.lesson.unit.course.titleAr, q.lesson.unit.course.titleEn)} · {pick(ar, q.lesson.titleAr, q.lesson.titleEn)}
         </Link>
         <span>
           {q.user.name} · <span className="num">{when.format(q.createdAt)}</span>

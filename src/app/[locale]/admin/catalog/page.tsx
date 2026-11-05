@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -69,8 +70,8 @@ export default async function CatalogPage({
     ...subjects.filter((s) => !on.has(s.id)),
   ];
   const gradeGroups = countries.map((c) => ({
-    label: ar ? c.nameAr : c.nameEn,
-    options: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })),
+    label: pick(ar, c.nameAr, c.nameEn),
+    options: c.grades.map((g) => ({ id: g.id, name: pick(ar, g.nameAr, g.nameEn) })),
   }));
 
   type CountryRow = (typeof countries)[number];
@@ -232,7 +233,7 @@ export default async function CatalogPage({
             <input type="hidden" name="id" value={c.id} />
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="font-display font-semibold">
-                {c.code} · {ar ? c.nameAr : c.nameEn}
+                {c.code} · {pick(ar, c.nameAr, c.nameEn)}
               </span>
               <span className="text-label text-ink-muted">{t("countryGradeCount", { count: c._count.grades })}</span>
             </div>
@@ -269,7 +270,7 @@ export default async function CatalogPage({
             <select name="country" defaultValue={country?.id ?? ""} className={field}>
               {countries.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {ar ? c.nameAr : c.nameEn}
+                  {pick(ar, c.nameAr, c.nameEn)}
                 </option>
               ))}
             </select>
@@ -320,7 +321,7 @@ export default async function CatalogPage({
               <input type="hidden" name="countryId" value={country.id} />
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="font-display font-semibold">
-                  {ar ? g.nameAr : g.nameEn} · {t(`curricula.${g.curriculum}`)}
+                  {pick(ar, g.nameAr, g.nameEn)} · {t(`curricula.${g.curriculum}`)}
                 </span>
                 <span className="text-label text-ink-muted">{t("gradeUsage", { courses: g._count.courses, users: g._count.users })}</span>
               </div>
@@ -365,7 +366,7 @@ export default async function CatalogPage({
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="flex items-center gap-2 font-display font-semibold">
                 <SubjectIcon icon={s.icon} size={24} muted={!s.active} />
-                {ar ? s.nameAr : s.nameEn}
+                {pick(ar, s.nameAr, s.nameEn)}
               </span>
               <span className="text-label text-ink-muted">{t("subjectUsage", { courses: s._count.courses, grades: s._count.grades })}</span>
             </div>
@@ -413,7 +414,7 @@ export default async function CatalogPage({
                   <label className="flex items-center gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-3 has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20">
                     <input type="checkbox" name="subject" value={s.id} defaultChecked={on.has(s.id)} className="size-5 accent-(--color-pen)" />
                     <SubjectIcon icon={s.icon} size={28} muted={!s.active} />
-                    <span className={`font-display font-semibold ${s.active ? "" : "text-ink-muted"}`}>{ar ? s.nameAr : s.nameEn}</span>
+                    <span className={`font-display font-semibold ${s.active ? "" : "text-ink-muted"}`}>{pick(ar, s.nameAr, s.nameEn)}</span>
                   </label>
                 </li>
               ))}

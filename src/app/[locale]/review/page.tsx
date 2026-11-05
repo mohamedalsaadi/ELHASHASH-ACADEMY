@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -83,7 +84,7 @@ export default async function ReviewPage({
                   <span className="font-semibold" dir="auto">{ans.item.prompt}</span>
                   <StatusChip tone={ans.correct ? "active" : "expired"}>{ans.correct ? t("correctLabel") : t("wrongLabel")}</StatusChip>
                 </div>
-                <span className="text-label text-ink-muted">{ar ? a.lesson.titleAr : a.lesson.titleEn}</span>
+                <span className="text-label text-ink-muted">{pick(ar, a.lesson.titleAr, a.lesson.titleEn)}</span>
                 {ans.text && <p className="text-small text-ink-muted" dir="auto">{t("yourAnswer")}: {ans.text}</p>}
                 {ans.choice && <p className="text-small text-ink-muted" dir="auto">{ans.choice.label}</p>}
                 {!ans.correct && ans.item.answer && (

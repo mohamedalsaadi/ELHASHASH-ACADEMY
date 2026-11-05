@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { mayAsk, opensLesson, opensLive, type Grant, type LessonScope } from "@/lib/plans";
 
@@ -90,7 +91,7 @@ export async function gradeGroups(locale: string) {
     orderBy: { order: "asc" },
     include: { grades: { where: { active: true }, orderBy: [{ order: "asc" }, { level: "asc" }] } },
   });
-  return countries.map((c) => ({ countryId: c.id, label: ar ? c.nameAr : c.nameEn, grades: c.grades.map((g) => ({ id: g.id, name: ar ? g.nameAr : g.nameEn })) }));
+  return countries.map((c) => ({ countryId: c.id, label: pick(ar, c.nameAr, c.nameEn), grades: c.grades.map((g) => ({ id: g.id, name: pick(ar, g.nameAr, g.nameEn) })) }));
 }
 
 export function cardInclude(now: Date) {

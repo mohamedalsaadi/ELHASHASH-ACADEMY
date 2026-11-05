@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -33,8 +34,8 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
 
   const options = courses.map((c) => ({
     id: c.id,
-    title: ar ? c.titleAr : c.titleEn,
-    lessons: c.units.flatMap((u) => u.lessons).map((l) => ({ id: l.id, title: ar ? l.titleAr : l.titleEn })),
+    title: pick(ar, c.titleAr, c.titleEn),
+    lessons: c.units.flatMap((u) => u.lessons).map((l) => ({ id: l.id, title: pick(ar, l.titleAr, l.titleEn) })),
   }));
 
   return (

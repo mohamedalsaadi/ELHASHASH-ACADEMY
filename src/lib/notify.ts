@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { after } from "next/server";
 import { Prisma, type NotificationKind } from "@/generated/prisma/client";
 import { db } from "./db";
@@ -46,8 +47,8 @@ export async function createNotification(input: NotificationInput) {
   if (input.email !== false && user.email) {
     const to = user.email;
     const ar = user.locale === "ar";
-    const title = ar ? input.titleAr : input.titleEn;
-    const body = (ar ? input.bodyAr : input.bodyEn) ?? null;
+    const title = pick(ar, input.titleAr, input.titleEn);
+    const body = (pick(ar, input.bodyAr, input.bodyEn)) ?? null;
     const cta = input.href ? { href: `${appUrl()}${input.href}`, label: ar ? "افتح ذروة" : "Open Dhirwa" } : undefined;
     // After the response: a slow mail provider must never hold up the action that caused the notice
     // (or stall a cron pass that sends dozens of them).

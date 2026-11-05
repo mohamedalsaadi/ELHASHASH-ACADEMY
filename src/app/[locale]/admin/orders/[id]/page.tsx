@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -36,7 +37,7 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
   });
   if (!o) notFound();
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Dubai" });
-  const name = (x: { titleAr: string; titleEn: string }) => (ar ? x.titleAr : x.titleEn);
+  const name = (x: { titleAr: string; titleEn: string }) => (pick(ar, x.titleAr, x.titleEn));
   const money = (n: number) => formatMoney(n, o.currency, locale);
 
   return (

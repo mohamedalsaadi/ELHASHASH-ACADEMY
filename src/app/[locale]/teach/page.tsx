@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
@@ -15,7 +16,7 @@ export default async function TeachPage({ params }: { params: Promise<{ locale: 
   setRequestLocale(locale);
   const t = await getTranslations("teach");
   const ar = locale === "ar";
-  const countries = (await db.country.findMany({ where: { active: true }, orderBy: { order: "asc" } })).map((c) => ({ id: c.id, name: ar ? c.nameAr : c.nameEn }));
+  const countries = (await db.country.findMany({ where: { active: true }, orderBy: { order: "asc" } })).map((c) => ({ id: c.id, name: pick(ar, c.nameAr, c.nameEn) }));
 
   return (
     <AuthShell>

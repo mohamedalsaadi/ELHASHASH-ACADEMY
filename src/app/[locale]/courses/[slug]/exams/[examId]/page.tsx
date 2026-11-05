@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -73,7 +74,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
       <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
         <PageHeader
           back={{ href: `/courses/${slug}/exams`, label: t("title") }}
-          eyebrow={ar ? paper.course.titleAr : paper.course.titleEn}
+          eyebrow={pick(ar, paper.course.titleAr, paper.course.titleEn)}
           title={<span dir="auto">{paper.title}</span>}
         />
         <ExamForm
@@ -112,7 +113,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
       <PageHeader
         back={{ href: `/courses/${slug}/exams`, label: t("title") }}
-        eyebrow={ar ? paper.course.titleAr : paper.course.titleEn}
+        eyebrow={pick(ar, paper.course.titleAr, paper.course.titleEn)}
         title={<span dir="auto">{paper.title}</span>}
         meta={
           <span className="num inline-flex flex-wrap items-center gap-2">

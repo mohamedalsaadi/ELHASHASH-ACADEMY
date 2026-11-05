@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -245,12 +246,12 @@ export default async function TeacherPage({
                     {grades.map((g) => (
                       <optgroup
                         key={g.id}
-                        label={`${manyCountries ? `${ar ? g.country.nameAr : g.country.nameEn} · ` : ""}${ar ? g.nameAr : g.nameEn}`}
+                        label={`${manyCountries ? `${pick(ar, g.country.nameAr, g.country.nameEn)} · ` : ""}${pick(ar, g.nameAr, g.nameEn)}`}
                       >
                         {g.subjects.map(({ subject: s }) => (
                           <option key={s.id} value={`${g.id}:${s.id}`}>
-                            {ar ? s.nameAr : s.nameEn} ·{" "}
-                            {ar ? g.nameAr : g.nameEn}
+                            {pick(ar, s.nameAr, s.nameEn)} ·{" "}
+                            {pick(ar, g.nameAr, g.nameEn)}
                           </option>
                         ))}
                       </optgroup>
@@ -282,13 +283,11 @@ export default async function TeacherPage({
                 >
                   <span className="grid gap-1">
                     <span className="font-display font-semibold">
-                      {ar ? c.titleAr : c.titleEn}
+                      {pick(ar, c.titleAr, c.titleEn)}
                     </span>
                     <span className="text-small text-ink-muted">
                       {c.grade
-                        ? ar
-                          ? c.grade.nameAr
-                          : c.grade.nameEn
+                        ? pick(ar, c.grade.nameAr, c.grade.nameEn)
                         : tc("skill")}
                     </span>
                   </span>
@@ -342,9 +341,9 @@ export default async function TeacherPage({
                   </span>
                   <span className="grid gap-1 text-small sm:text-end">
                     <span>
-                      {ar ? s.course.titleAr : s.course.titleEn}
+                      {pick(ar, s.course.titleAr, s.course.titleEn)}
                       {s.lesson &&
-                        ` · ${ar ? s.lesson.titleAr : s.lesson.titleEn}`}
+                        ` · ${pick(ar, s.lesson.titleAr, s.lesson.titleEn)}`}
                       {sku &&
                         ` · ${tc(`access.${sku.accessType}`, { days: sku.accessDays ?? 0 })}`}
                     </span>

@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { StatTile } from "@/components/ui/StatTile";
@@ -24,7 +25,7 @@ export default async function TeacherAnalyticsPage({ params }: { params: Promise
     select: { id: true, titleAr: true, titleEn: true },
   });
   const courseIds = courses.map((c) => c.id);
-  const courseNames = new Map(courses.map((c) => [c.id, ar ? c.titleAr : c.titleEn]));
+  const courseNames = new Map(courses.map((c) => [c.id, pick(ar, c.titleAr, c.titleEn)]));
 
   const graded = await db.submission.findMany({
     where: { assignment: { courseId: { in: courseIds } }, status: "GRADED", score: { not: null } },
@@ -75,7 +76,7 @@ export default async function TeacherAnalyticsPage({ params }: { params: Promise
 
     const unit = s.assignment.lesson?.unit;
     if (unit) {
-      const u = unitScores.get(unit.id) ?? { name: ar ? unit.titleAr : unit.titleEn, course: courseNames.get(unit.courseId) ?? "", scores: [] };
+      const u = unitScores.get(unit.id) ?? { name: pick(ar, unit.titleAr, unit.titleEn), course: courseNames.get(unit.courseId) ?? "", scores: [] };
       u.scores.push({ ...score, unitId: unit.id });
       unitScores.set(unit.id, u);
     }

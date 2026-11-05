@@ -1,3 +1,4 @@
+import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
@@ -40,8 +41,8 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
         ? { grade: { country: { code: f.country } } }
         : {};
   const courses = await db.course.findMany({ where, orderBy: { slug: "asc" }, include: { grade: { include: { country: true } }, instructor: { select: { name: true } } } });
-  const named = (rows: { id: string; nameAr: string; nameEn: string }[]) => rows.map((r) => ({ id: r.id, name: ar ? r.nameAr : r.nameEn }));
-  const gradeGroups = countries.map((c) => ({ label: ar ? c.nameAr : c.nameEn, options: named(c.grades) }));
+  const named = (rows: { id: string; nameAr: string; nameEn: string }[]) => rows.map((r) => ({ id: r.id, name: pick(ar, r.nameAr, r.nameEn) }));
+  const gradeGroups = countries.map((c) => ({ label: pick(ar, c.nameAr, c.nameEn), options: named(c.grades) }));
   const shownCountries = countries.filter((c) => !f.country || c.code === f.country);
 
   return (
@@ -55,7 +56,7 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
             <option value="">{to("all")}</option>
             {countries.map((c) => (
               <option key={c.code} value={c.code}>
-                {ar ? c.nameAr : c.nameEn}
+                {pick(ar, c.nameAr, c.nameEn)}
               </option>
             ))}
             <option value="skill">{tc("skill")}</option>
@@ -67,10 +68,10 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
             <option value="">{to("all")}</option>
             {/* Grade names repeat across countries, so each country's grades sit under its name. */}
             {shownCountries.map((c) => (
-              <optgroup key={c.code} label={ar ? c.nameAr : c.nameEn}>
+              <optgroup key={c.code} label={pick(ar, c.nameAr, c.nameEn)}>
                 {c.grades.map((g) => (
                   <option key={g.id} value={g.id}>
-                    {ar ? g.nameAr : g.nameEn}
+                    {pick(ar, g.nameAr, g.nameEn)}
                   </option>
                 ))}
               </optgroup>
@@ -90,9 +91,9 @@ export default async function AdminCoursesPage({ params, searchParams }: { param
                 className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-surface shadow-paper p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
               >
                 <span className="grid gap-1">
-                  <span className="font-display font-semibold">{ar ? c.titleAr : c.titleEn}</span>
+                  <span className="font-display font-semibold">{pick(ar, c.titleAr, c.titleEn)}</span>
                   <span className="text-small text-ink-muted">
-                    {c.grade ? `${ar ? c.grade.country.nameAr : c.grade.country.nameEn} · ${ar ? c.grade.nameAr : c.grade.nameEn}` : tc("skill")} · {c.instructor.name}
+                    {c.grade ? `${pick(ar, c.grade.country.nameAr, c.grade.country.nameEn)} · ${pick(ar, c.grade.nameAr, c.grade.nameEn)}` : tc("skill")} · {c.instructor.name}
                   </span>
                 </span>
                 <span className={`text-label ${c.published ? "text-up" : "text-ink-muted"}`}>{c.published ? t("published") : t("hidden")}</span>

@@ -19,6 +19,8 @@ import { toMinor } from "@/lib/format";
 import { issueInvite } from "@/lib/invites";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { applyPaymentOutcome } from "@/lib/payments";
+import { isLimited, recordAttempt } from "@/lib/rate-limit";
+import { safeNext } from "@/lib/safe-redirect";
 import { countryInput, gradeInput, rangesOverlap, stageInput, subjectInput } from "@/lib/schemas/catalog-admin";
 import { PASSWORD_MIN, passwordSchema, phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, assertSlot, requireAdmin, requireStaff } from "@/lib/staff";
@@ -264,8 +266,9 @@ const promoInput = z.object({
     .trim()
     .max(500)
     .default("")
-    // Same-site destinations only: a promotion must not become a phishing link.
-    .refine((h) => !h || h.startsWith("/"), "bad_href"),
+    // Same-site destinations only: a promotion must not become a phishing link. `startsWith("/")` alone
+    // let "//evil.com" and "/\evil.com" through, which browsers resolve off-site.
+    .refine((h) => safeNext(h, "") === h, "bad_href"),
   startsAt: z.string().default(""),
   endsAt: z.string().default(""),
   order: z.coerce.number().int().min(0).max(999).default(0),
@@ -443,9 +446,14 @@ export async function changePassword(_: unknown, form: FormData): Promise<"ok" |
   const me = await requireStaff();
   const current = String(form.get("current") ?? "");
   const next = String(form.get("next") ?? "");
+  // A stolen session must not be able to guess the current password at full speed.
+  if (await isLimited(`chpw:${me.id}`, 5, 15 * 60_000)) return "wrong";
   if (next.length < PASSWORD_MIN) return "short";
   const user = await db.user.findUniqueOrThrow({ where: { id: me.id } });
-  if (!(await bcrypt.compare(current, user.passwordHash))) return "wrong";
+  if (!(await bcrypt.compare(current, user.passwordHash))) {
+    await recordAttempt(`chpw:${me.id}`);
+    return "wrong";
+  }
   await db.user.update({ where: { id: me.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });
   return "ok";
 }

@@ -53,4 +53,9 @@ describe("opensAssignment", () => {
     expect(opensAssignment(courseLevel, [grant({ lessonId: "l1" })], now)).toBe(false);
     expect(opensAssignment(courseLevel, [grant()], now)).toBe(true);
   });
+
+  it("refuses a course-level plan that has not started yet", () => {
+    // The same rule hasPlan already applies: a plan bought for next term must not open this term's work.
+    expect(opensAssignment(courseLevel, [grant({ startsAt: new Date(now.getTime() + day) })], now)).toBe(false);
+  });
 });

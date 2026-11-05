@@ -37,7 +37,15 @@ export default function middleware(req: NextRequest) {
   const password = process.env.SITE_PASSWORD;
   if (password) {
     const [scheme, encoded] = req.headers.get("authorization")?.split(" ") ?? [];
-    const given = scheme === "Basic" && encoded ? atob(encoded).split(":").slice(1).join(":") : null;
+    // atob throws on malformed base64; a bad header is a failed attempt, not a server error.
+    let given: string | null = null;
+    if (scheme === "Basic" && encoded) {
+      try {
+        given = atob(encoded).split(":").slice(1).join(":");
+      } catch {
+        given = null;
+      }
+    }
     if (given !== password) {
       return new NextResponse("Password required", {
         status: 401,

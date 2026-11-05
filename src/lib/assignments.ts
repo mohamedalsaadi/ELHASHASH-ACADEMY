@@ -18,7 +18,7 @@ export function opensAssignment(a: AssignmentScope, grants: Grant[], now: Date):
     const scope = { id: a.lesson.id, month: a.lesson.month, term: a.lesson.unit.term };
     return grants.some((g) => opensLesson(g, scope, now));
   }
-  return grants.some((g) => !g.lessonId && !g.liveSessionId && (!g.endsAt || g.endsAt > now));
+  return grants.some((g) => !g.lessonId && !g.liveSessionId && g.startsAt <= now && (!g.endsAt || g.endsAt > now));
 }
 
 /**

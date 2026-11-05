@@ -10,6 +10,7 @@ import { createIntention } from "@/lib/paymob";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { applyCoupon, PricingError } from "@/lib/pricing-engine";
+import { isLimited } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/schemas/checkout";
 import { stripe } from "@/lib/stripe";
 import { createIntent, ziinaCapReached } from "@/lib/ziina";
@@ -22,6 +23,8 @@ const STRIPE_TTL_S = 60 * 60;
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  // Every request creates an order and a live gateway intent, and scans the month's paid orders.
+  if (await isLimited(`checkout:${session.user.id}`, 10, 3_600_000)) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const parsed = checkoutSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_request" }, { status: 400 });

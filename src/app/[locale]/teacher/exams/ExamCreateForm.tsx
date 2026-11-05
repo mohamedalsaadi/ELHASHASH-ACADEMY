@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { field, label } from "@/app/[locale]/admin/styles";
+import { field, label } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { createExam, type ExamError } from "./actions";
 

@@ -1,13 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { field, label } from "@/components/ui/form";
 import { useActionState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { changeOwnPassword, generateParentCode, updateProfile } from "./actions";
 
-const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
-const label = "grid gap-1 text-label text-ink-muted";
 const button =
   "btn btn-primary w-fit text-small";
 

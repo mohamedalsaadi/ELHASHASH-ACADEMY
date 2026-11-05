@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { courseZone, formatWhen, minorPerUnit } from "@/lib/format";
 import { canPublishLive } from "@/lib/live";
 import { requireStaff } from "@/lib/staff";
-import { field, label } from "../../admin/styles";
+import { field, label } from "@/components/ui/form";
 import { DeleteButton, SaveButton } from "../../admin/ui";
 import { TeacherNav } from "../TeacherNav";
 import { cancelLive, scheduleLive, setSeatPrice, updateLive } from "./actions";

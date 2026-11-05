@@ -1,4 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
+import { field } from "@/components/ui/form";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -14,7 +15,6 @@ import { PayForm } from "./PayForm";
 
 type CouponError = "invalid" | "not_started" | "expired" | "used_up" | "used_by_you" | "currency";
 
-const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
 const applyButton =
   "btn btn-outline";
 

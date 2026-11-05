@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { ExamTimer } from "@/components/exam/ExamTimer";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { field } from "@/app/[locale]/admin/styles";
+import { field } from "@/components/ui/form";
 import { submitExam } from "@/app/[locale]/courses/[slug]/exams/actions";
 import type { PracticeError } from "@/lib/practice";
 

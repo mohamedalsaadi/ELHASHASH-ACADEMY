@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
-import { field, label } from "../../../../admin/styles";
-import { SaveButton } from "../../../../admin/ui";
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { field, label } from "@/components/ui/form";
 import { askQuestion } from "./actions";
 
 export function AskForm({ lessonId }: { lessonId: string }) {
@@ -24,7 +24,7 @@ export function AskForm({ lessonId }: { lessonId: string }) {
         </p>
       )}
       <div>
-        <SaveButton showSaved={false}>{t("send")}</SaveButton>
+        <SubmitButton showSaved={false} className="btn btn-primary">{t("send")}</SubmitButton>
       </div>
     </form>
   );

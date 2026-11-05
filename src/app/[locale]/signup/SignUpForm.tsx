@@ -1,14 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { field, label } from "@/components/ui/form";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { Link } from "@/i18n/navigation";
 import { signUp } from "./actions";
 
-const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
-const label = "grid gap-2 text-label text-ink-muted";
 
 function Submit({ disabled }: { disabled?: boolean }) {
   const t = useTranslations("signup");

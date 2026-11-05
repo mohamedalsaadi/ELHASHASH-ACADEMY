@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { field, label } from "../../admin/styles";
+import { field, label } from "@/components/ui/form";
 import { acceptInvite } from "./actions";
 
 export function InviteForm({ token }: { token: string }) {

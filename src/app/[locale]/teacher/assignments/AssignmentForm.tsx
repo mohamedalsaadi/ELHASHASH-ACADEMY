@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { UploadField } from "@/components/homework/UploadField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { field, label } from "@/app/[locale]/admin/styles";
+import { field, label } from "@/components/ui/form";
 import type { AssignmentError } from "./actions";
 
 export type CourseOption = { id: string; title: string; lessons: { id: string; title: string }[] };

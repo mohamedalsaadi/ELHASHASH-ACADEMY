@@ -5,7 +5,7 @@ import { SubjectIcon, SUBJECT_ICONS } from "@/components/brand/SubjectIcon";
 import { db } from "@/lib/db";
 import { requireStaff, teacherCountryIds } from "@/lib/staff";
 import { panel } from "../../admin/AdminNav";
-import { field, label } from "../../admin/styles";
+import { field, label } from "@/components/ui/form";
 import { TeacherNav } from "../TeacherNav";
 import { createSubject, requestCountry } from "./actions";
 

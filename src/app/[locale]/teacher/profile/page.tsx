@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/staff";
 import { avatarPrefix } from "@/lib/blob";
 import { SaveButton, PasswordForm } from "../../admin/ui";
-import { field, label } from "../../admin/styles";
+import { field, label } from "@/components/ui/form";
 import { TeacherNav } from "../TeacherNav";
 import { updateTeacherProfile } from "./actions";
 

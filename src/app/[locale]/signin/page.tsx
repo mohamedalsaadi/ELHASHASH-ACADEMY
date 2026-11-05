@@ -1,4 +1,5 @@
 import { pageMetadata } from "@/lib/seo";
+import { field } from "@/components/ui/form";
 import { AuthError } from "next-auth";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
@@ -9,7 +10,6 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { safeNext } from "@/lib/safe-redirect";
 
-const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/signin", "signin", { key: "title", noindex: true });

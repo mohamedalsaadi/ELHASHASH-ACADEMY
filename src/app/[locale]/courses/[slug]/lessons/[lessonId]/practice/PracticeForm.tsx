@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { field } from "@/app/[locale]/admin/styles";
+import { field } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { PracticeError } from "@/lib/practice";
 

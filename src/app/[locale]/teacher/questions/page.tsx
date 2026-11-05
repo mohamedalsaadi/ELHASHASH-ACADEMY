@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { matchesQuery } from "@/lib/arabic-search";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/staff";
-import { field } from "../../admin/styles";
+import { field } from "@/components/ui/form";
 import { SaveButton } from "../../admin/ui";
 import { TeacherNav } from "../TeacherNav";
 import { answerQuestion } from "./actions";

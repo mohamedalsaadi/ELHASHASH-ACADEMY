@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { UploadField } from "@/components/homework/UploadField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { field, label } from "@/app/[locale]/admin/styles";
+import { field, label } from "@/components/ui/form";
 import { submitAssignment, type SubmitError } from "./actions";
 
 export function SubmitForm({

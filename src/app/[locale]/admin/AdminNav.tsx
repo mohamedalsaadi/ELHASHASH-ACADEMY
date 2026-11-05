@@ -43,6 +43,6 @@ export async function AdminNav({ current, title }: { current: AdminTab; title?: 
 }
 
 /** Shared table look for back-office lists. */
-export const table = "w-full min-w-[34rem] border-collapse text-small [&_td]:border-b [&_td]:border-dashed [&_td]:border-rule [&_td]:py-3 [&_td]:pe-3 [&_th]:border-b [&_th]:border-hairline [&_th]:py-2 [&_th]:pe-3 [&_th]:text-start [&_th]:text-label [&_th]:font-medium [&_th]:text-ink-muted";
+export const table = "w-full border-collapse text-small [&_td]:border-b [&_td]:border-dashed [&_td]:border-rule [&_td]:py-3 [&_td]:pe-3 [&_th]:border-b [&_th]:border-hairline [&_th]:py-2 [&_th]:pe-3 [&_th]:text-start [&_th]:text-label [&_th]:font-medium [&_th]:text-ink-muted";
 export const panel = "grid gap-3 rounded-lg border border-hairline bg-surface p-4 shadow-paper";
 export const stat = "grid gap-0.5 rounded-lg border border-hairline bg-surface shadow-paper px-4 py-3";

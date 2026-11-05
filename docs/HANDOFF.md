@@ -83,9 +83,11 @@ count (#10, #22, #31, #36) are fixed; `docs/audit.md` now carries a Status block
   in payments; Stripe refund idempotency; accessible assessment names; 44px password reveal; anchor
   offsets; `.btn-outline` per `DESIGN.md` §7; spoken lesson state; AA `--color-up`; router `Link` in the
   map; one shared form style; wrapping admin tables; the dead Daily path. Full detail in `docs/WORKLOG.md`.
-- **#47 is the last one and it is not code.** `DATABASE_URL` ends in `sslmode=require`, which
-  `pg-connection-string` 8.x warns about. Change it to `sslmode=verify-full` in Vercel and locally;
-  behaviour is identical under `pg` 8.23. Steps are in `docs/launch-checklist.md` under Deployment.
+- **#47 done 2026-11-06.** `DATABASE_URL` now ends in `sslmode=verify-full` in Vercel Production and Preview
+  and in `.env.local`; the `pg-connection-string` warning is gone and prisma still reports the schema up to date.
+  Note: the Vercel variable is a **sensitive** one, so `vercel env pull` returns `[SENSITIVE]` and its value can
+  only be replaced, never read. It was replaced with the known-good local string after confirming both point at
+  the same Neon host, database and role.
 - **#45 is wrong as written** and should not be "fixed": `/courses` reads `searchParams.q`, which
   forces dynamic rendering regardless of `revalidate`.
 

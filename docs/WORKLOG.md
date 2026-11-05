@@ -24,6 +24,20 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: sslmode switched to verify-full
+
+`DATABASE_URL` ended in `sslmode=require`, which `pg-connection-string` 8.x treats as `verify-full` but warns
+about. It now says `sslmode=verify-full` in `.env.local` and in Vercel Production and Preview.
+
+The Vercel variable is sensitive, so it cannot be read back: `vercel env pull` returns `[SENSITIVE]`. It was
+replaced through `vercel env update` with the same connection string used locally, after checking that host
+(`ep-twilight-feather-b97jpk23-pooler...`), database (`neondb`) and role (`neondb_owner`) match what the launch
+checklist documents for production. The production deployment was then rebuilt from the same source
+(`vercel redeploy`, no local upload) and re-aliased to dhirwa.ae.
+
+Verified: `prisma migrate status` from `.env.local` prints no SECURITY WARNING and reports the schema up to
+date; the live site renders and `/api/health` answers 200 after the redeploy.
+
 ## 2026-11-06: DMARC and SPF fixed
 
 Two records were wrong or missing on `dhirwa.ae`. `_dmarc` contained the literal placeholder from the checklist,

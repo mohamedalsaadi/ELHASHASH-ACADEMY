@@ -101,7 +101,7 @@
       },
       "live": {
         "title": "Live lectures",
-        "body": "Join your teacher live and ask questions, with a private link that only works for you."
+        "body": "Join your teacher live and ask questions, through the link your teacher shares."
       }
     },
     "promotions": "Offers",
@@ -174,7 +174,7 @@
       "parent": {
         "k": "Parents",
         "t": "Follow your child and pay for them.",
-        "b": "Lessons, homework, exams and attendance, with a weekly report by email.",
+        "b": "Lessons, homework and exams, and your children's progress on the parent page.",
         "cta": "Parent account"
       }
     },

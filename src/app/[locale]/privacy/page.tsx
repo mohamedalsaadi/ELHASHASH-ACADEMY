@@ -64,8 +64,8 @@ const ar: Section[] = [
     h: "مدة الاحتفاظ",
     body: (
       <p>
-        نحتفظ ببيانات الحساب أثناء نشاطه، وبسجلات الدفع للمدة التي يفرضها القانون أو المحاسبة. تُحذف رسائل الدعم
-        بعد معالجتها، أو تُجهَّل عند طلب الحذف. يمكنك طلب حذف الحساب في أي وقت.
+        نحتفظ ببيانات الحساب أثناء نشاطه، وبسجلات الدفع للمدة التي يفرضها القانون أو المحاسبة. تُحفظ رسائل الدعم
+        أثناء معالجة الطلب، وتُحذف عند طلب الحذف. يمكنك طلب حذف الحساب في أي وقت.
       </p>
     ),
   },
@@ -153,7 +153,7 @@ const en: Section[] = [
     body: (
       <p>
         Account data is kept while the account is active. Payment records are kept as long as accounting or law requires.
-        Support messages are deleted after handling, or anonymised on a deletion request. You can ask to delete your account at
+        Support messages are kept while the request is handled and deleted on request. You can ask to delete your account at
         any time.
       </p>
     ),

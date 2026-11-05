@@ -24,7 +24,7 @@ export function AskForm({ lessonId }: { lessonId: string }) {
         </p>
       )}
       <div>
-        <SaveButton>{t("send")}</SaveButton>
+        <SaveButton showSaved={false}>{t("send")}</SaveButton>
       </div>
     </form>
   );

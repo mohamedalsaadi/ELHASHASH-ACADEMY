@@ -33,7 +33,8 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon, learners }: 
       setError(data.error && t.has(`errors.${data.error}`) ? t(`errors.${data.error}`) : t("errors.generic"));
     } catch {
       setError(t("errors.network"));
-    } finally {
+      // Only on failure: on success the page navigates away, and re-enabling here would let a
+      // second tap create a second order and a second gateway intent.
       setBusy(false);
     }
   }

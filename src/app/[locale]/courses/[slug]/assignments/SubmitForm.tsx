@@ -36,7 +36,7 @@ export function SubmitForm({
           {labels[state]}
         </p>
       )}
-      <SubmitButton className="btn btn-primary w-fit">{labels.submit}</SubmitButton>
+      <SubmitButton showSaved={false} className="btn btn-primary w-fit">{labels.submit}</SubmitButton>
     </form>
   );
 }

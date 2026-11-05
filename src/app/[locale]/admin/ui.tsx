@@ -15,10 +15,11 @@ import { field, label } from "./styles";
 const button =
   "rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised disabled:cursor-not-allowed disabled:opacity-45";
 
-export function SaveButton({ children, danger }: { children?: React.ReactNode; danger?: boolean }) {
+/** `showSaved={false}` when the form renders its own result, so the button never claims success for a failure. */
+export function SaveButton({ children, danger, showSaved = true }: { children?: React.ReactNode; danger?: boolean; showSaved?: boolean }) {
   const t = useTranslations("admin");
   return (
-    <SubmitButton pendingLabel={t("saving")} className={`${button} ${danger ? "border-down text-down" : ""}`}>
+    <SubmitButton pendingLabel={t("saving")} showSaved={showSaved} className={`${button} ${danger ? "border-down text-down" : ""}`}>
       {children ?? t("save")}
     </SubmitButton>
   );
@@ -53,7 +54,7 @@ export function PasswordForm() {
         </p>
       )}
       <div>
-        <SaveButton>{t("changePassword")}</SaveButton>
+        <SaveButton showSaved={false}>{t("changePassword")}</SaveButton>
       </div>
     </form>
   );

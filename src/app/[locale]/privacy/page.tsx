@@ -44,7 +44,7 @@ const ar: Section[] = [
     body: (
       <p>
         نستخدم مزودين يعالجون البيانات نيابة عنا: Neon (قاعدة البيانات)، Vercel (الاستضافة)، Ziina (الدفع)،
-        VdoCipher (حماية الفيديو)، وResend (البريد). وعند تفعيل التصحيح الآلي لكورس، يُرسل
+        VdoCipher (حماية الفيديو)، وResend (البريد). تُفتح الحصص المباشرة عبر رابط يقدّمه المدرّس (Zoom أو Microsoft Teams أو Google Meet)، ويُستضاف الاجتماع خارج ذروة ولا تسجّله. وعند تفعيل التصحيح الآلي لكورس، يُرسل
         نص إجابة الطالب والصور التي يرفعها إلى Google (Gemini) لاقتراح درجة يراجعها المدرّس. لا نبيع بياناتك.
       </p>
     ),
@@ -129,7 +129,7 @@ const en: Section[] = [
     body: (
       <p>
         We use providers that process data on our behalf: Neon (database), Vercel (hosting), Ziina (payments),
-        VdoCipher (video protection) and Resend (email). When automatic grading is switched on
+        VdoCipher (video protection) and Resend (email). Live lectures open through a link the teacher provides (Zoom, Microsoft Teams or Google Meet); the meeting is hosted outside Dhirwa and Dhirwa does not record it. When automatic grading is switched on
         for a course, the written answer a student submits and any uploaded photos are sent to Google (Gemini) for a suggested
         mark that the teacher reviews. We do not sell your data.
       </p>

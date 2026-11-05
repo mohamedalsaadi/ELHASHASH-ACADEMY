@@ -54,7 +54,8 @@ export async function getStudentHome(userId: string, now = new Date(), gradeId?:
     }),
   ]);
   const entitlements = await db.entitlement.findMany({
-    where: { userId, courseId: { in: courses.map((c) => c.id) }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+    // Same rule as the dashboard: a grant that has not started yet does not count as owned.
+    where: { userId, courseId: { in: courses.map((c) => c.id) }, startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
     select: { courseId: true },
     distinct: ["courseId"],
   });

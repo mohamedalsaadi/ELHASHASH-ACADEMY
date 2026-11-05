@@ -212,7 +212,7 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
             {u.views.map((v) => (
               <li key={v.lessonId} className="flex justify-between gap-3">
                 <span>{name(v.lesson)}</span>
-                <span className="num text-ink-muted">{v.completedAt ? date.format(v.completedAt) : t("minutes", { n: Math.round(v.watchedSec / 60) })}</span>
+                <span className="num text-ink-muted">{v.completedAt ? date.format(v.completedAt) : date.format(v.lastSeenAt)}</span>
               </li>
             ))}
           </ul>

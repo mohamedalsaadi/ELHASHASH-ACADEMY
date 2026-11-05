@@ -34,7 +34,7 @@ export default async function NotificationsPage({
     orderBy: { createdAt: "desc" },
     take: 50,
   });
-  const when = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" });
+  const when = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Dubai" }); // the academy's zone; the course zone is used where a course is known
   const unread = items.some((n) => !n.readAt);
 
   return (

@@ -231,7 +231,7 @@ export default async function CoursePage({ params }: { params: Promise<{ locale:
     url: courseUrl,
     offers: course.skus.map((s) => ({
       "@type": "Offer",
-      price: (effectivePrice(s, now) / minorPerUnit(s.currency)).toFixed(2),
+      price: (effectivePrice(s, now) / minorPerUnit(s.currency)).toFixed(minorPerUnit(s.currency) === 1000 ? 3 : 2),
       priceCurrency: s.currency,
       availability: "https://schema.org/InStock",
       url: courseUrl,

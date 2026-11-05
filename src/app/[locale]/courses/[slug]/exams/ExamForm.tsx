@@ -28,10 +28,11 @@ export function ExamForm({
 
       {items.map((item, i) => (
         <fieldset key={item.id} className="grid gap-2 card p-4">
-          <legend className="px-1 text-label text-ink-muted">
-            <span className="num">{i + 1}</span> · <span className="num">{item.marks}</span>
+          {/* The legend carries the prompt so a screen reader names the group, not just "1 · 2". */}
+          <legend className="grid gap-1 px-1">
+            <span className="text-label text-ink-muted"><span className="num">{i + 1}</span> · <span className="num">{item.marks}</span></span>
+            <span className="font-semibold" dir="auto">{item.prompt}</span>
           </legend>
-          <p className="font-semibold" dir="auto">{item.prompt}</p>
 
           {item.kind === "MCQ" ? (
             <div className="grid gap-1.5">
@@ -43,9 +44,9 @@ export function ExamForm({
               ))}
             </div>
           ) : item.kind === "WRITTEN" ? (
-            <textarea name={`text_${item.id}`} rows={4} maxLength={2000} dir="auto" placeholder={labels.yourAnswer} className={`${field} py-2`} />
+            <textarea name={`text_${item.id}`} rows={4} maxLength={2000} dir="auto" aria-label={labels.yourAnswer} placeholder={labels.yourAnswer} className={`${field} py-2`} />
           ) : (
-            <input name={`text_${item.id}`} maxLength={1000} dir="auto" placeholder={labels.yourAnswer} className={field} />
+            <input name={`text_${item.id}`} maxLength={1000} dir="auto" aria-label={labels.yourAnswer} placeholder={labels.yourAnswer} className={field} />
           )}
         </fieldset>
       ))}

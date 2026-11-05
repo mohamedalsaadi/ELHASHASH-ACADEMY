@@ -19,7 +19,7 @@ export function ReplyForm({
   return (
     <form action={formAction} className="grid gap-2">
       <input type="hidden" name="id" value={requestId} />
-      <textarea name="body" rows={2} maxLength={4000} dir="auto" placeholder={labels.placeholder} className={`${field} py-2`} />
+      <textarea name="body" rows={2} maxLength={4000} dir="auto" aria-label={labels.placeholder} placeholder={labels.placeholder} className={`${field} py-2`} />
       {state && state !== "ok" && <p role="alert" className="text-small text-down">{labels[state] ?? labels.invalid}</p>}
       {state === "ok" && <p role="status" className="text-small text-up">{labels.ok}</p>}
       <SubmitButton className="btn btn-outline w-fit px-4 py-2 text-small">{labels.send}</SubmitButton>

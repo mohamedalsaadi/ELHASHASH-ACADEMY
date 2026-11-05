@@ -424,7 +424,7 @@ export default async function CoursePage({
         </section>
       )}
 
-      <section id="units" className="grid scroll-mt-6 gap-4">
+      <section id="units" className="grid gap-4">
         <h2 className="font-display text-h2 font-bold">{t("units")}</h2>
         <form method="get" role="search" className="flex flex-wrap items-center gap-2">
           <input
@@ -483,6 +483,7 @@ export default async function CoursePage({
                             title={pick(ar, l.titleAr, l.titleEn)}
                             subtitle={t(`kind.${l.kind}`)}
                             state={state}
+                            stateLabel={state === "done" ? t("lessonState.done") : state === "current" ? t("lessonState.current") : state === "open" ? t("lessonState.ahead") : undefined}
                             trailing={
                               open ? null : level !== "none" ? (
                                 <span className="text-label text-ink-muted">{t("outsidePlan")}</span>
@@ -526,7 +527,7 @@ export default async function CoursePage({
       </section>
 
       {live.length > 0 && (
-        <section id="live" className="grid scroll-mt-6 gap-4">
+        <section id="live" className="grid gap-4">
           <h2 className="font-display text-h2 font-bold">{t("live")}</h2>
           <ul className="grid gap-3">
             {live.map((l) => {
@@ -567,7 +568,7 @@ export default async function CoursePage({
       )}
 
       {level === "partial" && upgrades.length > 0 && (
-        <section id="packages" className="grid scroll-mt-6 gap-4">
+        <section id="packages" className="grid gap-4">
           <h2 className="font-display text-h2 font-bold">{t("upgradeTitle")}</h2>
           <ul className="grid gap-3">
             {upgrades.map((s) => (
@@ -591,7 +592,7 @@ export default async function CoursePage({
       )}
 
       {showPlans && (single || months.length > 0 || terms.length > 0) && (
-        <section id="packages" className="grid scroll-mt-6 gap-4">
+        <section id="packages" className="grid gap-4">
           <h2 className="font-display text-h2 font-bold">{lapsed ? t("renewTitle") : tp("title")}</h2>
           <ul className="grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
             {single && (
@@ -655,7 +656,7 @@ export default async function CoursePage({
       )}
 
       {level === "none" && others.length > 0 && (
-        <section id={single || months.length > 0 || terms.length > 0 ? undefined : "packages"} className="grid scroll-mt-6 gap-4">
+        <section id={single || months.length > 0 || terms.length > 0 ? undefined : "packages"} className="grid gap-4">
           <h2 className="font-display text-h2 font-bold">{tp("other")}</h2>
           <ul className="grid gap-3">
             {others.map((s) => (

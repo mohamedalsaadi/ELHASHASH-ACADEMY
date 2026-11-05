@@ -10,6 +10,7 @@ export function LessonRow({
   title,
   subtitle,
   state,
+  stateLabel,
   trailing,
   active = false,
 }: {
@@ -17,6 +18,8 @@ export function LessonRow({
   title: string;
   subtitle?: string;
   state: LessonRowState;
+  /** Spoken after the title: "Completed", "In progress" or "Not started". */
+  stateLabel?: string;
   trailing?: React.ReactNode;
   active?: boolean;
 }) {
@@ -27,7 +30,7 @@ export function LessonRow({
         {locked ? (
           <Lock aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
         ) : (
-          <LessonMark state={state === "done" ? "done" : state === "current" ? "current" : "ahead"} />
+          <LessonMark state={state === "done" ? "done" : state === "current" ? "current" : "ahead"} label={stateLabel} />
         )}
         <span className="grid min-w-0 gap-0.5">
           <span className="truncate font-medium">{title}</span>

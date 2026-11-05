@@ -109,7 +109,7 @@ export default async function CoursesPage({
       </section>
 
       {q.length >= 2 && (
-        <section id="results" className="scroll-mt-6 border-b border-hairline">
+        <section id="results" className="border-b border-hairline">
           <div className="mx-auto grid max-w-5xl gap-4 px-4 py-8">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 className="font-display text-h2 font-bold">{t("searchResults", { count: results.length })}</h2>
@@ -140,11 +140,11 @@ export default async function CoursesPage({
             lines={countries.map((c) => ({
               code: c.code,
               inService: c._count.grades > 0,
-              stations: [{ label: pick(ar, c.nameAr, c.nameEn), href: `/${locale}/courses/c/${c.code.toLowerCase()}` }],
+              stations: [{ label: pick(ar, c.nameAr, c.nameEn), href: `/courses/c/${c.code.toLowerCase()}` }],
             }))}
           />
         )}
-        <ul id="school" className="grid scroll-mt-6 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul id="school" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {countries.map((c) => (
             <li key={c.id}>
               <CountryTile country={c} locale={locale} />
@@ -156,7 +156,7 @@ export default async function CoursesPage({
             <p className="text-ink-muted">{t("noCountries")}</p>
           </EmptyState>
         )}
-        <section id="skills" className="reveal grid scroll-mt-6 gap-4 border-t border-hairline pt-10">
+        <section id="skills" className="reveal grid gap-4 border-t border-hairline pt-10">
           <h2 className="font-display text-h1 font-bold">{t("skillTab")}</h2>
           {skills.length ? (
             <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

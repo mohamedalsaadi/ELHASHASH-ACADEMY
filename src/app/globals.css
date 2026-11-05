@@ -4,7 +4,8 @@
 
 html {
   scrollbar-gutter: stable;
-  scroll-padding-top: 1.5rem;
+  /* The sticky header is about 60px tall; anchor targets must land below it. One rule for every page. */
+  scroll-padding-top: 4.5rem;
 }
 
 /* Long course titles, IDs and emails wrap instead of pushing the row wide. */
@@ -75,13 +76,15 @@ body {
     transform: translateY(-1px);
     box-shadow: 0 10px 24px -8px rgb(31 115 86 / .6);
   }
+  /* DESIGN.md §7: transparent, 2px ink border, ink fill on hover. A hairline border measured 1.33:1. */
   .btn-outline {
-    border: 1px solid var(--color-hairline);
-    background: var(--color-surface);
+    border: 2px solid var(--color-ink);
+    background: transparent;
     color: var(--color-ink);
   }
   .btn-outline:hover {
-    background: var(--color-raised);
+    background: var(--color-ink);
+    color: var(--color-on-primary);
   }
   /* On the map: the summit-gold button. */
   .btn-glow {

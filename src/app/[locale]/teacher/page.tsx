@@ -237,7 +237,7 @@ export default async function TeacherPage({
       )}
 
       {me.role === "INSTRUCTOR" && (
-        <section id="new-course" className="grid scroll-mt-24 gap-3">
+        <section id="new-course" className="grid gap-3">
           <h2 className="font-display text-h2 font-semibold">
             {t("newCourse")}
           </h2>
@@ -279,7 +279,7 @@ export default async function TeacherPage({
         </section>
       )}
 
-      <section id="courses" className="grid scroll-mt-24 gap-3">
+      <section id="courses" className="grid gap-3">
         <h2 className="font-display text-h2 font-semibold">{t("myCourses")}</h2>
         {courses.length === 0 ? (
           <EmptyState>

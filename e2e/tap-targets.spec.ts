@@ -30,9 +30,11 @@ async function smallTargets(page: import("@playwright/test").Page): Promise<Box[
   });
 }
 
-test("every control on the home page is at least 44px", async ({ page, loc }) => {
-  await page.goto(`/${loc}`);
-  await page.waitForLoadState("networkidle");
-  const small = await smallTargets(page);
-  expect(small, JSON.stringify(small, null, 2)).toEqual([]);
-});
+for (const path of ["", "/signin", "/signup"]) {
+  test(`every control on ${path || "/"} is at least 44px`, async ({ page, loc }) => {
+    await page.goto(`/${loc}${path}`);
+    await page.waitForLoadState("networkidle");
+    const small = await smallTargets(page);
+    expect(small, JSON.stringify(small, null, 2)).toEqual([]);
+  });
+}

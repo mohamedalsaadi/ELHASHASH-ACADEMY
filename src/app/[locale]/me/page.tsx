@@ -178,7 +178,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
 
         <div className="grid gap-14">
           {ready.map((s) => (
-            <section key={s.id} id={`subject-${s.slug}`} className="grid scroll-mt-24 gap-5">
+            <section key={s.id} id={`subject-${s.slug}`} className="grid gap-5">
               <div className="flex items-center gap-3">
                 {/* The country's trail colour marks each waypoint section. */}
                 <i aria-hidden="true" className="h-6 w-1 rounded-full" style={{ background: line }} />

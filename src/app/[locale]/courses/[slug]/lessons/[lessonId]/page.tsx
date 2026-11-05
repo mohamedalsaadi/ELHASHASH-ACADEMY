@@ -292,7 +292,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
         )}
 
         {userId && (mayAsk || mine.length > 0) && (
-          <section id="questions" className="grid scroll-mt-6 gap-4 border-t border-hairline pt-6">
+          <section id="questions" className="grid gap-4 border-t border-hairline pt-6">
             <h2 className="font-display text-h2 font-semibold">{tq("title")}</h2>
             {mayAsk ? <AskForm lessonId={lesson.id} /> : <p className="text-small text-ink-muted">{tq("plansOnly")}</p>}
             <ul className="grid gap-3">
@@ -329,6 +329,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
                       href={open ? lessonHref(l.id) : undefined}
                       title={pick(ar, l.titleAr, l.titleEn)}
                       state={l.id === lesson.id ? "current" : done ? "done" : open ? "open" : "locked"}
+                      stateLabel={l.id === lesson.id ? tc("lessonState.current") : done ? tc("lessonState.done") : open ? tc("lessonState.ahead") : undefined}
                       active={l.id === lesson.id}
                     />
                   </li>

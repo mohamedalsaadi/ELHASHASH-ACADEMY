@@ -358,6 +358,7 @@
       "LIVE": "مقعد في حصة مباشرة",
       "MONTHLY": "شهر واحد"
     },
+    "lessonState": {"done": "مكتملة", "current": "قيد التقدّم", "ahead": "لم تبدأ"},
     "kind": {
       "VIDEO": "فيديو",
       "EXAM_STRUCTURE": "شرح الهيكل",

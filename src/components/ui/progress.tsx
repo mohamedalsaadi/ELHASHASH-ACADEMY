@@ -44,15 +44,3 @@ export function LessonMark({ state, label }: { state: MarkState; label?: string 
     </>
   );
 }
-
-export function LessonMarks({ states, label, markLabels }: { states: MarkState[]; label: string; markLabels?: Record<MarkState, string> }) {
-  return (
-    <ol aria-label={label} className="flex flex-wrap items-end gap-1">
-      {states.map((state, i) => (
-        <li key={i}>
-          <LessonMark state={state} label={markLabels?.[state]} />
-        </li>
-      ))}
-    </ol>
-  );
-}

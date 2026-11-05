@@ -80,7 +80,7 @@ Light only (`color-scheme: light`). Contrast ratios are WCAG 2.x, measured again
 | `--color-night` | `#0F1B2D` | the map, `.stage` heroes, the sign-in aside | night-text 13.9 · night-muted 6.4 |
 | `--color-night-2` | `#172840` | the map's second tier | |
 | `--color-marker` / `--color-summit` | `#E8B04B` | summit gold: one accent per viewport, the summit point, earned progress. Never body text | ink on it 8.4 |
-| `--color-up` | `#16834A` | improvement, correct | 5.2 |
+| `--color-up` | `#0F6B3B` | improvement, correct | 5.9 on paper |
 | `--color-down` | `#C8343E` | decline, wrong, errors | 5.8 |
 | `--color-focus` | `#1F7356` | 2px focus ring, 2px offset; summit gold on `.stage` | |
 

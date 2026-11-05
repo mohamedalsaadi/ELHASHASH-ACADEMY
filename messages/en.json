@@ -358,6 +358,7 @@
       "LIVE": "Seat in a live lecture",
       "MONTHLY": "One month"
     },
+    "lessonState": {"done": "Completed", "current": "In progress", "ahead": "Not started"},
     "kind": {
       "VIDEO": "Video",
       "EXAM_STRUCTURE": "Exam structure",

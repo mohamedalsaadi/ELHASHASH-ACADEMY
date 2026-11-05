@@ -126,7 +126,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       <div className="mx-auto max-w-(--container-page) px-4 py-20 md:py-28">
         <ol aria-label={t("climb.label")} className="relative grid gap-24 before:absolute before:inset-y-2 before:start-1.5 before:border-s before:border-contour-5 md:gap-32">
 
-          <li id="lines" className="reveal relative grid scroll-mt-24 gap-8 ps-8 md:ps-14">
+          <li id="lines" className="reveal relative grid gap-8 ps-8 md:ps-14">
             <Camp tone="bg-contour-1" />
             <Heading k={t("climb.c1.k")} title={t("climb.c1.t")} lede={t("climb.c1.b")} />
             {countries.length === 0 ? (
@@ -165,7 +165,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <PromoBand promos={cards} locale={locale} variant="CARD" label={t("promotions")} />
           </li>
 
-          <li id="roles" className="reveal relative grid scroll-mt-24 gap-8 ps-8 md:ps-14">
+          <li id="roles" className="reveal relative grid gap-8 ps-8 md:ps-14">
             <Camp tone="bg-contour-3" />
             <Heading k={t("climb.c3.k")} title={t("climb.c3.t")} lede={t("climb.c3.b")} />
             <ul className="grid gap-5 md:grid-cols-2">

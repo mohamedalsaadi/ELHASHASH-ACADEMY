@@ -1,3 +1,5 @@
+import { Link } from "@/i18n/navigation";
+
 // The trail map: one trail per country, winding up from its trailhead at the edge of an 800 × 500 survey sheet to the
 // summit at the centre, over still contour rings. Trails with something published are solid and may carry waypoints;
 // the rest are dashed, still being cut. Every trail and waypoint comes from the catalogue.
@@ -81,9 +83,9 @@ export function Network({ lines, label, className = "" }: { lines: NetLine[]; la
               </>
             );
             return s.href ? (
-              <a key={j} href={s.href} aria-label={s.label}>
+              <Link key={j} href={s.href} aria-label={s.label}>
                 {stop}
-              </a>
+              </Link>
             ) : (
               <g key={j}>{stop}</g>
             );

@@ -24,6 +24,20 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: DMARC and SPF fixed
+
+Two records were wrong or missing on `dhirwa.ae`. `_dmarc` contained the literal placeholder from the checklist,
+`rua=mailto:<an inbox you read>`, so reports had nowhere to go, and the root had no SPF at all (DKIM was fine).
+
+Now published through the Vercel DNS API and confirmed on 1.1.1.1 and 8.8.8.8:
+
+- `_dmarc` TXT: `v=DMARC1; p=none; rua=mailto:dmarc@dhirwa.ae`
+- root TXT: `v=spf1 include:amazonses.com ~all`
+
+`p=none` stays until reports look clean; `dmarc@dhirwa.ae` is received by the Resend inbound MX already on the
+root. SPF sits on the root because the `send` host is a CNAME to Resend's infrastructure and cannot also carry a
+TXT record. DMARC passes on DKIM alignment regardless, so the SPF is hygiene rather than the load-bearing record.
+
 ## 2026-11-06: Migrations run in the production build
 
 The outage on 2026-11-05 happened because code shipped ahead of its schema. The fix that stops it repeating is

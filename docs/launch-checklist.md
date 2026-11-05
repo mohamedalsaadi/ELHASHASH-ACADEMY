@@ -80,7 +80,7 @@ Each line says what was checked instead, and how to close it.
 
 - [ ] **Stripe webhook for the live domain.** Test mode only, per the standing rule: add `https://<domain>/api/webhooks/stripe`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`. Live keys stay off until the owner has the paperwork.
 - [ ] **Paymob.** Callback and response URLs to `https://<domain>/api/webhooks/paymob`; `PAYMOB_HMAC_SECRET` and the four `PAYMOB_INTEGRATION_*` ids from the dashboard. EGP only.
-- [ ] **Resend.** Verify the sending domain (SPF, DKIM, DMARC); set `RESEND_API_KEY` and `MAIL_FROM`.
+- [x] **Resend DNS (2026-11-06).** DKIM at `resend._domainkey`; root SPF `v=spf1 include:amazonses.com ~all`; `_dmarc` `v=DMARC1; p=none; rua=mailto:dmarc@dhirwa.ae`. Reports go to `dmarc@dhirwa.ae`, received by Resend inbound; tighten to `p=quarantine` after two clean weeks. `RESEND_API_KEY` and `MAIL_FROM` are set.
 - [ ] **Ziina is the only gateway (AED).** Stripe and Paymob are hidden until `STRIPE_ENABLED=1` / `PAYMOB_ENABLED=1`. Set `ZIINA_API_KEY` and leave `ZIINA_ENABLED` on; register the webhook at `https://<domain>/api/webhooks/ziina` in Ziina's dashboard. Keep `ZIINA_TEST=0` on production — a test intent completes without money and the code refuses it there anyway. Confirm the merchant fee in writing; their public fee page does not state one.
 - [ ] **Support channels.** `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` — the only contacts contact masking lets through.
 - [ ] **One test purchase end-to-end** after DNS, because `APP_URL` changes the callbacks.

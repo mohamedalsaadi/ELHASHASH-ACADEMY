@@ -18,7 +18,7 @@ Dhirwa (ذروة) is live at https://dhirwa.ae. Done so far: rebrand, Hop intro,
 ## Phase 1: prove what already exists (owner plus agent, no new features)
 - One real live session through a teacher-hosted link: schedule, join, the guardian-consent gate, the link opening. Reminders are gone by the owner's decision.
 - Lesson playback on VdoCipher and YouTube after the rebrand.
-- Ziina test purchase on a preview (`ZIINA_TEST=1` only off production; production refuses it), then a refund, then a reset email to a real inbox. Owner: add the DMARC TXT record `_dmarc` (`v=DMARC1; p=none; rua=mailto:<inbox you read>`) in Vercel DNS; consider a real support mailbox (root MX currently points at Resend inbound).
+- Ziina test purchase on a preview (`ZIINA_TEST=1` only off production; production refuses it), then a refund, then a reset email to a real inbox. ~~Owner: add the DMARC TXT record~~ done 2026-11-06: `_dmarc` is `v=DMARC1; p=none; rua=mailto:dmarc@dhirwa.ae` and the root SPF is `v=spf1 include:amazonses.com ~all`. Consider a real support mailbox (root MX points at Resend inbound).
 - Verify a real signed-in session after the auth change (JWT re-check) and the intro on a slow phone connection (both unverified).
 - Register the Ziina webhook `https://dhirwa.ae/api/webhooks/ziina` if not done; Stripe stays hidden and on test.
 

@@ -54,9 +54,11 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
   });
   if (!paper || paper.course.slug !== slug) notFound();
 
-  // An exam is course-level work: it opens for the course's staff, or for a student with a running
-  // plan. Without this, any signed-in account could read a whole paper and sit it for free.
-  if (!isCourseStaff(session.user, paper.course)) {
+  // An exam is course-level work. It opens for the course's staff, for a student with a plan that is
+  // running now, and — for a student who already sat it — so their own result is never taken away
+  // when a plan expires. Starting a new attempt is gated separately in startExam.
+  const alreadySat = paper.attempts.length > 0;
+  if (!alreadySat && !isCourseStaff(session.user, paper.course)) {
     const grants = await grantsFor(session.user.id, paper.course.id);
     if (!hasPlan(grants, new Date())) redirect(`/${locale}/courses/${slug}#packages`);
   }

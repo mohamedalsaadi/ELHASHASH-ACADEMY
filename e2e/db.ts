@@ -18,6 +18,12 @@ export async function sql<T = unknown>(text: string, params: unknown[] = []) {
   }
 }
 
+/** A course id by slug, for grants that do not need the lesson layout. */
+export async function courseIdOf(slug: string) {
+  const rows = await sql<{ id: string }>(`SELECT id FROM "Course" WHERE slug = $1`, [slug]);
+  return rows[0].id;
+}
+
 /** The seeded published exam paper of a course. */
 export async function examOf(courseSlug: string) {
   const rows = await sql<{ id: string }>(
@@ -96,6 +102,33 @@ export async function completeLesson(userId: string, lessonId: string) {
      VALUES ($1,$2,(now() at time zone 'utc'),(now() at time zone 'utc'))
      ON CONFLICT ("userId","lessonId") DO UPDATE SET "completedAt" = (now() at time zone 'utc')`,
     [userId, lessonId],
+  );
+}
+
+/** A whole-course grant that starts in the future, for testing "not yet" versus "running". */
+export async function grantCourseFrom(userId: string, courseId: string, daysFromNow: number) {
+  await sql(
+    `INSERT INTO "Entitlement" (id, "userId", "courseId", "accessType", "startsAt", "endsAt")
+     VALUES ($1,$2,$3,'SEMESTER',(now() at time zone 'utc') + ($4 || ' days')::interval,(now() at time zone 'utc') + interval '1 year')`,
+    [randomUUID(), userId, courseId, String(daysFromNow)],
+  );
+}
+
+/** A whole-course grant that ended yesterday. */
+export async function grantExpired(userId: string, courseId: string) {
+  await sql(
+    `INSERT INTO "Entitlement" (id, "userId", "courseId", "accessType", "startsAt", "endsAt")
+     VALUES ($1,$2,$3,'SEMESTER',(now() at time zone 'utc') - interval '60 days',(now() at time zone 'utc') - interval '1 day')`,
+    [randomUUID(), userId, courseId],
+  );
+}
+
+/** A finished attempt, as if the student sat the paper while their plan was running. */
+export async function sitExam(userId: string, paperId: string) {
+  await sql(
+    `INSERT INTO "ExamAttempt" (id,"paperId","userId","startedAt","expiresAt",status,"maxMarks")
+     VALUES ($1,$2,$3,(now() at time zone 'utc') - interval '2 days',(now() at time zone 'utc') - interval '2 days','GRADED',1)`,
+    [randomUUID(), paperId, userId],
   );
 }
 

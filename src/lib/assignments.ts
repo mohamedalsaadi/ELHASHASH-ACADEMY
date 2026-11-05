@@ -21,7 +21,11 @@ export function opensAssignment(a: AssignmentScope, grants: Grant[], now: Date):
   return grants.some((g) => !g.lessonId && !g.liveSessionId && (!g.endsAt || g.endsAt > now));
 }
 
-/** A whole-course subscription, which is what course-level homework needs. */
+/**
+ * A whole-course subscription that is running **now**: not a rental, not a live seat, already
+ * started, and not ended. The start check matters — a plan bought for next term must not open
+ * course-level work early.
+ */
 export function hasPlan(grants: Grant[], now: Date): boolean {
-  return grants.some((g) => !g.lessonId && !g.liveSessionId && (!g.endsAt || g.endsAt > now));
+  return grants.some((g) => !g.lessonId && !g.liveSessionId && g.startsAt <= now && (!g.endsAt || g.endsAt > now));
 }

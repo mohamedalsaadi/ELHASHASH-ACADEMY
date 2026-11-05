@@ -25,17 +25,16 @@ export async function startExam(form: FormData) {
   if (!paper) notFound();
   if (paper.items.length === 0) notFound();
 
-  // Same rule as the paper page: staff, or a student with a running plan. Checked here too so a
-  // direct POST cannot create an attempt the page would have refused.
-  if (!isCourseStaff(session.user, paper.course)) {
-    const grants = await grantsFor(session.user.id, paper.courseId);
-    if (!hasPlan(grants, new Date())) redirect(`/courses/${paper.course.slug}#packages`);
-  }
-
+  // Same rule as the paper page, with one addition: a student may always resume an attempt they
+  // legitimately started, even if the plan has ended since. Creating a new one needs a running plan.
   const [existing, used] = await Promise.all([
     db.examAttempt.findFirst({ where: { paperId: paper.id, userId: session.user.id, status: "IN_PROGRESS" }, select: { id: true } }),
     db.examAttempt.count({ where: { paperId: paper.id, userId: session.user.id } }),
   ]);
+  if (!existing && !isCourseStaff(session.user, paper.course)) {
+    const grants = await grantsFor(session.user.id, paper.courseId);
+    if (!hasPlan(grants, new Date())) redirect(`/courses/${paper.course.slug}#packages`);
+  }
   // A fresh attempt only while the student has one left, and never while one is already open.
   if (!existing && used < paper.maxAttempts) {
     const maxMarks = paper.items.reduce((sum, i) => sum + i.item.marks, 0);

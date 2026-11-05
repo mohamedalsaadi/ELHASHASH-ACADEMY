@@ -30,9 +30,12 @@ Git history has the rest (`git log --oneline`).
 Chosen from `docs/audit.md`: the four S1/S2 items that were small, plus the leaderboard bug.
 
 - **#1 Exams no longer open for free.** `courses/[slug]/exams/[examId]/page.tsx` and `startExam`
-  now require the course's staff or a running plan (`hasPlan`), the same rule course-level homework
-  uses. Before this, any signed-in account could read a whole paper and sit it. Covered by
-  `e2e/exam-access.spec.ts` (no plan → redirected; with a plan → opens), which fails without the fix.
+  require the course's staff, a **running** plan, or an attempt the student already owns. First cut
+  used `hasPlan`, which ignored `startsAt`, so a plan bought for next term would have opened a paper
+  early; `hasPlan` now checks the start too (it was documented as "what homework needs" but nothing
+  called it). A student whose plan has ended keeps sight of a result they already sat, and may resume
+  an attempt they legitimately started. Covered by `e2e/exam-access.spec.ts` — four cases: no plan,
+  future plan, expired plan with a sat paper, running plan — plus `assignments.test.ts` for the rule.
 - **#2 The parent-link code is no longer brute-forceable.** `linkChild` now allows ten tries per
   parent per 15 minutes and counts every failure, including an unknown phone, and compares the stored
   hash with `timingSafeEqual`. Six digits is a million-wide space; the window is what closes it.

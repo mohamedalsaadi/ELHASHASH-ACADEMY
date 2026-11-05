@@ -108,9 +108,11 @@ count (#10, #22, #31, #36) are fixed; `docs/audit.md` now carries a Status block
   next commit. Keep the exit code of `npm test` visible when chaining with `| grep`.
 
 ### Deploy steps the owner still owes (blocking)
-1. `prisma migrate` — these exist only in migrations: `LessonView.confidence`, `GuardianConsent`
-   (now with a nullable `parentId` and a `source`), `User.passwordChangedAt`, `Course.aiGrading`, the
-   live-approval column, and `20261108120000_guardian_consent_signup`.
+1. ~~`prisma migrate`~~ **done 2026-11-05**: this was the outage. The deployed build selected columns the
+   database did not have, so every page under the shared header rendered the error boundary. Six migrations
+   were applied (`guardian_consent`, `lesson_confidence`, `password_changed_at`, `course_ai_opt_in`,
+   `teacher_live_approval`, `guardian_consent_signup`); `prisma migrate status` now reports the schema up to
+   date. **Order matters: migrate before deploying code that needs the columns.**
 2. Redeploy. The CSP, HSTS preload and Permissions-Policy only reach users on a new build.
 3. Set `CRON_SECRET` in Vercel (the retention job reads it); the GitHub Actions reminders secret can go.
 4. Confirm in Vercel Production: `GEMINI_API_KEY`, `BLOB_READ_WRITE_TOKEN`, `APP_URL`.

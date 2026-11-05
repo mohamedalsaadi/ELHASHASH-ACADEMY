@@ -24,6 +24,26 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Production outage, cause and fix
+
+**Symptom.** dhirwa.ae answered 200 but every page rendered the error boundary ("حدث خطأ"), and the browser
+console showed a server-components render error with only a digest.
+
+**Cause.** The deployed code was ahead of the production schema. `origin/main` (`32b8c01`) selects
+`User.liveApproved` through `cardInclude` (`src/lib/catalog.ts:104`) and reads `User.passwordChangedAt` in
+`auth()`; neither column existed. Six migrations were pending on Neon, the newest applied being
+`20261106120000_teacher_countries`. Postgres returned `P2022 column does not exist`, the query threw, and
+because the shared header reads the session, every route failed. `/api/health` still answered 200 because it
+only runs `SELECT 1`, which is why this could not be seen from an uptime check.
+
+**Fix.** `npx prisma migrate deploy` against Neon, with the owner's approval. Six additive migrations applied;
+`prisma migrate status` now says the schema is up to date. Verified by rendering `/ar`, `/en` and `/ar/courses`:
+real headings, zero console errors.
+
+**Lesson.** The handoff already said "deploy must run `prisma migrate`". It was still missed, so the health
+endpoint now hides a class of failure that matters more than connection loss. Consider making it check a
+column the newest migration adds, or have the deploy run migrations automatically.
+
 ## 2026-11-05: Three-angle review (critic, UI, security) and its fixes
 
 **Why.** The owner asked for three independent senior reviews of the whole platform: an adversarial critic,

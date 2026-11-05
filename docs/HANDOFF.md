@@ -49,9 +49,61 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 reminders removed entirely at the owner's decision: cron route, workflow and vercel.json entry deleted, along with the parent weekly digest, owner briefing and analytics purge that shared the route. `EXPIRING`/`LIVE_SOON` stay in the DB enum, unused. Audit items 9, 17, 23, 33 declined.
 
-## Next (in order)
-1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
-2. (done) e2e checkout
-3. (done) e2e lesson access. Exam and homework e2e still open (need seeded exam/assignment rows).
-4. e2e: exam and homework
-5. money tests (30/70 split, refund, webhook replay), load test, a11y pass, Sentry/uptime, restore drill
+## Where things stand (2026-11-05, end of session)
+
+Read this first; the "Done" list above is history.
+
+### Audit work
+`docs/audit.md` holds 66 numbered items plus 10 service recommendations (G1–G10).
+**52 done · 4 declined by the owner · 10 service items are the owner's · 6 code items remain.**
+
+- **Declined by the owner, do not re-propose:** #9 (email verification enforcement), #17 (`/api`
+  behind the launch gate), #23 (dependency bumps for zod/next/@vercel/blob), #33 (drop the dead
+  `Concept` and `QuizAttempt` tables).
+- **Removed by the owner's decision:** reminders are gone entirely — the cron route, its workflow, the
+  Vercel cron, the weekly parent digest, the owner briefing and the analytics purge that shared the
+  route. `EXPIRING`/`LIVE_SOON` remain in the DB enum, unused. `CRON_SECRET` is no longer read.
+- **Remaining code items, in the order I would take them:**
+  1. **#31 finish the language fallback** — `pick(ar, a, b)` is in `src/lib/content.ts` and applied to
+     `CourseCard`, the course page and its units. About 80 `ar ? xAr : xEn` sites remain across the
+     app; the pattern is mechanical, but check each one — a few compare rather than display.
+  2. **#29 admin subscriber dates** — `admin/subscribers/page.tsx` and `[id]/page.tsx` format in
+     `Africa/Cairo` while access ends in the course country's zone. The list page's query needs the
+     course's zone joined in; the detail page already has it.
+  3. **#56 scoped search** — students cannot search their own lessons or questions, teachers cannot
+     search their roster. Largest remaining item.
+  4. **#46 `cache()` dedupe** — `generateMetadata` and the page each query the course on
+     `courses/[slug]` and `teachers/[id]`.
+  5. **#55 tap targets** — 11 elements under 44px on the home page (measured 2026-11-01).
+  6. **#47 `sslmode`** — the Postgres SSL warning in production logs; may be an environment string,
+     so ask the owner before changing code.
+- **#45 is wrong as written** and should not be "fixed": `/courses` reads `searchParams.q`, which
+  forces dynamic rendering regardless of `revalidate`.
+
+### Known weaknesses in what was shipped
+- **#2 (parent-link rate limit) and #3 (session invalidation on password change) have no automated
+  test.** Verified by reading, not by a red-then-green test.
+- **The CSP was verified in a production build on `/ar/privacy` only** — a static page. DB-backed
+  pages are covered by dev-mode e2e, where `unsafe-inline` is allowed, so a production-only violation
+  there would not have been caught.
+- **#19's rate-limiter race is documented, not removed** (`src/lib/rate-limit.ts`).
+- **One commit was made while two tests were red** during this session; it was caught and fixed in the
+  next commit. Keep the exit code of `npm test` visible when chaining with `| grep`.
+
+### Deploy steps the owner still owes (blocking)
+1. `prisma migrate` — five columns exist only in migrations: `LessonView.confidence`,
+   `GuardianConsent`, `User.passwordChangedAt`, `Course.aiGrading`, plus the live-approval column.
+2. Redeploy. The CSP, HSTS preload and Permissions-Policy only reach users on a new build.
+3. `CRON_SECRET` can be removed from GitHub and Vercel; nothing reads it.
+4. Confirm in Vercel Production: `GEMINI_API_KEY`, `BLOB_READ_WRITE_TOKEN`, `APP_URL`.
+5. Optional cleanups: `UPDATE "LiveSession" SET "roomUrl" = NULL WHERE "roomUrl" LIKE '%daily.co%';`
+   and `DELETE FROM "Notification" WHERE kind IN ('EXPIRING','LIVE_SOON');`
+6. Approve one teacher for live when that path is ready to test.
+
+### Working rules that caught real bugs here
+- Run `npx tsc --noEmit`, `npm test`, `npm run lint` and `npm run build` before every commit, and
+  **read the exit code** — piping through `grep` hides failures.
+- New columns mean `.env.local`'s production database will fail every query locally until the
+  migration is applied. The e2e harness (throwaway DB) is the way to verify without touching
+  production.
+- Clear `.next` after deleting a route, or stale generated types break `tsc`.

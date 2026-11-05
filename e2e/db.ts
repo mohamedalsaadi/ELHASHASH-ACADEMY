@@ -141,3 +141,28 @@ export async function grantCourse(userId: string, courseId: string) {  await sql
     randomUUID(), userId, courseId,
   ]);
 }
+
+/** A fresh parent account, so the link rate-limit counter starts empty. */
+export async function freshParent(tag: string) {
+  const id = randomUUID();
+  const phone = `05${String(Date.now()).slice(-6)}${String(Math.floor(Math.random() * 100)).padStart(2, "0")}`;
+  await sql(`INSERT INTO "User" (id, name, phone, "passwordHash", role, locale) VALUES ($1,$2,$3,$4,'PARENT','ar')`, [
+    id, `E2E Parent ${tag}`, phone, await bcrypt.hash(PASSWORD, 10),
+  ]);
+  return { id, phone };
+}
+
+/** Writes the code a student's account page would show, hashed the way the app hashes it. */
+export async function setParentCode(studentId: string, code: string) {
+  const hash = createHash("sha256").update(code).digest("hex");
+  await sql(
+    `INSERT INTO "ParentCode" ("studentId","codeHash","expiresAt") VALUES ($1,$2,(now() at time zone 'utc') + interval '15 minutes')
+     ON CONFLICT ("studentId") DO UPDATE SET "codeHash" = EXCLUDED."codeHash", "expiresAt" = EXCLUDED."expiresAt"`,
+    [studentId, hash],
+  );
+}
+
+export async function parentLinkExists(parentId: string, studentId: string) {
+  const rows = await sql(`SELECT 1 FROM "ParentLink" WHERE "parentId" = $1 AND "studentId" = $2`, [parentId, studentId]);
+  return rows.length > 0;
+}

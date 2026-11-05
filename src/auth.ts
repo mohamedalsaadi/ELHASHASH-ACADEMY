@@ -29,7 +29,8 @@ declare module "next-auth" {
 // The role and id ride in the token, so the token is re-checked against the database at most every five minutes:
 // a deleted account loses its session and a demoted one its old role within that window (requireStaff reads the
 // database on every call, so staff pages and actions lose access at once). Seven days bounds an offline token.
-export const RECHECK_MS = 5 * 60_000;
+/** How often a live session re-reads the user row. Tests set it to 0 so a reset lands on the next request. */
+export const RECHECK_MS = Number(process.env.SESSION_RECHECK_MS ?? 5 * 60_000);
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
 

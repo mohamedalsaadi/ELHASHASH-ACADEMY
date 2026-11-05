@@ -90,8 +90,10 @@ count (#10, #22, #31, #36) are fixed; `docs/audit.md` now carries a Status block
   forces dynamic rendering regardless of `revalidate`.
 
 ### Known weaknesses in what was shipped
-- **#2 (parent-link rate limit) and #3 (session invalidation on password change) still have no automated
-  test.** Verified by reading, not by a red-then-green test.
+- **#2 and #3 now have the tests the audit asked for.** `e2e/security.spec.ts` proves the parent-link code
+  stops after ten wrong tries (the correct code is then refused and no link row is written) and that a
+  password reset ends a session that was already signed in. Both were shown red with the protection removed.
+  The session test needs `SESSION_RECHECK_MS=0`, which `scripts/e2e.mjs` sets; production keeps five minutes.
 - **The unread badge keeps every route dynamic.** `SiteHeader` awaits `auth()` and a notification count in
   the shared layout, so the home page's `revalidate = 300` never applies. Deliberately deferred: the fix is
   a session endpoint plus a client header, not a one-file change.

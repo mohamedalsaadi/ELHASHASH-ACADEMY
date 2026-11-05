@@ -64,6 +64,13 @@ checkbox's label as its target; that spec then passed 12/12 and `e2e/signup.spec
 `e2e/signup.spec.ts` (consent recorded; no consent, no account) and `e2e/retention.spec.ts` (the job
 refuses callers without the secret).
 
+**Follow-up: the two tests the audit asked for.** `e2e/security.spec.ts` proves the parent-link code stops
+after ten wrong tries (the correct code is refused too, and no `ParentLink` row is written) and that a password
+reset ends a session that was already open. Both were run red with the protection removed. The session test is
+only observable if the JWT re-checks the user row on every request, so `RECHECK_MS` reads
+`SESSION_RECHECK_MS` (default five minutes) and the e2e harness sets it to 0. The parent-link test waits for
+each server action's response; the first version used fixed sleeps and silently skipped attempts.
+
 **Deliberately not done.** Moving the unread-badge query out of `SiteHeader`. The header calls `auth()` and
 a notification count in the shared layout, which is what makes every route dynamic, so the home page's
 `revalidate = 300` never applies. Fixing it means a session endpoint plus a client header — a redesign of

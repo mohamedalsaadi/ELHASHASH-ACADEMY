@@ -22,6 +22,8 @@ const env = {
   AUTH_TRUST_HOST: "true",
   APP_URL: "http://localhost:3200",
   SEED_STUDENT_PASSWORD: "e2e-pass-1234",
+  // Re-read the user row on every request, so a password reset is observed immediately.
+  SESSION_RECHECK_MS: "0",
   RESEND_API_KEY: "", DAILY_API_KEY: "", GEMINI_API_KEY: "", ZIINA_API_KEY: "", CRON_SECRET: "e2e-cron",
   STRIPE_SECRET_KEY: "", STRIPE_WEBHOOK_SECRET: "", VDOCIPHER_API_SECRET: "", BLOB_READ_WRITE_TOKEN: "",
   VERCEL_OIDC_TOKEN: "",

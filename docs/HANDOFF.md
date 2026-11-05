@@ -113,8 +113,12 @@ count (#10, #22, #31, #36) are fixed; `docs/audit.md` now carries a Status block
    were applied (`guardian_consent`, `lesson_confidence`, `password_changed_at`, `course_ai_opt_in`,
    `teacher_live_approval`, `guardian_consent_signup`); `prisma migrate status` now reports the schema up to
    date. **Order matters: migrate before deploying code that needs the columns.**
-2. Redeploy. The CSP, HSTS preload and Permissions-Policy only reach users on a new build.
-3. Set `CRON_SECRET` in Vercel (the retention job reads it); the GitHub Actions reminders secret can go.
+2. ~~Redeploy~~ **done 2026-11-05**: `main` pushed (`0a17396`) and Vercel built it. Verified live: home and
+   courses render, signup shows the guardian-consent field, the privacy page says 180 days and no longer names
+   Daily, `/api/health` answers 200, `/api/cron/retention` answers 401 (deployed, no secret yet).
+3. **Set `CRON_SECRET` in Vercel.** The job is live and answers 401 until it is set, so the 180-day analytics
+   and 90-day ticket deletes the privacy page promises are not running yet. Generate with
+   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`; Vercel sends it to its own cron.
 4. Confirm in Vercel Production: `GEMINI_API_KEY`, `BLOB_READ_WRITE_TOKEN`, `APP_URL`.
 5. Optional cleanups: `UPDATE "LiveSession" SET "roomUrl" = NULL WHERE "roomUrl" LIKE '%daily.co%';`
    and `DELETE FROM "Notification" WHERE kind IN ('EXPIRING','LIVE_SOON');`

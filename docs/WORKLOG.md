@@ -24,6 +24,19 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Release deployed, health endpoint hardened
+
+`main` was 27 commits ahead of `origin`; the live site was still `32b8c01`. Pushed (`0a17396`) and Vercel built
+it. Verified against production: home and courses render, signup asks for a guardian, the privacy page states the
+180-day window and no longer lists Daily, `/api/health` answers 200 with the new schema assertions, and
+`/api/cron/retention` answers 401 (route deployed, `CRON_SECRET` not set yet).
+
+`/api/health` now fails with 503 when a column or table the code selects is missing, so today's outage would
+have been visible to a monitor instead of hiding behind a 200. Results are cached for 30 seconds.
+
+Still the owner's: `CRON_SECRET`, `sslmode=verify-full`, the DMARC `rua` placeholder and the missing SPF
+record, 2FA on the five dashboards, and the Neon restore drill.
+
 ## 2026-11-05: Production outage, cause and fix
 
 **Symptom.** dhirwa.ae answered 200 but every page rendered the error boundary ("حدث خطأ"), and the browser

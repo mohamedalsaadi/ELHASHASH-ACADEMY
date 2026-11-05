@@ -79,6 +79,37 @@ async function main() {
     update: {},
     create: { parentId: parent.id, studentId: studentEg.id },
   });
+  // A second published course on the same grade and subject, by another teacher, so the subject page
+  // has two instructors to compare. Also gives that teacher a public profile page.
+  await db.course.upsert({
+    where: { slug: "ae-12-math-second" },
+    update: {},
+    create: {
+      slug: "ae-12-math-second",
+      gradeId: ae12.id,
+      subjectId: math.id,
+      instructorId: teacherEg.id,
+      titleAr: "الرياضيات، الصف الثاني عشر — شعبة ثانية",
+      titleEn: "Mathematics, Grade 12 — second section",
+      published: true,
+      units: {
+        create: [
+          {
+            order: 1,
+            titleAr: "الوحدة الأولى",
+            titleEn: "Unit 1",
+            term: 1,
+            lessons: {
+              create: [
+                { order: 1, kind: "VIDEO", titleAr: "درس تجريبي", titleEn: "Sample lesson" },
+                { order: 2, kind: "VIDEO", titleAr: "درس تجريبي ثانٍ", titleEn: "Second sample lesson" },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  });
   // The UAE student too, so the parent can record consent for the student who holds a live seat.
   await db.parentLink.upsert({
     where: { parentId_studentId: { parentId: parent.id, studentId: studentAe.id } },

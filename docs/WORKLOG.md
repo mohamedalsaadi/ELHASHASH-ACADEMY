@@ -25,6 +25,27 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-05: Instructor comparison block on the subject page
+
+- When several teachers publish a course for the same grade and subject, the catalogue used to list
+  their courses flat with no way to see who is who. The subject page now opens with one card per
+  teacher, above the course list, and the card leads into that teacher's course.
+- `src/components/teachers/InstructorCard.tsx` and `InstructorBlock.tsx`: photo (or the initial in a
+  circle), name, bio clamped to three lines with a cross-language fallback, a live chip when
+  `liveApproved`, the summed lesson count, "open the course" and a link to the existing
+  `/teachers/[id]` page. One card per **teacher**, not per course: a teacher with two courses for the
+  subject gets one card and their lessons are summed.
+- **Shows nothing about students.** No counts, no averages, no outcomes — those are minors' data and
+  comparing teachers on work they set would mislead. There is no rating or review data anywhere in
+  the schema, which is why none appears.
+- Renders for a single teacher too, so the layout never changes shape. No migration was needed:
+  `Course` has only an index on `(gradeId, subjectId)`, so two published courses can already share
+  them.
+- `cardInclude` in `src/lib/catalog.ts` now also selects `instructor.photoUrl/bioAr/bioEn/liveApproved`;
+  every existing caller ignores the extra fields.
+- Verified: `e2e/instructors.spec.ts` (two teachers, one teacher, profile link) green on ar-desktop
+  and en-desktop; 239 unit tests, `npx tsc --noEmit`, `npm run build`.
+
 ## 2026-11-05: Exam readiness index on the course page
 
 - Wave-1 item #1. `src/lib/readiness.ts` is pure and unit-tested (10 tests): coverage of openable

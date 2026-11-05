@@ -449,7 +449,13 @@
       "gapAccuracy": "أضعف وحدة: {unit} ({percent}٪ من الدرجات).",
       "gapUnfinished": "أكبر ما ينقصك: {unit} — دروس غير مكتملة: {count}.",
       "allGood": "لا توجد فجوة واضحة الآن. واصل."
-    }
+    },
+    "instructorsTitle": "المدرّسون",
+    "instructorsLede": "{count, plural, zero {لا يوجد مدرّس لهذه المادة.} one {مدرّس واحد لهذه المادة.} two {مدرّسان لهذه المادة — قارن واختر.} few {# مدرّسين لهذه المادة — قارن واختر.} many {# مدرّسًا لهذه المادة — قارن واختر.} other {# مدرّس لهذه المادة — قارن واختر.}}",
+    "liveAvailable": "حصص مباشرة",
+    "lessonsRecorded": "{count, plural, zero {لا توجد دروس مسجّلة} one {درس مسجّل واحد} two {درسان مسجّلان} few {# دروس مسجّلة} many {# درسًا مسجّلًا} other {# درس مسجّل}}",
+    "openCourse": "افتح الكورس",
+    "viewProfile": "الملف الشخصي"
   },
   "player": {
     "title": "الحصة",

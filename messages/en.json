@@ -449,7 +449,13 @@
       "gapAccuracy": "Weakest unit: {unit} ({percent}% of marks earned).",
       "gapUnfinished": "Biggest gap: {unit} — {count} lessons unfinished.",
       "allGood": "No clear gap right now. Keep going."
-    }
+    },
+    "instructorsTitle": "The teachers",
+    "instructorsLede": "{count, plural, one {One teacher for this subject.} other {# teachers for this subject — compare and choose.}}",
+    "liveAvailable": "Live lectures",
+    "lessonsRecorded": "{count, plural, =0 {No recorded lessons yet} one {# recorded lesson} other {# recorded lessons}}",
+    "openCourse": "Open the course",
+    "viewProfile": "View profile"
   },
   "player": {
     "title": "Lesson",

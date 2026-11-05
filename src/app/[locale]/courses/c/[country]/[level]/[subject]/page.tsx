@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { CourseCard } from "@/components/CourseCard";
+import { InstructorBlock } from "@/components/teachers/InstructorBlock";
 import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -60,6 +61,17 @@ export default async function SubjectPage({ params }: { params: Promise<Params> 
   const line = `var(--color-line-${slug.toLowerCase()}, var(--color-ink))`;
   const crumb = "inline-flex min-h-11 items-center text-pen underline-offset-4 hover:underline";
 
+  // One card per teacher, not per course: a teacher with two courses for this subject gets one card
+  // and their lessons are summed. Name order, so the list does not reshuffle when a course is edited.
+  const byInstructor = new Map<string, { instructor: (typeof courses)[number]["instructor"]; lessons: number; courseSlug: string }>();
+  for (const c of courses) {
+    const lessons = c.units.reduce((n, u) => n + u._count.lessons, 0);
+    const seen = byInstructor.get(c.instructor.id);
+    if (seen) seen.lessons += lessons;
+    else byInstructor.set(c.instructor.id, { instructor: c.instructor, lessons, courseSlug: c.slug });
+  }
+  const instructors = [...byInstructor.values()].sort((a, b) => a.instructor.name.localeCompare(b.instructor.name, locale));
+
   return (
     <main className="mx-auto grid max-w-5xl gap-8 px-4 py-10">
       <header className="grid gap-1 border-b-(length:--line) pb-6" style={{ borderColor: line }}>
@@ -85,13 +97,16 @@ export default async function SubjectPage({ params }: { params: Promise<Params> 
           <p className="text-ink-muted">{t("subjectEmpty")}</p>
         </EmptyState>
       ) : (
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map((c) => (
-            <li key={c.id}>
-              <CourseCard course={c} locale={locale} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <InstructorBlock entries={instructors} locale={locale} />
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {courses.map((c) => (
+              <li key={c.id}>
+                <CourseCard course={c} locale={locale} />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </main>
   );

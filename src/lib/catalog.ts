@@ -100,6 +100,6 @@ export function cardInclude(now: Date) {
     units: { select: { isFree: true, _count: { select: { lessons: true } } } },
     grade: { include: { country: { select: { code: true } } } },
     subject: { select: { icon: true, nameAr: true, nameEn: true } },
-    instructor: { select: { id: true, name: true } },
+    instructor: { select: { id: true, name: true, photoUrl: true, bioAr: true, bioEn: true, liveApproved: true } },
   };
 }

@@ -41,6 +41,8 @@ Everything still open, in order: `docs/plans/remaining.md`.
 
 - 2026-11-05 exam readiness index, `src/lib/readiness.ts` (pure, 10 unit tests), rendered as a card on `courses/[slug]` with `data-readiness`. Coverage 35 / accuracy 35 / confidence 15 / recency 15, renormalised over available signals; no practice caps the score at 55 by design. Gap names the weakest unit (≥3 marked attempts, <80%) else the unit with most unfinished lessons. WARNING for later: `courses/[slug]/page.tsx` has a local `opens` helper — do not import `opens` from `lib/learning` there. 239 tests, tsc, build, `e2e/lessons.spec.ts` green.
 
+- 2026-11-05 instructor comparison block on the subject page: one card per teacher above the course list (photo/initial, name, bio, live chip, summed lesson count, open-course and profile links). One card per teacher even with several courses. Nothing about students is shown, by design. `cardInclude` now selects the instructor's photo and bios. New spec `e2e/instructors.spec.ts` (3 tests) green on ar and en; seed gained a second teacher's course on ae/12/math.
+
 ## Next (in order)
 1. (done, untested on GitHub) e2e job in ci.yml: check the Actions tab after the next push; Postgres cannot run as root, the runner user is not root
 2. (done) e2e checkout

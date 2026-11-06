@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { Prisma } from "@/generated/prisma/client";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
-import { CONSENT_VERSION } from "@/lib/live-rules";
+import { PRIVACY_VERSION } from "@/lib/legal";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
 import { safeNext } from "@/lib/safe-redirect";
@@ -87,7 +87,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
       });
       if (!isParent) {
         await trx.guardianConsent.create({
-          data: { studentId: created.id, parentId: null, guardianName: guardianName!, rulesVersion: CONSENT_VERSION, source: "SIGNUP" },
+          data: { studentId: created.id, parentId: null, guardianName: guardianName!, rulesVersion: PRIVACY_VERSION, source: "SIGNUP" },
         });
       }
       return created;

@@ -10,6 +10,7 @@ import { createIntention } from "@/lib/paymob";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { applyCoupon, PricingError } from "@/lib/pricing-engine";
+import { TERMS_VERSION } from "@/lib/legal";
 import { isLimited } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/schemas/checkout";
 import { stripe } from "@/lib/stripe";
@@ -91,6 +92,9 @@ export async function POST(req: Request) {
     data: {
       userId: user.id,
       beneficiaryId,
+      // The buyer accepted the terms by pressing Pay; record which text was in force.
+      termsVersion: TERMS_VERSION,
+      termsAcceptedAt: new Date(),
       gateway,
       method: free ? null : method,
       currency: priced.currency,

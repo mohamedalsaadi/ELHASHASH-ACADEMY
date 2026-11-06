@@ -462,6 +462,9 @@ model Order {
   receiptSize    Int?
   /// The linked child the access is for, when a parent pays. Null means the buyer learns.
   beneficiaryId  String?
+  /// The legal text the buyer accepted when placing this order, and when. Null for orders an admin created.
+  termsVersion    String?
+  termsAcceptedAt DateTime?
   expiresAt      DateTime?
   paidAt         DateTime?
   createdAt      DateTime       @default(now())

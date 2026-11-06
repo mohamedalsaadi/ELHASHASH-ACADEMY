@@ -1,10 +1,11 @@
 import { test, expect } from "./fixtures";
 import { sql } from "./db";
+import { PRIVACY_VERSION } from "../src/lib/legal";
 
 // Signup is the only place a student account is created without a parent in the loop, so the
 // guardian-consent record must be written there or the policy is a promise nobody keeps.
 
-type Consent = { source: string; guardianName: string; parentId: string | null };
+type Consent = { source: string; guardianName: string; parentId: string | null; rulesVersion: string };
 
 async function fillStudent(page: import("@playwright/test").Page, loc: string, phone: string, email: string) {
   await page.goto(`/${loc}/signup`);
@@ -26,7 +27,7 @@ test("a student who gives a guardian's name and consent gets a consent record", 
   await page.waitForURL((u) => !u.pathname.endsWith("/signup"), { timeout: 30_000 });
 
   const rows = await sql<Consent>(
-    `SELECT gc."source", gc."guardianName", gc."parentId"
+    `SELECT gc."source", gc."guardianName", gc."parentId", gc."rulesVersion"
        FROM "GuardianConsent" gc JOIN "User" u ON u.id = gc."studentId"
       WHERE u.phone = $1`,
     [phone],
@@ -35,6 +36,8 @@ test("a student who gives a guardian's name and consent gets a consent record", 
   expect(rows[0].source).toBe("SIGNUP");
   expect(rows[0].guardianName).toBe("E2E Guardian");
   expect(rows[0].parentId).toBeNull();
+  // The guardian agreed to the privacy text, not the live-lecture rules.
+  expect(rows[0].rulesVersion).toBe(PRIVACY_VERSION);
 });
 
 test("the server refuses a student account with no guardian consent", async ({ page, loc }) => {

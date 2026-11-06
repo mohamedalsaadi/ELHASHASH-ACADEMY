@@ -24,6 +24,19 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: Consent and terms are recorded against the right document
+
+The signup guardian consent stored `CONSENT_VERSION` from `live-rules.ts`, the live-lecture wording, so the row
+could not prove which privacy text a guardian agreed to. A new `src/lib/legal.ts` holds `TERMS_VERSION` and
+`PRIVACY_VERSION`; signup records the privacy one, and live-lecture consent keeps its own version.
+
+Nothing recorded a buyer accepting the terms either. `Order` now carries `termsVersion` and `termsAcceptedAt`,
+written by the checkout route when the order is created (the act of pressing Pay). Orders an admin creates leave
+them null, because that is not a purchase acceptance.
+
+`e2e/signup.spec.ts` now asserts the stored consent version is the privacy one. Bump the constants when the text
+at `/terms` or `/privacy` changes.
+
 ## 2026-11-06: Account erasure, the promise the policy already made
 
 The privacy page has always said "you can ask to delete your account at any time", and no such path existed.

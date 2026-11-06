@@ -11,6 +11,7 @@ import { resolveDiscount } from "@/lib/referral";
 import { activeGateway } from "@/lib/gateway";
 import { formatMoney } from "@/lib/format";
 import { getFinanceConfig } from "@/lib/platform-settings";
+import { formatRate } from "@/lib/fx";
 import { applyCoupon, applyPlatformDiscount, effectivePrice, PricingError } from "@/lib/pricing-engine";
 import { taxConfigFor, vatFor } from "@/lib/tax";
 import { PayForm } from "./PayForm";
@@ -118,7 +119,7 @@ export default async function CheckoutPage({
       : null;
   const needsPhone = children !== null && children.length === 0;
 
-  const { skus, now } = result;
+  const { skus, now, displayCurrency, fxRate } = result;
   const money = (n: number) => formatMoney(n, priced.currency, locale);
   const localOf = (skuId: string) => {
     const sku = skus.get(skuId);
@@ -183,7 +184,15 @@ export default async function CheckoutPage({
           <dt className="font-display font-semibold">{t("total")}</dt>
           <dd className="num font-semibold">{money(payable)}</dd>
         </dl>
-        <p className="text-small text-ink-muted">{t("chargedInAed")}</p>
+        {displayCurrency !== "AED" ? (
+          <p className="text-small text-ink-muted">
+            {fxRate != null
+              ? t("conversionNoticeRate", { currency: displayCurrency, rate: formatRate(fxRate, locale) })
+              : t("conversionNotice", { currency: displayCurrency })}
+          </p>
+        ) : (
+          <p className="text-small text-ink-muted">{t("chargedInAed")}</p>
+        )}
 
         <form method="get" className="flex flex-wrap items-end gap-2 border-t border-hairline pt-4">
           {skuIds.map((id) => (

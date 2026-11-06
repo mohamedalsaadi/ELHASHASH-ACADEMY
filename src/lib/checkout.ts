@@ -51,11 +51,17 @@ export async function priceSkus(skuIds: string[], now = new Date()) {
     rules.map((r) => ({ id: r.id, percentOff: r.percentOff, minSubjects: r.minSubjects, subjectIds: r.subjects.map((s) => s.id) })),
     now,
   );
+  const displayCurrency = skus[0]?.currency ?? "AED";
+  const fx = displayCurrency !== "AED"
+    ? await db.fxRate.findUnique({ where: { currency: displayCurrency }, select: { aedPerUnit: true } })
+    : null;
   return {
     priced,
     skus: new Map(skus.map((s) => [s.id, s])),
     missing: skus.length !== unique.size,
     countryCode: skus[0]?.course.grade?.country.code ?? null,
+    displayCurrency,
+    fxRate: fx ? Number(fx.aedPerUnit) : null,
     now,
   };
 }

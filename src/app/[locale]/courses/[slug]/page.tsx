@@ -16,6 +16,7 @@ import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
 import { canCharge } from "@/lib/gateway";
+import { formatRate } from "@/lib/fx";
 import { liveApprovedOn } from "@/lib/live";
 import { readiness } from "@/lib/readiness";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
@@ -141,6 +142,14 @@ export default async function CoursePage({
 
   const course = await getCourse(slug);
   if (!course) notFound();
+
+  // The market the course is sold in. Its local currency is the display; AED is the charge.
+  const countryCurrency = course.grade?.country.currency ?? "AED";
+  const fxRow =
+    countryCurrency !== "AED"
+      ? await db.fxRate.findUnique({ where: { currency: countryCurrency }, select: { aedPerUnit: true } })
+      : null;
+  const fxRate = fxRow ? Number(fxRow.aedPerUnit) : null;
 
   const session = await auth();
   void logEventLater({ name: "course_viewed", userId: session?.user?.id, courseId: course.id, dedupeScope: course.id });
@@ -365,6 +374,14 @@ export default async function CoursePage({
           </div>
         </div>
       </header>
+
+      {countryCurrency !== "AED" && (
+        <p className="rounded-lg bg-raised p-3 text-small text-ink-muted">
+          {fxRate != null
+            ? t("conversionNoticeRate", { currency: countryCurrency, rate: formatRate(fxRate, locale) })
+            : t("conversionNotice", { currency: countryCurrency })}
+        </p>
+      )}
 
       {(bestPlan || lapsed || staff) && (
         <section className="grid gap-2 rounded-lg bg-raised p-4 text-small">

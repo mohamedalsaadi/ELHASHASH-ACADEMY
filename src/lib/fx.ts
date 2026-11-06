@@ -11,3 +11,8 @@ export const FX_CURRENCIES: Currency[] = ["EGP", "SAR", "KWD", "QAR", "BHD", "OM
 export function aedFromRate(localMinor: number, currency: Currency, aedPerUnit: number): number {
   return Math.round((localMinor / minorPerUnit(currency)) * aedPerUnit * 100);
 }
+
+/** Shows a rate without inventing precision. Arabic keeps Latin digits, as the price surfaces do. */
+export function formatRate(rate: number, locale: string): string {
+  return new Intl.NumberFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", { maximumFractionDigits: 6 }).format(rate);
+}

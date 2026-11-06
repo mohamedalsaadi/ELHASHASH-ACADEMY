@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aedFromRate } from "./fx";
+import { aedFromRate, formatRate } from "./fx";
 
 describe("aedFromRate", () => {
   it("converts 3-decimal OMR to AED fils", () => {
@@ -15,5 +15,16 @@ describe("aedFromRate", () => {
   it("rounds to the nearest fils", () => {
     expect(aedFromRate(1, "EGP", 0.075)).toBe(0);
     expect(aedFromRate(100, "EGP", 0.075)).toBe(8);
+  });
+});
+
+describe("formatRate", () => {
+  it("keeps the owner's precision without padding", () => {
+    expect(formatRate(9.55, "en")).toBe("9.55");
+    expect(formatRate(0.9793, "en")).toBe("0.9793");
+  });
+
+  it("uses Latin digits in Arabic", () => {
+    expect(formatRate(9.55, "ar")).toBe("9.55");
   });
 });

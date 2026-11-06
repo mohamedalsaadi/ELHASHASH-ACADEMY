@@ -55,6 +55,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
   const cfg = o.vat > 0 && !doc ? await getFinanceConfig() : null;
   const sellerTrn = doc?.sellerTrn ?? cfg?.vatTrn ?? null;
   const reference = doc?.number ?? o.id;
+  const localCurrency = o.items.find((i) => i.displayCurrency)?.displayCurrency ?? null;
 
   const name = (x: { titleAr: string; titleEn: string }) => (pick(ar, x.titleAr, x.titleEn));
   const money = (n: number) => formatMoney(n, o.currency, locale);
@@ -173,7 +174,9 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
           <dd className="num font-semibold">{money(o.total + o.vat)}</dd>
         </dl>
 
-        <p className="text-small text-ink-muted">{t("chargedInAed")}</p>
+        <p className="text-small text-ink-muted">
+          {localCurrency ? t("conversionNotice", { currency: localCurrency }) : t("chargedInAed")}
+        </p>
 
         <div className="grid gap-1 border-t border-hairline pt-3 text-label text-ink-muted">
           <span className="font-semibold text-ink">{doc?.sellerName ?? "Dhirwa (ذروة)"}</span>

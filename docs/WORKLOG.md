@@ -39,6 +39,9 @@ Git history has the rest (`git log --oneline`).
 - **Rate suggestion.** Admin → Settings stores an AED-per-unit rate for each non-AED currency. A package or
   rental form has a “use today’s rate” checkbox; when the AED price is empty, saving computes it from the
   local price and the stored rate. The AED price remains the charge; checkout never reads the rate.
+- **Conversion notice.** The course page, checkout and receipt state that the final amount is charged in AED
+  and the local amount is an approximation. When a rate is saved, the course page and checkout show it, for
+  example “1 OMR ≈ 9.55 AED”. Receipts keep the local list price per line.
 - **Open.** Set an AED price on every sellable package. Confirm Ziina’s international-card support and the
   exact international fee in writing (about 4.1% + AED 1). The migration `20261109205000_aed_charged_prices`
   is written but not deployed.

@@ -3,11 +3,13 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { z } from "zod";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
+import { eraseAccount } from "@/lib/erasure";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
@@ -118,4 +120,29 @@ export async function updateGrade(form: FormData) {
   await db.user.update({ where: { id: user.id }, data: { gradeId: grade.id } });
   revalidatePath("/[locale]/account", "page");
   revalidatePath("/[locale]/me", "page");
+}
+
+/**
+ * Erases the signed-in account. Staff are refused: courses, assignments, exam papers and bank items
+ * point at them with ON DELETE RESTRICT and are licensed under a separate agreement, so their
+ * removal goes through support.
+ */
+export async function deleteAccount(_: unknown, form: FormData): Promise<"ok" | "wrong" | "limited" | "denied"> {
+  const user = await me();
+  if (user.role !== "STUDENT" && user.role !== "PARENT") return "denied";
+
+  const key = `delete:${user.id}`;
+  if (await isLimited(key, 5, 15 * 60_000)) return "limited";
+
+  const password = String(form.get("password") ?? "");
+  const row = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { passwordHash: true } });
+  if (!(await bcrypt.compare(password, row.passwordHash))) {
+    await recordAttempt(key);
+    return "wrong";
+  }
+
+  await eraseAccount(user.id);
+  // The session is now invalid, but sign out so the browser stops presenting it.
+  await signOut({ redirectTo: `/${await getLocale()}` });
+  return "ok";
 }

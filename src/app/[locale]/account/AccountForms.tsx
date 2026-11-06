@@ -5,7 +5,7 @@ import { field, label } from "@/components/ui/form";
 import { useActionState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { PasswordField } from "@/components/ui/PasswordField";
-import { changeOwnPassword, generateParentCode, updateProfile } from "./actions";
+import { changeOwnPassword, deleteAccount, generateParentCode, updateProfile } from "./actions";
 
 const button =
   "btn btn-primary w-fit text-small";
@@ -111,6 +111,35 @@ export function ParentCodeForm() {
       )}
       <button disabled={pending} className={button}>
         {code ? t("newCode") : t("generateCode")}
+      </button>
+    </form>
+  );
+}
+
+export function DeleteAccountForm() {
+  const t = useTranslations("account");
+  const [state, action, pending] = useActionState(deleteAccount, null);
+  return (
+    <form id="delete-account" action={action} className="grid gap-3">
+      <p className="text-small text-ink-muted">{t("dangerHint")}</p>
+      <label className={label}>
+        {t("passwordTitle")}
+        <PasswordField name="password" autoComplete="current-password" required className={field} />
+      </label>
+      <label className="flex min-h-11 items-center gap-3 text-small">
+        <input type="checkbox" name="confirm" required className="size-5 shrink-0" />
+        <span>{t("dangerConfirm")}</span>
+      </label>
+      {state && state !== "ok" && (
+        <p role="alert" className="text-small text-down">
+          {t(`danger.${state}`)}
+        </p>
+      )}
+      <button
+        disabled={pending}
+        className="w-fit rounded-full border border-down px-4 py-2 font-display text-small font-semibold text-down"
+      >
+        {t("dangerDelete")}
       </button>
     </form>
   );

@@ -1168,7 +1168,12 @@
     "openStaff": "Open the staff dashboard",
     "gradeTitle": "My grade",
     "gradeHint": "Your grade and country decide which subjects and courses your home page shows. What you already bought stays yours.",
-    "grade": "Grade"
+    "grade": "Grade",
+    "dangerTitle": "Delete account",
+    "dangerHint": "This erases your personal data and signs you out. It cannot be undone. Paid receipts are kept as required for accounting, with your name removed.",
+    "dangerConfirm": "I understand this cannot be undone.",
+    "dangerDelete": "Delete my account",
+    "danger": {"wrong": "The password is not correct.", "limited": "Too many attempts. Try again in 15 minutes.", "denied": "Staff accounts are removed through support."}
   },
   "forgot": {
     "title": "Forgot your password?",

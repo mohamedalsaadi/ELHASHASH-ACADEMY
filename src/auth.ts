@@ -51,6 +51,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // refusing before the comparison let anyone lock a student out with ten guesses.
         const key = `login:${login}`;
         const user = await db.user.findUnique({ where: login.includes("@") ? { email: login } : { phone: login } });
+        // An erased account keeps its row for the money record but can never sign in again.
+        if (user?.deletedAt) return null;
         const ok = user ? await bcrypt.compare(parsed.data.password, user.passwordHash) : false;
         if (!ok || !user) {
           if (!(await isLimited(key, 10, 15 * 60_000))) await recordAttempt(key);
@@ -71,8 +73,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
       if (typeof token.checkedAt === "number" && Date.now() - token.checkedAt < RECHECK_MS) return token;
-      const row = await db.user.findUnique({ where: { id: token.sub! }, select: { role: true, passwordChangedAt: true } });
-      if (!row) return null;
+      const row = await db.user.findUnique({ where: { id: token.sub! }, select: { role: true, passwordChangedAt: true, deletedAt: true } });
+      if (!row || row.deletedAt) return null;
       // A reset or password change after this token was issued ends the session, at the next re-check.
       if ((row.passwordChangedAt?.getTime() ?? 0) !== (token.pwdAt ?? 0)) return null;
       token.role = row.role;

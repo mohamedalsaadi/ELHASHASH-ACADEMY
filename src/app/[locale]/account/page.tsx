@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { gradeGroups } from "@/lib/catalog";
 import { db } from "@/lib/db";
-import { ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
+import { DeleteAccountForm, ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
 import { sendVerification, unlinkParent } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -140,6 +140,13 @@ export default async function AccountPage({
           <Link href="/parent" className="text-small text-pen underline-offset-4 hover:underline">
             {t("openParent")}
           </Link>
+        </section>
+      )}
+
+      {(u.role === "STUDENT" || u.role === "PARENT") && (
+        <section className={`${panel} border-down/40`}>
+          <h2 className="font-display text-h3 font-semibold text-down">{t("dangerTitle")}</h2>
+          <DeleteAccountForm />
         </section>
       )}
 

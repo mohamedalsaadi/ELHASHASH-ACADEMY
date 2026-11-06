@@ -101,6 +101,9 @@ model User {
   passwordChangedAt DateTime?
   role            Role      @default(STUDENT)
   locale          String    @default("ar")
+  /// Set when the person asked for erasure. The row stays so paid orders keep their foreign key;
+  /// every personal field is blank and the account can no longer sign in.
+  deletedAt       DateTime?
   gradeId         String?
   /// Teacher profile, shown on the public teacher page. photoUrl is a private Blob pathname.
   photoUrl        String?

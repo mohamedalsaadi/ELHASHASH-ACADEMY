@@ -24,6 +24,26 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: Account erasure, the promise the policy already made
+
+The privacy page has always said "you can ask to delete your account at any time", and no such path existed.
+It could not exist as a real delete either: `Order.userId` and `Order.beneficiaryId` are `onDelete: Restrict`,
+because an invoice has to survive for accounting and tax.
+
+Erasure now anonymises instead. `User.deletedAt` marks the account; `eraseAccount` deletes every row that is the
+person's own activity (submissions and their Blob files, questions, practice/exam/quiz attempts, lesson views,
+review schedule, progress, attendance, notifications, tokens, device, parent code and links, guardian consents,
+special requests, entitlements), detaches analytics rows from the person while keeping the counts, drops their
+support tickets, then blanks name, phone, email, photo, bios, grade and password (replaced with a value no
+password can match). Orders and ledger entries stay, pointing at the anonymous row. Sign-in and any live session
+are refused for a deleted account.
+
+Staff are refused: courses, assignments, exam papers and bank items point at them with `ON DELETE RESTRICT`, so
+their removal goes through support. The account page shows the "delete account" form only to students and parents.
+
+Verified by `e2e/erasure.spec.ts` in both locales and viewports: after deleting, the row is anonymous, the lesson
+view is gone, and the old phone number can no longer sign in.
+
 ## 2026-11-06: Refund policy rewritten to say one thing
 
 The refund page opened with "all sales are final", then promised a 30-day refund window for two cases, and the

@@ -24,6 +24,21 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: Refund policy rewritten to say one thing
+
+The refund page opened with "all sales are final", then promised a 30-day refund window for two cases, and the
+checkout consent line repeated the harsh half at the moment of payment. That is both internally contradictory and
+hard to defend under consumer-protection rules that survive contract terms.
+
+It now opens with the actual rule: the content unlocks on payment, so there is no change-of-mind refund for a
+package already opened; if something went wrong we refund in full; and nothing in the policy limits a statutory
+right. The refund list gained unavailable-or-materially-different and unauthorised-payment. The suspension clause
+now says a refund may be declined "without affecting any right the law gives you". The Terms clause and the
+checkout consent line were aligned to the same sentence.
+
+Still the owner's: the legal entity name, licence, address and TRN, without which the policy cannot name who is
+selling.
+
 ## 2026-11-06: sslmode switched to verify-full
 
 `DATABASE_URL` ended in `sslmode=require`, which `pg-connection-string` 8.x treats as `verify-full` but warns

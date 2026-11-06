@@ -9,11 +9,11 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
 
 const ar: Section[] = [
   {
-    h: "جميع المبيعات نهائية",
+    h: "الخلاصة",
     body: (
       <p>
-        الباقات محتوى رقمي يُفتح فور الدفع، لذلك لا نقبل استرداد المبلغ أو إلغاء الاشتراك بعد إتمام الدفع، ولا يُسترد أي جزء
-        من المبلغ عن مدة لم تُستخدم.
+        الباقات محتوى رقمي يُفتح فور إتمام الدفع، لذلك لا نردّ مبلغ باقة فتحتها لمجرد تغيير الرأي. أما إذا حدث خطأ فسياستنا
+        أن نردّ المبلغ كاملًا. لا تحدّ هذه السياسة من أي حق يمنحه لك قانون حماية المستهلك المعمول به في بلدك.
       </p>
     ),
   },
@@ -30,10 +30,12 @@ const ar: Section[] = [
     h: "الحالات التي نرد فيها المبلغ",
     body: (
       <>
-        <p>نرد المبلغ كاملًا في حالات الخطأ فقط:</p>
+        <p>نرد المبلغ كاملًا في الحالات الآتية:</p>
         <ul>
           <li>إذا خُصم منك المبلغ مرتين لنفس الباقة، نرد المبلغ المكرر.</li>
           <li>إذا تم الدفع ولم تُفتح الباقة في حسابك ولم نتمكن من حل المشكلة خلال 7 أيام من تواصلك معنا.</li>
+          <li>إذا كانت الباقة غير متاحة أو تختلف جوهريًا عن الوصف المنشور.</li>
+          <li>إذا كانت الدفعة غير مصرّح بها، مثل استخدام بطاقة دون إذن صاحبها.</li>
         </ul>
       </>
     ),
@@ -51,8 +53,8 @@ const ar: Section[] = [
     h: "إيقاف الحساب",
     body: (
       <p>
-        إذا أوقفنا حسابًا بسبب مشاركته أو تسجيل الفيديوهات أو نشرها بالمخالفة <Link href="/terms">للشروط والأحكام</Link>، فلا
-        يُرد المبلغ.
+        إذا أوقفنا حسابًا بسبب مشاركته أو تسجيل الفيديوهات أو نشرها بالمخالفة <Link href="/terms">للشروط والأحكام</Link>، فقد
+        نرفض استرداد المبلغ، دون المساس بأي حق يمنحه لك القانون.
       </p>
     ),
   },
@@ -60,11 +62,12 @@ const ar: Section[] = [
 
 const en: Section[] = [
   {
-    h: "All sales are final",
+    h: "The short version",
     body: (
       <p>
-        Packages are digital content that unlocks the moment you pay, so we do not offer refunds or cancellations once
-        payment is complete, including for unused time.
+        Packages are digital content that unlocks the moment you pay, so we do not refund a package you have already
+        opened simply because you changed your mind. If something went wrong, our policy is to refund in full. Nothing
+        here limits any right the consumer-protection law of your country gives you.
       </p>
     ),
   },
@@ -81,10 +84,12 @@ const en: Section[] = [
     h: "When we do refund",
     body: (
       <>
-        <p>We refund in full only when something went wrong:</p>
+        <p>We refund in full when:</p>
         <ul>
           <li>You were charged twice for the same package: we refund the duplicate charge.</li>
           <li>You paid but the package never unlocked, and we could not fix it within 7 days of you contacting us.</li>
+          <li>The package was unavailable, or materially different from what was described.</li>
+          <li>The payment was not authorised, for example a card used without permission from its owner.</li>
         </ul>
       </>
     ),
@@ -103,7 +108,7 @@ const en: Section[] = [
     body: (
       <p>
         If we suspend an account for sharing it, or for recording or publishing the videos in breach of the{" "}
-        <Link href="/terms">terms</Link>, no refund is given.
+        <Link href="/terms">terms</Link>, we may decline a refund, without affecting any right the law gives you.
       </p>
     ),
   },

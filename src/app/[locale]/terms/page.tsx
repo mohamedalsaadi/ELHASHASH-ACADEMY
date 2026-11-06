@@ -37,7 +37,7 @@ const ar: Section[] = [
         </li>
         <li>كل باقة تفتح مادة محددة حتى تاريخ الانتهاء المكتوب عند الشراء (فصل دراسي، سنة كاملة، أو مراجعة نهائية).</li>
         <li>
-          جميع المبيعات نهائية، وتفاصيل الحالات الاستثنائية في <Link href="/refund">سياسة الاسترداد</Link>.
+          الباقات رقمية وتُفتح فور الدفع، وحالات الاسترداد وحقوقك القانونية في <Link href="/refund">سياسة الاسترداد</Link>.
         </li>
       </ul>
     ),
@@ -116,7 +116,7 @@ const en: Section[] = [
         </li>
         <li>Each package unlocks one subject until the end date shown at purchase (semester, full year or final revision).</li>
         <li>
-          All sales are final; the exceptions are in the <Link href="/refund">refund policy</Link>.
+          Packages are digital and unlock immediately; refund cases and your statutory rights are in the <Link href="/refund">refund policy</Link>.
         </li>
       </ul>
     ),

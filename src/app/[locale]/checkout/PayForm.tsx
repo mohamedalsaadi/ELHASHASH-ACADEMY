@@ -141,6 +141,7 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon, learners, ne
           </label>
         ))}
       </fieldset>
+      {gateway === "ZIINA" && <p className="text-small text-ink-muted">{t("walletHint")}</p>}
       {error && (
         <p role="alert" className="text-small text-down">
           {error}

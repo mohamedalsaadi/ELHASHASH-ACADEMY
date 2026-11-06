@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
+import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -62,8 +64,49 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };
       },
     }),
+    // Google is added only when its OAuth client is configured. Existing accounts match by email;
+    // a new Google user becomes a student and finishes phone, grade and guardian details first.
+    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET ? [Google] : []),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider !== "google") return true;
+      const email = user.email?.trim().toLowerCase();
+      if (!email) return false;
+      const existing = await db.user.findUnique({
+        where: { email },
+        select: { id: true, role: true, deletedAt: true, emailVerifiedAt: true, passwordChangedAt: true },
+      });
+      if (existing) {
+        if (existing.deletedAt) return false;
+        user.id = existing.id;
+        user.role = existing.role;
+        user.pwdAt = existing.passwordChangedAt?.getTime() ?? 0;
+        // Google proved the address, so an earlier unverified signup is now verified.
+        if (!existing.emailVerifiedAt) {
+          await db.user.update({ where: { id: existing.id }, data: { emailVerifiedAt: new Date() } });
+        }
+        return true;
+      }
+      // A first Google sign-in creates the row. The random password keeps credentials login closed
+      // until the student chooses a password, and the profile page fills phone, grade and consent.
+      const created = await db.user.upsert({
+        where: { email },
+        create: {
+          name: user.name?.trim() || email.split("@")[0] || "Student",
+          email,
+          role: "STUDENT",
+          locale: "ar",
+          passwordHash: await bcrypt.hash(randomUUID(), 10),
+          emailVerifiedAt: new Date(),
+        },
+        update: {},
+      });
+      user.id = created.id;
+      user.role = created.role;
+      user.pwdAt = created.passwordChangedAt?.getTime() ?? 0;
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;

@@ -8,6 +8,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { gradeGroups } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { formatMoney } from "@/lib/format";
 import { appUrl } from "@/lib/mail";
 import { getOrCreateReferralCode } from "@/lib/referral";
 import { DeleteAccountForm, ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
@@ -48,6 +49,24 @@ export default async function AccountPage({
 
   const verified = Boolean(u.emailVerifiedAt);
   const ar = locale === "ar";
+  const receipts = await db.order.findMany({
+    where: {
+      status: { in: ["PAID", "REFUNDED"] },
+      OR: [{ userId: u.id }, { beneficiaryId: u.id }],
+    },
+    orderBy: { paidAt: "desc" },
+    take: 20,
+    select: {
+      id: true,
+      currency: true,
+      total: true,
+      vat: true,
+      paidAt: true,
+      createdAt: true,
+      documents: { where: { kind: "INVOICE" }, select: { id: true, number: true } },
+    },
+  });
+  const day = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "Asia/Dubai" });
   const referral = u.role === "STUDENT" || u.role === "PARENT" ? await getOrCreateReferralCode(u.id) : null;
   const shareText = referral
     ? ar
@@ -163,6 +182,38 @@ export default async function AccountPage({
           <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer" className={smallButton}>
             {t("referralShare")}
           </a>
+        </section>
+      )}
+
+      {receipts.length > 0 && (
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("receiptsTitle")}</h2>
+          <ul className="grid gap-2">
+            {receipts.map((o) => {
+              const doc = o.documents[0];
+              return (
+                <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-2 text-small">
+                  <span className="grid gap-0.5">
+                    <span className="num" dir="ltr">
+                      {doc?.number ?? o.id}
+                    </span>
+                    <span className="text-label text-ink-muted">{day.format(o.paidAt ?? o.createdAt)}</span>
+                  </span>
+                  <span className="num font-semibold">{formatMoney(o.total + o.vat, o.currency, locale)}</span>
+                  <span className="flex flex-wrap gap-2">
+                    {doc && (
+                      <a href={`/api/documents/${doc.id}/pdf`} className="text-pen underline underline-offset-4">
+                        {t("receiptPdf")}
+                      </a>
+                    )}
+                    <Link href={`/orders/${o.id}`} className="text-pen underline underline-offset-4">
+                      {t("receiptView")}
+                    </Link>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 

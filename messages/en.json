@@ -217,7 +217,10 @@
     "forgot": "Forgot your password?",
     "verified": "Your email is confirmed. Sign in.",
     "resetDone": "Your password was changed. Sign in.",
-    "submitting": "Signing in…"
+    "submitting": "Signing in…",
+    "google": "Continue with Google",
+    "or": "or",
+    "googleFailed": "Google sign-in did not complete. Try again, or sign in with your phone and password."
   },
   "checkout": {
     "title": "Complete your purchase",
@@ -328,6 +331,7 @@
     "chargedInAed": "You will be charged in UAE dirhams (AED). Your bank may add its own exchange fee.",
     "conversionNotice": "Prices are shown in {currency}. The final amount is charged in AED (UAE dirham). The {currency} amount is an approximation.",
     "conversionNoticeRate": "Prices are shown in {currency}. The final amount is charged in AED (UAE dirham). The {currency} amount is an approximation at 1 {currency} ≈ {rate} AED.",
+    "walletHint": "Apple Pay and Google Pay appear on the secure Ziina page when your device supports them.",
     "forChildPhone": "Your child's phone number",
     "forChildPhoneHint": "Use the phone your child signed up with. The course goes straight to their account.",
     "childFound": "Course for: {name}",
@@ -733,6 +737,8 @@
   },
   "signup": {
     "title": "Create an account",
+    "completeTitle": "Finish your account",
+    "completeHint": "Add a phone number, your grade and your date of birth. Under-18 accounts need a guardian email.",
     "name": "Full name",
     "email": "Email",
     "emailHint": "Receipts and lesson updates go here.",
@@ -769,6 +775,7 @@
       "too_young": "Students under 13 cannot create an account. Contact us about a guardian-managed account.",
       "too_many": "Too many new accounts from this network. Try again in an hour.",
       "guardian_required": "A guardian's name, email and consent are required for a student under 18.",
+      "phone_taken": "That phone number is already used by another account.",
       "check_email": "If that email or mobile already has an account, we sent it a sign-in note. Otherwise sign in, or reset your password."
     },
     "teacherQ": "A teacher who wants to join?",
@@ -1285,6 +1292,9 @@
     "referralHint": "Share your code. The other family enters it in the coupon field at checkout for a welcome discount.",
     "referralHow": "After their first payment, a one-time reward code appears here for your next subscription.",
     "referralShare": "Share on WhatsApp",
+    "receiptsTitle": "Receipts",
+    "receiptPdf": "PDF",
+    "receiptView": "View",
     "gradeTitle": "My grade",
     "gradeHint": "Your grade and country decide which subjects and courses your home page shows. What you already bought stays yours.",
     "grade": "Grade",

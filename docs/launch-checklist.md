@@ -57,6 +57,9 @@ Each line says what was checked instead, and how to close it.
 - [ ] **Admin catalog CRUD with a real admin login.** Verify: sign in as the owner → `/ar/admin/catalog` → create a test country, stage, grade and subject → check `/courses`, the country page and signup → delete or deactivate the test rows.
 - [ ] **Contact form delivery.** No message was sent because `RESEND_API_KEY` is not set locally.
 - [ ] **All transactional email.** Password reset, verification, paid receipt, answer notification, reminders and the digest share one mail path; none was delivered end to end.
+- [ ] **Google sign-in end to end.** Needs `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` (owner action 3). Verify: a Google email with no Dhirwa account lands on `/complete-profile`, saves phone, grade and birth date, and reaches the dashboard; the next Google sign-in goes straight to the dashboard.
+- [ ] **Apple Pay and Google Pay at checkout.** Ziina's payment page offers both when the device and browser support them; the checkout form says so. Not seen on a real payment, because no Ziina intent has completed with money.
+- [ ] **Monthly progress note.** `/api/cron/progress` sends one email per linked parent on the 1st. Never run against real data.
 - [ ] **PWA install and offline page.** Needs HTTPS; verify on the Vercel URL in Chrome.
 - [ ] **Arabic headings across every page.** A visual pass at phone and desktop widths.
 - [ ] **Stripe refund.** Not exercised against a paid test order.
@@ -83,6 +86,7 @@ Each line says what was checked instead, and how to close it.
 - [x] **Resend DNS (2026-11-06).** DKIM at `resend._domainkey`; root SPF `v=spf1 include:amazonses.com ~all`; `_dmarc` `v=DMARC1; p=none; rua=mailto:dmarc@dhirwa.ae`. Reports go to `dmarc@dhirwa.ae`, received by Resend inbound; tighten to `p=quarantine` after two clean weeks. `RESEND_API_KEY` and `MAIL_FROM` are set.
 - [ ] **Ziina is the only gateway (AED).** Stripe and Paymob are hidden until `STRIPE_ENABLED=1` / `PAYMOB_ENABLED=1`. Set `ZIINA_API_KEY` and leave `ZIINA_ENABLED` on; register the webhook at `https://<domain>/api/webhooks/ziina` in Ziina's dashboard. Keep `ZIINA_TEST=0` on production — a test intent completes without money and the code refuses it there anyway. Confirm the merchant fee in writing; their public fee page does not state one.
 - [ ] **Support channels.** `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` — the only contacts contact masking lets through.
+- [ ] **Google sign-in.** Google Cloud console → Credentials → OAuth client (Web). Authorised redirect URI `https://dhirwa.ae/api/auth/callback/google` (and `http://localhost:3000/api/auth/callback/google` for local work). Put both values in Vercel as `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`. Until they are set, the provider and its button stay off and phone/password sign-in is unchanged. The OAuth consent screen needs the app's privacy policy URL and must be published, or only test users can sign in.
 - [ ] **One test purchase end-to-end** after DNS, because `APP_URL` changes the callbacks.
 
 ### Deployment and environment

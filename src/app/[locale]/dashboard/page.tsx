@@ -48,7 +48,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const ar = locale === "ar";
   const now = new Date();
   const userId = session.user.id;
-  const profile = await db.user.findUnique({ where: { id: userId }, select: { dateOfBirth: true } });
+  const profile = await db.user.findUnique({ where: { id: userId }, select: { dateOfBirth: true, phone: true, gradeId: true } });
+  // A first Google sign-in has an account but no phone or grade yet.
+  if (session.user.role === "STUDENT" && (!profile?.phone || !profile.gradeId)) redirect(`/${locale}/complete-profile`);
 
   const [entitlements, completedViews, lastView, orders, answers] = await Promise.all([
     db.entitlement.findMany({

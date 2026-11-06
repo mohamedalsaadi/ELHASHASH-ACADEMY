@@ -907,3 +907,48 @@ All of the following is in the working tree, **not committed or deployed**. The 
   - Slow pages: admin/teachers 1.7 s, dashboard 1.6 s, teacher 1.4 s.
   - The admin/catalog HTML is 468 KB.
   - 11 tap targets on the home page are under 44 px.
+
+## 2026-11-06: Google sign-in, wallet hint, monthly progress note, receipts list
+
+Committed; not deployed.
+
+**Google sign-in**
+- `src/auth.ts` adds the Google provider only when `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` are both set.
+- An existing account is matched by email; Google's verification also settles an earlier unverified signup.
+- An unknown Google email creates a STUDENT row with a random password, so credentials sign-in stays closed
+  until a password is chosen.
+- That account has no phone or grade, so `/dashboard` redirects it to the new `/complete-profile` page:
+  phone, grade, birth date, and guardian name, email and consent under 18. The guardian gets the same
+  verification mail as a normal signup.
+- `/signin` shows the Google button and an "or" rule above the phone form. `AUTH_GOOGLE_ID` and
+  `AUTH_GOOGLE_SECRET` are now documented in `.env.example`; creating the OAuth client is owner action 3 in
+  `docs/launch-checklist.md`.
+
+**Apple Pay and Google Pay**
+- No code: Ziina owns the payment page and offers both wallets when the device and browser support them.
+  Their Payment Intent API has no field to select a method, so the app cannot add or force one.
+- `/checkout` says that under the method list when the gateway is Ziina.
+
+**Lifecycle email**
+- `/api/cron/progress`, monthly on the 1st: one email per linked parent covering the previous month, with a
+  line per child (lessons completed, homework submitted and its average, exams and their average, reviews due).
+- The in-app notification is the idempotency key, so a re-run for the same parent and month sends nothing. A
+  failed email deletes the note so the next run retries.
+- This is the first lifecycle mail since the reminders route was removed on 2026-11-05.
+
+**Receipts**
+- `/account` lists the last 20 paid or refunded orders the user owns or benefits from, with the invoice number,
+  the Dubai date, the amount including VAT, a link to the PDF and a link to the order.
+
+**Fixed on review**
+- The `/signin` error copy said no account used that email, which contradicts the auto-create path. The key is
+  now `googleFailed`, with text that matches a failed Google handshake in both locales.
+- The new dashboard guard bounced any account without a grade, so instructors and admins were sent to
+  `/complete-profile`. It now applies to students only, and that page sends admin home to `/admin`.
+- Four tests cover the profile schema: an adult needs no guardian, a minor needs consent and guardian details,
+  under 13 is refused, and a phone the rest of the app rejects is refused here too.
+
+**Open**
+- Deploy, which needs the owner's approval.
+- Google sign-in was not exercised against a real OAuth client (no keys yet).
+- No Ziina intent has completed with money, so neither the wallets nor the receipt mail was seen end to end.

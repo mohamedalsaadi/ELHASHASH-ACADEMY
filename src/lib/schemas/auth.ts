@@ -58,3 +58,29 @@ export const signUpSchema = z
 
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
+
+/** A Google sign-in creates the row; this fills the phone, grade and guardian fields. */
+export const completeProfileSchema = z
+  .object({
+    phone: phoneSchema,
+    gradeId: z.string().min(1),
+    dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate"),
+    guardianName: z.string().trim().min(2).max(80).optional(),
+    guardianEmail: z.email().trim().toLowerCase().optional(),
+    guardianConsent: z.coerce.boolean().default(false),
+  })
+  .superRefine((d, ctx) => {
+    const dob = parseBirthDate(d.dateOfBirth);
+    if (!dob) {
+      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "invalid_birthdate" });
+      return;
+    }
+    const age = ageOn(dob);
+    if (age < 13) {
+      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "too_young" });
+      return;
+    }
+    if (age < 18 && (!d.guardianConsent || !d.guardianName || !d.guardianEmail)) {
+      ctx.addIssue({ code: "custom", path: ["guardianConsent"], message: "guardian_required" });
+    }
+  });

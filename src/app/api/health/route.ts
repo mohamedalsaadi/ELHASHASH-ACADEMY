@@ -24,6 +24,8 @@ const REQUIRED_COLUMNS: [string, string][] = [
   ["LedgerEntry", "instructorPayout"],
   ["User", "dateOfBirth"],
   ["GuardianConsent", "verifiedAt"],
+  ["Sku", "aedPrice"],
+  ["OrderItem", "displayPrice"],
 ];
 const REQUIRED_TABLES = ["GuardianConsent", "AiRun", "Referral", "ReferralCode", "Document", "TeacherStatement"];
 

@@ -57,6 +57,9 @@ type SnapshotLine = {
   platformDiscount: number;
   vat: number;
   lineTotal: number;
+  /** The local list price the buyer saw, when the sale was charged in AED. */
+  displayPrice?: number | null;
+  displayCurrency?: string | null;
 };
 
 /**
@@ -107,6 +110,8 @@ export async function issueDocument(orderId: string, kind: DocumentKind = "INVOI
       platformDiscount: i.platformDiscount,
       vat: 0,
       lineTotal: 0,
+      displayPrice: i.displayPrice,
+      displayCurrency: i.displayCurrency,
     };
   });
   const vatShares = allocate(order.vat, lines.map((l) => l.net));

@@ -114,6 +114,12 @@ Complete set the app reads, for Vercel **Production and Preview**:
 ### Product and legal
 
 - [ ] **Legal entity and address** in `/terms`, `/privacy`, `/refund` — they must read "ذروة (Dhirwa), UAE" (the legal pages are owned by Content/SEO; check they were renamed); add the licence number and address.
+- [ ] **AED price on every package.** Model 1 charges every market in AED. Set the “AED price (charged)” on
+  each package and rental in Admin → course. A package without one is display-only and shows “payment opens
+  soon”. The local price is the reference, not the charge.
+- [ ] **Ziina international cards.** Confirm in writing that international cards are enabled, the exact
+  international-card fee (about 4.1% + AED 1), and whether Egyptian-issued cards are accepted. Factor the fee
+  into the platform share; the ledger does not record gateway fees.
 - [ ] **Seller identity for documents.** Fill `sellerLegalName`, `sellerAddress` and `sellerLicenceNo` in Admin → Settings. Add the TRN to the UAE country row in Admin → Catalog. Documents omit a missing line; they never print a placeholder.
 - [ ] **VAT registration.** Do not tick the master VAT switch or the UAE country switch until the TRN is issued. The rate and TRN then print on every tax invoice.
 - [ ] **Corporate-tax contribution.** Confirm the 9% base with the accountant. The switch is off; when on, it deducts from the teacher’s share and appears only on statements.

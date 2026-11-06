@@ -367,6 +367,8 @@ model Sku {
   accessType    AccessType
   price         Int
   currency      Currency
+  /// The AED price charged to every market. Null means the package is display-only until the owner sets it.
+  aedPrice      Int?
   saleFrom      DateTime?
   saleTo        DateTime?
   discountPrice Int?
@@ -570,6 +572,9 @@ model OrderItem {
   price   Int
   /// The platform-funded part of this line; the buyer pays price - platformDiscount.
   platformDiscount Int @default(0)
+  /// The local list price shown to the buyer, copied for audit and the receipt reference. Null on AED sales.
+  displayPrice    Int?
+  displayCurrency Currency?
 
   order  Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   sku    Sku           @relation(fields: [skuId], references: [id], onDelete: Restrict)

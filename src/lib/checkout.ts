@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { effectivePrice, price, PricingError } from "@/lib/pricing-engine";
+import { aedPriceOf, price, PricingError } from "@/lib/pricing-engine";
 
 /** Loads purchasable SKUs and active bundle rules, then prices them. Throws PricingError on an invalid cart. */
 export async function priceSkus(skuIds: string[], now = new Date()) {
@@ -32,17 +32,22 @@ export async function priceSkus(skuIds: string[], now = new Date()) {
     console.warn(`[pricing] SKU currency differs from its course country: ${detail}`);
   }
   const unique = new Set(skuIds);
-  const priced = price(
-    skus.map((s) => ({
+  // Model 1: every market is charged in AED. The SKU's local price stays for display; a non-AED
+  // package without an AED price cannot be bought online yet.
+  const cart = skus.map((s) => {
+    const amount = aedPriceOf(s, now);
+    if (amount == null) throw new PricingError("price_unavailable");
+    return {
       skuId: s.id,
       courseId: s.courseId,
       subjectId: s.course.subjectId,
       accessType: s.accessType,
-      price: effectivePrice(s, now),
-      currency: s.currency,
-      saleFrom: s.saleFrom,
-      saleTo: s.saleTo,
-    })),
+      price: amount,
+      currency: "AED" as const,
+    };
+  });
+  const priced = price(
+    cart,
     rules.map((r) => ({ id: r.id, percentOff: r.percentOff, minSubjects: r.minSubjects, subjectIds: r.subjects.map((s) => s.id) })),
     now,
   );
@@ -51,5 +56,6 @@ export async function priceSkus(skuIds: string[], now = new Date()) {
     skus: new Map(skus.map((s) => [s.id, s])),
     missing: skus.length !== unique.size,
     countryCode: skus[0]?.course.grade?.country.code ?? null,
+    now,
   };
 }

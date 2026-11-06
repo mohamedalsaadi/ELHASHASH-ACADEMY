@@ -11,7 +11,7 @@ import { resolveDiscount } from "@/lib/referral";
 import { activeGateway } from "@/lib/gateway";
 import { formatMoney } from "@/lib/format";
 import { getFinanceConfig } from "@/lib/platform-settings";
-import { applyCoupon, applyPlatformDiscount, PricingError } from "@/lib/pricing-engine";
+import { applyCoupon, applyPlatformDiscount, effectivePrice, PricingError } from "@/lib/pricing-engine";
 import { taxConfigFor, vatFor } from "@/lib/tax";
 import { PayForm } from "./PayForm";
 
@@ -118,8 +118,16 @@ export default async function CheckoutPage({
       : null;
   const needsPhone = children !== null && children.length === 0;
 
-  const { skus } = result;
+  const { skus, now } = result;
   const money = (n: number) => formatMoney(n, priced.currency, locale);
+  const localOf = (skuId: string) => {
+    const sku = skus.get(skuId);
+    if (!sku) return null;
+    const list = effectivePrice(sku, now);
+    if (sku.currency !== "AED") return { amount: list, currency: sku.currency };
+    // An AED package whose explicit AED charge differs from its list price still shows both.
+    return sku.aedPrice != null && sku.aedPrice !== list ? { amount: list, currency: "AED" as const } : null;
+  };
   const bundle = priced.discount - priced.couponDiscount;
   const title = (id: string) => {
     const s = skus.get(id)!;
@@ -132,12 +140,18 @@ export default async function CheckoutPage({
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
       <section className="card grid gap-4 p-6">
         <ul className="grid gap-2">
-          {priced.lines.map((l) => (
-            <li key={l.skuId} className="flex justify-between gap-4">
-              <span>{title(l.skuId)}</span>
-              <span className="num">{money(l.price)}</span>
-            </li>
-          ))}
+          {priced.lines.map((l) => {
+            const local = localOf(l.skuId);
+            return (
+              <li key={l.skuId} className="flex justify-between gap-4">
+                <span className="grid gap-0.5">
+                  <span>{title(l.skuId)}</span>
+                  {local && <span className="text-label text-ink-muted">{t("localPrice", { price: formatMoney(local.amount, local.currency, locale) })}</span>}
+                </span>
+                <span className="num">{money(l.price)}</span>
+              </li>
+            );
+          })}
         </ul>
         <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-t border-hairline pt-3">
           <dt className="text-ink-muted">{t("subtotal")}</dt>
@@ -169,6 +183,7 @@ export default async function CheckoutPage({
           <dt className="font-display font-semibold">{t("total")}</dt>
           <dd className="num font-semibold">{money(payable)}</dd>
         </dl>
+        <p className="text-small text-ink-muted">{t("chargedInAed")}</p>
 
         <form method="get" className="flex flex-wrap items-end gap-2 border-t border-hairline pt-4">
           {skuIds.map((id) => (

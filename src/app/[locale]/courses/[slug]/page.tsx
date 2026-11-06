@@ -20,7 +20,7 @@ import { liveApprovedOn } from "@/lib/live";
 import { readiness } from "@/lib/readiness";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
-import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
+import { aedPriceOf, cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
 import { alternates, siteUrl } from "@/lib/seo";
 import { ProgressBar } from "@/components/ui/progress";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -240,7 +240,9 @@ export default async function CoursePage({
     if (v?.savePct && v.savePct > 0) notes.push({ text: tp("save", { pct: v.savePct }), good: true });
     const pct = discountPercent(s, now);
     if (pct !== null) notes.push({ text: t("percentOff", { pct }), good: true });
-    if (!canCharge(s.currency)) notes.push({ text: t("paySoon") });
+    const aed = aedPriceOf(s, now);
+    if (aed == null || !canCharge("AED")) notes.push({ text: t("paySoon") });
+    else if (aed !== price) notes.push({ text: t("chargedInAed", { price: formatMoney(aed, "AED", locale) }) });
     return { id: s.id, label, price: formatMoney(price, s.currency, locale), was: pct !== null ? formatMoney(s.price, s.currency, locale) : undefined, notes };
   };
   const zone = courseZone(course);
@@ -277,6 +279,7 @@ export default async function CoursePage({
   // Bahrain's red is too light for white; it carries ink (as on the map).
   const inkOnLine = course.grade?.country.code === "BH";
   const buyFrom = showPlans && level === "none" && !lapsed ? cheapestSku(single ? [...course.skus, single] : course.skus, now) : null;
+  const buyAed = buyFrom ? aedPriceOf(buyFrom, now) : null;
   const headline = pick(ar, course.headlineAr, course.headlineEn);
   const desc = pick(ar, course.descAr, course.descEn);
 
@@ -352,7 +355,10 @@ export default async function CoursePage({
                 <span className="flex items-baseline gap-2">
                   <span className="text-small text-ink-muted">{t("from")}</span>
                   <span className="num font-display text-h3 font-bold">{formatMoney(effectivePrice(buyFrom, now), buyFrom.currency, locale)}</span>
-                  {!canCharge(buyFrom.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                  {buyAed != null && buyAed !== effectivePrice(buyFrom, now) && (
+                    <span className="text-label text-ink-muted">{t("chargedInAed", { price: formatMoney(buyAed, "AED", locale) })}</span>
+                  )}
+                  {buyAed == null && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
                 </span>
               </>
             ) : null}
@@ -501,6 +507,7 @@ export default async function CoursePage({
                       const open = opens(entry);
                       const done = completed.has(l.id);
                       const rent = cheapestSku(l.skus, now);
+                      const rentAed = rent ? aedPriceOf(rent, now) : null;
                       const state = done ? "done" : currentView?.lessonId === l.id ? "current" : open ? "open" : level !== "none" ? "lockedPlan" : "locked";
                       return (
                         <li key={l.id}>
@@ -518,7 +525,11 @@ export default async function CoursePage({
                                   <Link href={{ pathname: "/checkout", query: { sku: rent.id } }} className="btn btn-outline px-3 py-1.5 text-small">
                                     {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span>
                                   </Link>
-                                  {!canCharge(rent.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                                  {rentAed == null || !canCharge("AED") ? (
+                                    <span className="text-label text-ink-muted">{t("paySoon")}</span>
+                                  ) : rentAed !== effectivePrice(rent, now) ? (
+                                    <span className="text-label text-ink-muted">{t("chargedInAed", { price: formatMoney(rentAed, "AED", locale) })}</span>
+                                  ) : null}
                                 </span>
                               ) : (
                                 <span className="text-label">{t("liveSubscribers")}</span>
@@ -561,6 +572,7 @@ export default async function CoursePage({
           <ul className="grid gap-3">
             {live.map((l) => {
               const seat = l.sku?.active && (!l.sku.saleTo || l.sku.saleTo > now) ? l.sku : null;
+              const seatAed = seat ? aedPriceOf(seat, now) : null;
               const canJoin = staff || active.some((g) => opensLive(g, l.id, now));
               const phase = livePhase(l.startsAt, l.durationMin, now);
               const opensNow = canJoin && roomOpensAt(l.startsAt, LIVE_LEAD_MIN.student) <= now;
@@ -585,7 +597,11 @@ export default async function CoursePage({
                           <Link href={{ pathname: "/checkout", query: { sku: seat.id } }} className="btn btn-outline px-3 py-1.5 text-small">
                             {t("liveSeat")} · <span className="num">{formatMoney(effectivePrice(seat, now), seat.currency, locale)}</span>
                           </Link>
-                          {!canCharge(seat.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                          {seatAed == null || !canCharge("AED") ? (
+                            <span className="text-label text-ink-muted">{t("paySoon")}</span>
+                          ) : seatAed !== effectivePrice(seat, now) ? (
+                            <span className="text-label text-ink-muted">{t("chargedInAed", { price: formatMoney(seatAed, "AED", locale) })}</span>
+                          ) : null}
                         </span>
                       ) : (
                         <span className="text-ink-muted">{t("liveSubscribers")}</span>
@@ -603,7 +619,9 @@ export default async function CoursePage({
         <section id="packages" className="grid gap-4">
           <h2 className="font-display text-h2 font-bold">{t("upgradeTitle")}</h2>
           <ul className="grid gap-3">
-            {upgrades.map((s) => (
+            {upgrades.map((s) => {
+              const aed = aedPriceOf(s, now);
+              return (
               <li key={s.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`planKind.${s.accessType}`)}</span>
@@ -614,14 +632,19 @@ export default async function CoursePage({
                 <div className="flex items-center gap-3">
                   <span className="grid justify-items-end gap-0.5">
                     <span className="num font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
-                    {!canCharge(s.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                    {aed == null || !canCharge("AED") ? (
+                      <span className="text-label text-ink-muted">{t("paySoon")}</span>
+                    ) : aed !== effectivePrice(s, now) ? (
+                      <span className="text-label text-ink-muted">{t("chargedInAed", { price: formatMoney(aed, "AED", locale) })}</span>
+                    ) : null}
                   </span>
                   <Link href={{ pathname: "/checkout", query: { sku: s.id } }} className="btn btn-outline px-3 py-1.5 text-small">
                     {t("upgrade")}
                   </Link>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
       )}
@@ -696,7 +719,9 @@ export default async function CoursePage({
         <section id={single || months.length > 0 || terms.length > 0 ? undefined : "packages"} className="grid gap-4">
           <h2 className="font-display text-h2 font-bold">{tp("other")}</h2>
           <ul className="grid gap-3">
-            {others.map((s) => (
+            {others.map((s) => {
+              const aed = aedPriceOf(s, now);
+              return (
               <li key={s.id} className="card flex flex-wrap items-center justify-between gap-4 p-4">
                 <div className="grid gap-1">
                   <span className="font-display font-semibold">{t(`access.${s.accessType}`, { days: s.accessDays ?? 0 })}</span>
@@ -708,7 +733,11 @@ export default async function CoursePage({
                       {discountPercent(s, now) !== null && <s className="num text-small text-ink-muted">{formatMoney(s.price, s.currency, locale)}</s>}
                       <span className="num text-h3 font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
                     </span>
-                    {!canCharge(s.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                    {aed == null || !canCharge("AED") ? (
+                      <span className="text-label text-ink-muted">{t("paySoon")}</span>
+                    ) : aed !== effectivePrice(s, now) ? (
+                      <span className="text-label text-ink-muted">{t("chargedInAed", { price: formatMoney(aed, "AED", locale) })}</span>
+                    ) : null}
                   </span>
                   <Link
                     href={{ pathname: "/checkout", query: { sku: s.id } }}
@@ -718,7 +747,8 @@ export default async function CoursePage({
                   </Link>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
       )}

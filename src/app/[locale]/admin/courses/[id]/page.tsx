@@ -261,6 +261,18 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                   lectures={lecturesIn(course.units, s)}
                   single={single}
                 />
+                <label className={label}>
+                  {t("aedPrice")}
+                  <input
+                    name="aedPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={s.aedPrice != null ? s.aedPrice / minorPerUnit("AED") : ""}
+                    dir="ltr"
+                    className={`${field} num`}
+                  />
+                </label>
                 {s.accessType === "SEMESTER" && (
                   <label className={label}>
                     {t("term")}
@@ -326,6 +338,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                 </label>
               </div>
               <p className="text-label text-ink-muted">{t("discountHint")}</p>
+              <p className="text-label text-ink-muted">{t("aedHint")}</p>
               <label className={check}>
                 <input type="checkbox" name="active" defaultChecked={s.active} className="size-4" />
                 {t("activeHint")}
@@ -363,7 +376,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                   const s = rentalOf.get(l.id);
                   const title = <span className="font-semibold">{pick(locale === "ar", l.titleAr, l.titleEn)}</span>;
                   return s ? (
-                    <form key={`${s.id}:${renderedAt}`} action={updateSku} className={`${tile} sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end`}>
+                    <form key={`${s.id}:${renderedAt}`} action={updateSku} className={`${tile} sm:grid-cols-[1fr_auto_auto_auto_auto_auto] sm:items-end`}>
                       <input type="hidden" name="id" value={s.id} />
                       <input type="hidden" name="saleFrom" value="" />
                       <input type="hidden" name="saleTo" value="" />
@@ -371,6 +384,18 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                       <label className={label}>
                         {t("price", { currency: s.currency })}
                         <input name="price" type="number" min="0" step="0.01" defaultValue={s.price / minorPerUnit(s.currency)} required dir="ltr" className={`${field} num w-28`} />
+                      </label>
+                      <label className={label}>
+                        {t("aedPrice")}
+                        <input
+                          name="aedPrice"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          defaultValue={s.aedPrice != null ? s.aedPrice / minorPerUnit("AED") : ""}
+                          dir="ltr"
+                          className={`${field} num w-28`}
+                        />
                       </label>
                       <label className={label}>
                         {t("accessDays")}

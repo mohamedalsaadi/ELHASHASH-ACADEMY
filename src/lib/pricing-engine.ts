@@ -127,12 +127,21 @@ export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedC
   };
 }
 
-/** The price charged today: the temporary price inside [discountFrom, discountTo), otherwise the normal price. */
+/** The price charged today in the SKU's own currency. */
 export function effectivePrice(s: Priceable, now: Date): number {
   if (s.discountPrice == null || s.discountPrice >= s.price) return s.price;
   if (s.discountFrom && now < s.discountFrom) return s.price;
   if (s.discountTo && now >= s.discountTo) return s.price;
   return s.discountPrice;
+}
+
+/**
+ * What is charged in AED. An explicit AED price wins; a SKU already priced in AED uses its own
+ * price. Null means the package has no AED price yet and cannot be sold online.
+ */
+export function aedPriceOf(s: Priceable & { currency: Currency; aedPrice?: number | null }, now: Date): number | null {
+  if (s.aedPrice != null) return s.aedPrice;
+  return s.currency === "AED" ? effectivePrice(s, now) : null;
 }
 
 /** The percent shown on a badge, or null when the temporary price is not active. */

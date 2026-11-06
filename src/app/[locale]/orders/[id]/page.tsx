@@ -128,7 +128,14 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
             {o.items.map((i) => (
               <tr key={i.id} className="border-b border-dashed border-rule">
                 <td className="min-w-0 py-2 break-words">
-                  {name(i.sku.liveSession ?? i.sku.lesson ?? i.sku.course)} · {tc(`access.${i.sku.accessType}`, { days: i.sku.accessDays ?? 0 })}
+                  <span className="grid gap-0.5">
+                    <span>
+                      {name(i.sku.liveSession ?? i.sku.lesson ?? i.sku.course)} · {tc(`access.${i.sku.accessType}`, { days: i.sku.accessDays ?? 0 })}
+                    </span>
+                    {i.displayPrice != null && i.displayCurrency && (
+                      <span className="text-label text-ink-muted">{t("localPrice", { price: formatMoney(i.displayPrice, i.displayCurrency, locale) })}</span>
+                    )}
+                  </span>
                 </td>
                 <td className="num py-2 text-end">{money(i.price - i.platformDiscount)}</td>
               </tr>
@@ -165,6 +172,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
           <dt className="font-display font-semibold">{t("total")}</dt>
           <dd className="num font-semibold">{money(o.total + o.vat)}</dd>
         </dl>
+
+        <p className="text-small text-ink-muted">{t("chargedInAed")}</p>
 
         <div className="grid gap-1 border-t border-hairline pt-3 text-label text-ink-muted">
           <span className="font-semibold text-ink">{doc?.sellerName ?? "Dhirwa (ذروة)"}</span>

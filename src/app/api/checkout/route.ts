@@ -12,7 +12,7 @@ import { activeGateway, stripeTestKeyInProduction, stripeUnitAmount, type Method
 import { createIntention } from "@/lib/paymob";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
-import { applyCoupon, applyPlatformDiscount, PricingError } from "@/lib/pricing-engine";
+import { applyCoupon, applyPlatformDiscount, effectivePrice, PricingError } from "@/lib/pricing-engine";
 import { TERMS_VERSION } from "@/lib/legal";
 import { isLimited } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/schemas/checkout";
@@ -104,8 +104,20 @@ export async function POST(req: Request) {
     if (e instanceof PricingError) return NextResponse.json({ error: e.message }, { status: 400 });
     throw e;
   }
-  const { skus, missing } = result;
+  const { skus, missing, now } = result;
   if (missing) return NextResponse.json({ error: "sku_unavailable" }, { status: 400 });
+
+  // The local price is the buyer's reference. It is copied onto the line so the receipt still shows
+  // what they saw after a later price edit.
+  const displayOf = (skuId: string) => {
+    const sku = skus.get(skuId);
+    if (!sku) return { displayPrice: null, displayCurrency: null };
+    const list = effectivePrice(sku, now);
+    if (sku.currency !== "AED" || (sku.aedPrice != null && sku.aedPrice !== list)) {
+      return { displayPrice: list, displayCurrency: sku.currency };
+    }
+    return { displayPrice: null, displayCurrency: null };
+  };
 
   // The code is resolved again here, never trusted from the browser. A referral is a platform-funded
   // discount: teacher pay stays calculated on the pre-discount line.
@@ -179,6 +191,7 @@ export async function POST(req: Request) {
             skuId: l.skuId,
             price: l.price - l.discount - l.couponDiscount,
             platformDiscount: l.platformDiscount,
+            ...displayOf(l.skuId),
           })),
         },
       },

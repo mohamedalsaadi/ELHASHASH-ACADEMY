@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import type { cardInclude } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
 import { canCharge } from "@/lib/gateway";
-import { cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
+import { aedPriceOf, cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
 import type { Prisma } from "@/generated/prisma/client";
 
 export type CardCourse = Prisma.CourseGetPayload<{ include: ReturnType<typeof cardInclude> }>;
@@ -18,6 +18,9 @@ export function CourseCard({ course: c, locale }: { course: CardCourse; locale: 
   const from = cheapestSku(c.skus, now);
   // Only a sale the SKU really carries right now; never a made-up "was" price.
   const off = from ? discountPercent(from, now) : null;
+  // Model 1: every market is charged in AED. A non-AED package needs an explicit AED price.
+  const aed = from ? aedPriceOf(from, now) : null;
+  const buyable = canCharge("AED") && aed != null;
   const sessions = c.units.reduce((n, u) => n + u._count.lessons, 0);
   const line = c.grade ? `var(--color-line-${c.grade.country.code.toLowerCase()}, var(--color-primary))` : "var(--color-primary)";
   return (
@@ -57,7 +60,10 @@ export function CourseCard({ course: c, locale }: { course: CardCourse; locale: 
               <span className="num font-display text-h2 leading-none font-bold">{formatMoney(effectivePrice(from, now), from.currency, locale)}</span>
               {off !== null && <s className="num text-small text-ink-muted">{formatMoney(from.price, from.currency, locale)}</s>}
             </span>
-            {!canCharge(from.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+            {!buyable && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+            {aed != null && aed !== effectivePrice(from, now) && (
+              <span className="text-label text-ink-muted">{t("chargedInAed", { price: formatMoney(aed, "AED", locale) })}</span>
+            )}
           </span>
           {off !== null && (
             <span className="rounded-full bg-marker px-2.5 py-0.5 text-label font-bold text-ink">{t("percentOff", { pct: off })}</span>

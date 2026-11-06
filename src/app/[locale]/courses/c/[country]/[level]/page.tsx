@@ -9,7 +9,7 @@ import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { canCharge } from "@/lib/gateway";
-import { cheapestSku, effectivePrice } from "@/lib/pricing-engine";
+import { aedPriceOf, cheapestSku, effectivePrice } from "@/lib/pricing-engine";
 import { alternates } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +65,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
     const courses = grade.courses.filter((c) => c.subjectId === subject.id);
     // Every teacher's course of this subject lives on the subject page; the tile shows how many and the lowest price.
     const from = cheapestSku(courses.flatMap((c) => c.skus), now);
-    return { subject, count: courses.length, from };
+    return { subject, count: courses.length, from, aed: from ? aedPriceOf(from, now) : null };
   });
   const live = tiles.filter((x) => x.count > 0).length;
   const card = "flex h-full min-h-44 flex-col gap-3 p-4";
@@ -97,7 +97,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
             </EmptyState>
           </li>
         )}
-        {tiles.map(({ subject, count, from }) => {
+        {tiles.map(({ subject, count, from, aed }) => {
           const label = (
             <span className="grid">
               <span className="font-display font-bold">{pick(ar, subject.nameAr, subject.nameEn)}</span>
@@ -121,7 +121,11 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
                     {from && (
                       <span className="grid justify-items-end gap-0.5">
                         <span className="num font-bold">{formatMoney(effectivePrice(from, now), from.currency, locale)}</span>
-                        {!canCharge(from.currency) && <span className="text-label font-normal text-ink-muted">{t("paySoon")}</span>}
+                        {aed == null || !canCharge("AED") ? (
+                          <span className="text-label font-normal text-ink-muted">{t("paySoon")}</span>
+                        ) : aed !== effectivePrice(from, now) ? (
+                          <span className="text-label font-normal text-ink-muted">{t("chargedInAed", { price: formatMoney(aed, "AED", locale) })}</span>
+                        ) : null}
                       </span>
                     )}
                   </span>

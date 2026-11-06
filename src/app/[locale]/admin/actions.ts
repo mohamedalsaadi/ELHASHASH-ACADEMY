@@ -187,6 +187,7 @@ export async function updateSku(form: FormData) {
       saleFrom: z.string(),
       saleTo: z.string(),
       discountPrice: optionalMoney,
+      aedPrice: optionalMoney.optional(),
       discountFrom: z.string().default(""),
       discountTo: z.string().default(""),
       term: term.optional(),
@@ -208,6 +209,8 @@ export async function updateSku(form: FormData) {
       saleFrom: cairoDay(d.saleFrom, "start", timeZone),
       saleTo: cairoDay(d.saleTo, "end", timeZone),
       discountPrice: d.discountPrice === null ? null : toMinor(d.discountPrice, currency),
+      // Model 1: every market is charged in AED. Empty means the package is not sold online.
+      aedPrice: d.aedPrice === undefined ? undefined : d.aedPrice === null ? null : toMinor(d.aedPrice, "AED"),
       discountFrom: cairoDay(d.discountFrom, "start", timeZone),
       discountTo: cairoDay(d.discountTo, "end", timeZone),
       term: d.term,

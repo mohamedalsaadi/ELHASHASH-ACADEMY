@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCoupon, applyPlatformDiscount, cheapestSku, discountPercent, effectivePrice, price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
+import { aedPriceOf, applyCoupon, applyPlatformDiscount, cheapestSku, discountPercent, effectivePrice, price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
 
 const now = new Date("2026-05-01T12:00:00Z");
 
@@ -199,6 +199,20 @@ describe("sale prices", () => {
     const egp = { id: "egp", price: 4000, currency: "EGP" as const };
     expect(cheapestSku([aed, egp], now)?.id).toBe("aed");
     expect(cheapestSku([egp, aed], now)?.id).toBe("egp");
+  });
+});
+
+describe("aedPriceOf", () => {
+  it("uses an explicit AED price for a local-currency package", () => {
+    expect(aedPriceOf({ price: 50_000, currency: "SAR", aedPrice: 44_000 }, now)).toBe(44_000);
+  });
+
+  it("falls back to the SKU price when the package is already in AED", () => {
+    expect(aedPriceOf({ price: 50_000, currency: "AED" }, now)).toBe(50_000);
+  });
+
+  it("returns null when a non-AED package has no AED price", () => {
+    expect(aedPriceOf({ price: 50_000, currency: "EGP" }, now)).toBeNull();
   });
 });
 

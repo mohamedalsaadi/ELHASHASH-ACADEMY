@@ -24,6 +24,22 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: Model 1, every market charged in AED
+
+- **One charged currency.** `Sku.aedPrice` is the amount actually charged. A package already priced in AED
+  uses its own price when no explicit AED price is set. Every other package needs an AED price to be sold
+  online; without one the site shows “payment opens soon”.
+- **Checkout is AED.** `priceSkus` prices the cart in AED, so Ziina is the only gateway needed. The local
+  price stays on the course page and at checkout as a labelled reference. `OrderItem.displayPrice` and
+  `displayCurrency` keep what the buyer saw for the receipt and audit.
+- **Admin.** The package form and the rental form now have an “AED price (charged)” field. Leaving it empty
+  pauses online sale for that package. The local price is unchanged.
+- **Copy.** Checkout says the local list price, the AED charge, and that the buyer’s bank may add an FX fee.
+  Receipts show the local reference and state the AED charge.
+- **Open.** Set an AED price on every sellable package. Confirm Ziina’s international-card support and the
+  exact international fee in writing (about 4.1% + AED 1). The migration `20261109205000_aed_charged_prices`
+  is written but not deployed.
+
 ## 2026-11-06: Market currency, referrals, receipts and tax, simple parent purchase, age assurance
 
 - **Market currency.** `activeGateway` is the one truth; Stripe is now opt-in per currency with `STRIPE_CURRENCIES`

@@ -952,3 +952,11 @@ Committed; not deployed.
 - Deploy, which needs the owner's approval.
 - Google sign-in was not exercised against a real OAuth client (no keys yet).
 - No Ziina intent has completed with money, so neither the wallets nor the receipt mail was seen end to end.
+
+## 2026-11-07: The intro plays on phones again
+
+- `public/intro-guard.js` no longer skips viewports 767 px or narrower. The gate went in on 2026-11-06 with
+  the phone hero change; the owner asked for the intro back.
+- Still once per tab session, still off under reduced motion, still skipped by `?intro=off`.
+- `e2e/public.spec.ts` gains a phone test that opts back into motion, because the whole suite runs under
+  `reducedMotion: "reduce"` and could never catch this. It fails if a width gate returns.

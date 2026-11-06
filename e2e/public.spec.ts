@@ -40,3 +40,15 @@ test("no horizontal scroll on the home page", async ({ page, loc }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+// The rest of this suite runs under reduced motion, where the guard never fires. This one opts back in, so a
+// width or motion condition creeping back into intro-guard.js fails here instead of on the owner's phone.
+test.describe("the intro guard", () => {
+  test.use({ reducedMotion: "no-preference" });
+
+  test("plays on a phone viewport", async ({ page, loc }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/${loc}?intro=1`);
+    await expect(page.locator("html")).toHaveAttribute("data-intro", /play|run/);
+  });
+});

@@ -106,13 +106,14 @@
     },
     "promotions": "Offers",
     "noCountries": "Countries are being prepared. Check back soon.",
+    "trustLabel": "What you get",
     "trust": {
       "device": "One device per account, to protect lessons",
       "pay": "Secure card payment",
       "lang": "In Arabic and English"
     },
     "headline": "Every student has a <a>peak</a>. Start the climb.",
-    "lede": "Your country's best teachers in one place. Pick your grade and subject, and see every course, its sessions and price before you enrol.",
+    "lede": "Teachers who teach your country's curriculum, in one place. Pick your grade and subject, and see every course, its sessions and price before you enrol.",
     "ctaStart": "Find your course",
     "ctaParent": "I’m a parent",
     "mapLabel": "Course map: one trail per country",
@@ -162,7 +163,7 @@
       "cta": "See courses and prices",
       "faq": "Questions and answers"
     },
-    "eyebrow": "Egypt and the Gulf · Grades 1 to 12",
+    "eyebrow": "Egypt and the Gulf · Grades 10 to 12",
     "roles": {
       "title": "Everything a student and a parent need.",
       "student": {
@@ -192,7 +193,7 @@
       },
       "c2": {
         "k": "Stage two · The climb",
-        "t": "Learn with the best teachers",
+        "t": "Learn with teachers approved for your curriculum",
         "b": "Each teacher sets their course's sessions and price, and you see it all before you enrol."
       },
       "c3": {
@@ -341,6 +342,10 @@
     "search": "Search courses",
     "searchPlaceholder": "Subject, grade or course name",
     "lessonSearchPlaceholder": "Search this course's lessons",
+    "freeUnit": "First unit free",
+    "comingSoon": "Coming soon",
+    "freeLesson": "Free",
+    "tryFree": "Watch the first unit free",
     "searchButton": "Search",
     "searchResults": "{count, plural, =0 {No results} one {# result} other {# results}}",
     "searchEmpty": "Nothing matched. Try the subject or grade name, or browse the countries below.",
@@ -380,7 +385,7 @@
     "liveSubscribers": "For subscribers",
     "eyebrow": "Courses · National curriculum",
     "pickCountry": "Choose your <m>country</m>",
-    "pickCountryLede": "Grades 1 to 12, in your country’s curriculum and currency.",
+    "pickCountryLede": "Grades 10 to 12, in your country’s curriculum and currency.",
     "gradeCount": "{count, plural, one {# grade} other {# grades}}",
     "pickGrade": "{country} · Choose your <m>grade</m>",
     "gradeRange": "Grades {from}–{to}",
@@ -777,6 +782,7 @@
     "privacy": "Privacy",
     "faq": "FAQ",
     "legalNav": "Help and legal",
+    "accessibility": "Accessibility",
     "contact": "Contact us",
     "rights": "Dhirwa (ذروة), United Arab Emirates",
     "tagline": "Every lesson is a step toward the peak."
@@ -812,6 +818,9 @@
     "publicProfileHint": "This is shown to your students and parents on your public page, opened from the course page.",
     "displayName": "Display name",
     "bioAr": "Bio in Arabic",
+    "yearsTeaching": "Years teaching",
+    "qualification": "Qualification or school",
+    "yearsTeachingValue": "{years} years teaching",
     "bioEn": "Bio in English",
     "photo": "Profile photo",
     "coursesTaught": "Courses",
@@ -965,6 +974,7 @@
       "requests": "Requests",
       "support": "Support",
       "analytics": "Behaviour",
+      "funnel": "Funnel",
       "settings": "Settings"
     },
     "analyticsHint": "Last {days} days. Each step counts only people who also completed the earlier steps.",
@@ -1127,7 +1137,15 @@
         "ANSWERED": "Answered",
         "CLOSED": "Closed"
       }
-    }
+    },
+    "funnelTitle": "Last 30 days",
+    "funnelHint": "Each person is counted once per day per step, so these are people, not page views.",
+    "funnelStep": "Step",
+    "funnelCount": "People",
+    "funnelRate": "Of course views",
+    "funnelPaid": "Paid orders",
+    "funnelNoPaid": "No paid orders in this window.",
+    "event": {"course_viewed": "Viewed a course", "checkout_started": "Started checkout", "order_paid": "Paid", "signup_completed": "Created an account"}
   },
   "account": {
     "title": "My account",

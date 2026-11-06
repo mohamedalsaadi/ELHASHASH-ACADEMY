@@ -83,6 +83,36 @@ const ar: Section[] = [
       </p>
     ),
   },
+  {
+    h: "محتوى المدرّس وعملك",
+    body: (
+      <>
+        <p>
+          يبقى المحتوى الذي ينشره المدرّس ملكًا له، ويمنحنا ترخيصًا لعرضه وبثّه وترجمته داخل المنصة حتى يحذفه أو يغادر.
+          وتبقى إجاباتك وواجباتك ملكًا لك، وتمنحنا ترخيصًا لتخزينها وتصحيحها وعرضها لك ولولي أمرك المرتبط بحسابك فقط.
+        </p>
+        <p>لا نسجّل الحصص المباشرة. إن سجّلها المدرّس أو أي مشارك فيلزمه إبلاغنا وموافقة أولياء أمور الطلاب قبل ذلك.</p>
+      </>
+    ),
+  },
+  {
+    h: "الميزات المدعومة بالذكاء الاصطناعي",
+    body: (
+      <p>
+        قد يقترح الذكاء الاصطناعي درجة أو ردًّا مساعدًا. القرار النهائي للمدرّس أو لفريق الدعم، وقد يكون الاقتراح خاطئًا،
+        ولا يُعد نصيحة دراسية. لا تُستخدم إجابات الطالب في تدريب نماذج خارجية.
+      </p>
+    ),
+  },
+  {
+    h: "محتوى الغير وحقوق النشر",
+    body: (
+      <p>
+        تُعرض الفيديوهات عبر مزوّدين خارجيين (VdoCipher ويوتيوب) وتنطبق شروطهم أيضًا. إذا كنت صاحب حق وتعتقد أن محتوى
+        منشورًا يخالفه، راسلنا على <Mail /> بوصف العمل ورابطه، ونراجعه ونزيله عند ثبوت المخالفة.
+      </p>
+    ),
+  },
 ];
 
 const en: Section[] = [
@@ -161,6 +191,38 @@ const en: Section[] = [
       <p>
         These terms are governed by the laws of the United Arab Emirates. We may update them and will show the new date at
         the top of this page; using the site after an update means you accept it.
+      </p>
+    ),
+  },
+  {
+    h: "Teacher content and your work",
+    body: (
+      <>
+        <p>
+          A teacher keeps ownership of what they publish and gives us a licence to host, stream, translate and show it
+          on the platform until they delete it or leave. Your answers and homework stay yours, and you give us a
+          licence to store, mark and show them to you and to the guardian linked to your account.
+        </p>
+        <p>We do not record live sessions. If a teacher or a participant records one, they must tell us and get the agreement of the guardians of the students taking part.</p>
+      </>
+    ),
+  },
+  {
+    h: "AI-assisted features",
+    body: (
+      <p>
+        AI may suggest a mark or draft a reply. A teacher or the support team makes the decision, the suggestion can
+        be wrong, and it is not study advice. A student answer is not used to train outside models.
+      </p>
+    ),
+  },
+  {
+    h: "Third-party content and copyright",
+    body: (
+      <p>
+        Video is served by outside providers (VdoCipher and YouTube) and their terms apply too. If you own a right and
+        believe published content infringes it, email <Mail /> with the work and its link; we review it and remove it
+        where the claim holds.
       </p>
     ),
   },

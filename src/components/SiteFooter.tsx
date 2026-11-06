@@ -18,7 +18,7 @@ export async function SiteFooter() {
           <span>{t("tagline")}</span>
         </div>
         <nav aria-label={t("legalNav")} className="flex flex-wrap items-center gap-x-5">
-          {(["terms", "refund", "privacy", "faq", "contact"] as const).map((k) => (
+          {(["terms", "refund", "privacy", "accessibility", "faq", "contact"] as const).map((k) => (
             <Link key={k} href={`/${k}`} className={footLink}>
               {t(k)}
             </Link>

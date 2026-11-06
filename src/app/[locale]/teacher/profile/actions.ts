@@ -19,6 +19,8 @@ export async function updateTeacherProfile(form: FormData) {
       bioAr: z.string().trim().max(2000).default(""),
       bioEn: z.string().trim().max(2000).default(""),
       photoKey: z.string().trim().max(500).default(""),
+      yearsTeaching: z.coerce.number().int().min(1).max(60).optional().or(z.literal("").transform(() => undefined)),
+      qualification: z.string().trim().max(120).default(""),
     })
     .parse(Object.fromEntries(form));
 
@@ -33,7 +35,14 @@ export async function updateTeacherProfile(form: FormData) {
 
   await db.user.update({
     where: { id: me.id },
-    data: { name: d.name, bioAr: maskedBio(d.bioAr), bioEn: maskedBio(d.bioEn), ...photo },
+    data: {
+      name: d.name,
+      bioAr: maskedBio(d.bioAr),
+      bioEn: maskedBio(d.bioEn),
+      yearsTeaching: d.yearsTeaching ?? null,
+      qualification: d.qualification ? maskContacts(d.qualification).text : null,
+      ...photo,
+    },
   });
   revalidatePath("/[locale]/teacher", "layout");
   revalidatePath("/[locale]/teachers", "layout");

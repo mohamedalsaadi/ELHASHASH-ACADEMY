@@ -20,6 +20,8 @@ const getTeacher = cache((id: string) =>
       bioAr: true,
       bioEn: true,
       photoUrl: true,
+      yearsTeaching: true,
+      qualification: true,
       courses: { where: { published: true }, orderBy: { createdAt: "desc" }, include: cardInclude(new Date()) },
     },
   }),
@@ -68,6 +70,13 @@ export default async function PublicTeacherPage({ params }: { params: Promise<{ 
         <div className="grid gap-1">
           <h1 className="font-display text-display font-bold">{user.name}</h1>
           {subjects.length > 0 && <p className="font-display font-semibold text-pen">{subjects.join(" · ")}</p>}
+          {(user.yearsTeaching || user.qualification) && (
+            <p className="text-small text-ink-muted">
+              {[user.yearsTeaching ? t("yearsTeachingValue", { years: user.yearsTeaching }) : null, user.qualification]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
           {bio && (
             <p className="max-w-[60ch] text-small text-ink-muted" dir="auto">
               {bio}

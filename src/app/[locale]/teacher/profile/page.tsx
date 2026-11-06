@@ -24,7 +24,7 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
 
   const user = await db.user.findUniqueOrThrow({
     where: { id: me.id },
-    select: { name: true, bioAr: true, bioEn: true, photoUrl: true },
+    select: { name: true, bioAr: true, bioEn: true, photoUrl: true, yearsTeaching: true, qualification: true },
   });
 
   return (
@@ -48,6 +48,14 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
         <label className={label}>
           {t("bioEn")}
           <textarea name="bioEn" defaultValue={user.bioEn ?? ""} rows={4} maxLength={2000} dir="ltr" className={`${field} py-2`} />
+        </label>
+        <label className={label}>
+          {t("yearsTeaching")}
+          <input name="yearsTeaching" type="number" min={1} max={60} defaultValue={user.yearsTeaching ?? ""} className={`${field} num`} />
+        </label>
+        <label className={label}>
+          {t("qualification")}
+          <input name="qualification" maxLength={120} defaultValue={user.qualification ?? ""} dir="auto" className={field} />
         </label>
         <ImageUpload
           pathPrefix={avatarPrefix(me.id)}

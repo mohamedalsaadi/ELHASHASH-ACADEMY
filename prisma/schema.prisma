@@ -112,6 +112,9 @@ model User {
   bioEn           String?
   /// Live streaming is off for every teacher by default; an admin turns it on per teacher.
   liveApproved    Boolean   @default(false)
+  /// Public credentials a teacher fills in themselves. Shown on the teacher page so "who teaches" is checkable.
+  yearsTeaching   Int?
+  qualification   String?   @db.VarChar(120)
   createdAt       DateTime  @default(now())
 
   grade               Grade?                  @relation(fields: [gradeId], references: [id], onDelete: SetNull)
@@ -1302,6 +1305,23 @@ model PlatformSetting {
 
 /// A behaviour event. No foreign keys on purpose: inserts stay cheap and user deletion never blocks.
 /// `name` is one of the canonical names in src/lib/analytics.ts.
+/// One row per model call: what was run, on whose data, how many tokens, and whether it worked.
+/// Deliberately never stores the prompt or the reply: a minor's words do not belong in a log.
+model AiRun {
+  id        String   @id @default(cuid())
+  kind      String
+  actorId   String?
+  studentId String?
+  model     String
+  tokensIn  Int      @default(0)
+  tokensOut Int      @default(0)
+  status    String   @default("OK")
+  createdAt DateTime @default(now())
+
+  @@index([kind, createdAt])
+  @@index([studentId, createdAt])
+}
+
 model AnalyticsEvent {
   id        String   @id @default(cuid())
   name      String

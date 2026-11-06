@@ -15,7 +15,7 @@ const REQUIRED_COLUMNS: [string, string][] = [
   ["Course", "aiGrading"],
   ["LessonView", "confidence"],
 ];
-const REQUIRED_TABLES = ["GuardianConsent"];
+const REQUIRED_TABLES = ["GuardianConsent", "AiRun"];
 
 // Monitors poll this; the schema does not change between deploys, so a short cache is enough.
 const TTL_MS = 30_000;

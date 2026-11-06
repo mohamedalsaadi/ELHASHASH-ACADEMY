@@ -1,6 +1,7 @@
 // Contact-form tickets: stored, drafted by AI, answered by the owner. The draft is never sent on its own.
 import { z } from "zod";
 import { askJson } from "./ai";
+import { logAiRun } from "./ai-log";
 import { maskContacts } from "./contact-guard";
 import { db } from "./db";
 
@@ -39,6 +40,14 @@ export async function draftSupportReply(ticket: { topic: string; message: string
     schema: Draft,
     maxTokens: 1500,
   });
+  if (result) {
+    void logAiRun({
+      kind: "support_draft",
+      model: result.model,
+      tokensIn: result.usage?.input,
+      tokensOut: result.usage?.output,
+    });
+  }
   return result?.data ?? null;
 }
 

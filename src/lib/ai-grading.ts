@@ -4,6 +4,7 @@
 import { get } from "@vercel/blob";
 import { z } from "zod";
 import { askJson, type AiPart } from "./ai";
+import { logAiRun } from "./ai-log";
 import { db } from "./db";
 
 const MAX_FILES = 3;
@@ -88,6 +89,7 @@ export async function suggestGrade(submissionId: string): Promise<boolean> {
     select: {
       text: true,
       revision: true,
+      studentId: true,
       files: { select: { pathname: true, contentType: true } },
       assignment: { select: { title: true, instructions: true, maxScore: true } },
     },
@@ -95,6 +97,14 @@ export async function suggestGrade(submissionId: string): Promise<boolean> {
   if (!submission) return false;
   const result = await gradeWithAi({ ...submission.assignment, text: submission.text, files: submission.files });
   if (!result) return false;
+  // Usage used to be computed and thrown away, so nobody could say what grading costs.
+  void logAiRun({
+    kind: "grade",
+    model: result.model,
+    tokensIn: result.usage?.input,
+    tokensOut: result.usage?.output,
+    studentId: submission.studentId,
+  });
   // Only the revision that was marked: a resubmission while this ran must not inherit the old mark.
   await db.submission.updateMany({
     where: { id: submissionId, revision: submission.revision },

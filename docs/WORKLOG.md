@@ -24,6 +24,42 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: AI cost logging, teacher credentials, Terms clauses, accessibility, funnel
+
+- **AiRun.** Every model call now records kind, model, token counts, the student when a minor's work was sent, and
+  the outcome. Never the prompt or the reply. The table is in the health check, so a missing migration fails loudly.
+- **Teacher credentials.** Years teaching and a qualification, optional and masked like every public text, shown
+  under the teacher's name. "Who teaches my child" now has something behind it.
+- **Terms.** Three sections for what had none: teacher content stays the teacher's with a licence to host and
+  translate; student work stays the student's with a licence to mark and show it to them and their guardian; AI
+  output is a suggestion a human decides; third-party video and a copyright takedown contact.
+- **Superlative removed.** "Your country's best teachers" was unsubstantiated and aimed at parents; it now says
+  what is true, that teachers are approved for the curriculum.
+- **Accessibility statement** at `/accessibility`, linked from the footer and the sitemap, with what is in place,
+  what we do not control, and a five-day response promise.
+- **Funnel dashboard** at `/admin/funnel`: course views, checkout starts, orders paid attributed, and paid orders
+  by currency for the last 30 days. Each person is counted once per day per step, which the page says.
+
+## 2026-11-06: Conversion batch one (free unit, best value, phone hero, grades, signup)
+
+- **The free first unit is now visible and one click away.** The header carries "watch the first unit free"
+  beside Subscribe, the unit summary wears a "first unit free" badge, and free lessons say so in their row.
+  It was the strongest risk reversal on the site and nothing labelled it.
+- **"Best value" is computed, not asserted.** The badge now goes to whichever plan actually has the lowest
+  price per lecture, from `effectivePrice` and `lecturesIn`. The semester card had it unconditionally, next to
+  real savings numbers.
+- **The phone hero starts at the headline.** The intro is skipped below 768px and the top padding drops from
+  `min(80vw,20rem)` to `min(45vw,10rem)`, which was putting both CTAs below the fold on a 667px screen.
+- **The grade range is consistent.** Only grades 10 to 12 exist in the catalogue; the metadata said so and the
+  hero said "grades 1 to 12". The hero and the catalogue lede now say 10 to 12. Dashed grade stations are no
+  longer links: a parent who tapped one landed on "no subjects yet".
+- **Signup keeps the guardians consent tick** after a failed submit. The password is still not echoed back into
+  the HTML, which is why that field alone is re-entered.
+- **The three trust reassurances already in the translations** (one device, card payment, Arabic and English)
+  are rendered under the hero instead of sitting unused.
+
+Verified: 264 unit tests, build, and 72 e2e (public, signup, checkout, roles) across both locales and viewports.
+
 ## 2026-11-06: Consent and terms are recorded against the right document
 
 The signup guardian consent stored `CONSENT_VERSION` from `live-rules.ts`, the live-lecture wording, so the row

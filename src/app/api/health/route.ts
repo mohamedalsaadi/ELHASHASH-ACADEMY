@@ -27,7 +27,7 @@ const REQUIRED_COLUMNS: [string, string][] = [
   ["Sku", "aedPrice"],
   ["OrderItem", "displayPrice"],
 ];
-const REQUIRED_TABLES = ["GuardianConsent", "AiRun", "Referral", "ReferralCode", "Document", "TeacherStatement"];
+const REQUIRED_TABLES = ["GuardianConsent", "AiRun", "Referral", "ReferralCode", "Document", "TeacherStatement", "FxRate"];
 
 // Monitors poll this; the schema does not change between deploys, so a short cache is enough.
 const TTL_MS = 30_000;

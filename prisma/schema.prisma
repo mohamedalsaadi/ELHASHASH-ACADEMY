@@ -1379,6 +1379,14 @@ model LedgerEntry {
   @@index([kind, createdAt])
 }
 
+/// Owner-maintained suggestion rate. The charged price is always the explicit AED price on the SKU.
+model FxRate {
+  currency  Currency @id
+  /// AED per one unit of this currency.
+  aedPerUnit Decimal  @db.Decimal(12, 6)
+  updatedAt DateTime @updatedAt
+}
+
 /// Singleton row. A missing row means the defaults in lib/finance.ts: VAT off, 30% platform share.
 model PlatformSetting {
   id                 String   @id @default("singleton")

@@ -36,6 +36,9 @@ Git history has the rest (`git log --oneline`).
   pauses online sale for that package. The local price is unchanged.
 - **Copy.** Checkout says the local list price, the AED charge, and that the buyer’s bank may add an FX fee.
   Receipts show the local reference and state the AED charge.
+- **Rate suggestion.** Admin → Settings stores an AED-per-unit rate for each non-AED currency. A package or
+  rental form has a “use today’s rate” checkbox; when the AED price is empty, saving computes it from the
+  local price and the stored rate. The AED price remains the charge; checkout never reads the rate.
 - **Open.** Set an AED price on every sellable package. Confirm Ziina’s international-card support and the
   exact international fee in writing (about 4.1% + AED 1). The migration `20261109205000_aed_charged_prices`
   is written but not deployed.

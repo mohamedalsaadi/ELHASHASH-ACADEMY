@@ -272,6 +272,12 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     dir="ltr"
                     className={`${field} num`}
                   />
+                  {s.currency !== "AED" && (
+                    <span className="flex items-center gap-2 text-label font-normal">
+                      <input type="checkbox" name="useRate" className="size-4" />
+                      {t("useRate")}
+                    </span>
+                  )}
                 </label>
                 {s.accessType === "SEMESTER" && (
                   <label className={label}>
@@ -396,6 +402,12 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                           dir="ltr"
                           className={`${field} num w-28`}
                         />
+                        {s.currency !== "AED" && (
+                          <span className="flex items-center gap-2 text-label font-normal">
+                            <input type="checkbox" name="useRate" className="size-4" />
+                            {t("useRate")}
+                          </span>
+                        )}
                       </label>
                       <label className={label}>
                         {t("accessDays")}

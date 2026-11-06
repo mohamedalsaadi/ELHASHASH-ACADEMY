@@ -16,6 +16,7 @@ import { refundIntent } from "@/lib/ziina";
 import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
 import { issueCreditNote } from "@/lib/documents";
+import { FX_CURRENCIES, aedFromRate } from "@/lib/fx";
 import { toMinor } from "@/lib/format";
 import { issueInvite } from "@/lib/invites";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
@@ -188,21 +189,34 @@ export async function updateSku(form: FormData) {
       saleTo: z.string(),
       discountPrice: optionalMoney,
       aedPrice: optionalMoney.optional(),
+      useRate: checkbox,
       discountFrom: z.string().default(""),
       discountTo: z.string().default(""),
       term: term.optional(),
       month: z.coerce.number().int().min(1).max(12).optional(),
     })
     .parse(Object.fromEntries(form));
-  const sku = await db.sku.findUniqueOrThrow({ where: { id: d.id }, select: { currency: true, courseId: true } });
+  const sku = await db.sku.findUniqueOrThrow({ where: { id: d.id }, select: { currency: true, courseId: true, aedPrice: true } });
   // A teacher sets the price of their own course; the owner sets any.
   await assertCourse(me, sku.courseId);
   const { currency } = sku;
   const { timeZone } = await courseLocation(sku.courseId);
+  const localPrice = toMinor(d.price, currency);
+  // An explicit AED price wins. With an empty AED price and "use rate", compute it from the saved
+  // rate; if no rate is saved, keep the existing AED price rather than clearing it silently.
+  let aedPrice: number | null | undefined;
+  if (d.aedPrice != null) {
+    aedPrice = toMinor(d.aedPrice, "AED");
+  } else if (d.useRate && currency !== "AED") {
+    const rate = await db.fxRate.findUnique({ where: { currency }, select: { aedPerUnit: true } });
+    aedPrice = rate ? aedFromRate(localPrice, currency, Number(rate.aedPerUnit)) : sku.aedPrice;
+  } else {
+    aedPrice = d.aedPrice === undefined ? undefined : null;
+  }
   await db.sku.update({
     where: { id: d.id },
     data: {
-      price: toMinor(d.price, currency),
+      price: localPrice,
       active: d.active,
       accessEndsAt: cairoDay(d.accessEndsAt, "end", timeZone),
       accessDays: d.accessDays,
@@ -210,7 +224,7 @@ export async function updateSku(form: FormData) {
       saleTo: cairoDay(d.saleTo, "end", timeZone),
       discountPrice: d.discountPrice === null ? null : toMinor(d.discountPrice, currency),
       // Model 1: every market is charged in AED. Empty means the package is not sold online.
-      aedPrice: d.aedPrice === undefined ? undefined : d.aedPrice === null ? null : toMinor(d.aedPrice, "AED"),
+      aedPrice,
       discountFrom: cairoDay(d.discountFrom, "start", timeZone),
       discountTo: cairoDay(d.discountTo, "end", timeZone),
       term: d.term,
@@ -436,8 +450,7 @@ export async function refundOrder(form: FormData) {
  * The platform fee and VAT live in one settings row. A change applies to future orders only:
  * every ledger row keeps the rates it was written with.
  */
-export async function saveFinanceSettings(form: FormData) {
-  const me = await requireAdmin();
+export async function saveFinanceSettings(form: FormData) {  const me = await requireAdmin();
   const d = z
     .object({
       vatEnabled: checkbox,
@@ -470,6 +483,26 @@ export async function saveFinanceSettings(form: FormData) {
   };
   await saveFinanceConfig(cfg, me.id);
   revalidatePath("/[locale]/admin", "layout");
+}
+
+/** Saves the owner's suggestion rates. They only pre-fill the AED price form; checkout never uses them. */
+export async function saveFxRates(form: FormData) {
+  await requireAdmin();
+  for (const currency of FX_CURRENCIES) {
+    const raw = String(form.get(`rate_${currency}`) ?? "").trim();
+    if (!raw) {
+      await db.fxRate.deleteMany({ where: { currency } });
+      continue;
+    }
+    const rate = Number(raw);
+    if (!Number.isFinite(rate) || rate <= 0 || rate > 1000) continue;
+    await db.fxRate.upsert({
+      where: { currency },
+      create: { currency, aedPerUnit: String(rate) },
+      update: { aedPerUnit: String(rate) },
+    });
+  }
+  revalidatePath("/[locale]/admin/settings", "page");
 }
 
 export async function changePassword(_: unknown, form: FormData): Promise<"ok" | "wrong" | "short"> {

@@ -1,8 +1,10 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { db } from "@/lib/db";
+import { FX_CURRENCIES } from "@/lib/fx";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { requireAdmin } from "@/lib/staff";
-import { saveFinanceSettings } from "../actions";
+import { saveFinanceSettings, saveFxRates } from "../actions";
 import { AdminNav, panel } from "../AdminNav";
 import { field, label } from "../styles";
 import { SaveButton } from "../ui";
@@ -20,6 +22,8 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
   await requireAdmin();
   const t = await getTranslations("office");
   const cfg = await getFinanceConfig();
+  const rates = await db.fxRate.findMany({ select: { currency: true, aedPerUnit: true } });
+  const rateMap = new Map(rates.map((r) => [r.currency, Number(r.aedPerUnit)]));
 
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
@@ -157,6 +161,30 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
       <div className={panel}>
         <MailTest title={t("mailTest")} hint={t("mailTestHint")} button={t("mailTestButton")} />
       </div>
+
+      <form action={saveFxRates} className={panel}>
+        <h2 className="font-display text-h3 font-semibold">{t("fxTitle")}</h2>
+        <p className="max-w-[65ch] text-small text-ink-muted">{t("fxHint")}</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {FX_CURRENCIES.map((currency) => (
+            <label key={currency} className={label}>
+              {currency} → AED
+              <input
+                name={`rate_${currency}`}
+                type="number"
+                min="0"
+                step="0.000001"
+                defaultValue={rateMap.get(currency) ?? ""}
+                dir="ltr"
+                className={`${field} num`}
+              />
+            </label>
+          ))}
+        </div>
+        <div>
+          <SaveButton />
+        </div>
+      </form>
     </main>
   );
 }

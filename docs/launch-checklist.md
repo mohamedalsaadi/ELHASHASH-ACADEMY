@@ -117,6 +117,9 @@ Complete set the app reads, for Vercel **Production and Preview**:
 - [ ] **AED price on every package.** Model 1 charges every market in AED. Set the “AED price (charged)” on
   each package and rental in Admin → course. A package without one is display-only and shows “payment opens
   soon”. The local price is the reference, not the charge.
+- [ ] **Suggestion rates.** Before onboarding a non-AED teacher, enter the AED-per-unit rate for their currency
+  in Admin → Settings. On their packages, tick “use today’s rate” and review the AED price. The saved AED
+  price is the charge.
 - [ ] **Ziina international cards.** Confirm in writing that international cards are enabled, the exact
   international-card fee (about 4.1% + AED 1), and whether Egyptian-issued cards are accepted. Factor the fee
   into the platform share; the ledger does not record gateway fees.

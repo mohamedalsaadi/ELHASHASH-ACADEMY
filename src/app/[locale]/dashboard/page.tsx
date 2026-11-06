@@ -17,6 +17,7 @@ import { ProgressBar } from "@/components/ui/progress";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { saveDateOfBirth } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const ar = locale === "ar";
   const now = new Date();
   const userId = session.user.id;
+  const profile = await db.user.findUnique({ where: { id: userId }, select: { dateOfBirth: true } });
 
   const [entitlements, completedViews, lastView, orders, answers] = await Promise.all([
     db.entitlement.findMany({
@@ -310,6 +312,28 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   return (
     <main className="mx-auto grid max-w-3xl gap-8 px-4 py-12">
       <PageHeader title={t("hello", { name: session.user.name ?? "" })} />
+
+      {!profile?.dateOfBirth && (
+        <section className="card grid gap-3 p-5">
+          <div className="grid gap-1">
+            <h2 className="font-display text-h3 font-semibold">{t("dobTitle")}</h2>
+            <p className="text-small text-ink-muted">{t("dobHint")}</p>
+          </div>
+          <form action={saveDateOfBirth} className="flex flex-wrap items-end gap-3">
+            <label className="grid gap-1 text-label text-ink-muted">
+              {t("dobLabel")}
+              <input
+                type="date"
+                name="dateOfBirth"
+                required
+                max={now.toISOString().slice(0, 10)}
+                className="min-h-11 rounded-sm border border-rule bg-surface px-3 text-body text-ink"
+              />
+            </label>
+            <button className="btn btn-outline">{t("dobSave")}</button>
+          </form>
+        </section>
+      )}
 
       {summary.length > 0 && (
         <section className="card grid gap-3 p-5">

@@ -45,6 +45,9 @@ export default async function TaxPage({
         <a href={`/${locale}/admin/finance/tax/pdf?period=${period}`} className="btn btn-outline w-fit">
           {t("taxExportPdf")}
         </a>
+        <a href={`/${locale}/admin/finance/receipts/export?period=${period}`} className="btn btn-outline w-fit">
+          {t("receiptsExport")}
+        </a>
       </form>
 
       {report.length === 0 ? (

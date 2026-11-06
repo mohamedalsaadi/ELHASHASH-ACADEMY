@@ -3,10 +3,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/brand/Mark";
 import { toDayInput } from "@/lib/admin-input";
 import { db } from "@/lib/db";
-import { minorPerUnit } from "@/lib/format";
+import { formatMoney, minorPerUnit } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { deleteCoupon, deletePromotion, saveCoupon, savePromotion } from "../actions";
-import { AdminNav, panel } from "../AdminNav";
+import { AdminNav, panel, table } from "../AdminNav";
 import { field, label } from "../styles";
 import { DeleteButton, SaveButton } from "../ui";
 
@@ -25,13 +25,30 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
   await requireAdmin();
   const t = await getTranslations("admin");
 
-  const [promotions, coupons] = await Promise.all([
+  const [promotions, coupons, referrals] = await Promise.all([
     db.promotion.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
     db.coupon.findMany({
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { orders: { where: { status: "PAID" } } } } },
     }),
+    db.referral.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        createdAt: true,
+        status: true,
+        discount: true,
+        currency: true,
+        rewardedAt: true,
+        referrer: { select: { name: true, phone: true } },
+        referredUser: { select: { name: true, phone: true } },
+        code: { select: { code: true } },
+        rewardCoupon: { select: { code: true } },
+      },
+    }),
   ]);
+  const date = new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "UTC" });
 
   const promoFields = (p?: (typeof promotions)[number]) => (
     <>
@@ -217,6 +234,63 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
             <SaveButton>{t("addCoupon")}</SaveButton>
           </div>
         </form>
+      </section>
+
+      <section className="grid gap-4">
+        <div className="grid gap-1">
+          <h2 className="font-display text-h2 font-semibold">{t("referralsTitle")}</h2>
+          <p className="text-small text-ink-muted">{t("referralsHint")}</p>
+        </div>
+        {referrals.length === 0 ? (
+          <EmptyState>
+            <p className="text-ink-muted">{t("noReferrals")}</p>
+          </EmptyState>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className={table}>
+              <thead>
+                <tr>
+                  <th>{t("referralDate")}</th>
+                  <th>{t("referrer")}</th>
+                  <th>{t("referred")}</th>
+                  <th>{t("referralCode")}</th>
+                  <th>{t("referralStatus")}</th>
+                  <th>{t("referralDiscount")}</th>
+                  <th>{t("referralRewarded")}</th>
+                  <th>{t("referralCoupon")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {referrals.map((r) => (
+                  <tr key={r.id}>
+                    <td>{date.format(r.createdAt)}</td>
+                    <td>
+                      {r.referrer.name}
+                      <span className="block text-label text-ink-muted" dir="ltr">
+                        {r.referrer.phone ?? ""}
+                      </span>
+                    </td>
+                    <td>
+                      {r.referredUser.name}
+                      <span className="block text-label text-ink-muted" dir="ltr">
+                        {r.referredUser.phone ?? ""}
+                      </span>
+                    </td>
+                    <td className="num" dir="ltr">
+                      {r.code.code}
+                    </td>
+                    <td>{t(`referralStatuses.${r.status}`)}</td>
+                    <td className="num">{formatMoney(r.discount, r.currency, locale)}</td>
+                    <td>{r.rewardedAt ? date.format(r.rewardedAt) : ""}</td>
+                    <td className="num" dir="ltr">
+                      {r.rewardCoupon?.code ?? ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </main>
   );

@@ -24,6 +24,20 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: Receipts CSV, teacher receipt columns, referral list, existing-student DOB
+
+- `/admin/finance/receipts/export?period=YYYY-MM` exports one row per issued document with its
+  `receipt_pdf_url`. The tax page links it. A CSV cell cannot embed a file; the URL is the practical
+  attachment. The teacher earnings CSV adds receipt number, acknowledgement time, corporate tax and
+  `paid_out`.
+- The payout column arrived after the first sales, so a migration backfills historical
+  `instructorPayout = instructorNet`. The corporate tax was off, so this is the correct historical payout.
+- Admin → Marketing now lists referrals, their status, discount and reward coupon. The percentage settings
+  remain in Admin → Settings.
+- A student with no birth date gets a non-blocking card on the dashboard. The server action validates and
+  stores it; existing access is unchanged.
+- Verified: `npx tsc --noEmit`, 323 unit tests, `npm run build`. The admin CSV routes were not browser-tested.
+
 ## 2026-11-06: Model 1, every market charged in AED
 
 - **One charged currency.** `Sku.aedPrice` is the amount actually charged. A package already priced in AED

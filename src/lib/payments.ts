@@ -2,8 +2,9 @@ import { Prisma } from "@/generated/prisma/client";
 import { accessEnd, learnerOf } from "@/lib/access";
 import { logEvent } from "@/lib/analytics";
 import { db } from "@/lib/db";
+import { allocate, issueDocument } from "@/lib/documents";
 import { DEFAULT_FINANCE, splitLine, type FinanceConfig } from "@/lib/finance";
-import { notifyOrderPaid } from "@/lib/notify";
+import { notifyOrderPaid, createNotification } from "@/lib/notify";
 
 export type PaymentOutcome =
   | { kind: "paid"; amount: number; currency: string }
@@ -39,6 +40,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
             sku: { include: { course: { select: { instructorId: true, subjectId: true, gradeId: true } } } },
           },
         },
+        referral: { select: { id: true, status: true, referrerId: true } },
       },
     });
 
@@ -71,17 +73,30 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
 
           // One immutable money row per line. Rates are read once and copied onto the row.
           const setting = await trx.platformSetting.findUnique({ where: { id: "singleton" } });
+          // The VAT rate comes from the order, not the current settings: a mid-day edit must not
+          // rewrite the tax that was actually charged.
           const cfg: FinanceConfig = setting
             ? {
-                vatEnabled: setting.vatEnabled,
-                vatRateBp: setting.vatRateBp,
+                vatEnabled: order.vatRateBp > 0,
+                vatRateBp: order.vatRateBp,
                 vatTrn: setting.vatTrn,
                 platformShareBp: setting.platformShareBp,
+                referralWelcomePercentOff: setting.referralWelcomePercentOff,
+                referralRewardPercentOff: setting.referralRewardPercentOff,
+                corporateTaxEnabled: setting.corporateTaxEnabled,
+                corporateTaxBp: setting.corporateTaxBp,
+                sellerLegalName: setting.sellerLegalName,
+                sellerAddress: setting.sellerAddress,
+                sellerLicenceNo: setting.sellerLicenceNo,
               }
-            : { ...DEFAULT_FINANCE };
+            : { ...DEFAULT_FINANCE, vatEnabled: order.vatRateBp > 0, vatRateBp: order.vatRateBp };
+          const vatShares = allocate(order.vat, order.items.map((i) => i.price - i.platformDiscount));
           await trx.ledgerEntry.createMany({
-            data: order.items.map((i) => {
-              const split = splitLine(i.price, cfg);
+            data: order.items.map((i, index) => {
+              // price is pre-platform-discount; splitLine caps the funded part at the platform share.
+              const split = splitLine(i.price, cfg, i.platformDiscount);
+              // The order-level VAT is the authority; allocate it so the ledger sums to the cent.
+              const vat = vatShares[index] ?? 0;
               return {
                 kind: "SALE" as const,
                 orderId: order.id,
@@ -91,18 +106,53 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
                 subjectId: i.sku.course.subjectId,
                 gradeId: i.sku.course.gradeId,
                 currency: order.currency,
-                gross: split.gross,
-                vat: split.vat,
+                gross: split.net + vat,
+                vat,
                 net: split.net,
                 platformFee: split.platformFee,
                 instructorNet: split.instructorNet,
+                corporateTax: split.corporateTax,
+                corporateTaxBp: split.corporateTaxBp,
+                instructorPayout: split.instructorPayout,
+                platformDiscount: split.platformDiscount,
                 vatRateBp: split.vatRateBp,
                 platformShareBp: split.platformShareBp,
               };
             }),
             skipDuplicates: true,
           });
-          return { userId: order.userId, amount: payable, currency: order.currency, gateway: order.gateway };
+
+          // The referrer's one-time reward is minted exactly once, only after the referred family pays.
+          if (order.referral?.status === "PENDING") {
+            const rewardPercent = setting?.referralRewardPercentOff ?? 0;
+            const { count: rewarded } = await trx.referral.updateMany({
+              where: { id: order.referral.id, status: "PENDING" },
+              data: { status: "REWARDED", rewardedAt: paidAt },
+            });
+            if (rewarded === 1 && rewardPercent > 0) {
+              const coupon = await trx.coupon.create({
+                data: {
+                  code: `RW-${order.referral.id}`,
+                  percentOff: rewardPercent,
+                  funding: "PLATFORM",
+                  ownerId: order.referral.referrerId,
+                  perUser: 1,
+                  maxRedemptions: 1,
+                  active: true,
+                  endsAt: new Date(paidAt.getTime() + 90 * 86_400_000),
+                },
+              });
+              await trx.referral.update({ where: { id: order.referral.id }, data: { rewardCouponId: coupon.id } });
+            }
+          }
+          return {
+            userId: order.userId,
+            amount: payable,
+            currency: order.currency,
+            gateway: order.gateway,
+            referralId: order.referral?.id ?? null,
+            referrerId: order.referral?.referrerId ?? null,
+          };
         }
         return null;
       }
@@ -115,6 +165,8 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
           where: { id: order.id, status: "PENDING" },
           data: { status: outcome.kind === "failed" ? "FAILED" : "EXPIRED" },
         });
+        // An abandoned checkout must not burn the family's one welcome discount.
+        await trx.referral.deleteMany({ where: { referredOrderId: order.id, status: "PENDING" } });
         return null;
     }
     return null;
@@ -126,7 +178,29 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
     } catch (e) {
       console.error("[notify] order paid failed", orderId, e);
     }
+    if (paid.referrerId && paid.referralId) {
+      try {
+        await createNotification({
+          userId: paid.referrerId,
+          kind: "SYSTEM",
+          titleAr: "مكافأة الإحالة جاهزة",
+          titleEn: "Your referral reward is ready",
+          bodyAr: "أصبح لديك كود خصم لاشتراكك القادم. تجده في حسابك.",
+          bodyEn: "You have a discount code for your next subscription. It is in your account.",
+          href: "/account",
+          dedupeKey: `referral-reward:${paid.referralId}`,
+        });
+      } catch (e) {
+        console.error("[notify] referral reward failed", paid.referralId, e);
+      }
+    }
     await logEvent({ name: "order_paid", userId: paid.userId, props: { ...paid } });
+    // A document-delivery failure must never undo a settled payment. The page backfills on first view.
+    try {
+      await issueDocument(orderId, "INVOICE");
+    } catch (e) {
+      console.error("[documents] invoice issue failed", orderId, e);
+    }
   }
   if (replay) return false;
   return true;

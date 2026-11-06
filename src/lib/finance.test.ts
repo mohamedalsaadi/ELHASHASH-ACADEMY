@@ -37,6 +37,23 @@ describe("splitLine", () => {
   it("holds the 3-decimal currencies in fils", () => {
     expect(splitLine(12_500, cfg())).toMatchObject({ platformFee: 3_750, instructorNet: 8_750 });
   });
+
+  it("funds a discount from the platform share and leaves the teacher whole", () => {
+    const r = splitLine(10_000, cfg({ vatEnabled: true, vatRateBp: 500 }), 1_000);
+    expect(r).toMatchObject({
+      instructorNet: 7_000,
+      platformFee: 2_000,
+      net: 9_000,
+      vat: 450,
+      gross: 9_450,
+      platformDiscount: 1_000,
+    });
+  });
+
+  it("caps a platform discount at the platform share", () => {
+    const r = splitLine(10_000, cfg(), 99_999);
+    expect(r).toMatchObject({ platformDiscount: 3_000, platformFee: 0, instructorNet: 7_000, net: 7_000 });
+  });
 });
 
 describe("vatOn", () => {

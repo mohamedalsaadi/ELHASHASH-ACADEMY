@@ -2,28 +2,65 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { lookupStudent } from "./actions";
 
 type Method = "CARD" | "WALLET" | "KIOSK" | "VALU";
 
 type Learner = { id: string; name: string };
 
-export function PayForm({ skuIds, locale, methods, gateway, coupon, learners }: { skuIds: string[]; locale: string; methods: Method[]; gateway: "PAYMOB" | "ZIINA" | "STRIPE"; coupon?: string; learners?: Learner[] }) {
+type Lookup = { state: "idle" | "checking" | "found" | "not_found"; name?: string };
+
+export function PayForm({ skuIds, locale, methods, gateway, coupon, learners, needsPhone }: { skuIds: string[]; locale: string; methods: Method[]; gateway: "PAYMOB" | "ZIINA" | "STRIPE"; coupon?: string; learners?: Learner[]; needsPhone?: boolean }) {
   const t = useTranslations("checkout");
   const [method, setMethod] = useState<Method>(methods[0]);
   // Set only for a parent: the child the access goes to.
   const [learner, setLearner] = useState<string | undefined>(learners?.[0]?.id);
+  const [phone, setPhone] = useState("");
+  const [lookup, setLookup] = useState<Lookup>({ state: "idle" });
+  const [attested, setAttested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function checkPhone() {
+    const value = phone.trim();
+    if (!value) {
+      setLookup({ state: "idle" });
+      return;
+    }
+    setLookup({ state: "checking" });
+    try {
+      const result = await lookupStudent(value);
+      setLookup(result.ok ? { state: "found", name: result.name } : { state: result.reason === "not_found" ? "not_found" : "idle" });
+    } catch {
+      setLookup({ state: "idle" });
+    }
+  }
+
   async function pay(e: React.FormEvent) {
     e.preventDefault();
+    if (needsPhone && lookup.state !== "found") {
+      setError(t(lookup.state === "not_found" ? "errors.child_not_found" : "errors.child_required"));
+      return;
+    }
+    if (needsPhone && !attested) {
+      setError(t("errors.attestation_required"));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ skuIds, method, locale, coupon, forStudentId: learner }),
+        body: JSON.stringify({
+          skuIds,
+          method,
+          locale,
+          coupon,
+          forStudentId: needsPhone ? undefined : learner,
+          forStudentPhone: needsPhone ? phone.trim() : undefined,
+          guardianAttestation: needsPhone ? attested : undefined,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { checkoutUrl?: string; error?: string };
       if (data.checkoutUrl) {
@@ -41,7 +78,7 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon, learners }: 
 
   return (
     <form onSubmit={pay} className="grid gap-4">
-      {learners && (
+      {learners && learners.length > 0 && (
         <label className="grid gap-1 text-label text-ink-muted">
           {t("forChild")}
           <select
@@ -56,6 +93,38 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon, learners }: 
             ))}
           </select>
         </label>
+      )}
+      {needsPhone && (
+        <div className="grid gap-3">
+          <label className="grid gap-1 text-label text-ink-muted">
+            {t("forChildPhone")}
+            <input
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              dir="ltr"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setLookup({ state: "idle" });
+              }}
+              onBlur={checkPhone}
+              className="min-h-11 rounded-sm border border-rule bg-surface px-3 text-body text-ink"
+            />
+          </label>
+          <p className="text-small text-ink-muted">{t("forChildPhoneHint")}</p>
+          {lookup.state === "checking" && <p className="text-small text-ink-muted">{t("childChecking")}</p>}
+          {lookup.state === "found" && <p className="text-small text-up">{t("childFound", { name: lookup.name ?? "" })}</p>}
+          {lookup.state === "not_found" && (
+            <p role="alert" className="text-small text-down">
+              {t("errors.child_not_found")}
+            </p>
+          )}
+          <label className="flex min-h-11 items-start gap-2 text-small">
+            <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} className="mt-1 size-4" />
+            {t("guardianAttestation")}
+          </label>
+        </div>
       )}
       <fieldset className="grid gap-2">
         <legend className="mb-2 text-label text-ink-muted">{t("method")}</legend>

@@ -33,6 +33,9 @@ export const countryInput = z.object({
   timeZone: timeZoneSchema,
   order: z.coerce.number().int().min(0).max(999).default(0),
   active: checkbox,
+  vatEnabled: checkbox,
+  vatRate: z.coerce.number().min(0).max(50).default(5),
+  vatTrn: z.string().trim().max(40).default(""),
 });
 
 export const stageInput = z

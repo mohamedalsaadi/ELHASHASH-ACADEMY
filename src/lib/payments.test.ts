@@ -16,7 +16,7 @@ vi.mock("@/generated/prisma/client", () => ({
 // The client is built at import time from DATABASE_URL; this file drives a fake transaction instead.
 const h = vi.hoisted(() => ({ db: { $transaction: null as unknown as (fn: (trx: unknown) => unknown) => unknown } }));
 vi.mock("@/lib/db", () => ({ db: h.db }));
-vi.mock("@/lib/notify", () => ({ notifyOrderPaid: vi.fn(async () => {}) }));
+vi.mock("@/lib/notify", () => ({ notifyOrderPaid: vi.fn(async () => {}), createNotification: vi.fn(async () => null) }));
 vi.mock("@/lib/analytics", () => ({ logEvent: vi.fn(async () => {}) }));
 
 import { Prisma } from "@/generated/prisma/client";
@@ -34,11 +34,13 @@ const order = {
   currency: "AED",
   gateway: "ZIINA",
   paidAt: null as Date | null,
+  referral: null as null | { id: string; status: string; referrerId: string },
 };
 
 const line = {
   id: "item-1",
   price: 30_000,
+  platformDiscount: 0,
   sku: {
     courseId: "course-1",
     lessonId: null,
@@ -93,6 +95,12 @@ function fakeDatabase(seed: Partial<typeof order> = {}, opts: { throwOnEntitleme
       },
     },
     ledgerEntry: { createMany: async ({ data }: { data: Row[] }) => (ledger.push(...data), { count: data.length }) },
+    referral: {
+      deleteMany: async () => ({ count: 0 }),
+      updateMany: async () => ({ count: 0 }),
+      update: async () => ({}),
+    },
+    coupon: { create: async ({ data }: { data: Row }) => data },
     platformSetting: { findUnique: async () => null },
   };
 

@@ -24,6 +24,37 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-06: Market currency, referrals, receipts and tax, simple parent purchase, age assurance
+
+- **Market currency.** `activeGateway` is the one truth; Stripe is now opt-in per currency with `STRIPE_CURRENCIES`
+  instead of catching every currency. `canCharge` and `chargeableCurrencies` feed a “payment opens soon” note on
+  cards, course pages and subject tiles. `cheapestSku` never compares prices across currencies. `priceSkus` reports
+  a currency that differs from its course country; `STRICT_CURRENCY=1` turns the report into a refusal after the
+  data audit.
+- **Parent buys without a link.** A parent can enter a registered student’s phone at checkout, confirm a masked
+  name, and attest guardianship. Access goes to the student; the parent still needs the student’s code for
+  visibility. `Order.beneficiaryDeclaredAt` records the declaration. The student is notified when the course
+  arrives.
+- **Referrals.** One code per person, platform-funded on both sides, teacher pay calculated before the discount.
+  `Order`/`OrderItem`/`LedgerEntry` carry `platformDiscount`; the platform share absorbs it and can never go
+  negative. One reward coupon per family, owner-locked, after the first payment. Settings live in Admin → Settings.
+- **Receipts and tax.** A numbered `Document` per paid order (invoice, credit note on refund) with a gapless
+  `DocumentSequence`, snapshot seller/buyer/lines, and an English PDF in Blob. Per-market VAT lives on `Country`
+  behind the global master switch. The 9% corporate-tax contribution is a contractual deduction from teacher pay,
+  off by default. Teachers acknowledge each receipt and each monthly statement; `/api/cron/statements` issues
+  statements on the 1st. `/admin/finance/tax` exports a VAT201-style CSV and PDF per market and currency.
+- **Age assurance.** Signup asks for a date of birth, blocks under-13, and emails a guardian a confirmation link
+  for under-18s. Live, AI grading and self-purchase require a verified consent. A parent purchase records the
+  verification. Legacy consent rows are grandfathered in the migration. Privacy copy updated.
+- **Compliance docs.** `docs/compliance/` now holds the ROPA, processor/DPA register, data-residency recommendation
+  and licensing questions.
+- **Cleanup.** Removed the unused `gsap` and `lenis`. Fixed the stale `summit-scene` reference and the “no GSAP”
+  claim. Live avatar was never in the code; the idea is dropped.
+- **Open.** Migrations are written but not deployed. The legal name, licence, address and TRN are still the
+  owner’s. Referral percentages, VAT and corporate tax are all off until the owner sets them. The currency audit
+  must run before `STRICT_CURRENCY=1`. Receipt PDFs are English-labelled; the Arabic copy is the HTML receipt.
+  DPA acceptance and the MASDAR questions are owner actions.
+
 ## 2026-11-06: AI cost logging, teacher credentials, Terms clauses, accessibility, funnel
 
 - **AiRun.** Every model call now records kind, model, token counts, the student when a minor's work was sent, and

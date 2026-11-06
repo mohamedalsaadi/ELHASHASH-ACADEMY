@@ -8,6 +8,8 @@ export async function resolveCoupon(codeInput: string, userId: string, now = new
   if (!CODE_RE.test(code)) return { ok: false as const, reason: "invalid" as const };
   const coupon = await db.coupon.findUnique({ where: { code } });
   if (!coupon) return { ok: false as const, reason: "invalid" as const };
+  // A reward coupon belongs to one account; sharing the code must not move the reward.
+  if (coupon.ownerId && coupon.ownerId !== userId) return { ok: false as const, reason: "invalid" as const };
 
   const [paidTotal, paidByUser] = await Promise.all([
     db.order.count({ where: { couponId: coupon.id, status: "PAID" } }),

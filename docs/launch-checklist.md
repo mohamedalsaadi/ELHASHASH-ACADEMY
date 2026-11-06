@@ -102,6 +102,8 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_{CARD,WALLET,KIOSK,VALU}` | for Egypt | without them EGP checkout falls back to Stripe |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | yes | test keys |
 | `ZIINA_API_KEY` | beta | AED card payments; `ZIINA_ENABLED=0` switches them off |
+| `STRIPE_CURRENCIES` | if Stripe is on | comma-separated currencies Stripe may take; empty takes none |
+| `STRICT_CURRENCY` | after audit | `1` refuses a SKU whose currency differs from its course country |
 | `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` | recommended | support identity and masking allow-list |
 | `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
 
@@ -112,10 +114,19 @@ Complete set the app reads, for Vercel **Production and Preview**:
 ### Product and legal
 
 - [ ] **Legal entity and address** in `/terms`, `/privacy`, `/refund` — they must read "ذروة (Dhirwa), UAE" (the legal pages are owned by Content/SEO; check they were renamed); add the licence number and address.
+- [ ] **Seller identity for documents.** Fill `sellerLegalName`, `sellerAddress` and `sellerLicenceNo` in Admin → Settings. Add the TRN to the UAE country row in Admin → Catalog. Documents omit a missing line; they never print a placeholder.
+- [ ] **VAT registration.** Do not tick the master VAT switch or the UAE country switch until the TRN is issued. The rate and TRN then print on every tax invoice.
+- [ ] **Corporate-tax contribution.** Confirm the 9% base with the accountant. The switch is off; when on, it deducts from the teacher’s share and appears only on statements.
+- [ ] **DPAs and ROPA.** Accept and file a DPA for every supplier in `docs/compliance/processors.md`. Review `docs/compliance/ropa.md` with the privacy adviser.
+- [ ] **Age assurance.** Signup now asks for a date of birth; under-18 accounts need a guardian email confirmation. Review the privacy notice wording and the under-13 block.
+- [ ] **Referral settings.** Set the new-family and referrer percentages in Admin → Settings. Both are capped at the platform share; zero pauses the programme.
 - [ ] **Privacy review** by the owner's advisor.
 - [ ] **Branded support address** — `SUPPORT_EMAIL` falls back to `chemical.mohammed@gmail.com`.
 - [ ] **New-country art.** New countries get a code badge until flag/landmark art exists.
 - [ ] **Catalog regions.** Add countries, grades and subjects only when tutor agreements are ready.
+- [ ] **Currency audit.** List SKUs whose currency differs from their course country. Fix or quarantine them before setting `STRICT_CURRENCY=1`.
+- [ ] **Receipt PDFs.** The PDF is English-labelled because the standard PDF fonts have no Arabic glyphs; the HTML receipt is the Arabic copy. Confirm that is acceptable for the accountant.
+
 
 ---
 

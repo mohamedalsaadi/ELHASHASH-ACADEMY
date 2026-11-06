@@ -65,7 +65,7 @@ export async function createNotification(input: NotificationInput) {
 export async function notifyOrderPaid(orderId: string) {
   const order = await db.order.findUnique({
     where: { id: orderId },
-    select: { id: true, userId: true, total: true, vat: true, currency: true },
+    select: { id: true, userId: true, beneficiaryId: true, total: true, vat: true, currency: true },
   });
   if (!order) return;
   const paid = order.total + order.vat;
@@ -79,6 +79,20 @@ export async function notifyOrderPaid(orderId: string) {
     href: `/orders/${order.id}`,
     dedupeKey: `order:${order.id}`,
   });
+  // A parent may have paid for a student without a ParentLink. That is a gift: tell the learner,
+  // not the payer, and never the other way round.
+  if (order.beneficiaryId && order.beneficiaryId !== order.userId) {
+    await createNotification({
+      userId: order.beneficiaryId,
+      kind: "ORDER_PAID",
+      titleAr: "أهداك ولي أمرك كورسًا",
+      titleEn: "A guardian bought you a course",
+      bodyAr: "تم تفعيل وصولك. الإيصال جاهز في حسابك.",
+      bodyEn: "Your access is active. Your receipt is ready in your account.",
+      href: `/orders/${order.id}`,
+      dedupeKey: `order-gift:${order.id}:${order.beneficiaryId}`,
+    });
+  }
 }
 
 /** One notice per question, even if the teacher edits the answer later. */

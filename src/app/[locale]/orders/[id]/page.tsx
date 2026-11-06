@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
+import { issueDocument } from "@/lib/documents";
 import { formatMoney } from "@/lib/format";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { PrintButton } from "./PrintButton";
@@ -31,6 +32,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
     where: { id },
     include: {
       user: { select: { name: true, phone: true } },
+      beneficiary: { select: { name: true } },
       coupon: { select: { code: true } },
       items: {
         include: {
@@ -45,8 +47,14 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
       },
     },
   });
-  if (!o || (o.userId !== session.user.id && session.user.role !== "ADMIN")) notFound();
-  const cfg = o.vat > 0 ? await getFinanceConfig() : null;
+  if (!o || (o.userId !== session.user.id && o.beneficiaryId !== session.user.id && session.user.role !== "ADMIN")) notFound();
+
+  // Legacy paid orders get their document on first view; the issue is idempotent. A failure must not
+  // hide the receipt, so the page falls back to the order and the current settings.
+  const doc = o.status === "PAID" ? await issueDocument(o.id, "INVOICE").catch(() => null) : null;
+  const cfg = o.vat > 0 && !doc ? await getFinanceConfig() : null;
+  const sellerTrn = doc?.sellerTrn ?? cfg?.vatTrn ?? null;
+  const reference = doc?.number ?? o.id;
 
   const name = (x: { titleAr: string; titleEn: string }) => (pick(ar, x.titleAr, x.titleEn));
   const money = (n: number) => formatMoney(n, o.currency, locale);
@@ -58,15 +66,22 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
         <Link href="/dashboard" className="text-small text-pen underline-offset-4 hover:underline">
           <span aria-hidden="true" className="rtl:-scale-x-100">←</span> {t("back")}
         </Link>
-        <PrintButton label={t("print")} />
+        <div className="flex flex-wrap gap-2">
+          {doc && (
+            <a href={`/api/documents/${doc.id}/pdf`} className="btn btn-outline text-small">
+              {t("downloadPdf")}
+            </a>
+          )}
+          <PrintButton label={t("print")} />
+        </div>
       </div>
 
       <section className="grid gap-5 card p-6 print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline pb-4">
           <div className="grid gap-1">
-            <h1 className="font-display text-h2 font-semibold">{t("title")}</h1>
+            <h1 className="font-display text-h2 font-semibold">{doc?.vat ? t("taxInvoice") : t("title")}</h1>
             <p className="num text-small text-ink-muted" dir="ltr">
-              {o.id}
+              {reference}
             </p>
           </div>
           <span className="rounded-full border border-hairline px-3 py-1 text-label font-semibold">{tr(`status.${o.status}`)}</span>
@@ -74,7 +89,13 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
 
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-small [&_dt]:text-label [&_dt]:text-ink-muted">
           <dt>{t("student")}</dt>
-          <dd>{o.user.name}</dd>
+          <dd>{o.beneficiary?.name ?? o.user.name}</dd>
+          {o.beneficiaryId && o.beneficiaryId !== o.userId && (
+            <>
+              <dt>{t("buyer")}</dt>
+              <dd>{o.user.name}</dd>
+            </>
+          )}
           <dt>{t("date")}</dt>
           <dd className="num">{date.format(o.paidAt ?? o.createdAt)}</dd>
           <dt>{t("gateway")}</dt>
@@ -109,7 +130,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
                 <td className="min-w-0 py-2 break-words">
                   {name(i.sku.liveSession ?? i.sku.lesson ?? i.sku.course)} · {tc(`access.${i.sku.accessType}`, { days: i.sku.accessDays ?? 0 })}
                 </td>
-                <td className="num py-2 text-end">{money(i.price)}</td>
+                <td className="num py-2 text-end">{money(i.price - i.platformDiscount)}</td>
               </tr>
             ))}
           </tbody>
@@ -129,6 +150,12 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
               <dd className="num text-up">−{money(o.discount)}</dd>
             </>
           )}
+          {o.platformDiscount > 0 && (
+            <>
+              <dt className="text-up">{t("referralDiscount")}</dt>
+              <dd className="num text-up">−{money(o.platformDiscount)}</dd>
+            </>
+          )}
           {o.vat > 0 && (
             <>
               <dt className="text-ink-muted">{t("vat", { pct: o.vatRateBp / 100 })}</dt>
@@ -139,11 +166,15 @@ export default async function ReceiptPage({ params }: { params: Promise<{ locale
           <dd className="num font-semibold">{money(o.total + o.vat)}</dd>
         </dl>
 
-        {cfg?.vatTrn && (
-          <p className="num text-label text-ink-muted" dir="ltr">
-            {t("trn")}: {cfg.vatTrn}
-          </p>
-        )}
+        <div className="grid gap-1 border-t border-hairline pt-3 text-label text-ink-muted">
+          <span className="font-semibold text-ink">{doc?.sellerName ?? "Dhirwa (ذروة)"}</span>
+          {doc?.sellerAddress && <span>{doc.sellerAddress}</span>}
+          {sellerTrn && (
+            <span className="num" dir="ltr">
+              {t("trn")}: {sellerTrn}
+            </span>
+          )}
+        </div>
 
         <p className="text-small text-ink-muted">{t("thanks")}</p>
       </section>

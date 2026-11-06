@@ -12,6 +12,13 @@ export async function getFinanceConfig(): Promise<FinanceConfig> {
     vatRateBp: row.vatRateBp,
     vatTrn: row.vatTrn,
     platformShareBp: row.platformShareBp,
+    referralWelcomePercentOff: row.referralWelcomePercentOff,
+    referralRewardPercentOff: row.referralRewardPercentOff,
+    corporateTaxEnabled: row.corporateTaxEnabled,
+    corporateTaxBp: row.corporateTaxBp,
+    sellerLegalName: row.sellerLegalName,
+    sellerAddress: row.sellerAddress,
+    sellerLicenceNo: row.sellerLicenceNo,
   };
 }
 

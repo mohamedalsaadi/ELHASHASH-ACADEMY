@@ -2,14 +2,17 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { logEvent } from "@/lib/analytics";
 import { priceSkus } from "@/lib/checkout";
-import { resolveCoupon } from "@/lib/coupon-resolve";
+import { isMinor } from "@/lib/age";
+import { resolveBeneficiary } from "@/lib/checkout-beneficiary";
+import { CONSENT_VERSION } from "@/lib/live-rules";
+import { resolveDiscount } from "@/lib/referral";
 import { db } from "@/lib/db";
-import { vatOn } from "@/lib/finance";
+import { taxConfigFor, vatFor } from "@/lib/tax";
 import { activeGateway, stripeTestKeyInProduction, stripeUnitAmount, type Method } from "@/lib/gateway";
 import { createIntention } from "@/lib/paymob";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
-import { applyCoupon, PricingError } from "@/lib/pricing-engine";
+import { applyCoupon, applyPlatformDiscount, PricingError } from "@/lib/pricing-engine";
 import { TERMS_VERSION } from "@/lib/legal";
 import { isLimited } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/schemas/checkout";
@@ -21,6 +24,8 @@ const PENDING_TTL_MS = 72 * 60 * 60 * 1000;
 // Stripe allows a Checkout Session to live 30 minutes to 24 hours.
 const STRIPE_TTL_S = 60 * 60;
 
+type ReferralDiscount = Extract<Awaited<ReturnType<typeof resolveDiscount>>, { ok: true; kind: "referral" }>;
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
@@ -29,20 +34,67 @@ export async function POST(req: Request) {
 
   const parsed = checkoutSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
-  const { skuIds, method, locale, coupon, forStudentId } = parsed.data;
+  const { skuIds, method, locale, coupon, forStudentId, forStudentPhone, guardianAttestation } = parsed.data;
 
-  // A parent learns nothing themselves: they buy for a child they have linked, and only for one.
-  let beneficiaryId: string | null = null;
+  // A parent learns nothing themselves: they buy for a student and only for one. A linked child is the
+  // usual path; a registered student found by phone is the gift path, where paying grants access but
+  // never visibility (that still needs the student's own six-digit code).
+  let linkedStudentIds: string[] = [];
+  let studentIdByPhone: string | null = null;
   if (session.user.role === "PARENT") {
-    if (!forStudentId) return NextResponse.json({ error: "child_required" }, { status: 400 });
-    const link = await db.parentLink.findUnique({
-      where: { parentId_studentId: { parentId: session.user.id, studentId: forStudentId } },
-      select: { id: true },
+    if (forStudentId) {
+      const link = await db.parentLink.findUnique({
+        where: { parentId_studentId: { parentId: session.user.id, studentId: forStudentId } },
+        select: { studentId: true },
+      });
+      linkedStudentIds = link ? [link.studentId] : [];
+    } else if (forStudentPhone) {
+      const student = await db.user.findUnique({ where: { phone: forStudentPhone }, select: { id: true, role: true } });
+      studentIdByPhone = student?.role === "STUDENT" ? student.id : null;
+    }
+  }
+  const beneficiary = resolveBeneficiary({
+    role: session.user.role,
+    buyerId: session.user.id,
+    forStudentId,
+    forStudentPhone,
+    guardianAttestation,
+    linkedStudentIds,
+    studentIdByPhone,
+  });
+  if (!beneficiary.ok) return NextResponse.json({ error: beneficiary.error }, { status: 400 });
+  const beneficiaryId = beneficiary.beneficiaryId;
+  const beneficiaryDeclaredAt = beneficiary.declaredAt;
+
+  // A minor pays only after a guardian verifies. A parent purchase is the guardian acting, so it
+  // records the verification on the student's consent row instead of asking for a second email.
+  if (session.user.role === "STUDENT") {
+    const student = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { dateOfBirth: true, guardianConsent: { select: { verifiedAt: true } } },
     });
-    if (!link) return NextResponse.json({ error: "child_required" }, { status: 400 });
-    beneficiaryId = forStudentId;
-  } else if (forStudentId) {
-    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    if (isMinor(student?.dateOfBirth) && !student?.guardianConsent?.verifiedAt) {
+      return NextResponse.json({ error: "guardian_required" }, { status: 400 });
+    }
+  }
+  if (session.user.role === "PARENT" && beneficiaryId) {
+    const parent = await db.user.findUnique({ where: { id: session.user.id }, select: { name: true } });
+    await db.guardianConsent.upsert({
+      where: { studentId: beneficiaryId },
+      create: {
+        studentId: beneficiaryId,
+        parentId: session.user.id,
+        guardianName: parent?.name ?? "Guardian",
+        source: "PARENT",
+        rulesVersion: CONSENT_VERSION,
+        verifiedAt: new Date(),
+      },
+      update: {},
+    });
+    await db.guardianConsent.updateMany({
+      where: { studentId: beneficiaryId, verifiedAt: null },
+      data: { verifiedAt: new Date() },
+    });
   }
 
   let result;
@@ -55,24 +107,35 @@ export async function POST(req: Request) {
   const { skus, missing } = result;
   if (missing) return NextResponse.json({ error: "sku_unavailable" }, { status: 400 });
 
-  // The coupon is resolved again here, never trusted from the browser.
+  // The code is resolved again here, never trusted from the browser. A referral is a platform-funded
+  // discount: teacher pay stays calculated on the pre-discount line.
+  const cfg = await getFinanceConfig();
   let priced = result.priced;
   let couponId: string | null = null;
+  let referral: ReferralDiscount | null = null;
   if (coupon) {
-    const resolved = await resolveCoupon(coupon, session.user.id);
+    const resolved = await resolveDiscount(coupon, session.user.id, beneficiaryId);
     if (!resolved.ok) return NextResponse.json({ error: `coupon_${resolved.reason}` }, { status: 400 });
     try {
-      priced = applyCoupon(priced, resolved.coupon);
+      if (resolved.kind === "referral") {
+        priced = applyPlatformDiscount(priced, resolved.percentOff, cfg.platformShareBp);
+        referral = resolved;
+      } else if (resolved.funding === "PLATFORM") {
+        priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, cfg.platformShareBp);
+        couponId = resolved.coupon.id;
+      } else {
+        priced = applyCoupon(priced, resolved.coupon);
+        couponId = resolved.coupon.id;
+      }
     } catch (e) {
       if (e instanceof PricingError) return NextResponse.json({ error: "coupon_currency" }, { status: 400 });
       throw e;
     }
-    couponId = resolved.coupon.id;
   }
 
-  // VAT is added on top of the net total. It is zero unless the owner has switched it on.
-  const cfg = await getFinanceConfig();
-  const vat = vatOn(priced.total, cfg);
+  // VAT is added on top of what the buyer actually pays, at the course market's rate.
+  const tax = await taxConfigFor(result.countryCode);
+  const vat = vatFor(priced.total, tax);
   const payable = priced.total + vat;
 
   // A 100% code leaves nothing for a gateway to charge; such an order is completed below without one.
@@ -87,26 +150,61 @@ export async function POST(req: Request) {
   }
 
   const user = await db.user.findUniqueOrThrow({ where: { id: session.user.id } });
-  const net = (l: (typeof priced.lines)[number]) => l.price - l.discount - l.couponDiscount;
-  const order = await db.order.create({
-    data: {
-      userId: user.id,
-      beneficiaryId,
-      // The buyer accepted the terms by pressing Pay; record which text was in force.
-      termsVersion: TERMS_VERSION,
-      termsAcceptedAt: new Date(),
-      gateway,
-      method: free ? null : method,
-      currency: priced.currency,
-      subtotal: priced.subtotal,
-      discount: priced.discount,
-      total: priced.total,
-      vat,
-      vatRateBp: vat > 0 ? cfg.vatRateBp : 0,
-      couponId,
-      expiresAt: free ? null : new Date(Date.now() + (gateway === "STRIPE" ? STRIPE_TTL_S * 1000 : PENDING_TTL_MS)),
-      items: { create: priced.lines.map((l) => ({ skuId: l.skuId, price: net(l) })) },
-    },
+  // What the gateway charges for a line: the pre-platform-discount net minus the funded part.
+  const net = (l: (typeof priced.lines)[number]) => l.price - l.discount - l.couponDiscount - l.platformDiscount;
+  const order = await db.$transaction(async (trx) => {
+    const created = await trx.order.create({
+      data: {
+        userId: user.id,
+        beneficiaryId,
+        beneficiaryDeclaredAt,
+        // The buyer accepted the terms by pressing Pay; record which text was in force.
+        termsVersion: TERMS_VERSION,
+        termsAcceptedAt: new Date(),
+        gateway,
+        method: free ? null : method,
+        currency: priced.currency,
+        subtotal: priced.subtotal,
+        discount: priced.discount,
+        platformDiscount: priced.platformDiscount,
+        total: priced.total,
+        vat,
+        vatRateBp: vat > 0 ? tax.vatRateBp : 0,
+        taxCountryCode: tax.taxCountryCode,
+        couponId,
+        expiresAt: free ? null : new Date(Date.now() + (gateway === "STRIPE" ? STRIPE_TTL_S * 1000 : PENDING_TTL_MS)),
+        // price stays pre-referral so teacher pay is calculated the same way as any other sale.
+        items: {
+          create: priced.lines.map((l) => ({
+            skuId: l.skuId,
+            price: l.price - l.discount - l.couponDiscount,
+            platformDiscount: l.platformDiscount,
+          })),
+        },
+      },
+    });
+    if (referral) {
+      const existing = await trx.referral.findUnique({ where: { referredUserId: user.id }, select: { id: true, status: true } });
+      if (!existing) {
+        await trx.referral.create({
+          data: {
+            codeId: referral.code.id,
+            referrerId: referral.referrerId,
+            referredUserId: user.id,
+            referredOrderId: created.id,
+            currency: priced.currency,
+            discount: priced.platformDiscount,
+          },
+        });
+      } else if (existing.status === "PENDING") {
+        // An abandoned checkout reuses its pending attribution instead of blocking the family forever.
+        await trx.referral.update({
+          where: { id: existing.id },
+          data: { codeId: referral.code.id, referredOrderId: created.id, currency: priced.currency, discount: priced.platformDiscount },
+        });
+      }
+    }
+    return created;
   });
 
   await logEvent({
@@ -133,7 +231,7 @@ export async function POST(req: Request) {
       return { name: `${locale === "ar" ? name.titleAr : name.titleEn} (${sku.accessType})`, amountCents: net(l) };
     })
     .filter((i) => i.amountCents > 0);
-  if (vat > 0) items.push({ name: `VAT (${cfg.vatRateBp / 100}%)`, amountCents: vat });
+  if (vat > 0) items.push({ name: `VAT (${tax.vatRateBp / 100}%)`, amountCents: vat });
 
   let checkoutUrl: string;
   let gatewayOrderId: string;

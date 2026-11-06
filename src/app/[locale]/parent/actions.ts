@@ -87,8 +87,10 @@ export async function recordChildConsent(form: FormData) {
       parentId: session.user.id,
       guardianName: link.parent.name,
       rulesVersion: CONSENT_VERSION,
+      verifiedAt: new Date(),
     },
-    update: {},
+    // A linked parent acting in the app is verification; the first name and wording still stand.
+    update: { verifiedAt: new Date() },
   });
   revalidatePath("/[locale]/parent", "page");
   revalidatePath("/[locale]/live", "layout");

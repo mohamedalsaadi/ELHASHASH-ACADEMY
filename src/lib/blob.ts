@@ -1,5 +1,5 @@
 // Vercel Blob helpers shared by the upload token route, the download route and the server actions.
-import { get, head } from "@vercel/blob";
+import { get, head, put } from "@vercel/blob";
 
 /** What a homework handout or a student's answer may be. Anything else is refused at token time. */
 export const ALLOWED_CONTENT_TYPES = [
@@ -58,4 +58,14 @@ export async function streamBlob(pathname: string, contentType: string | null, c
       "Cache-Control": cacheControl,
     },
   });
+}
+
+/** Issued invoices and statements. Private, overwritten only by the same document id. */
+export const documentPrefix = (id: string) => `documents/${id}.pdf`;
+
+/** Stores a generated document. No token means local development: the route serves the bytes directly. */
+export async function putDocument(pathname: string, bytes: Uint8Array): Promise<boolean> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return false;
+  await put(pathname, Buffer.from(bytes), { access: "private", addRandomSuffix: false, allowOverwrite: true });
+  return true;
 }

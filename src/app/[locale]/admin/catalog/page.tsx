@@ -115,6 +115,28 @@ export default async function CatalogPage({
         <input type="checkbox" name="active" defaultChecked={c?.active ?? true} className="size-4" />
         {t("active")}
       </label>
+      <label className={check}>
+        <input type="checkbox" name="vatEnabled" defaultChecked={c?.vatEnabled ?? false} className="size-4" />
+        {t("vatEnabled")}
+      </label>
+      <label className={label}>
+        {t("vatRate")}
+        <input
+          name="vatRate"
+          type="number"
+          min="0"
+          max="50"
+          step="0.01"
+          defaultValue={(c?.vatRateBp ?? 500) / 100}
+          dir="ltr"
+          className={`${field} num`}
+        />
+      </label>
+      <label className={label}>
+        {t("vatTrn")}
+        <input name="vatTrn" defaultValue={c?.vatTrn ?? ""} maxLength={40} dir="ltr" className={field} />
+      </label>
+      <p className="text-small text-ink-muted sm:col-span-2">{t("vatHint")}</p>
     </>
   );
 

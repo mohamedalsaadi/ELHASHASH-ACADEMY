@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCoupon, cheapestSku, discountPercent, effectivePrice, price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
+import { applyCoupon, applyPlatformDiscount, cheapestSku, discountPercent, effectivePrice, price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
 
 const now = new Date("2026-05-01T12:00:00Z");
 
@@ -193,6 +193,13 @@ describe("sale prices", () => {
     expect(cheapestSku([a, b], now)?.id).toBe("b");
     expect(cheapestSku([a, b], new Date("2026-07-01T00:00:00Z"))?.id).toBe("a");
   });
+
+  it("never compares prices across currencies", () => {
+    const aed = { id: "aed", price: 40000, currency: "AED" as const };
+    const egp = { id: "egp", price: 4000, currency: "EGP" as const };
+    expect(cheapestSku([aed, egp], now)?.id).toBe("aed");
+    expect(cheapestSku([egp, aed], now)?.id).toBe("egp");
+  });
 });
 
 describe("applyCoupon", () => {
@@ -229,5 +236,32 @@ describe("applyCoupon", () => {
 
   it("returns the cart untouched without a coupon", () => {
     expect(applyCoupon(cart, { percentOff: null, amountOff: null, currency: null })).toBe(cart);
+  });
+});
+
+describe("applyPlatformDiscount", () => {
+  const cart = price([line("math", 50000), line("physics", 40000)], [], now);
+  const perLine = (r: typeof cart) => r.lines.reduce((sum, l) => sum + l.platformDiscount, 0);
+
+  it("takes the welcome discount out of the platform share, not the teacher", () => {
+    const r = applyPlatformDiscount(cart, 10, 3000);
+    expect(r.platformDiscount).toBe(9_000);
+    expect(r.total).toBe(81_000);
+    expect(perLine(r)).toBe(9_000);
+  });
+
+  it("never takes more than the platform share", () => {
+    const r = applyPlatformDiscount(cart, 100, 3000);
+    expect(r.platformDiscount).toBe(27_000);
+    expect(r.total).toBe(63_000);
+    expect(perLine(r)).toBe(27_000);
+  });
+
+  it("keeps the spread on the currency step", () => {
+    const kwd = price([line("math", 30_000, { currency: "KWD" })], [], now);
+    const r = applyPlatformDiscount(kwd, 10, 3000);
+    expect(r.total % 10).toBe(0);
+    expect(r.platformDiscount).toBe(3_000);
+    for (const l of r.lines) expect(l.platformDiscount % 10).toBe(0);
   });
 });

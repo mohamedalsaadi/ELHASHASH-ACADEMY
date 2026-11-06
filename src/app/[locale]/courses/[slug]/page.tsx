@@ -15,6 +15,7 @@ import { grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
 import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
+import { canCharge } from "@/lib/gateway";
 import { liveApprovedOn } from "@/lib/live";
 import { readiness } from "@/lib/readiness";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
@@ -239,6 +240,7 @@ export default async function CoursePage({
     if (v?.savePct && v.savePct > 0) notes.push({ text: tp("save", { pct: v.savePct }), good: true });
     const pct = discountPercent(s, now);
     if (pct !== null) notes.push({ text: t("percentOff", { pct }), good: true });
+    if (!canCharge(s.currency)) notes.push({ text: t("paySoon") });
     return { id: s.id, label, price: formatMoney(price, s.currency, locale), was: pct !== null ? formatMoney(s.price, s.currency, locale) : undefined, notes };
   };
   const zone = courseZone(course);
@@ -350,6 +352,7 @@ export default async function CoursePage({
                 <span className="flex items-baseline gap-2">
                   <span className="text-small text-ink-muted">{t("from")}</span>
                   <span className="num font-display text-h3 font-bold">{formatMoney(effectivePrice(buyFrom, now), buyFrom.currency, locale)}</span>
+                  {!canCharge(buyFrom.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
                 </span>
               </>
             ) : null}
@@ -511,9 +514,12 @@ export default async function CoursePage({
                               open ? null : level !== "none" ? (
                                 <span className="text-label text-ink-muted">{t("outsidePlan")}</span>
                               ) : rent ? (
-                                <Link href={{ pathname: "/checkout", query: { sku: rent.id } }} className="btn btn-outline px-3 py-1.5 text-small">
-                                  {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span>
-                                </Link>
+                                <span className="grid justify-items-end gap-0.5">
+                                  <Link href={{ pathname: "/checkout", query: { sku: rent.id } }} className="btn btn-outline px-3 py-1.5 text-small">
+                                    {t("rent")} · <span className="num">{formatMoney(effectivePrice(rent, now), rent.currency, locale)}</span>
+                                  </Link>
+                                  {!canCharge(rent.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                                </span>
                               ) : (
                                 <span className="text-label">{t("liveSubscribers")}</span>
                               )
@@ -575,9 +581,12 @@ export default async function CoursePage({
                       ) : canJoin ? (
                         <span className="text-up">{t("liveIncluded")}</span>
                       ) : seat ? (
-                        <Link href={{ pathname: "/checkout", query: { sku: seat.id } }} className="btn btn-outline px-3 py-1.5 text-small">
-                          {t("liveSeat")} · <span className="num">{formatMoney(effectivePrice(seat, now), seat.currency, locale)}</span>
-                        </Link>
+                        <span className="grid justify-items-end gap-0.5">
+                          <Link href={{ pathname: "/checkout", query: { sku: seat.id } }} className="btn btn-outline px-3 py-1.5 text-small">
+                            {t("liveSeat")} · <span className="num">{formatMoney(effectivePrice(seat, now), seat.currency, locale)}</span>
+                          </Link>
+                          {!canCharge(seat.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                        </span>
                       ) : (
                         <span className="text-ink-muted">{t("liveSubscribers")}</span>
                       )
@@ -603,7 +612,10 @@ export default async function CoursePage({
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="num font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
+                  <span className="grid justify-items-end gap-0.5">
+                    <span className="num font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
+                    {!canCharge(s.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
+                  </span>
                   <Link href={{ pathname: "/checkout", query: { sku: s.id } }} className="btn btn-outline px-3 py-1.5 text-small">
                     {t("upgrade")}
                   </Link>
@@ -691,9 +703,12 @@ export default async function CoursePage({
                   {s.accessEndsAt && <span className="text-small text-ink-muted">{t("until", { date: formatDate(s.accessEndsAt, zone, locale) })}</span>}
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="flex items-baseline gap-2">
-                    {discountPercent(s, now) !== null && <s className="num text-small text-ink-muted">{formatMoney(s.price, s.currency, locale)}</s>}
-                    <span className="num text-h3 font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
+                  <span className="grid justify-items-end gap-0.5">
+                    <span className="flex items-baseline gap-2">
+                      {discountPercent(s, now) !== null && <s className="num text-small text-ink-muted">{formatMoney(s.price, s.currency, locale)}</s>}
+                      <span className="num text-h3 font-semibold">{formatMoney(effectivePrice(s, now), s.currency, locale)}</span>
+                    </span>
+                    {!canCharge(s.currency) && <span className="text-label text-ink-muted">{t("paySoon")}</span>}
                   </span>
                   <Link
                     href={{ pathname: "/checkout", query: { sku: s.id } }}

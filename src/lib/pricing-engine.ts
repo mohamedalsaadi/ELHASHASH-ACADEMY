@@ -25,8 +25,10 @@ export type PricedCart = {
   discount: number;
   /// The coupon's part of `discount`.
   couponDiscount: number;
+  /// Platform-funded discount, on top of `discount`.
+  platformDiscount: number;
   total: number;
-  lines: { skuId: string; price: number; discount: number; couponDiscount: number }[];
+  lines: { skuId: string; price: number; discount: number; couponDiscount: number; platformDiscount: number }[];
   applied: { ruleId: string; skuIds: string[]; amount: number }[];
 };
 
@@ -118,8 +120,9 @@ export function price(cart: CartLine[], rules: BundleRule[], now: Date): PricedC
     subtotal,
     discount: plan.amount,
     couponDiscount: 0,
+    platformDiscount: 0,
     total: subtotal - plan.amount,
-    lines: cart.map((l, i) => ({ skuId: l.skuId, price: l.price, discount: discounts.get(i) ?? 0, couponDiscount: 0 })),
+    lines: cart.map((l, i) => ({ skuId: l.skuId, price: l.price, discount: discounts.get(i) ?? 0, couponDiscount: 0, platformDiscount: 0 })),
     applied: plan.applications.map((a) => ({ ruleId: a.ruleId, skuIds: a.lines.map((i) => cart[i].skuId), amount: a.amount })),
   };
 }
@@ -140,11 +143,38 @@ export function discountPercent(s: Priceable, now: Date): number | null {
   return pct > 0 ? pct : null;
 }
 
-/** The SKU a card should advertise: the lowest effective price today. */
-export function cheapestSku<T extends Priceable>(skus: readonly T[], now: Date): T | undefined {
+/** The SKU a card should advertise: the lowest effective price today, within one currency group. */
+export function cheapestSku<T extends Priceable & { currency?: Currency }>(skus: readonly T[], now: Date): T | undefined {
+  const currency = skus[0]?.currency;
   let best: T | undefined;
-  for (const s of skus) if (!best || effectivePrice(s, now) < effectivePrice(best, now)) best = s;
+  for (const s of skus) {
+    if (currency && s.currency && s.currency !== currency) continue;
+    if (!best || effectivePrice(s, now) < effectivePrice(best, now)) best = s;
+  }
   return best;
+}
+
+/** Spreads an amount across lines, capped per line, in currency steps. The largest line absorbs rounding. */
+function spreadAcross(available: number[], amount: number, step: number): number[] {
+  const shares = available.map(() => 0);
+  const total = available.reduce((sum, n) => sum + n, 0);
+  if (amount <= 0 || total <= 0) return shares;
+  const order = available.map((_, i) => i).sort((a, b) => available[b] - available[a]);
+  let left = amount;
+  for (const i of order) {
+    if (left <= 0) break;
+    const proportional = Math.floor((amount * available[i]) / total / step) * step;
+    const share = Math.min(available[i], proportional, left);
+    shares[i] = share;
+    left -= share;
+  }
+  for (const i of order) {
+    if (left <= 0) break;
+    const extra = Math.min(available[i] - shares[i], left);
+    shares[i] += extra;
+    left -= extra;
+  }
+  return shares;
 }
 
 /**
@@ -166,23 +196,8 @@ export function applyCoupon(cart: PricedCart, coupon: CouponLike): PricedCart {
   amount = Math.min(Math.max(0, amount), cart.total);
   if (amount === 0) return cart;
 
-  const net = cart.lines.map((l) => l.price - l.discount);
-  const order = net.map((_, i) => i).sort((a, b) => net[b] - net[a]);
-  const shares = net.map(() => 0);
-  let left = amount;
-  for (const i of order) {
-    if (!left) break;
-    const share = Math.min(net[i], round((amount * net[i]) / cart.total), left);
-    shares[i] = share;
-    left -= share;
-  }
-  // Rounding can leave a multiple of the step; the largest remaining line absorbs it.
-  for (const i of order) {
-    if (!left) break;
-    const extra = Math.min(net[i] - shares[i], left);
-    shares[i] += extra;
-    left -= extra;
-  }
+  const available = cart.lines.map((l) => l.price - l.discount - l.platformDiscount);
+  const shares = spreadAcross(available, amount, step);
 
   return {
     ...cart,
@@ -190,5 +205,28 @@ export function applyCoupon(cart: PricedCart, coupon: CouponLike): PricedCart {
     couponDiscount: amount,
     total: cart.total - amount,
     lines: cart.lines.map((l, i) => ({ ...l, couponDiscount: shares[i] })),
+  };
+}
+
+/**
+ * A platform-funded discount: teacher pay stays calculated on the pre-discount line, and the
+ * platform's own share absorbs it. Each line is capped at the platform's share, so `platformFee`
+ * can never go negative. Returns the cart unchanged when the cap leaves nothing to apply.
+ */
+export function applyPlatformDiscount(cart: PricedCart, percentOff: number, platformShareBp: number): PricedCart {
+  if (cart.total <= 0 || percentOff <= 0) return cart;
+  const step = minorPerUnit(cart.currency) / 100;
+  const round = (n: number) => Math.round(n / step) * step;
+  const requested = Math.min(round((cart.total * Math.min(100, percentOff)) / 100), cart.total);
+  const caps = cart.lines.map((l) => round(((l.price - l.discount - l.couponDiscount) * platformShareBp) / 10_000));
+  const amount = Math.min(requested, caps.reduce((sum, n) => sum + n, 0));
+  if (amount <= 0) return cart;
+
+  const shares = spreadAcross(caps, amount, step);
+  return {
+    ...cart,
+    platformDiscount: cart.platformDiscount + amount,
+    total: cart.total - amount,
+    lines: cart.lines.map((l, i) => ({ ...l, platformDiscount: l.platformDiscount + shares[i] })),
   };
 }

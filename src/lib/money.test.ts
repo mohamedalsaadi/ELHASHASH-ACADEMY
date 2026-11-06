@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { courseZone, formatMoney as format, minorPerUnit, toMinor } from "./format";
-import { activeGateway, stripeUnitAmount } from "./gateway";
+import { activeGateway, canCharge, chargeableCurrencies, stripeUnitAmount } from "./gateway";
 import { price } from "./pricing-engine";
 
 // Intl separates the code from the amount with a no-break space.
@@ -67,8 +67,28 @@ describe("gateway", () => {
     vi.stubEnv("PAYMOB_SECRET_KEY", "test");
     vi.stubEnv("PAYMOB_ENABLED", "1");
     vi.stubEnv("STRIPE_ENABLED", "1");
+    vi.stubEnv("STRIPE_CURRENCIES", "AED,SAR");
     expect(activeGateway("EGP")?.gateway).toBe("PAYMOB");
     expect(activeGateway("AED")?.gateway).toBe("STRIPE");
+    expect(activeGateway("SAR")?.gateway).toBe("STRIPE");
+    expect(activeGateway("KWD")).toBeNull();
+  });
+
+  it("never lets Stripe take a currency the owner did not list", () => {
+    vi.stubEnv("ZIINA_API_KEY", "");
+    vi.stubEnv("STRIPE_ENABLED", "1");
+    vi.stubEnv("STRIPE_CURRENCIES", "");
+    expect(activeGateway("AED")).toBeNull();
+    expect(activeGateway("KWD")).toBeNull();
+  });
+
+  it("reports which prices can be paid today", () => {
+    vi.stubEnv("ZIINA_API_KEY", "test");
+    vi.stubEnv("ZIINA_ENABLED", "1");
+    vi.stubEnv("STRIPE_ENABLED", "");
+    expect(canCharge("AED")).toBe(true);
+    expect(canCharge("SAR")).toBe(false);
+    expect(chargeableCurrencies()).toEqual(["AED"]);
   });
 
   it("never selects Ziina when the test flag is set on a production deployment", () => {

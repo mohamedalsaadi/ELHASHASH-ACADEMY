@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
+import { canCharge } from "@/lib/gateway";
 import { cheapestSku, effectivePrice } from "@/lib/pricing-engine";
 import { alternates } from "@/lib/seo";
 
@@ -117,7 +118,12 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
                   {label}
                   <span className="mt-auto flex items-baseline justify-between gap-2 border-t border-dashed border-rule pt-2 text-small">
                     <span className="text-pen">{t("available", { count })}</span>
-                    {from && <span className="num font-bold">{formatMoney(effectivePrice(from, now), from.currency, locale)}</span>}
+                    {from && (
+                      <span className="grid justify-items-end gap-0.5">
+                        <span className="num font-bold">{formatMoney(effectivePrice(from, now), from.currency, locale)}</span>
+                        {!canCharge(from.currency) && <span className="text-label font-normal text-ink-muted">{t("paySoon")}</span>}
+                      </span>
+                    )}
                   </span>
                 </Link>
               ) : (

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ageOn, parseBirthDate } from "@/lib/age";
 
 // Local mobile formats of the seven catalog countries, stored as typed:
 // Egypt 01[0125]+8; Saudi/UAE 05+8; Kuwait [569]+7; Qatar [3567]+7; Bahrain [36]+7; Oman [79]+7.
@@ -29,14 +30,30 @@ export const signUpSchema = z
     name: z.string().trim().min(2).max(80),
     /// Required for a student, absent for a parent.
     gradeId: z.string().optional(),
+    /// Required for a student. The action decides whether the account is a minor.
+    dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate").optional(),
+    /// Required for a minor; the consent link is sent here.
+    guardianEmail: z.email().trim().toLowerCase().optional(),
     /// A student joins with a guardian's consent; the model has no birth date, so every STUDENT is a minor.
     guardianName: z.string().trim().min(2).max(80).optional(),
     guardianConsent: z.coerce.boolean().default(false),
   })
   .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" })
-  .refine((d) => d.type === "PARENT" || (d.guardianConsent && Boolean(d.guardianName)), {
-    path: ["guardianConsent"],
-    message: "guardian_required",
+  .superRefine((d, ctx) => {
+    if (d.type === "PARENT") return;
+    const dob = parseBirthDate(d.dateOfBirth);
+    if (!dob) {
+      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "invalid_birthdate" });
+      return;
+    }
+    const age = ageOn(dob);
+    if (age < 13) {
+      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "too_young" });
+      return;
+    }
+    if (age < 18 && (!d.guardianConsent || !d.guardianName || !d.guardianEmail)) {
+      ctx.addIssue({ code: "custom", path: ["guardianConsent"], message: "guardian_required" });
+    }
   });
 
 export type SignInInput = z.infer<typeof signInSchema>;

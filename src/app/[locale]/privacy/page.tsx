@@ -72,8 +72,9 @@ const ar: Section[] = [
     h: "الأطفال وولي الأمر",
     body: (
       <p>
-        من هم تحت 18 عامًا يشتركون بموافقة ولي الأمر. يستطيع ولي الأمر إنشاء حساب ومتابعة التقدم والمدفوعات بعد ربط
-        الطالب بكود يصدره الطالب من حسابه.
+        من هم تحت 18 عامًا يشتركون بموافقة ولي الأمر. نطلب تاريخ الميلاد عند التسجيل، وإذا كان الطالب تحت 18 نرسل إلى
+        ولي الأمر رابط تأكيد واحدًا. ويستطيع ولي الأمر أيضًا إنشاء حساب ومتابعة التقدم والمدفوعات بعد ربط الطالب بكود
+        يصدره الطالب من حسابه.
       </p>
     ),
   },
@@ -161,8 +162,9 @@ your account at any time.
     h: "Children and parents",
     body: (
       <p>
-        Students under 18 join with a guardian&apos;s consent. A parent can create an account and follow progress and payments
-        after linking the student with a code the student generates in their account.
+        Students under 18 join with a guardian&apos;s consent. We ask for a date of birth at sign-up; if the student is under
+        18, we email the guardian a single confirmation link. A parent can also create an account and follow progress and
+        payments after linking the student with a code the student generates in their account.
       </p>
     ),
   },

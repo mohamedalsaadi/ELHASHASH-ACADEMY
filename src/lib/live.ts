@@ -1,3 +1,4 @@
+import { isMinor } from "@/lib/age";
 import { db } from "@/lib/db";
 
 /**
@@ -34,10 +35,18 @@ export async function canPublishLive(me: { id: string; role: string }): Promise<
 }
 
 /**
- * A guardian must have consented before a student joins a live lecture. Every STUDENT account is
- * treated as a minor: there is no birth date to decide otherwise.
+ * A guardian must have verified consent before a minor joins live or uses AI grading. An adult
+ * needs no guardian row; a legacy account with no birth date is grandfathered by the migration.
  */
 export async function hasGuardianConsent(studentId: string): Promise<boolean> {
-  const row = await db.guardianConsent.findUnique({ where: { studentId }, select: { studentId: true } });
-  return row !== null;
+  const student = await db.user.findUnique({
+    where: { id: studentId },
+    select: { dateOfBirth: true, guardianConsent: { select: { verifiedAt: true } } },
+  });
+  if (!student) return false;
+  // No birth date is a legacy account. The old rule treated every student as a minor, so keep that
+  // for live and AI; the migration marks the consent rows that already existed as verified.
+  const minor = student.dateOfBirth === null ? true : isMinor(student.dateOfBirth);
+  if (!minor) return true;
+  return Boolean(student.guardianConsent?.verifiedAt);
 }

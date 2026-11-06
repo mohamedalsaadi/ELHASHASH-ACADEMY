@@ -7,15 +7,25 @@ import { db } from "@/lib/db";
 import { Link } from "@/i18n/navigation";
 import { priceSkus } from "@/lib/checkout";
 import { pick } from "@/lib/content";
-import { resolveCoupon } from "@/lib/coupon-resolve";
+import { resolveDiscount } from "@/lib/referral";
 import { activeGateway } from "@/lib/gateway";
-import { vatOn } from "@/lib/finance";
 import { formatMoney } from "@/lib/format";
 import { getFinanceConfig } from "@/lib/platform-settings";
-import { applyCoupon, PricingError } from "@/lib/pricing-engine";
+import { applyCoupon, applyPlatformDiscount, PricingError } from "@/lib/pricing-engine";
+import { taxConfigFor, vatFor } from "@/lib/tax";
 import { PayForm } from "./PayForm";
 
-type CouponError = "invalid" | "not_started" | "expired" | "used_up" | "used_by_you" | "currency";
+type CouponError =
+  | "invalid"
+  | "not_started"
+  | "expired"
+  | "used_up"
+  | "used_by_you"
+  | "currency"
+  | "referral_self"
+  | "referral_used"
+  | "referral_not_first"
+  | "referral_unavailable";
 
 const applyButton =
   "btn btn-outline";
@@ -66,16 +76,25 @@ export default async function CheckoutPage({
   }
 
   // Re-resolve the code on every render; the API resolves it again before charging.
+  const finance = await getFinanceConfig();
   let priced = result.priced;
   let appliedCode: string | null = null;
   let couponError: CouponError | null = null;
   if (coupon) {
-    const resolved = await resolveCoupon(coupon, user.id);
+    const resolved = await resolveDiscount(coupon, user.id);
     if (!resolved.ok) couponError = resolved.reason;
     else {
       try {
-        priced = applyCoupon(priced, resolved.coupon);
-        appliedCode = resolved.coupon.code;
+        if (resolved.kind === "referral") {
+          priced = applyPlatformDiscount(priced, resolved.percentOff, finance.platformShareBp);
+          appliedCode = resolved.code.code;
+        } else if (resolved.funding === "PLATFORM") {
+          priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, finance.platformShareBp);
+          appliedCode = resolved.coupon.code;
+        } else {
+          priced = applyCoupon(priced, resolved.coupon);
+          appliedCode = resolved.coupon.code;
+        }
       } catch (e) {
         if (e instanceof PricingError && e.message === "coupon_currency") couponError = "currency";
         else throw e;
@@ -83,32 +102,21 @@ export default async function CheckoutPage({
     }
   }
 
-  // The gateway charges total + VAT (src/app/api/checkout/route.ts), so the page must show the same
-  // amount. Showing the ex-VAT total and charging more is both a consumer-protection problem and the
-  // commonest complaint a payment provider sees.
-  const finance = await getFinanceConfig();
-  const vat = vatOn(priced.total, finance);
+  // The gateway charges total + VAT for the course's market, so the page must show the same amount.
+  const tax = await taxConfigFor(result.countryCode);
+  const vat = vatFor(priced.total, tax);
   const payable = priced.total + vat;
 
   // A 100% code needs no gateway (the API settles it without one), so the button still shows.
   const gateway = activeGateway(priced.currency) ?? (priced.total === 0 ? { gateway: "ZIINA" as const, methods: ["CARD" as const] } : null);
 
-  // A parent pays for a linked child; with no child linked yet there is nobody to give the access to.
+  // A parent pays for a student. A linked child is the usual path; with no link yet, checkout asks for
+  // the student's phone instead of blocking, and access goes to that student without granting visibility.
   const children =
     user.role === "PARENT"
       ? (await db.parentLink.findMany({ where: { parentId: user.id }, select: { student: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } })).map((l) => l.student)
       : null;
-  if (children && children.length === 0) {
-    return (
-      <main className="mx-auto grid max-w-xl gap-4 px-4 py-16">
-        <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-        <p className="text-ink-muted">{t("noChildren")}</p>
-        <Link href="/parent" className="btn btn-primary w-fit">
-          {t("linkChild")}
-        </Link>
-      </main>
-    );
-  }
+  const needsPhone = children !== null && children.length === 0;
 
   const { skus } = result;
   const money = (n: number) => formatMoney(n, priced.currency, locale);
@@ -146,9 +154,15 @@ export default async function CheckoutPage({
               <dd className="num text-up">−{money(priced.couponDiscount)}</dd>
             </>
           )}
+          {priced.platformDiscount > 0 && appliedCode && (
+            <>
+              <dt className="text-up">{t("couponRow", { code: appliedCode })}</dt>
+              <dd className="num text-up">−{money(priced.platformDiscount)}</dd>
+            </>
+          )}
           {vat > 0 && (
             <>
-              <dt className="text-ink-muted">{t("vat", { pct: (finance.vatRateBp / 100).toFixed(0) })}</dt>
+              <dt className="text-ink-muted">{t("vat", { pct: (tax.vatRateBp / 100).toFixed(0) })}</dt>
               <dd className="num">{money(vat)}</dd>
             </>
           )}
@@ -178,7 +192,7 @@ export default async function CheckoutPage({
         )}
       </section>
       {gateway ? (
-        <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} learners={children ?? undefined} {...gateway} />
+        <PayForm skuIds={skuIds} locale={locale} coupon={appliedCode ?? undefined} learners={children ?? undefined} needsPhone={needsPhone} {...gateway} />
       ) : (
         <p role="status" className="rounded-lg border border-hairline bg-surface shadow-paper p-4 text-small text-ink-muted">
           {t("errors.payments_unavailable")}

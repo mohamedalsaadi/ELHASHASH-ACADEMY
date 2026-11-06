@@ -111,11 +111,25 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
       {type === "STUDENT" && (
         <>
           <label className={label}>
+            {t("dateOfBirth")}
+            <input
+              type="date"
+              name="dateOfBirth"
+              required
+              max={new Date().toISOString().slice(0, 10)}
+              defaultValue={v?.dateOfBirth}
+              dir="ltr"
+              aria-invalid={state?.error === "invalid_birthdate" || state?.error === "too_young"}
+              aria-describedby="signup-error"
+              className={field}
+            />
+            <span className="text-label">{t("dateOfBirthHint")}</span>
+          </label>
+          <label className={label}>
             {t("guardianName")}
             <input
               name="guardianName"
               autoComplete="name"
-              required
               minLength={2}
               maxLength={80}
               defaultValue={v?.guardianName}
@@ -126,11 +140,24 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
             />
             <span className="text-label">{t("guardianHint")}</span>
           </label>
+          <label className={label}>
+            {t("guardianEmail")}
+            <input
+              type="email"
+              name="guardianEmail"
+              autoComplete="email"
+              defaultValue={v?.guardianEmail}
+              dir="ltr"
+              aria-invalid={state?.error === "guardian_required"}
+              aria-describedby="signup-error"
+              className={field}
+            />
+            <span className="text-label">{t("guardianEmailHint")}</span>
+          </label>
           <label className="flex min-h-11 items-center gap-3 text-small">
             <input
               type="checkbox"
               name="guardianConsent"
-              required
               defaultChecked={v?.guardianConsent ?? false}
               className="size-5 shrink-0"
               aria-invalid={state?.error === "guardian_required"}

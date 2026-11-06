@@ -25,11 +25,11 @@ The curriculum of one country and one grade, taught in Arabic first (English too
 
 - Main channel: Instagram (handle not bought yet) and WhatsApp shares, opened on mid-range Android phones and iPhones.
 - Seven countries are active: Egypt (EGP), Saudi Arabia (SAR), UAE (AED), Kuwait (KWD), Qatar (QAR), Bahrain (BHD), Oman (OMR). Each has its own grades, subjects and prices.
-- Payment: card (Stripe test mode, Paymob for EGP, Ziina for AED beta) and bank transfer. One device per account.
+- Payment: card through Ziina (AED, live). Paymob (EGP) and Stripe stay coded behind env flags and test keys. One device per account.
 
 ## Capabilities and Constraints
 
-- Next.js 15 App Router, React 19, Tailwind v4, next-intl (`ar` default, `en`), Prisma on Neon. `three` is installed; no GSAP or Motion.
+- Next.js 15 App Router, React 19, Tailwind v4, next-intl (`ar` default, `en`), Prisma on Neon. `three` is installed; GSAP and Lenis are not.
 - Arabic first, RTL, logical properties only. The wordmark is ذروة in Reem Kufi in Arabic and Dhirwa in English.
 - Tokens live in `src/app/tokens.css` and motion in `src/app/brand.css`; no raw hex, px or ms in components.
 - Motion and 3D only on marketing pages; app pages stay calm; `prefers-reduced-motion` is honoured.

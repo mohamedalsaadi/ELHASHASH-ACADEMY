@@ -8,6 +8,8 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { gradeGroups } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { appUrl } from "@/lib/mail";
+import { getOrCreateReferralCode } from "@/lib/referral";
 import { DeleteAccountForm, ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
 import { sendVerification, unlinkParent } from "./actions";
 
@@ -45,6 +47,13 @@ export default async function AccountPage({
   if (!u) notFound();
 
   const verified = Boolean(u.emailVerifiedAt);
+  const ar = locale === "ar";
+  const referral = u.role === "STUDENT" || u.role === "PARENT" ? await getOrCreateReferralCode(u.id) : null;
+  const shareText = referral
+    ? ar
+      ? `جرّب ذروة لابنك. استخدم كود الإحالة ${referral.code} عند الدفع: ${appUrl()}/${locale}/courses`
+      : `Try Dhirwa for your child. Use referral code ${referral.code} at checkout: ${appUrl()}/${locale}/courses`
+    : "";
 
   return (
     <main className="mx-auto grid max-w-2xl gap-8 px-4 py-12">
@@ -140,6 +149,20 @@ export default async function AccountPage({
           <Link href="/parent" className="text-small text-pen underline-offset-4 hover:underline">
             {t("openParent")}
           </Link>
+        </section>
+      )}
+
+      {referral && (
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("referralTitle")}</h2>
+          <p className="text-small text-ink-muted">{t("referralHint")}</p>
+          <p className="num font-display text-h2 font-bold tracking-wider" dir="ltr">
+            {referral.code}
+          </p>
+          <p className="text-small text-ink-muted">{t("referralHow")}</p>
+          <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer" className={smallButton}>
+            {t("referralShare")}
+          </a>
         </section>
       )}
 

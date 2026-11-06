@@ -101,6 +101,8 @@ model User {
   passwordChangedAt DateTime?
   role            Role      @default(STUDENT)
   locale          String    @default("ar")
+  /// Used for age assurance. Null on legacy accounts, which are grandfathered.
+  dateOfBirth     DateTime?
   /// Set when the person asked for erasure. The row stays so paid orders keep their foreign key;
   /// every personal field is blank and the account can no longer sign in.
   deletedAt       DateTime?
@@ -135,6 +137,12 @@ model User {
   parentCode          ParentCode?
   parentLinks         ParentLink[]            @relation("Parent")
   childLinks          ParentLink[]            @relation("Student")
+  referralCode        ReferralCode?
+  couponsOwned        Coupon[]                @relation("CouponOwner")
+  referralsMade       Referral[]              @relation("ReferralReferrer")
+  referralsReceived   Referral[]              @relation("ReferralReferred")
+  receiptAcks         ReceiptAck[]            @relation("ReceiptAcks")
+  statements          TeacherStatement[]
   attendance          LiveAttendance[]
   /// Guardian consent for live lectures. Every STUDENT account is treated as a minor.
   guardianConsent     GuardianConsent? @relation("ConsentStudent")
@@ -171,6 +179,10 @@ model Country {
   active       Boolean                     @default(true)
   /// Display order on /courses.
   order        Int                         @default(0)
+  /// This market is VAT-registered. It applies only while the global master switch is on.
+  vatEnabled   Boolean                     @default(false)
+  vatRateBp    Int                         @default(500)
+  vatTrn       String?
   grades       Grade[]
   stages       Stage[]
   teachers     TeacherCountry[]
@@ -418,6 +430,19 @@ model Promotion {
 }
 
 /// A checkout code. Redemptions are counted from paid orders, so no separate redemption table is needed.
+enum CouponFunding {
+  /// The discount reduces the amount teacher pay is calculated on, as before.
+  STANDARD
+  /// The platform funds it: teacher pay is calculated before the discount.
+  PLATFORM
+}
+
+enum ReferralStatus {
+  PENDING
+  REWARDED
+  VOID
+}
+
 model Coupon {
   id             String    @id @default(cuid())
   /// Stored uppercase.
@@ -432,9 +457,53 @@ model Coupon {
   maxRedemptions Int?
   perUser        Int       @default(1)
   active         Boolean   @default(true)
+  /// PLATFORM means the platform funds the discount and teacher pay is calculated before it.
+  funding        CouponFunding @default(STANDARD)
+  /// Set on a reward coupon: only this user may redeem the code.
+  ownerId        String?
   createdAt      DateTime  @default(now())
 
-  orders Order[]
+  owner     User?     @relation("CouponOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  orders    Order[]
+  rewardFor Referral? @relation("ReferralReward")
+}
+
+/// One shareable code per person. The code is the referral link's last path segment.
+model ReferralCode {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  code      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referrals Referral[]
+}
+
+/// The attribution and the two-sided reward. One row per referred family, ever.
+model Referral {
+  id              String         @id @default(cuid())
+  codeId          String
+  referrerId      String
+  /// One welcome reward per family: the unique is the anti-double-dip guard.
+  referredUserId  String         @unique
+  /// The first order that carried the discount; unique so a replay cannot re-attribute.
+  referredOrderId String?        @unique
+  status          ReferralStatus @default(PENDING)
+  currency        Currency
+  /// The discount actually applied to the buyer (already capped server-side).
+  discount        Int            @default(0)
+  rewardCouponId  String?        @unique
+  createdAt       DateTime       @default(now())
+  rewardedAt      DateTime?
+
+  code         ReferralCode @relation(fields: [codeId], references: [id], onDelete: Restrict)
+  referrer     User         @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Restrict)
+  referredUser User         @relation("ReferralReferred", fields: [referredUserId], references: [id], onDelete: Restrict)
+  order        Order?       @relation(fields: [referredOrderId], references: [id], onDelete: SetNull)
+  rewardCoupon Coupon?      @relation("ReferralReward", fields: [rewardCouponId], references: [id], onDelete: SetNull)
+
+  @@index([referrerId, createdAt])
 }
 
 model Order {
@@ -454,6 +523,8 @@ model Order {
   vatRateBp      Int            @default(0)
   /// Set when a coupon took part in `discount`.
   couponId       String?
+  /// Discount funded by the platform (a referral welcome). Never reduces teacher pay.
+  platformDiscount Int          @default(0)
   /// Kiosk reference the student pays in cash; the order stays PENDING until the gateway webhook arrives.
   kioskRef       String?
   /// Paymob intention id or Stripe Checkout Session id
@@ -465,6 +536,10 @@ model Order {
   receiptSize    Int?
   /// The linked child the access is for, when a parent pays. Null means the buyer learns.
   beneficiaryId  String?
+  /// When a parent bought for a student without a ParentLink, the moment they declared they are the guardian.
+  beneficiaryDeclaredAt DateTime?
+  /// The tax jurisdiction of the sale, copied from the course country at checkout.
+  taxCountryCode String?
   /// The legal text the buyer accepted when placing this order, and when. Null for orders an admin created.
   termsVersion    String?
   termsAcceptedAt DateTime?
@@ -480,6 +555,8 @@ model Order {
   entitlements Entitlement[]
   ledger       LedgerEntry[]
   bankEmails   BankEmail[]
+  referral     Referral?
+  documents    Document[]
 
   @@index([userId, status])
   @@index([beneficiaryId])
@@ -489,7 +566,10 @@ model OrderItem {
   id      String @id @default(cuid())
   orderId String
   skuId   String
+  /// Pre-platform-discount line net. Teacher pay is calculated from this.
   price   Int
+  /// The platform-funded part of this line; the buyer pays price - platformDiscount.
+  platformDiscount Int @default(0)
 
   order  Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   sku    Sku           @relation(fields: [skuId], references: [id], onDelete: Restrict)
@@ -569,9 +649,8 @@ model LiveAttendance {
   @@id([userId, liveSessionId])
 }
 
-/// A guardian's consent for one student to join live lectures, recorded by the linked parent.
-/// Only a parent account can write it, so the row is evidence that a guardian acted. There is no
-/// birth date anywhere in the schema, so every STUDENT account is treated as under 18.
+/// A guardian's consent for one student. A signup declaration is unverified until the guardian
+/// clicks the emailed link; a parent account acting through the app is evidence in itself.
 enum ConsentSource {
   SIGNUP
   PARENT
@@ -583,10 +662,17 @@ model GuardianConsent {
   parentId      String?
   /// The guardian's name at the moment of consent, copied so later edits cannot rewrite history.
   guardianName  String
+  /// Where the verification link was sent. Null on legacy rows.
+  guardianEmail String?
   source        ConsentSource @default(PARENT)
   /// Bumped when the wording shown at consent changes (CONSENT_VERSION in src/lib/live.ts).
   rulesVersion  String
   consentedAt   DateTime @default(now())
+  /// Set when the guardian opened the emailed link. Legacy rows are backfilled in the migration.
+  verifiedAt    DateTime?
+  /// Only the SHA-256 hash of the link token is stored.
+  verifyTokenHash  String? @unique
+  verifyExpiresAt DateTime?
 
   student User @relation("ConsentStudent", fields: [studentId], references: [id], onDelete: Cascade)
   parent  User? @relation("ConsentParent", fields: [parentId], references: [id], onDelete: Cascade)
@@ -1262,6 +1348,13 @@ model LedgerEntry {
   platformFee   Int
   /// net - platformFee
   instructorNet Int
+  /// The platform-funded part of the buyer price on this line. Teacher pay is calculated before it.
+  platformDiscount Int @default(0)
+  /// Corporate-tax contribution deducted from the teacher's share when switched on.
+  corporateTax Int @default(0)
+  corporateTaxBp Int @default(0)
+  /// What the teacher is actually paid: instructorNet - corporateTax.
+  instructorPayout Int @default(0)
 
   vatRateBp       Int @default(0)
   platformShareBp Int @default(3000)
@@ -1291,6 +1384,17 @@ model PlatformSetting {
   vatTrn             String?
   /// Basis points: 3000 = 30.00%.
   platformShareBp    Int      @default(3000)
+  /// Welcome discount for a referred family, in percent. Zero disables referrals.
+  referralWelcomePercentOff Int @default(0)
+  /// One-time reward for the referrer, in percent, after the referred family pays.
+  referralRewardPercentOff  Int @default(0)
+  /// Corporate-tax contribution deducted from teacher pay. A contractual split, not a VAT line.
+  corporateTaxEnabled       Boolean @default(false)
+  corporateTaxBp            Int     @default(900)
+  /// Seller identity printed on documents. Null until the owner supplies it; never a placeholder.
+  sellerLegalName           String?
+  sellerAddress             String?
+  sellerLicenceNo           String?
   /// Bank details shown to a student paying by transfer. No IBAN means transfer is not offered.
   bankName           String?
   bankAccountName    String?
@@ -1301,6 +1405,119 @@ model PlatformSetting {
   bankAutoApprove    Boolean  @default(false)
   updatedAt          DateTime @updatedAt
   updatedById        String?
+}
+
+enum DocumentKind {
+  INVOICE
+  CREDIT_NOTE
+}
+
+enum DocumentPdfStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+/// One row per document series. The row lock makes the number gapless.
+model DocumentSequence {
+  key  String @id
+  next Int    @default(1)
+}
+
+/// A numbered document. Every field it shows is snapshotted, so a later profile or tax edit cannot
+/// rewrite history. The HTML page is the readable artifact; the PDF is a convenience copy.
+model Document {
+  id                String            @id @default(cuid())
+  kind              DocumentKind
+  /// e.g. INV-AE-2026 / CN-AE-2026.
+  sequenceKey       String
+  sequenceNo        Int
+  /// e.g. AE-2026-000123 / CN-AE-2026-000001.
+  number            String            @unique
+  orderId           String
+  /// On a credit note: the invoice it credits.
+  creditsDocumentId String?           @unique
+  currency          Currency
+  taxCountryCode    String?
+  sellerName        String
+  sellerAddress     String?
+  sellerTrn         String?
+  buyerName         String
+  buyerEmail        String?
+  buyerPhone        String?
+  beneficiaryName   String?
+  subtotal          Int
+  discount          Int
+  platformDiscount  Int               @default(0)
+  vat               Int
+  vatRateBp         Int               @default(0)
+  total             Int
+  /// [{ skuId, titleAr, titleEn, accessType, net, discount, platformDiscount, vat, lineTotal }]
+  lines             Json
+  issuedAt          DateTime          @default(now())
+  pdfKey            String?
+  pdfStatus         DocumentPdfStatus @default(PENDING)
+  pdfAttempts       Int               @default(0)
+
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  creditsDocument Document? @relation("CreditNote", fields: [creditsDocumentId], references: [id], onDelete: Restrict)
+  creditNote      Document? @relation("CreditNote")
+  acks            ReceiptAck[]
+
+  @@unique([orderId, kind])
+  @@unique([sequenceKey, sequenceNo])
+  @@index([taxCountryCode, issuedAt])
+}
+
+/// A teacher's confirmation of the earning lines on one document. The teacher never receives the
+/// buyer's document itself; this row records that they saw their own lines and accepted the amounts.
+model ReceiptAck {
+  documentId     String
+  teacherId      String
+  acknowledgedAt DateTime @default(now())
+  ip             String?
+  userAgent      String?
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  teacher  User     @relation("ReceiptAcks", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, teacherId])
+}
+
+enum StatementStatus {
+  OPEN
+  ACKNOWLEDGED
+}
+
+/// A month's ledger summary for one teacher and one currency. The immutable rows are the evidence;
+/// this row is the acknowledgement snapshot.
+model TeacherStatement {
+  id               String          @id @default(cuid())
+  number           String          @unique
+  instructorId     String
+  /// "2026-11", the UTC month of the ledger rows.
+  period           String
+  currency         Currency
+  salesCount       Int             @default(0)
+  refundCount      Int             @default(0)
+  gross            Int             @default(0)
+  vat              Int             @default(0)
+  net              Int             @default(0)
+  platformFee      Int             @default(0)
+  platformDiscount Int             @default(0)
+  corporateTax     Int             @default(0)
+  instructorNet    Int             @default(0)
+  instructorPayout Int             @default(0)
+  status           StatementStatus @default(OPEN)
+  issuedAt         DateTime        @default(now())
+  acknowledgedAt   DateTime?
+  ackIp            String?
+  ackUserAgent     String?
+
+  instructor User @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@unique([instructorId, period, currency])
+  @@index([period, status])
 }
 
 /// A behaviour event. No foreign keys on purpose: inserts stay cheap and user deletion never blocks.

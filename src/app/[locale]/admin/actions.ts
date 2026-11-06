@@ -15,6 +15,7 @@ import { saveFinanceConfig } from "@/lib/platform-settings";
 import { refundIntent } from "@/lib/ziina";
 import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
+import { issueCreditNote } from "@/lib/documents";
 import { toMinor } from "@/lib/format";
 import { issueInvite } from "@/lib/invites";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
@@ -405,6 +406,10 @@ export async function refundOrder(form: FormData) {
           net: -s.net,
           platformFee: -s.platformFee,
           instructorNet: -s.instructorNet,
+          corporateTax: -s.corporateTax,
+          corporateTaxBp: s.corporateTaxBp,
+          instructorPayout: -s.instructorPayout,
+          platformDiscount: -s.platformDiscount,
           vatRateBp: s.vatRateBp,
           platformShareBp: s.platformShareBp,
           reversalOfId: s.id,
@@ -413,6 +418,12 @@ export async function refundOrder(form: FormData) {
       });
     }
   });
+  // The refund is recorded; a document failure must not undo it. The credit note can be retried.
+  try {
+    await issueCreditNote(id);
+  } catch (e) {
+    console.error("[documents] credit note failed", id, e);
+  }
   done();
   revalidatePath("/[locale]/admin/orders", "layout");
   revalidatePath("/[locale]/dashboard", "page");
@@ -430,6 +441,13 @@ export async function saveFinanceSettings(form: FormData) {
       vatRate: z.coerce.number().min(0).max(50),
       vatTrn: z.string().trim().max(40).default(""),
       platformShare: z.coerce.number().min(0).max(100),
+      referralWelcome: z.coerce.number().min(0).max(100),
+      referralReward: z.coerce.number().min(0).max(100),
+      corporateTaxEnabled: checkbox,
+      corporateTax: z.coerce.number().min(0).max(50),
+      sellerLegalName: z.string().trim().max(200).default(""),
+      sellerAddress: z.string().trim().max(500).default(""),
+      sellerLicenceNo: z.string().trim().max(80).default(""),
     })
     .parse(Object.fromEntries(form));
 
@@ -438,6 +456,14 @@ export async function saveFinanceSettings(form: FormData) {
     vatRateBp: Math.round(d.vatRate * 100),
     vatTrn: d.vatTrn || null,
     platformShareBp: Math.round(d.platformShare * 100),
+    // A reward larger than the platform share would make the platform's take negative.
+    referralWelcomePercentOff: Math.min(d.referralWelcome, d.platformShare),
+    referralRewardPercentOff: Math.min(d.referralReward, d.platformShare),
+    corporateTaxEnabled: d.corporateTaxEnabled,
+    corporateTaxBp: Math.round(d.corporateTax * 100),
+    sellerLegalName: d.sellerLegalName || null,
+    sellerAddress: d.sellerAddress || null,
+    sellerLicenceNo: d.sellerLicenceNo || null,
   };
   await saveFinanceConfig(cfg, me.id);
   revalidatePath("/[locale]/admin", "layout");
@@ -672,7 +698,17 @@ export async function setGradeSubjects(form: FormData) {
 export async function saveCountry(form: FormData) {
   await requireAdmin();
   const d = countryInput.parse(Object.fromEntries(form));
-  const data = { nameAr: d.nameAr, nameEn: d.nameEn, currency: d.currency, timeZone: d.timeZone, order: d.order, active: d.active };
+  const data = {
+    nameAr: d.nameAr,
+    nameEn: d.nameEn,
+    currency: d.currency,
+    timeZone: d.timeZone,
+    order: d.order,
+    active: d.active,
+    vatEnabled: d.vatEnabled,
+    vatRateBp: Math.round(d.vatRate * 100),
+    vatTrn: d.vatTrn || null,
+  };
   try {
     if (d.id) await db.country.update({ where: { id: d.id }, data });
     else await db.country.create({ data: { ...data, code: d.code } });

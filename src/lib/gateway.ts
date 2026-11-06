@@ -28,6 +28,18 @@ export function stripeTestKeyInProduction(): boolean {
 
 export type ActiveGateway = { gateway: GatewayName; methods: Method[] };
 
+const ALL_CURRENCIES: Currency[] = ["EGP", "SAR", "AED", "KWD", "QAR", "BHD", "OMR"];
+
+/** Stripe is opt-in per currency. Empty means it takes nothing, so it can never silently catch the GCC currencies. */
+function stripeCurrencies(): Set<string> {
+  return new Set(
+    (process.env.STRIPE_CURRENCIES ?? "")
+      .split(",")
+      .map((c) => c.trim().toUpperCase())
+      .filter(Boolean),
+  );
+}
+
 // Ziina is the only way to pay: it settles AED. Stripe and Paymob stay coded but hidden until the
 // owner turns them on with STRIPE_ENABLED=1 / PAYMOB_ENABLED=1. Null means nothing can take this currency.
 export function activeGateway(currency: Currency): ActiveGateway | null {
@@ -42,8 +54,19 @@ export function activeGateway(currency: Currency): ActiveGateway | null {
   if (currency === "EGP" && process.env.PAYMOB_SECRET_KEY && process.env.PAYMOB_ENABLED === "1") {
     return { gateway: "PAYMOB", methods: ["CARD", "WALLET", "KIOSK", "VALU"] };
   }
-  if (process.env.STRIPE_ENABLED === "1") return { gateway: "STRIPE", methods: ["CARD"] };
+  if (process.env.STRIPE_ENABLED === "1" && stripeCurrencies().has(currency)) {
+    return { gateway: "STRIPE", methods: ["CARD"] };
+  }
   return null;
+}
+
+/** Whether a price in this currency can be paid today. The single signal price surfaces and checkout share. */
+export function canCharge(currency: Currency): boolean {
+  return activeGateway(currency) !== null;
+}
+
+export function chargeableCurrencies(): Currency[] {
+  return ALL_CURRENCIES.filter(canCharge);
 }
 
 /** Stripe takes 3-decimal currencies only in multiples of 10 fils; prices are saved that way, so anything else is a bug. */

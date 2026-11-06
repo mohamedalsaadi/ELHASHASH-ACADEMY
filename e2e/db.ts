@@ -76,13 +76,13 @@ export async function liveOf(courseSlug: string) {
   return { live: rows.find((r) => !r.cancelledAt)!.id, cancelled: rows.find((r) => r.cancelledAt)!.id };
 }
 
-/** Records guardian consent for a student, as the linked parent would. */
+/** Records guardian consent for a student, as the linked parent would. The parent acting verifies it. */
 export async function consentLive(studentPhone: string) {
   await sql(
-    `INSERT INTO "GuardianConsent" ("studentId","parentId","guardianName","rulesVersion")
-     SELECT s.id, p.id, p.name, 'e2e' FROM "User" s, "User" p
+    `INSERT INTO "GuardianConsent" ("studentId","parentId","guardianName","rulesVersion","verifiedAt")
+     SELECT s.id, p.id, p.name, 'e2e', now() FROM "User" s, "User" p
      WHERE s.phone = $1 AND p.role = 'PARENT'
-     ON CONFLICT ("studentId") DO NOTHING`,
+     ON CONFLICT ("studentId") DO UPDATE SET "verifiedAt" = now()`,
     [studentPhone],
   );
 }

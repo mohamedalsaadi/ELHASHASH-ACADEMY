@@ -7,6 +7,7 @@ import { execSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import net from "node:net";
 
 const port = 54329;
 const dir = mkdtempSync(join(tmpdir(), "dhirwa-e2e-"));
@@ -30,6 +31,24 @@ const env = {
 };
 const run = (cmd) => execSync(cmd, { stdio: "inherit", env });
 
+// A Postgres left behind by an aborted run holds the port, and embedded-postgres then fails without
+// printing anything, so the whole run looks like a silent pass. Say so plainly instead.
+const portBusy = () =>
+  new Promise((resolve) => {
+    const probe = net.connect({ port, host: "127.0.0.1" });
+    const done = (busy) => {
+      probe.destroy();
+      resolve(busy);
+    };
+    probe.once("connect", () => done(true));
+    probe.once("error", () => done(false));
+    setTimeout(() => done(false), 500);
+  });
+if (await portBusy()) {
+  console.error(`[e2e] port ${port} is already in use. Stop the leftover Postgres and run again.`);
+  process.exit(1);
+}
+
 let code = 0;
 try {
   await pg.initialise();
@@ -40,7 +59,8 @@ try {
   run("npx tsx e2e/seed.ts");
   run(`npx playwright test ${process.argv.slice(2).join(" ")}`);
 } catch (e) {
-  code = typeof e?.status === "number" ? e.status : 1;
+  console.error("[e2e] failed:", e?.message ?? e);
+  code = typeof e?.status === "number" && e.status !== 0 ? e.status : 1;
 } finally {
   await pg.stop().catch(() => {});
   rmSync(dir, { recursive: true, force: true });

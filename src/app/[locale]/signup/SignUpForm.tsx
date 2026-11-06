@@ -131,7 +131,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
               type="checkbox"
               name="guardianConsent"
               required
-              defaultChecked={false}
+              defaultChecked={v?.guardianConsent ?? false}
               className="size-5 shrink-0"
               aria-invalid={state?.error === "guardian_required"}
               aria-describedby="signup-error"

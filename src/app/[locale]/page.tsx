@@ -90,7 +90,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       <section className="stage">
         <Summit rtl={ar} />
         <Intro skipLabel={t("skipIntro")} />
-        <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(80vw,20rem)] pb-14 md:pb-20 lg:pt-28">
+        <div className="relative mx-auto grid min-h-[min(92svh,56rem)] max-w-(--container-page) content-end px-4 pt-[min(45vw,10rem)] md:pt-[min(80vw,20rem)] pb-14 md:pb-20 lg:pt-28">
           <div className="as-hero-copy grid max-w-[38rem] gap-6">
             <span className="text-label font-medium text-night-muted ltr:tracking-wide" style={{ "--i": 0 } as React.CSSProperties}>
               {t("eyebrow")}
@@ -114,6 +114,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 {t("ctaParent")}
               </a>
             </div>
+            <ul aria-label={t("trustLabel")} className="grid gap-2 text-small text-night-muted sm:grid-cols-3" style={{ "--i": 4.5 } as React.CSSProperties}>
+              {(["device", "pay", "lang"] as const).map((k) => (
+                <li key={k} className="flex items-start gap-2">
+                  <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-summit" />
+                  {t(`trust.${k}`)}
+                </li>
+              ))}
+            </ul>
             {stats.length > 0 && (
               <ul aria-label={t("statsLabel")} className="mt-4 flex flex-wrap gap-x-10 gap-y-4" style={{ "--i": 4 } as React.CSSProperties}>
                 {stats.map((s) => (

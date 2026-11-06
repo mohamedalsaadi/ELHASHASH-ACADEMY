@@ -8,7 +8,10 @@
 // `script-src 'self'` with no 'unsafe-inline'.
 try {
   var d = document.documentElement;
+  // ?intro=off skips it outright, for reviewing the page without waiting four seconds.
   if (
+    !location.search.includes("intro=off") &&
+    !matchMedia("(max-width: 767px)").matches &&
     (/[?&]intro=/.test(location.search) || !sessionStorage.getItem("as-intro")) &&
     !matchMedia("(prefers-reduced-motion: reduce)").matches
   ) {

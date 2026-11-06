@@ -25,7 +25,7 @@ export type SignUpState = {
     | "guardian_required"
     | "check_email"
     | "too_many";
-  values?: { type: string; name: string; email: string; phone: string; gradeId: string; guardianName: string };
+  values?: { type: string; name: string; email: string; phone: string; gradeId: string; guardianName: string; guardianConsent: boolean };
 } | null;
 
 export async function signUp(_: SignUpState, form: FormData): Promise<SignUpState> {
@@ -36,6 +36,8 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     phone: String(form.get("phone") ?? ""),
     gradeId: String(form.get("gradeId") ?? ""),
     guardianName: String(form.get("guardianName") ?? ""),
+    // Returned with the error so the guardian does not have to tick it again after a typo elsewhere.
+    guardianConsent: form.get("guardianConsent") === "on",
   };
   const parsed = signUpSchema.safeParse({
     ...values,

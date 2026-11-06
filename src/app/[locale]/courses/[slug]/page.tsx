@@ -218,6 +218,19 @@ export default async function CoursePage({
   const singlePrice = single ? effectivePrice(single, now) : null;
   const months = course.skus.filter((s) => s.accessType === "MONTHLY").sort((a, b) => (a.month ?? 0) - (b.month ?? 0));
   const terms = course.skus.filter((s) => s.accessType === "SEMESTER").sort((a, b) => (a.term ?? 0) - (b.term ?? 0));
+
+  // "Best value" is computed from the real per-lecture price, never asserted. The cheapest plan among
+  // the ones actually on offer earns the badge.
+  const perLectureOf = (sku: NonNullable<typeof single>) => effectivePrice(sku, now) / Math.max(1, lecturesIn(course.units, sku));
+  const planOptions = [
+    { kind: "SINGLE" as const, sku: single },
+    { kind: "MONTHLY" as const, sku: months[0] },
+    { kind: "SEMESTER" as const, sku: terms[0] },
+  ].filter((o): o is { kind: "SINGLE" | "MONTHLY" | "SEMESTER"; sku: NonNullable<typeof single> } => Boolean(o.sku));
+  const bestKind = [...planOptions].sort((a, b) => perLectureOf(a.sku) - perLectureOf(b.sku))[0]?.kind;
+
+  // The free first unit is the strongest risk reversal the product has; it must be reachable in one click.
+  const freeEntry = entries.find((e) => e.isFree) ?? null;
   const others = course.skus.filter((s) => s.accessType !== "MONTHLY" && s.accessType !== "SEMESTER");
   const offer = (s: (typeof course.skus)[number], label?: string): Offer => {
     const price = effectivePrice(s, now);
@@ -329,6 +342,11 @@ export default async function CoursePage({
                   {t("subscribe")}
                   <Arrow aria-hidden="true" className="size-5" strokeWidth={2.5} />
                 </Link>
+                {freeEntry && (
+                  <Link href={lessonHref(freeEntry.lesson.id)} className="btn btn-outline font-display">
+                    {t("tryFree")}
+                  </Link>
+                )}
                 <span className="flex items-baseline gap-2">
                   <span className="text-small text-ink-muted">{t("from")}</span>
                   <span className="num font-display text-h3 font-bold">{formatMoney(effectivePrice(buyFrom, now), buyFrom.currency, locale)}</span>
@@ -466,7 +484,12 @@ export default async function CoursePage({
                 </span>
                 <details open={q.length >= 2 || hasCurrent || (shownUnits[0]?.unit === u && !currentView)} className="card mb-4 overflow-hidden">
                   <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
-                    <span className="font-display text-h3 font-bold">{pick(ar, u.titleAr, u.titleEn)}</span>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-h3 font-bold">{pick(ar, u.titleAr, u.titleEn)}</span>
+                      {u.isFree && (
+                        <span className="rounded-full bg-marker px-2 py-0.5 font-display text-label font-bold text-ink">{t("freeUnit")}</span>
+                      )}
+                    </span>
                     <span className="num text-label text-ink-muted">{t("unitCount", { done, total: lessons.length })}</span>
                   </summary>
                   <ul className="px-2 pb-2">
@@ -481,7 +504,7 @@ export default async function CoursePage({
                           <LessonRow
                             href={open ? lessonHref(l.id) : undefined}
                             title={pick(ar, l.titleAr, l.titleEn)}
-                            subtitle={t(`kind.${l.kind}`)}
+                            subtitle={u.isFree ? `${t(`kind.${l.kind}`)} · ${t("freeLesson")}` : t(`kind.${l.kind}`)}
                             state={state}
                             stateLabel={state === "done" ? t("lessonState.done") : state === "current" ? t("lessonState.current") : state === "open" ? t("lessonState.ahead") : undefined}
                             trailing={
@@ -612,6 +635,7 @@ export default async function CoursePage({
                     notes: [],
                   },
                 ]}
+                best={bestKind === "SINGLE"}
                 bestLabel={tp("bestValue")}
                 cta={t("subscribe")}
               />
@@ -625,6 +649,7 @@ export default async function CoursePage({
                   { on: true, text: tp("askYes") },
                 ]}
                 offers={months.map((s) => offer(s, s.month ? tp("monthN", { n: s.month }) : undefined))}
+                best={bestKind === "MONTHLY"}
                 bestLabel={tp("bestValue")}
                 cta={t("subscribe")}
               />
@@ -638,7 +663,7 @@ export default async function CoursePage({
                   { on: true, text: tp("askYes") },
                 ]}
                 offers={terms.map((s) => offer(s, s.term ? tp("termN", { n: s.term }) : undefined))}
-                best
+                best={bestKind === "SEMESTER"}
                 bestLabel={tp("bestValue")}
                 cta={t("subscribe")}
                 className="order-first sm:order-none"

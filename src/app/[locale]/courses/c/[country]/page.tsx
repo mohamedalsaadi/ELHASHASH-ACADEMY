@@ -177,15 +177,12 @@ export default async function CountryPage({
                       style={{ borderColor: line }}
                     />
                   )}
-                  <Link
-                    href={`/courses/c/${slug.toLowerCase()}/${g.level}`}
-                    aria-label={
-                      isMine
-                        ? `${pick(ar, g.nameAr, g.nameEn)}، ${t("yourGrade")}`
-                        : undefined
-                    }
-                    className="group flex items-start gap-4 py-2 sm:grid sm:justify-items-center sm:gap-2 sm:px-1 sm:py-0 sm:text-center"
-                  >
+                  {open ? (
+                    <Link
+                      href={`/courses/c/${slug.toLowerCase()}/${g.level}`}
+                      aria-label={isMine ? `${pick(ar, g.nameAr, g.nameEn)}، ${t("yourGrade")}` : undefined}
+                      className="group flex items-start gap-4 py-2 sm:grid sm:justify-items-center sm:gap-2 sm:px-1 sm:py-0 sm:text-center"
+                    >
                     <span
                       aria-hidden="true"
                       className={`relative grid size-8 shrink-0 place-items-center rounded-full border-4 transition-colors duration-(--dur-fast) ease-(--ease-out) ${
@@ -220,7 +217,51 @@ export default async function CountryPage({
                         </span>
                       )}
                     </span>
-                  </Link>
+                  
+                    </Link>
+                  ) : (
+                    // A dashed station has nothing behind it; a link here is a dead end for a parent.
+                    <div
+                      aria-label={`${pick(ar, g.nameAr, g.nameEn)} · ${t("comingSoon")}`}
+                      className="flex items-start gap-4 py-2 opacity-60 sm:grid sm:justify-items-center sm:gap-2 sm:px-1 sm:py-0 sm:text-center"
+                    >
+                    <span
+                      aria-hidden="true"
+                      className={`relative grid size-8 shrink-0 place-items-center rounded-full border-4 transition-colors duration-(--dur-fast) ease-(--ease-out) ${
+                        isMine
+                          ? "border-surface bg-marker shadow-glow"
+                          : open
+                            ? "border-primary bg-surface group-hover:bg-primary"
+                            : "border-dashed border-field bg-surface group-hover:border-primary"
+                      }`}
+                    />
+                    <span className="grid gap-0.5 sm:justify-items-center">
+                      <span className="num font-display text-h2 leading-none font-bold">
+                        {numeral.format(g.level)}
+                      </span>
+                      {/* The big numeral already says "grade", so the station drops the leading الصف. */}
+                      <span className="text-small leading-snug font-medium">
+                        {pick(ar, g.nameAr.replace(/^الصف /, ""), g.nameEn)}
+                      </span>
+                      {g.isTerminal && (
+                        <span className="rounded-full bg-marker px-2 font-display text-label font-bold text-ink">
+                          {t("terminal")}
+                        </span>
+                      )}
+                      {isMine && (
+                        <span className="text-label font-bold text-pen">
+                          {t("yourGrade")}
+                        </span>
+                      )}
+                      {open && (
+                        <span className="text-label font-semibold text-pen">
+                          {t("available", { count: g._count.courses })}
+                        </span>
+                      )}
+                    </span>
+                  
+                    </div>
+                  )}
                 </li>
               );
             })}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic, Readex_Pro, Reem_Kufi } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
@@ -26,13 +26,20 @@ const readex = Readex_Pro({
   display: "swap",
 });
 
-// Reem Kufi, lettered like a survey map: the Arabic wordmark and words set on the map only (DESIGN.md §0).
+// Reem Kufi: the Arabic wordmark only (DESIGN.md §0).
 const reem = Reem_Kufi({
   subsets: ["arabic", "latin"],
   weight: ["700"],
   variable: "--font-reem",
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F5F7" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -65,6 +72,11 @@ export default async function LocaleLayout({
 
   return (
     <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${plex.variable} ${readex.variable} ${reem.variable}`}>
+      <head>
+        {/* Blocking on purpose: it sets the theme before the first paint. Same-origin, so the CSP stays strict. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-guard.js" />
+      </head>
       <body className="antialiased">
         <a
           href="#main-content"

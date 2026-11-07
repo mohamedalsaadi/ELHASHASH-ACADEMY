@@ -94,7 +94,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   setRequestLocale(locale);
   const isAr = locale === "ar";
   return (
-    <LegalPage locale={locale} title={isAr ? "تواصل معنا" : "Contact us"} sections={isAr ? ar : en}>
+    <LegalPage numbered={false} locale={locale} title={isAr ? "تواصل معنا" : "Contact us"} sections={isAr ? ar : en}>
       <ContactForm />
     </LegalPage>
   );

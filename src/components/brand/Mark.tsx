@@ -2,7 +2,7 @@
 // Geometry lives in brand-svg.ts so the generated icons and this component never drift.
 import { MARK_VIEWBOX, RIDGES, RIDGE_WIDTH, SUMMIT } from "@/app/brand-svg";
 
-/** The ridges take the current text colour (ink on paper, snow on the map); the summit is always gold. */
+/** The ridges take the current text colour; the summit is always gold. */
 function Glyph({ className = "", ...rest }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox={MARK_VIEWBOX} aria-hidden="true" fill="none" className={`shrink-0 ${className}`} {...rest}>
@@ -22,11 +22,12 @@ export function Mark({ size = 24, className = "" }: { size?: number; className?:
 }
 
 /** The wordmark: the peak plus the name, ذروة in Reem Kufi in Arabic, Dhirwa in Readex Pro in English. */
-export function Wordmark({ locale = "ar", className = "" }: { locale?: string; className?: string }) {
+export function Wordmark({ locale = "ar", className = "", headerMark = false }: { locale?: string; className?: string; headerMark?: boolean }) {
   const ar = locale === "ar";
   return (
     <span className={`inline-flex items-center gap-[.36em] leading-none ${className}`} dir={ar ? "rtl" : "ltr"}>
-      <Glyph className="h-[1.1em] w-auto" />
+      {/* The header's copy is where the intro's big mark lands. */}
+      <Glyph className="h-[1.1em] w-auto" {...(headerMark ? { "data-header-mark": "" } : {})} />
       {ar ? (
         <span lang="ar" className="font-mark text-[1.12em] font-bold">
           ذروة

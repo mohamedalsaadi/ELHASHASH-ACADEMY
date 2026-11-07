@@ -21,6 +21,14 @@
         "3100"
       ],
       "port": 3100
+    },
+    {
+      "name": "seeded",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/preview.mjs"
+      ],
+      "port": 3200
     }
   ]
 }

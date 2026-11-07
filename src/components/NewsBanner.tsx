@@ -70,19 +70,19 @@ export async function NewsBanner() {
   const [t, locale] = await Promise.all([getTranslations("news"), getLocale()]);
   const ar = locale === "ar";
   return (
-    <aside aria-label={t("label")} className="bg-night text-night-text">
+    <aside aria-label={t("label")} className="bg-surface text-ink">
       <div className="mx-auto flex max-w-(--container-page) items-center gap-4 px-4">
-        <span className="shrink-0 rounded-full bg-summit px-3 py-1 font-display text-label font-bold text-night">{t("label")}</span>
+        <span className="shrink-0 text-label font-semibold">{t("label")}</span>
         <ul className="flex snap-x gap-6 overflow-x-auto text-small [scrollbar-width:none]">
           {items.map((it) => {
             const body = (
               <>
-                <span className="text-night-muted">{t(it.kind)}</span>
-                <span className="font-semibold">{pick(ar, it.titleAr, it.titleEn)}</span>
+                <span className="text-ink-muted">{t(it.kind)}</span>
+                <span className="font-medium">{pick(ar, it.titleAr, it.titleEn)}</span>
                 {it.price && (
                   <span className="num">
-                    <s className="text-night-muted">{formatMoney(it.price.was, it.price.currency, locale)}</s>{" "}
-                    <span className="text-summit">{formatMoney(it.price.now, it.price.currency, locale)}</span>
+                    <s className="text-ink-muted">{formatMoney(it.price.was, it.price.currency, locale)}</s>{" "}
+                    <span className="font-semibold">{formatMoney(it.price.now, it.price.currency, locale)}</span>
                   </span>
                 )}
               </>

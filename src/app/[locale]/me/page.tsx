@@ -115,25 +115,25 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
 
   return (
     <main>
-      <section className="stage">
+      <section>
         <div className="relative mx-auto grid max-w-(--container-page) gap-8 px-4 pt-14 pb-12 md:pt-20">
           <div className="grid max-w-[40rem] gap-4">
-            <span className="text-label font-medium text-night-muted">{t("hello", { name: home.name.split(" ")[0] })}</span>
+            <span className="text-label font-medium text-ink-muted">{t("hello", { name: home.name.split(" ")[0] })}</span>
             <h1 className="flex flex-wrap items-center gap-3 font-display text-display leading-tight font-bold">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/flags/${code}.svg`} alt="" width={28} height={20} loading="lazy" decoding="async" className="h-7 w-auto rounded-sm" />
               {t("title", { grade: gradeName, country: countryName })}
             </h1>
-            <p className="text-night-muted">{t("lede", { count: ready.length })}</p>
+            <p className="text-ink-muted">{t("lede", { count: ready.length })}</p>
             <form action={clearCountry}>
-              <button className="min-h-11 text-small text-night-muted underline underline-offset-4">{t("changeCountry")}</button>
+              <button className="min-h-11 text-small text-ink-muted underline underline-offset-4">{t("changeCountry")}</button>
             </form>
           </div>
           <Ride subjects={ride} rtl={ar} countryCode={grade.country.code} label={t("subjects")} />
           {ride.length > 0 ? (
-            <p className="text-center text-small text-night-muted">{t("hint")}</p>
+            <p className="text-center text-small text-ink-muted">{t("hint")}</p>
           ) : (
-            <p className="text-night-muted">{t("noneYet")}</p>
+            <p className="text-ink-muted">{t("noneYet")}</p>
           )}
         </div>
       </section>

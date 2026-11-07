@@ -36,7 +36,7 @@ export function ConfirmButton({ action, children, confirmText, className = "", t
           setOpen(false);
           if (trigger.current?.isConnected) trigger.current.focus();
         }}
-        className="m-auto w-[min(92vw,24rem)] rounded-lg border border-hairline bg-surface p-6 text-ink shadow-float backdrop:bg-night/50"
+        className="m-auto w-[min(92vw,24rem)] rounded-lg border border-hairline bg-surface p-6 text-ink shadow-float backdrop:bg-black/50"
       >
         <h2 id={`${id}-title`} className="font-display text-h3 font-semibold">
           {confirmText}

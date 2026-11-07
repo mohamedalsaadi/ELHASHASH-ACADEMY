@@ -7,8 +7,8 @@ Git history has the rest (`git log --oneline`).
 ## Standing facts
 
 - **Brand:** Dhirwa (ذروة, "the peak"), since 2026-11-02, when the owner reserved the trade name. Sabboura was
-  dropped the same day (a Dubai "Saboura" and an existing trademark). Identity "Contour" (DESIGN.md §0,
-  `docs/brand/dhirwa-dna.json`). `dhirwa.ae` is live, with its DNS on Vercel; `APP_URL`, `MAIL_FROM` and callbacks point at it.
+  dropped the same day (a Dubai "Saboura" and an existing trademark). Identity in DESIGN.md §0 and
+  `docs/brand/dhirwa-dna.json`. `dhirwa.ae` is live, with its DNS on Vercel; `APP_URL`, `MAIL_FROM` and callbacks point at it.
 - **Live site:** https://dhirwa.ae, public. `SITE_PASSWORD` is empty, so the pre-launch gate in
   `src/middleware.ts` is off.
 - **Payments (owner decision, 2026-11-02): Ziina only.**
@@ -23,6 +23,24 @@ Git history has the rest (`git log --oneline`).
   - Teachers publish their own courses, sessions, prices and cover picture per country, grade and subject.
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
+
+## 2026-11-07: Full redesign, intro, dark mode and reworded copy (branch `redesign-2026`)
+
+- **Why.** The owner asked for the whole site and the intro redone with Apple's guidelines and GSAP, and the wording
+  redone with the highest-starred open translator as a reference. Same name and logo.
+- **Design.** `DESIGN.md` and `docs/brand/dhirwa-dna.json` are rewritten; read them instead of the Contour notes in older
+  entries. Neutral grounds, ink pills, gold only for what a student reached or earned. Token names stayed, so call sites
+  did not rename. Device-following dark mode with a toggle (`public/theme-guard.js`, `ThemeToggle`). Phone tab bar for
+  signed-in users (`TabBar`). Summit, hop-scene, Landmark and the network map's board are deleted.
+- **Motion.** GSAP on marketing pages only: `components/brand/Intro.tsx` and `components/motion/Motion.tsx`. Native scroll.
+- **Copy.** 374 of 1,435 Arabic strings changed, plus the English that went with them. Legal text is untouched. One term
+  per concept (DESIGN.md §8). LibreTranslate ran locally over every string as a reference and was weak, so Arabic is
+  hand-written and `docs/copy-review-2026-11.csv` lists translator output, final text and reasons. Course is now دورة,
+  not كورس, across the site. `messages-parity.test.ts` guards keys and placeholders. Unused keys were deleted.
+- **Preview.** `node scripts/preview.mjs` (launch config `seeded`) runs port 3200 on a throwaway database and seed.
+- **Out of scope.** Transactional emails and PDF receipts keep the old look.
+- **Open.** Nothing is committed, pushed or deployed until the owner has reviewed it. Rebuild the graph after the commit
+  (`python -m graphify update .`).
 
 ## 2026-11-06: Receipts CSV, teacher receipt columns, referral list, existing-student DOB
 

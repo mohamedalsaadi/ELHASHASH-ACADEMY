@@ -43,10 +43,10 @@ export function PromoBand({
   if (!promos.length) {
     if (variant !== "BAR" || !fallback) return null;
     return (
-      <aside aria-label={label} className="border-b border-hairline bg-night text-on-primary">
+      <aside aria-label={label} className="border-b border-hairline bg-surface text-ink">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-3 text-small">
-          <span className="text-night-text">{fallback.text}</span>
-          <Link href="/courses" className="font-semibold underline decoration-marker decoration-2 underline-offset-4">
+          <span className="text-ink-muted">{fallback.text}</span>
+          <Link href="/courses" className="font-semibold underline underline-offset-4">
             {fallback.cta}
           </Link>
         </div>
@@ -56,7 +56,7 @@ export function PromoBand({
 
   if (variant === "BAR") {
     return (
-      <aside aria-label={label} className="border-b border-hairline bg-night text-on-primary">
+      <aside aria-label={label} className="border-b border-hairline bg-surface text-ink">
         <ul className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-4 py-3 text-small">
           {promos.map((p) => {
             const body = pick(ar, p.bodyAr, p.bodyEn);

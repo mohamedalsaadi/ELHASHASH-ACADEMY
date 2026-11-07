@@ -41,7 +41,7 @@ export function LessonRow({
     </>
   );
 
-  const className = `flex items-center justify-between gap-3 border-t border-hairline px-2 py-3 first:border-t-0 ${active ? "bg-raised" : ""}`;
+  const className = `flex items-center justify-between gap-3 border-t border-hairline px-2 py-3 first:border-t-0 ${active ? "rounded-sm bg-raised" : ""}`;
 
   if (!href || locked) return <div className={className}>{body}</div>;
   return (

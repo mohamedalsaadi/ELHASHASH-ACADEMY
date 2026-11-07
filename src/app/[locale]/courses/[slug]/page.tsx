@@ -78,7 +78,7 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-display text-h3 font-bold">{name}</h3>
         {best && (
-          <span className="shrink-0 rounded-full bg-marker px-2.5 py-0.5 font-display text-label font-bold text-ink">{bestLabel}</span>
+          <span className="shrink-0 rounded-full bg-marker px-2.5 py-0.5 font-display text-label font-bold text-on-summit">{bestLabel}</span>
         )}
       </div>
       <ul className="grid gap-2 text-small">
@@ -90,7 +90,7 @@ function PlanCard({ name, lines, offers, best, bestLabel, cta, className = "" }:
         ))}
       </ul>
       {offers.map((o) => (
-        <div key={o.id ?? "pick"} className="grid gap-1.5 border-t border-dashed border-rule pt-3">
+        <div key={o.id ?? "pick"} className="grid gap-1.5 border-t border-hairline pt-3">
           {o.id && o.label && <span className="text-small font-semibold">{o.label}</span>}
           <span className="flex flex-wrap items-baseline gap-2">
             <span className="num font-display text-h2 font-bold">{o.price}</span>
@@ -286,7 +286,6 @@ export default async function CoursePage({
   const line = course.grade ? `var(--color-line-${course.grade.country.code.toLowerCase()}, var(--color-primary))` : "var(--color-primary)";
   // The one buy call in the header: only for someone who holds nothing yet and has a plan to pick.
   // Bahrain's red is too light for white; it carries ink (as on the map).
-  const inkOnLine = course.grade?.country.code === "BH";
   const buyFrom = showPlans && level === "none" && !lapsed ? cheapestSku(single ? [...course.skus, single] : course.skus, now) : null;
   const buyAed = buyFrom ? aedPriceOf(buyFrom, now) : null;
   const headline = pick(ar, course.headlineAr, course.headlineEn);
@@ -297,25 +296,16 @@ export default async function CoursePage({
   const shownUnits = q.length < 2 ? course.units.map((u) => ({ unit: u, lessons: u.lessons })) : filterUnits(course.units, q);
 
   return (
-    <main className="mx-auto grid max-w-3xl gap-10 px-4 py-12">
+    <main className="mx-auto grid max-w-4xl gap-12 px-4 py-10 md:py-16">
       <JsonLd data={jsonLd} />
 
-      <header className="card overflow-hidden">
+      <header className="grid gap-6">
         {course.coverKey && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`} alt="" className="aspect-[16/9] w-full object-cover" />
+          <img src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`} alt="" className="aspect-[16/9] w-full rounded-lg object-cover" />
         )}
-        {/* The course's trail over a contour line. Not mirrored: a map is never flipped. */}
-        <svg aria-hidden="true" viewBox="0 0 400 24" preserveAspectRatio="none" className={`h-6 w-full ${course.coverKey ? "-mt-3" : ""}`}>
-          <g fill="none" strokeLinecap="round">
-            {!course.coverKey && (
-              <path d="M0 10C80 9 150 3 230 4S340 10 400 7" className="stroke-contour-4" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
-            )}
-            <path d="M0 20C70 19 130 12 200 10S330 4 400 3" strokeWidth="3" vectorEffect="non-scaling-stroke" style={{ stroke: line }} />
-          </g>
-        </svg>
-        <div className="grid gap-4 px-5 pb-6 sm:px-8 sm:pb-8">
-          <Link href="/courses" className="inline-flex min-h-11 w-fit items-center gap-2 text-small text-pen underline-offset-4 hover:underline">
+        <div className="grid gap-4">
+          <Link href="/courses" className="inline-flex min-h-11 w-fit items-center gap-2 text-small text-ink-muted underline-offset-4 hover:underline">
             <Arrow aria-hidden="true" className="size-4 rotate-180" />
             {t("title")}
           </Link>
@@ -324,8 +314,8 @@ export default async function CoursePage({
               <i aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ background: line }} />
               {course.grade ? pick(ar, course.grade.nameAr, course.grade.nameEn) : t("skill")}
             </p>
-            <h1 className="font-display text-display font-bold">{courseTitle}</h1>
-            {headline && <p className="max-w-[65ch] text-h3 font-semibold">{headline}</p>}
+            <h1 className="font-display text-display leading-[1.15] font-bold">{courseTitle}</h1>
+            {headline && <p className="max-w-[65ch] text-lede font-medium">{headline}</p>}
             {desc && <p className="max-w-[65ch] text-ink-muted">{desc}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -495,25 +485,17 @@ export default async function CoursePage({
             const done = lessons.filter((l) => completed.has(l.id)).length;
             const hasCurrent = lessons.some((l) => l.id === currentView?.lessonId);
             const cleared = lessons.length > 0 && done === lessons.length;
-            const last = i === shownUnits.length - 1;
             return (
-              <li key={u.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 sm:gap-x-4">
-                <span aria-hidden="true" className="flex flex-col items-center pt-3">
-                  <span
-                    className={`grid size-10 shrink-0 place-items-center rounded-full border-4 font-display text-small font-bold ${cleared ? (inkOnLine ? "text-ink" : "text-on-primary") : "bg-surface"}`}
-                    style={{ borderColor: line, background: cleared ? line : undefined }}
-                  >
-                    {cleared ? <Check className="size-5" strokeWidth={3} /> : <span className="num">{i + 1}</span>}
-                  </span>
-                  <i className="w-1 flex-1 rounded-full" style={{ background: line }} />
-                  {last && <i className="mb-4 size-4 shrink-0 rounded-full bg-summit shadow-glow" />}
-                </span>
-                <details open={q.length >= 2 || hasCurrent || (shownUnits[0]?.unit === u && !currentView)} className="card mb-4 overflow-hidden">
+              <li key={u.id}>
+                <details open={q.length >= 2 || hasCurrent || (shownUnits[0]?.unit === u && !currentView)} className="card overflow-hidden">
                   <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-3 p-4">
-                    <span className="flex flex-wrap items-center gap-2">
+                    <span className="flex flex-wrap items-center gap-3">
+                      <span aria-hidden="true" className={`num grid size-8 shrink-0 place-items-center rounded-full text-small font-semibold ${cleared ? "bg-summit text-on-summit" : "bg-raised text-ink-muted"}`}>
+                        {cleared ? <Check className="size-4" strokeWidth={3} /> : i + 1}
+                      </span>
                       <span className="font-display text-h3 font-bold">{pick(ar, u.titleAr, u.titleEn)}</span>
                       {u.isFree && (
-                        <span className="rounded-full bg-marker px-2 py-0.5 font-display text-label font-bold text-ink">{t("freeUnit")}</span>
+                        <span className="rounded-full bg-marker px-2 py-0.5 font-display text-label font-bold text-on-summit">{t("freeUnit")}</span>
                       )}
                     </span>
                     <span className="num text-label text-ink-muted">{t("unitCount", { done, total: lessons.length })}</span>
@@ -604,9 +586,7 @@ export default async function CoursePage({
                     phaseLabel={phase === "now" ? tl("liveNow") : phase === "soon" ? tl("startsSoon", { minutes }) : tl("later")}
                     action={
                       opensNow ? (
-                        <Link href={`/live/${l.id}`} className="btn btn-outline px-3 py-1.5 text-small">
-                          {tl("joinNow")}
-                        </Link>
+                        <span className="btn btn-outline px-3 py-1.5 text-small">{tl("joinNow")}</span>
                       ) : canJoin ? (
                         <span className="text-up">{t("liveIncluded")}</span>
                       ) : seat ? (

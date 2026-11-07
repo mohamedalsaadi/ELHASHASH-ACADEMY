@@ -1,7 +1,7 @@
 {
   "errors": {
     "notFoundTitle": "This page could not be found",
-    "notFoundBody": "The link may be old, or the page moved. Start from the home page or the course catalog.",
+    "notFoundBody": "The link may be old, or the page moved. Start from the home page or the courses.",
     "errorTitle": "Something went wrong",
     "errorBody": "Try again. If it keeps happening, contact us.",
     "retry": "Try again",
@@ -44,7 +44,7 @@
     "title": "Send us a message",
     "name": "Your name",
     "email": "Email",
-    "phone": "Mobile (optional)",
+    "phone": "Phone (optional)",
     "topic": "Topic",
     "topics": {
       "general": "General",
@@ -79,49 +79,22 @@
     "close": "Close",
     "parent": "Parent dashboard",
     "notifications": "Notifications",
-    "account": "My account"
+    "account": "My account",
+    "theme": {
+      "system": "Appearance: device",
+      "light": "Appearance: light",
+      "dark": "Appearance: dark"
+    }
   },
   "home": {
     "skipIntro": "Skip intro",
-    "stats": {
-      "courses": "{count, plural, one {# course} other {# courses}}",
-      "lessons": "{count, plural, one {# lesson} other {# lessons}}",
-      "subjects": "{count, plural, one {# subject} other {# subjects}}"
-    },
-    "ways": {
-      "title": "Three ways to learn",
-      "soon": "Soon",
-      "subscribe": {
-        "title": "Subscribe to a subject",
-        "body": "One subject for your grade: every lesson and exam until the end of the school year."
-      },
-      "rent": {
-        "title": "Rent a lecture",
-        "body": "Need just one lesson? Rent it for a set number of days, for less."
-      },
-      "live": {
-        "title": "Live lectures",
-        "body": "Join your teacher live and ask questions, through the link your teacher shares."
-      }
-    },
     "promotions": "Offers",
     "noCountries": "Countries are being prepared. Check back soon.",
-    "trustLabel": "What you get",
-    "trust": {
-      "device": "One device per account, to protect lessons",
-      "pay": "Secure card payment",
-      "lang": "In Arabic and English"
-    },
-    "headline": "Every student has a <a>peak</a>. Start the climb.",
-    "lede": "Teachers who teach your country's curriculum, in one place. Pick your grade and subject, and see every course, its sessions and price before you enrol.",
+    "headline": "Every student has a peak. Start the climb.",
+    "lede": "Teachers who teach your country's curriculum, in one place. Pick your grade and subject, and see every course, its lessons and price before you enrol.",
     "ctaStart": "Find your course",
     "ctaParent": "I’m a parent",
-    "mapLabel": "Course map: one trail per country",
     "legend": {
-      "title": "Map legend",
-      "caption": "Counted from the catalogue today",
-      "open": "Trail open",
-      "soon": "Trail being marked",
       "units": {
         "courses": "courses",
         "lessons": "lessons",
@@ -129,89 +102,87 @@
         "teachers": "teachers"
       }
     },
-    "lines": {
-      "title": "Exactly your country's curriculum",
-      "lede": "Choose your country to see its grades, subjects and teachers' courses.",
-      "soon": "Coming soon"
-    },
-    "how": {
-      "title": "How the climb works",
-      "s1": {
-        "t": "Pick your grade",
-        "b": "Your country, then your grade, then the subject."
-      },
-      "s2": {
-        "t": "See it all before you pay",
-        "b": "Lessons, sessions and the full price are shown before you sign up."
-      },
-      "s3": {
-        "t": "Pick a teacher’s course",
-        "b": "Each teacher sets the sessions and the price, shown up front."
-      },
-      "s4": {
-        "t": "Follow your progress",
-        "b": "A mark after every practice, which parents see too."
-      }
-    },
     "latest": {
       "title": "Latest courses",
       "all": "All courses"
     },
     "parent": {
-      "title": "For parents",
-      "body": "The full price is shown before sign-up, in your country’s currency. Follow your child’s marks from a parent account.",
-      "cta": "See courses and prices",
       "faq": "Questions and answers"
     },
     "eyebrow": "Egypt and the Gulf · Grades 10 to 12",
     "roles": {
-      "title": "Everything a student and a parent need.",
+      "title": "For students, parents and teachers.",
       "student": {
         "k": "Students",
-        "t": "Your country's teachers, their sessions and prices.",
+        "t": "Your country's teachers, their lessons and prices.",
         "b": "Watch, practise, review your mistakes and follow your progress day by day.",
         "cta": "Start learning"
       },
       "parent": {
         "k": "Parents",
-        "t": "Follow your child and pay for them.",
+        "t": "Follow your children and pay for them.",
         "b": "Lessons, homework and exams, and your children's progress on the parent page.",
         "cta": "Parent account"
+      },
+      "teacher": {
+        "k": "Teachers",
+        "t": "Teach your way, at your price.",
+        "b": "Set your course's lessons and price, and follow your students and earnings from one dashboard.",
+        "cta": "Apply to teach"
       }
     },
     "final": {
-      "title": "The <a>top</a> is closer than you think.",
+      "title": "The top is closer than you think.",
       "body": "Pick your grade's course and take the first step today."
     },
-    "statsLabel": "Real numbers from today's catalogue",
+    "statsLabel": "Real numbers from today's courses",
     "climb": {
-      "label": "The stages of the way to the top",
       "c1": {
-        "k": "Stage one · Base camp",
         "t": "Choose your country and grade",
         "b": "Your country's curriculum, exactly. Choose your country to see its grades, subjects and teachers' courses."
       },
       "c2": {
-        "k": "Stage two · The climb",
-        "t": "Learn with teachers approved for your curriculum",
-        "b": "Each teacher sets their course's sessions and price, and you see it all before you enrol."
+        "t": "Learn with teachers who teach your curriculum",
+        "b": "Each teacher sets their course's lessons and price, and you see it all before you enrol."
+      }
+    },
+    "steps": {
+      "title": "From lesson to mark.",
+      "lesson": {
+        "t": "Watch the lesson",
+        "b": "Lessons from a teacher of your curriculum, whenever you like."
       },
-      "c3": {
-        "k": "Stage three · Near the top",
-        "t": "Practise and track your level",
-        "b": "A mark after every practice, a review of what you got wrong, and parents can follow your progress too."
+      "exam": {
+        "t": "Practise and sit exams",
+        "b": "Practice questions on every lesson, and timed exams."
       },
-      "c4": {
-        "k": "The summit"
+      "progress": {
+        "t": "Know your level",
+        "b": "Your mark after every practice, what you got wrong, and progress your parent can follow too."
+      }
+    },
+    "sample": {
+      "label": "Example",
+      "unit": "Unit 1: Equations",
+      "lessons": {
+        "a": "Linear equations",
+        "b": "Solving inequalities",
+        "c": "Applications"
+      },
+      "question": "If 2x + 3 = 11, what is x?",
+      "tier": "Very Good",
+      "concepts": {
+        "a": "Linear equations",
+        "b": "Inequalities"
       }
     }
   },
   "signin": {
     "title": "Sign in",
-    "phone": "Mobile number or email",
+    "phone": "Phone number or email",
     "password": "Password",
     "submit": "Sign in",
-    "error": "Wrong mobile number, email or password. After 10 wrong tries, sign-in pauses for 15 minutes.",
+    "error": "Wrong phone number, email or password. After 10 wrong tries, sign-in pauses for 15 minutes.",
     "noAccount": "No account yet?",
     "signUp": "Create one",
     "forgot": "Forgot your password?",
@@ -243,8 +214,8 @@
       "YEARLY": "Full year",
       "REVISION": "Final revision",
       "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
-      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}",
-      "LIVE": "Seat in a live lecture",
+      "RENTAL": "Lesson rental, {days, plural, one {# day} other {# days}}",
+      "LIVE": "Seat in a live session",
       "MONTHLY": "One month"
     },
     "methods": {
@@ -325,7 +296,7 @@
       "dashboard": "Go to my dashboard",
       "contact": "Contact support"
     },
-    "agree": "By paying you agree to the <terms>terms of use</terms>, the <privacy>privacy policy</privacy> and the <refund>refund policy</refund>. Packages are digital and unlock immediately; see the refund policy. See the <faq>FAQ</faq>.",
+    "agree": "By paying you agree to the <terms>terms of use</terms>, the <privacy>privacy policy</privacy> and the <refund>refund policy</refund>. Packages are digital and unlock immediately. For more, see the <faq>FAQ</faq>.",
     "forChild": "Who is this course for?",
     "localPrice": "List price: {price}",
     "chargedInAed": "You will be charged in UAE dirhams (AED). Your bank may add its own exchange fee.",
@@ -341,7 +312,7 @@
     "linkChild": "Link my child"
   },
   "payment": {
-    "opensSoon": "Payment opens soon in your market.",
+    "opensSoon": "Payment opens soon in your country.",
     "gateways": {
       "PAYMOB": "Paymob",
       "STRIPE": "Stripe",
@@ -374,7 +345,7 @@
     "tryFree": "Watch the first unit free",
     "searchButton": "Search",
     "searchResults": "{count, plural, =0 {No results} one {# result} other {# results}}",
-    "searchEmpty": "Nothing matched. Try the subject or grade name, or browse the countries below.",
+    "searchEmpty": "No results. Try the subject or grade name, or browse the countries below.",
     "searchClear": "Clear search",
     "owned": "You're subscribed to this course",
     "units": "Units",
@@ -386,11 +357,15 @@
       "YEARLY": "Full year",
       "REVISION": "Final revision",
       "FIXED_DAYS": "{days, plural, one {# day} other {# days}} access",
-      "RENTAL": "Lecture rental, {days, plural, one {# day} other {# days}}",
-      "LIVE": "Seat in a live lecture",
+      "RENTAL": "Lesson rental, {days, plural, one {# day} other {# days}}",
+      "LIVE": "Seat in a live session",
       "MONTHLY": "One month"
     },
-    "lessonState": {"done": "Completed", "current": "In progress", "ahead": "Not started"},
+    "lessonState": {
+      "done": "Completed",
+      "current": "In progress",
+      "ahead": "Not started"
+    },
     "kind": {
       "VIDEO": "Video",
       "EXAM_STRUCTURE": "Exam structure",
@@ -399,13 +374,12 @@
     },
     "videoSoon": "This lesson's video is coming soon.",
     "skill": "Courses",
-    "schoolTab": "School subjects",
     "skillTab": "Courses",
     "skillEmpty": "No courses are published yet.",
     "rent": "Rent",
     "rentFor": "for {days, plural, one {# day} other {# days}}",
     "rented": "Rented until {date}",
-    "live": "Live lectures",
+    "live": "Live sessions",
     "liveIncluded": "Included in your subscription",
     "liveSeat": "Seat",
     "liveSubscribers": "For subscribers",
@@ -424,24 +398,24 @@
     "recordedBy": "Recorded by {name}",
     "plans": {
       "title": "Choose a plan",
-      "SINGLE": "Single lecture",
+      "SINGLE": "Single lesson",
       "MONTHLY": "1 month",
       "SEMESTER": "Full semester",
       "bestValue": "Best value",
       "monthN": "Month {n}",
       "termN": "Term {n}",
-      "singleIncl": "One recorded lecture, open for {days, plural, one {# day} other {# days}}",
-      "monthIncl": "The month's {count, plural, one {# recorded lecture} other {# recorded lectures}}, open for {days, plural, one {# day} other {# days}}",
-      "semesterIncl": "Every recorded lecture of the term ({count})",
+      "singleIncl": "One recorded lesson, open for {days, plural, one {# day} other {# days}}",
+      "monthIncl": "The month's {count, plural, one {# recorded lesson} other {# recorded lessons}}, open for {days, plural, one {# day} other {# days}}",
+      "semesterIncl": "Every recorded lesson of the term ({count})",
       "liveYes": "The term's live sessions",
       "liveNo": "No live sessions",
-      "askYes": "Ask your teacher under each lecture",
+      "askYes": "Ask your teacher under each lesson",
       "askNo": "No questions",
-      "perLecture": "{price} a lecture",
-      "save": "Save {pct}% vs single lectures",
-      "pickLecture": "Pick a lecture below",
+      "perLecture": "{price} a lesson",
+      "save": "Save {pct}% vs single lessons",
+      "pickLecture": "Pick a lesson below",
       "other": "Other packages",
-      "wholeCourseIncl": "Every recorded lecture, including those added later"
+      "wholeCourseIncl": "Every recorded lesson, including those added later"
     },
     "planPanel": {
       "yourPlan": "Your current plan",
@@ -474,21 +448,20 @@
     "allDone": "All available lessons completed.",
     "unitCount": "{done} of {total, plural, one {# lesson} other {# lessons}}",
     "progressLabel": "Your progress in this course",
-    "sessions": "{count, plural, one {# session} other {# sessions}}",
-    "subjectLede": "{count, plural, =0 {No teacher has released a course in this subject yet.} one {One course, with the sessions and price its teacher set.} other {# courses, each with the sessions and price its teacher set.}}",
+    "sessions": "{count, plural, one {# lesson} other {# lessons}}",
+    "subjectLede": "{count, plural, =0 {No teacher has released a course in this subject yet.} one {One course, with the lessons and price its teacher set.} other {# courses, each with the lessons and price its teacher set.}}",
     "subjectEmpty": "No courses in this subject yet. Check back soon.",
-    "mapLabel": "Trail map: one trail per country, climbing to the summit",
     "aboutTeacher": "The teacher",
     "readiness": {
       "title": "Exam readiness",
       "noPractice": "No practice yet. Practice raises this number; watching does not.",
       "gapAccuracy": "Weakest unit: {unit} ({percent}% of marks earned).",
-      "gapUnfinished": "Biggest gap: {unit} — {count} lessons unfinished.",
+      "gapUnfinished": "Biggest gap: {unit}, {count} lessons unfinished.",
       "allGood": "No clear gap right now. Keep going."
     },
     "instructorsTitle": "The teachers",
-    "instructorsLede": "{count, plural, one {One teacher for this subject.} other {# teachers for this subject — compare and choose.}}",
-    "liveAvailable": "Live lectures",
+    "instructorsLede": "{count, plural, one {One teacher for this subject.} other {# teachers for this subject. Compare and choose.}}",
+    "liveAvailable": "Live sessions",
     "lessonsRecorded": "{count, plural, =0 {No recorded lessons yet} one {# recorded lesson} other {# recorded lessons}}",
     "openCourse": "Open the course",
     "viewProfile": "View profile"
@@ -514,8 +487,8 @@
     "confidenceQuestion": "How did that lesson feel?",
     "confidenceChoice": {
       "GOT_IT": "Got it",
-      "SHAKY": "Shaky",
-      "LOST": "Lost"
+      "SHAKY": "Partly",
+      "LOST": "Not yet"
     }
   },
   "admin": {
@@ -581,29 +554,29 @@
     "teachers": "Teachers",
     "addTeacher": "Add teacher",
     "teacherName": "Teacher's name",
-    "teacherLogin": "Email or mobile number",
+    "teacherLogin": "Email or phone number",
     "tempPassword": "Temporary password (at least 8 characters)",
     "teacherHint": "Hand this password to the teacher. They change it from their dashboard.",
     "teacherResult": {
       "ok": "Teacher account created.",
-      "taken": "That email or mobile number already has an account.",
-      "invalid": "Check the name, the email or mobile number, and the password (at least 10 characters)."
+      "taken": "That email or phone number already has an account.",
+      "invalid": "Check the name, the email or phone number, and the password (at least 8 characters)."
     },
     "inviteTeacher": "Invite a teacher",
     "inviteHint": "Pick the grades and subjects this teacher may teach in, then send the invitation. The invitation creates a teacher account and stays valid for seven days.",
     "inviteEmail": "Email (optional)",
-    "invitePhone": "Mobile number (optional)",
-    "inviteContactHint": "Give at least one of email or mobile. The link is emailed and also shown here to copy.",
+    "invitePhone": "Phone number (optional)",
+    "inviteContactHint": "Give at least one of email or phone. The link is emailed and also shown here to copy.",
     "inviteSlots": "Allowed grades and subjects",
     "inviteCreated": "Invitation created. This is its link.",
     "inviteErrors": {
       "invalid": "Check the name.",
-      "contact": "Enter a valid email address or mobile number.",
+      "contact": "Enter a valid email address or phone number.",
       "slot": "Pick at least one grade and subject from the list.",
       "email_taken": "That email is already in use."
     },
     "sendInvite": "Create the invitation",
-    "pendingInvites": "Pending invitations",
+    "pendingInvites": "Invitations waiting",
     "cancelInvite": "Cancel invitation",
     "confirmCancelInvite": "Cancel this invitation? Its link will stop working.",
     "createCourse": "Create course",
@@ -618,7 +591,7 @@
     "saveTeacher": "Change teacher",
     "skillTitlesHint": "For a school subject the title is made from the subject and grade; you can edit it after.",
     "accessDays": "Access days from purchase",
-    "rentals": "Lecture rentals",
+    "rentals": "Lesson rentals",
     "rentalsHint": "A price and number of days for each lesson in paid units. A lesson is offered for rent only once it has a price and is switched on.",
     "addRental": "Add a rental price",
     "rentalOn": "Available to rent",
@@ -631,9 +604,9 @@
     "term": "Term",
     "lessonMonth": "Month",
     "noMonth": "No month",
-    "perLecture": "{count, plural, one {# lecture} other {# lectures}} · {price} a lecture",
-    "saveVsSingles": "{pct}% cheaper than single lectures",
-    "dearerThanSingles": "dearer than buying single lectures; lower the price",
+    "perLecture": "{count, plural, one {# lesson} other {# lessons}} · {price} a lesson",
+    "saveVsSingles": "{pct}% cheaper than single lessons",
+    "dearerThanSingles": "dearer than buying single lessons; lower the price",
     "promotionsTitle": "Promotions",
     "promotionsHint": "A bar shows under the header; cards show in the home page scroll. Inactive or out-of-window promos are hidden automatically.",
     "addPromotion": "Add promotion",
@@ -673,7 +646,11 @@
     "referralRewarded": "Rewarded",
     "referralCoupon": "Reward coupon",
     "noReferrals": "No referrals yet.",
-    "referralStatuses": { "PENDING": "Pending", "REWARDED": "Rewarded", "VOID": "Void" },
+    "referralStatuses": {
+      "PENDING": "Waiting",
+      "REWARDED": "Rewarded",
+      "VOID": "Void"
+    },
     "catalogTitle": "Catalog",
     "countriesTitle": "Countries",
     "countriesHint": "Add a country or edit its details. An inactive country is hidden from students.",
@@ -738,15 +715,15 @@
   "signup": {
     "title": "Create an account",
     "completeTitle": "Finish your account",
-    "completeHint": "Add a phone number, your grade and your date of birth. Under-18 accounts need a guardian email.",
+    "completeHint": "Add a phone number, your grade and your date of birth. If you are under 18, add a guardian's email.",
     "name": "Full name",
     "email": "Email",
     "emailHint": "Receipts and lesson updates go here.",
     "type": "Account type",
     "typeStudent": "Student",
     "typeParent": "Parent",
-    "parentHint": "A parent account follows your children after you link them with a code from the student's account.",
-    "phone": "Mobile number",
+    "parentHint": "A parent follows their children after linking them with a code from the student's account.",
+    "phone": "Phone number",
     "phoneHint": "Egypt: 01xxxxxxxxx · Gulf: 05xxxxxxxx or 8 digits · elsewhere: +country code",
     "grade": "Grade",
     "gradePick": "Choose your grade",
@@ -763,22 +740,22 @@
     "guardianEmail": "Guardian's email",
     "guardianEmailHint": "Required if the student is under 18. We send one confirmation link.",
     "dateOfBirth": "Date of birth",
-    "dateOfBirthHint": "Under-18 accounts need a guardian to confirm consent by email.",
+    "dateOfBirthHint": "If you are under 18, a guardian confirms consent by email.",
     "guardianConsent": "I am the student's parent or guardian and I agree to the terms and privacy policy on their behalf.",
     "errors": {
       "invalid_name": "Enter your full name (at least 2 letters).",
       "invalid_email": "Enter a valid email address.",
-      "invalid_phone": "That mobile number isn't valid. Use your local mobile format, or an international number starting with +.",
+      "invalid_phone": "That phone number isn't valid. Use your local format, or an international number starting with +.",
       "password_too_short": "The password is too short. Use at least 8 characters.",
       "invalid_grade": "Choose your grade.",
       "invalid_birthdate": "Enter a valid date of birth.",
       "too_young": "Students under 13 cannot create an account. Contact us about a guardian-managed account.",
       "too_many": "Too many new accounts from this network. Try again in an hour.",
       "guardian_required": "A guardian's name, email and consent are required for a student under 18.",
-      "phone_taken": "That phone number is already used by another account.",
-      "check_email": "If that email or mobile already has an account, we sent it a sign-in note. Otherwise sign in, or reset your password."
+      "phone_taken": "That phone number is already used by another account. Sign in, or use another number.",
+      "check_email": "If that email or phone already has an account, we sent it a sign-in note. Otherwise sign in, or reset your password."
     },
-    "teacherQ": "A teacher who wants to join?",
+    "teacherQ": "Are you a teacher who wants to join?",
     "teacherLink": "Register as a teacher"
   },
   "guardianConfirm": {
@@ -787,26 +764,27 @@
     "bad": "This link is invalid or has expired. Ask the student to send a new one."
   },
   "dashboard": {
-    "title": "Student dashboard",
+    "title": "My dashboard",
     "dobTitle": "Add your date of birth",
     "dobHint": "This lets us apply the right guardian settings. You can keep using your account without it.",
     "dobLabel": "Date of birth",
-    "dobSave": "Save",    "hello": "Hi, {name}",
+    "dobSave": "Save",
+    "hello": "Hi, {name}",
     "myCourses": "My courses",
     "empty": "You haven't subscribed to a course yet. Browse your grade's courses to start.",
     "browse": "Browse courses",
     "until": "Open until {date}",
     "forever": "Open with no end date",
     "expired": "Subscription ended, renew it",
-    "myRentals": "Rented lectures",
-    "myLive": "My live lectures",
+    "myRentals": "Rented lessons",
+    "myLive": "My live sessions",
     "continue": "Continue where you left off",
     "resume": "Continue",
     "summary": {
       "title": "Your summary",
       "completedLessons": "Lessons completed",
       "activeCourses": "Active courses",
-      "upcomingLive": "Upcoming live"
+      "upcomingLive": "Upcoming live sessions"
     },
     "nextAction": {
       "eyebrow": "Next step",
@@ -854,11 +832,11 @@
     "navHome": "Overview",
     "navSubjects": "Subjects",
     "subjectsTitle": "Subjects and countries",
-    "subjectsHint": "Choose a country, see its grades and subjects, and add a subject of your own. A new subject shows at once. To teach in another country, request it and the owner approves.",
+    "subjectsHint": "Choose a country, see its grades and subjects, and add a subject of your own. A new subject shows at once. To teach in another country, send a request for admin approval.",
     "country": "Country",
     "show": "Show",
     "gradesIn": "Grades and subjects in {country}",
-    "noCountry": "You have no country yet. Ask the owner to approve one.",
+    "noCountry": "You have no country yet. Ask admin to approve one.",
     "newSubject": "Add a subject",
     "newSubjectHint": "It is visible at once. If a subject with the same English name exists, the grades you tick are added to it.",
     "nameAr": "Name in Arabic",
@@ -867,11 +845,11 @@
     "tickGrades": "Add it to these grades",
     "addSubject": "Add subject",
     "anotherCountry": "Teach in another country",
-    "anotherCountryHint": "Pick a country to see its grades and subjects. Adding it needs the owner's approval.",
+    "anotherCountryHint": "Pick a country to see its grades and subjects. Adding it needs admin approval.",
     "noOtherCountry": "There is no other country to request.",
-    "requestNote": "Note to the owner (optional)",
+    "requestNote": "Note to admin (optional)",
     "requestAccess": "Request access",
-    "pending": "Waiting for the owner's approval.",
+    "pending": "Waiting for admin approval.",
     "reqPENDING": "Waiting for approval",
     "reqAPPROVED": "Approved",
     "reqREJECTED": "Rejected",
@@ -905,18 +883,18 @@
     "noStudents": "No students are subscribed right now.",
     "until": "Until {date}",
     "forever": "Lifetime access",
-    "navLive": "Live lectures",
+    "navLive": "Live sessions",
     "navQuestions": "Questions",
     "navHomework": "Homework",
     "navRequests": "Requests",
-    "navAnalytics": "Analytics",
+    "navAnalytics": "Student analytics",
     "navBank": "Question bank",
     "navExams": "Exams",
     "earlyWarning": "Students to check on",
     "earlyWarningHint": "No lesson opened in seven days. Reach out before it becomes a gap.",
     "lastSeen": "Last activity: {date}",
     "never": "No activity recorded",
-    "ownCourses": "You run your own courses: pick any grade and subject in your country, then set the sessions, prices, discounts and cover picture yourself, and publish when you're ready.",
+    "ownCourses": "You run your own courses: pick any grade and subject in your country, then set the lessons, prices, discounts and cover picture yourself, and publish when you're ready.",
     "navCourses": "My courses",
     "navEarnings": "Earnings",
     "earningsLede": "Your share of every sale, from the ledger, which never changes. Refunds are taken off in their own month.",
@@ -943,8 +921,8 @@
     "setupDone": "Done"
   },
   "live": {
-    "title": "Live lectures",
-    "schedule": "Schedule a live lecture",
+    "title": "Live sessions",
+    "schedule": "Schedule a live session",
     "scheduleCta": "Schedule",
     "course": "Course",
     "titleAr": "Title (Arabic)",
@@ -961,29 +939,29 @@
       "Muscat": "Oman"
     },
     "durationMin": "Length (minutes)",
-    "zoneHint": "Times are in the course country: Cairo time for Egyptian courses, UAE time for the rest. Subscribers join for free; the owner sets a seat price for everyone else.",
+    "zoneHint": "Times are in the course country: Cairo time for Egyptian courses, UAE time for the rest. Subscribers join for free; admin sets a seat price for everyone else.",
     "upcoming": "Coming up",
-    "noUpcoming": "No live lectures scheduled yet.",
+    "noUpcoming": "No live sessions scheduled yet.",
     "past": "Past and cancelled",
     "seats": "{count, plural, =0 {No seats sold} one {# seat sold} other {# seats sold}}",
     "openRoom": "Open the room",
-    "cancel": "Cancel lecture",
-    "confirmCancel": "Cancel this live lecture? Seats already sold stay on record for refunds.",
+    "cancel": "Cancel session",
+    "confirmCancel": "Cancel this live session? Seats already sold stay on record for refunds.",
     "cancelled": "Cancelled",
     "seatPrice": "Seat price ({currency})",
     "seatOn": "Seats on sale",
     "minutes": "{count, plural, one {# minute} other {# minutes}}",
-    "isCancelled": "This live lecture was cancelled.",
-    "ended": "This live lecture has ended.",
-    "signIn": "Sign in to join this live lecture.",
+    "isCancelled": "This live session was cancelled.",
+    "ended": "This live session has ended.",
+    "signIn": "Sign in to join this live session.",
     "contactRule": "Keep contact inside the academy: phone numbers, links and handles are hidden in questions and chat.",
-    "noSeat": "This live lecture is for course subscribers and seat holders.",
+    "noSeat": "This live session is for course subscribers and seat holders.",
     "buySeat": "Buy a seat · {price}",
     "subscribe": "See subscriptions",
     "opensIn": "The room opens in",
     "opensHint": "You can enter {minutes} minutes before the start. This page opens the room by itself.",
     "pastError": "That time has already passed. Pick a time in the future.",
-    "noCourses": "No courses are linked to you yet. Ask the admin to link one before scheduling a live lecture.",
+    "noCourses": "No courses are linked to you yet. Ask admin to link one before scheduling a live session.",
     "liveNow": "Live now",
     "joinNow": "Join now",
     "startsSoon": "Starts in {minutes, plural, one {# minute} other {# minutes}}",
@@ -991,25 +969,25 @@
     "later": "Later",
     "details": "Details",
     "backToCourse": "Back to course",
-    "backToDashboard": "Student dashboard",
+    "backToDashboard": "My dashboard",
     "meetingUrl": "Meeting link (Zoom, Teams or Google Meet)",
     "meetingUrlHint": "Paste the link you created yourself. Only students who hold a seat or a plan see it, from ten minutes before the start.",
     "linkError": "That link is not accepted. Paste an https link from Zoom, Microsoft Teams or Google Meet.",
-    "notApproved": "Live lectures are not enabled for your account. Ask the admin to enable them before scheduling.",
+    "notApproved": "Live sessions are not enabled for your account. Ask admin to enable them before scheduling.",
     "noLinkShort": "No link yet",
-    "joinCta": "Open the lecture on {provider}",
+    "joinCta": "Open the session on {provider}",
     "joinCtaHost": "Open the meeting on {provider}",
-    "joinExternal": "This lecture runs outside Dhirwa on {provider}, in a new tab. Never share your password or a sign-in code with anyone.",
-    "joinHonest": "We record only that you opened the lecture page. We do not know how long you stayed.",
+    "joinExternal": "This session runs outside Dhirwa on {provider}, in a new tab. Never share your password or a sign-in code with anyone.",
+    "joinHonest": "We record only that you opened the session page. We do not know how long you stayed.",
     "noLinkYet": "The teacher has not added the meeting link yet. It appears here before the start.",
     "consentTitle": "Guardian consent",
-    "consentBody": "Live lectures open an external meeting link outside Dhirwa. We need the guardian's consent once per student, before the first live lecture.",
+    "consentBody": "Live sessions open an external meeting link outside Dhirwa. We need the guardian's consent once per student, before the first live session.",
     "consentParent": "Your guardian is linked to your account. Ask them to approve from the parent page, then come back here."
   },
   "questions": {
     "title": "Questions",
     "searchPlaceholder": "Question, student or lesson",
-    "ask": "Ask your teacher about this lecture",
+    "ask": "Ask your teacher about this lesson",
     "askHint": "Up to 5 questions a day. Your teacher answers here and on your dashboard.",
     "contactRule": "For everyone's safety, phone numbers, links and social handles are hidden. Contact the academy through the official channels.",
     "send": "Send",
@@ -1040,7 +1018,7 @@
       "live": "Live",
       "questions": "Questions",
       "marketing": "Marketing",
-      "requests": "Requests",
+      "requests": "Teacher requests",
       "support": "Support",
       "analytics": "Behaviour",
       "funnel": "Funnel",
@@ -1113,12 +1091,12 @@
     "activeSubscribers": "Active subscribers",
     "newStudents": "New students this week",
     "activeRentals": "Active rentals",
-    "pendingKiosk": "Pending kiosk orders",
-    "upcomingLive": "Upcoming live lectures",
-    "lecture": "Lecture",
+    "pendingKiosk": "Kiosk orders waiting for payment",
+    "upcomingLive": "Upcoming live sessions",
+    "lecture": "Session",
     "when": "When",
     "seats": "Seats",
-    "noLive": "No live lectures scheduled.",
+    "noLive": "No live sessions scheduled.",
     "noKiosk": "No kiosk payments waiting.",
     "country": "Country",
     "all": "All",
@@ -1167,7 +1145,7 @@
     "refundZiinaHint": "Refunds the amount through Ziina and ends the access it granted.",
     "refundPaymobHint": "For Paymob, refund in the Paymob dashboard first, then press the button to end access and record it.",
     "orderStatus": {
-      "PENDING": "Pending",
+      "PENDING": "Waiting for payment",
       "PAID": "Paid",
       "FAILED": "Failed",
       "EXPIRED": "Expired",
@@ -1211,7 +1189,7 @@
     "noEvents": "No payment events.",
     "cancelled": "Cancelled",
     "seatsSold": "{count, plural, one {# seat sold} other {# seats sold}}",
-    "attendees": "{count, plural, =0 {nobody opened the lecture page} one {# opened the lecture page} other {# opened the lecture page}}",
+    "attendees": "{count, plural, =0 {nobody opened the session page} one {# opened the session page} other {# opened the session page}}",
     "questionsHint": "Questions on each teacher's courses over the last 90 days, plus any still waiting.",
     "answered": "Answered",
     "unanswered": "Waiting",
@@ -1249,7 +1227,12 @@
     "funnelRate": "Of course views",
     "funnelPaid": "Paid orders",
     "funnelNoPaid": "No paid orders in this window.",
-    "event": {"course_viewed": "Viewed a course", "checkout_started": "Started checkout", "order_paid": "Paid", "signup_completed": "Created an account"}
+    "event": {
+      "course_viewed": "Viewed a course",
+      "checkout_started": "Started checkout",
+      "order_paid": "Paid",
+      "signup_completed": "Created an account"
+    }
   },
   "account": {
     "title": "My account",
@@ -1259,9 +1242,9 @@
     "save": "Save",
     "profile": {
       "ok": "Saved.",
-      "invalid_name": "Enter a valid name.",
+      "invalid_name": "Enter your full name.",
       "invalid_email": "Enter a valid email address.",
-      "email_taken": "This email is already used."
+      "email_taken": "This email is used by another account."
     },
     "verified": "Email confirmed",
     "unverified": "Email not confirmed",
@@ -1276,7 +1259,7 @@
     "password": {
       "ok": "Password changed.",
       "wrong": "The current password is wrong.",
-      "short": "The new password is too short."
+      "short": "The new password is too short. Use at least 8 characters."
     },
     "parentTitle": "Parent access",
     "parentCodeHint": "Generate a six-digit code and give it to your parent within 15 minutes.",
@@ -1289,7 +1272,7 @@
     "openParent": "Open the parent dashboard",
     "openStaff": "Open the staff dashboard",
     "referralTitle": "Refer a family",
-    "referralHint": "Share your code. The other family enters it in the coupon field at checkout for a welcome discount.",
+    "referralHint": "Share your code. The other family enters it in the discount code field at checkout for a welcome discount.",
     "referralHow": "After their first payment, a one-time reward code appears here for your next subscription.",
     "referralShare": "Share on WhatsApp",
     "receiptsTitle": "Receipts",
@@ -1302,7 +1285,12 @@
     "dangerHint": "This erases your personal data and signs you out. It cannot be undone. Paid receipts are kept as required for accounting, with your name removed.",
     "dangerConfirm": "I understand this cannot be undone.",
     "dangerDelete": "Delete my account",
-    "danger": {"wrong": "The password is not correct.", "limited": "Too many attempts. Try again in 15 minutes.", "denied": "Staff accounts are removed through support."}
+    "danger": {
+      "wrong": "The password is not correct.",
+      "limited": "Too many attempts. Try again in 15 minutes.",
+      "denied": "Staff accounts are removed through support."
+    },
+    "appearanceTitle": "Appearance"
   },
   "forgot": {
     "title": "Forgot your password?",
@@ -1318,15 +1306,15 @@
     "hint": "At least 8 characters",
     "submit": "Save",
     "errors": {
-      "invalid": "This link is invalid or has expired.",
-      "short": "The password is too short."
+      "invalid": "This link is invalid or has expired. Request a new one.",
+      "short": "The password is too short. Use at least 8 characters."
     }
   },
   "verify": {
     "title": "Confirm your email",
     "lede": "Press the button to confirm your address.",
     "submit": "Confirm",
-    "invalid": "This link is invalid or has expired."
+    "invalid": "This link is invalid or has expired. Sign in to request a new one."
   },
   "invite": {
     "metaTitle": "An invitation to teach at Dhirwa",
@@ -1382,21 +1370,21 @@
     "title": "Parent dashboard",
     "lede": "Follow your children's progress and payments.",
     "linkTitle": "Link a student",
-    "linkHint": "Ask the student for a code from their account, then enter their mobile number and the code.",
-    "phone": "Mobile number",
+    "linkHint": "Ask the student for a code from their account, then enter their phone number and the code.",
+    "phone": "Phone number",
     "code": "Code",
     "link": "Link",
     "errors": {
       "ok": "Linked.",
-      "not_found": "No student has that number.",
-      "bad_code": "The code is wrong or has expired.",
+      "not_found": "No student has that number. Check it, or ask them to sign up first.",
+      "bad_code": "The code is wrong or has expired. Ask the student for a new one.",
       "already": "This student is already linked."
     },
     "unlink": "Unlink",
     "confirmUnlink": "Remove this student link?",
     "courses": "Active courses",
     "completedWeek": "Lessons completed this week",
-    "attendedMonth": "Lecture pages opened this month",
+    "attendedMonth": "Lesson pages opened this month",
     "nextExpiry": "Next expiry",
     "noExpiry": "None",
     "lastPayment": "Last payment",
@@ -1406,8 +1394,8 @@
     "navRequests": "Messages",
     "navCourses": "Courses",
     "buyFor": "Buy a course for {name}",
-    "consentBody": "Live lectures open an external link outside Dhirwa. Your one consent lets {name} join every lecture they hold a seat or plan for.",
-    "consentCta": "I consent to {name} joining live lectures",
+    "consentBody": "Live sessions open an external link outside Dhirwa. Your one consent lets {name} join every session they hold a seat or plan for.",
+    "consentCta": "I consent to {name} joining live sessions",
     "consentDone": "Your consent is recorded on {date}."
   },
   "homework": {
@@ -1489,7 +1477,7 @@
     "reply": "Reply",
     "close": "Close",
     "requestOk": "Your request was sent.",
-    "requestLimited": "Daily request limit reached.",
+    "requestLimited": "Daily request limit reached. Try tomorrow.",
     "requestInvalid": "Write a subject and at least 10 characters of detail.",
     "open": "Open",
     "answered": "Answered",
@@ -1512,14 +1500,14 @@
     "aiGrade": "Grade with AI",
     "aiSuggestion": "Suggestion: {score} of {max}",
     "aiUnavailable": "AI grading is not configured yet.",
-    "aiLimited": "Daily AI grading limit reached.",
+    "aiLimited": "Daily AI grading limit reached. Try tomorrow.",
     "aiOk": "Suggestion received.",
-    "aiNone": "Could not grade it — review by hand.",
+    "aiNone": "Could not grade it. Review by hand.",
     "examsTitle": "Exams",
     "noExams": "No exams taken yet.",
     "awaitingMark": "Awaiting a mark",
-    "liveTitle": "Live lecture pages opened",
-    "noLive": "No live lecture page opened yet."
+    "liveTitle": "Live session pages opened",
+    "noLive": "No live session page opened yet."
   },
   "practice": {
     "title": "Practice",
@@ -1597,7 +1585,7 @@
     "written": "Written answer",
     "marks": "Marks",
     "save": "Save",
-    "timeUp": "Time is up — submitting…",
+    "timeUp": "Time is up. Submitting…",
     "noAccess": "This exam is not open to you.",
     "edit": "Edit",
     "takeAgain": "Try again",
@@ -1622,10 +1610,10 @@
     "from": "from {price}",
     "see": "See {subject} courses",
     "continue": "Continue learning",
-    "dashboard": "My learning",
+    "dashboard": "My dashboard",
     "bundle": {
       "k": "Bundle offer",
-      "title": "Take {subjects} together",
+      "title": "Buy {subjects} together",
       "save": "You save {amount}.",
       "cta": "Get the bundle"
     },
@@ -1644,15 +1632,12 @@
     "pickSave": "Show my subjects",
     "noneYet": "Teachers are still adding courses for your grade. Check back soon."
   },
-  "auth": {
-    "panel": "Every lesson is a step toward the peak."
-  },
   "teach": {
     "title": "Teach on Dhirwa",
-    "intro": "Register, tell us the countries of the subjects you will teach, and the owner reviews your request. Nothing is created until you are approved.",
+    "intro": "Register, tell us the countries you will teach in, and we review your application. Your account is created once you are approved.",
     "name": "Full name",
     "email": "Email",
-    "phone": "Mobile number",
+    "phone": "Phone number",
     "countries": "Countries of your subjects",
     "countriesHint": "Tick every country whose students you want to teach.",
     "subjects": "Subjects and grades you will teach",
@@ -1660,7 +1645,7 @@
     "password": "Password",
     "passwordHint": "At least 8 characters.",
     "submit": "Send my application",
-    "submitting": "Sending...",
+    "submitting": "Sending…",
     "sent": "We received your application. We will review it and reply by email.",
     "errors": {
       "invalid": "Please check the fields, and tick at least one country.",

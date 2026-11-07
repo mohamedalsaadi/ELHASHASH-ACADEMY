@@ -1,4 +1,5 @@
 import { pick } from "@/lib/content";
+import { Motion } from "@/components/motion/Motion";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const name = pick(locale === "ar", grade.nameAr, grade.nameEn);
   return {
     title: name,
-    description: locale === "ar" ? `مواد ${name} وكورساتها على ذروة.` : `${name} subjects and courses on Dhirwa.`,
+    description: locale === "ar" ? `مواد ${name} ودوراتها على ذروة.` : `${name} subjects and courses on Dhirwa.`,
     alternates: alternates(locale, `/courses/c/${slug.toLowerCase()}/${level}`),
   };
 }
@@ -69,27 +70,27 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
   });
   const live = tiles.filter((x) => x.count > 0).length;
   const card = "flex h-full min-h-44 flex-col gap-3 p-4";
-  const line = `var(--color-line-${slug.toLowerCase()}, var(--color-ink))`;
 
   return (
-    <main className="mx-auto grid max-w-5xl gap-8 px-4 py-10">
-      <header className="grid gap-1 border-b-(length:--line) pb-6" style={{ borderColor: line }}>
+    <main className="mx-auto grid max-w-(--container-page) gap-14 px-4 py-12 md:py-20">
+      <Motion />
+      <header className="grid gap-3">
         <p className="flex flex-wrap gap-2 text-small text-ink-muted">
-          <Link href="/courses" className="inline-flex min-h-11 items-center text-pen underline-offset-4 hover:underline">
+          <Link href="/courses" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("title")}
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
-          <Link href={`/courses/c/${slug.toLowerCase()}`} className="inline-flex min-h-11 items-center text-pen underline-offset-4 hover:underline">
+          <Link href={`/courses/c/${slug.toLowerCase()}`} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {pick(ar, grade.country.nameAr, grade.country.nameEn)}
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>
           {pick(ar, grade.nameAr, grade.nameEn)}
         </p>
-        <h1 className="font-display text-h1 font-bold">{t.rich("pickSubject", { grade: pick(ar, grade.nameAr, grade.nameEn), m: (c) => <span className="marker">{c}</span> })}</h1>
+        <h1 className="font-display text-display leading-[1.15] font-bold">{t.rich("pickSubject", { grade: pick(ar, grade.nameAr, grade.nameEn), m: (c) => c })}</h1>
         <p className="text-ink-muted">{t("subjectCount", { count: tiles.length, live })}</p>
       </header>
 
-      <ul className="reveal grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <ul data-reveal="" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.length === 0 && (
           <li className="col-span-full">
             <EmptyState>
@@ -111,12 +112,11 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
               {count > 0 ? (
                 <Link
                   href={`/courses/c/${slug.toLowerCase()}/${level}/${subject.slug}`}
-                  className={`${card} card border-t-(length:--line) bg-surface hover-lift`}
-                  style={{ borderTopColor: line }}
+                  className={`${card} card hover-lift`}
                 >
                   <SubjectIcon icon={subject.icon} size={44} />
                   {label}
-                  <span className="mt-auto flex items-baseline justify-between gap-2 border-t border-dashed border-rule pt-2 text-small">
+                  <span className="mt-auto flex items-baseline justify-between gap-2 border-t border-hairline pt-2 text-small">
                     <span className="text-pen">{t("available", { count })}</span>
                     {from && (
                       <span className="grid justify-items-end gap-0.5">
@@ -134,7 +134,7 @@ export default async function GradePage({ params }: { params: Promise<{ locale: 
                 <div className={`${card} rounded-lg border-2 border-dashed border-field`}>
                   <SubjectIcon icon={subject.icon} size={44} muted />
                   {label}
-                  <span className="mt-auto border-t border-dashed border-rule pt-2 text-small text-ink-muted">{t("soon")}</span>
+                  <span className="mt-auto border-t border-hairline pt-2 text-small text-ink-muted">{t("soon")}</span>
                 </div>
               )}
             </li>

@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
 const tab =
-  "shrink-0 rounded-full px-4 py-2 text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out)";
+  "inline-flex min-h-11 shrink-0 items-center rounded-full px-4 py-2 text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out)";
 
 export async function TeacherNav({
   current,
@@ -41,7 +41,7 @@ export async function TeacherNav({
     { key: "profile", href: "/teacher/profile", label: t("navProfile") },
   ] as const;
   return (
-    <nav className="flex flex-wrap items-center gap-1 rounded-lg bg-raised p-1">
+    <nav className="subnav">
       {items.map((i) => (
         <Link
           key={i.key}

@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { GradePicker } from "@/components/GradePicker";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 import { gradeGroups } from "@/lib/catalog";
@@ -75,7 +76,7 @@ export default async function AccountPage({
     : "";
 
   return (
-    <main className="mx-auto grid max-w-2xl gap-8 px-4 py-12">
+    <main className="mx-auto grid max-w-2xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-12">
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
       {verifiedParam === "1" && verified && (
         <p role="status" className="rounded-sm border border-up px-3 py-2 text-small text-up">
@@ -103,6 +104,11 @@ export default async function AccountPage({
       <section className={panel}>
         <h2 className="font-display text-h3 font-semibold">{t("passwordTitle")}</h2>
         <PasswordForm />
+      </section>
+
+      <section className={panel}>
+        <h2 className="font-display text-h3 font-semibold">{t("appearanceTitle")}</h2>
+        <ThemeToggle withLabel className="btn btn-outline w-fit" />
       </section>
 
       {u.role === "STUDENT" && (

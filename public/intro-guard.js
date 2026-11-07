@@ -1,14 +1,13 @@
 // Runs while the HTML is parsed, before the hero paints. Once per tab session, never under reduced
-// motion; without JS nothing is hidden. Any input skips it. "play" holds the hero until the scene is
-// ready; the scene (Summit) then sets "run", which starts the mark and the copy together, and clears
-// it at the end. If the scene never arrives a timer clears "play", so the hero copy can never stay
-// hidden. An ?intro= link replays it every time (for previews).
+// motion; without JS nothing is hidden. Any input skips it. "play" holds the page behind the empty
+// ground until the timeline is ready; the timeline (brand/Intro.tsx) then sets "run" and clears it at
+// the end. If the code never arrives a timer clears "play", so the page can never stay hidden. An
+// ?intro= link replays it every time (for previews); ?intro=off skips it outright.
 //
 // A separate file rather than an inline script so the Content-Security-Policy can stay
 // `script-src 'self'` with no 'unsafe-inline'.
 try {
   var d = document.documentElement;
-  // ?intro=off skips it outright, for reviewing the page without waiting four seconds.
   if (
     !location.search.includes("intro=off") &&
     (/[?&]intro=/.test(location.search) || !sessionStorage.getItem("as-intro")) &&

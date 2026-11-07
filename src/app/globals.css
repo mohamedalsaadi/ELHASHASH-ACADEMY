@@ -47,7 +47,7 @@ body {
 }
 
 @layer components {
-  /* The one action shape: a trail-green pill. Hover lifts 1px with a stronger glow. Padding, font and press state live here so call sites cannot drift. */
+  /* The one action shape: a pill. Padding, font and press state live here so call sites cannot drift. */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -55,7 +55,7 @@ body {
     gap: 0.5rem;
     min-height: var(--control-h);
     padding-block: 10px;
-    padding-inline: 20px;
+    padding-inline: 22px;
     border-radius: var(--radius-full);
     font-family: var(--font-body);
     font-weight: 600;
@@ -63,50 +63,38 @@ body {
     text-align: center;
     transition:
       background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-base) var(--ease-out),
-      transform var(--dur-base) var(--ease-out);
+      opacity var(--dur-fast) var(--ease-out);
   }
   .btn-primary {
     background: var(--color-primary);
     color: var(--color-on-primary);
-    box-shadow: 0 6px 16px -8px rgb(31 115 86 / .5);
   }
   .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 24px -8px rgb(31 115 86 / .6);
+    opacity: 0.82;
   }
-  /* DESIGN.md §7: transparent, 2px ink border, ink fill on hover. A hairline border measured 1.33:1. */
   .btn-outline {
-    border: 2px solid var(--color-ink);
+    border: 1px solid var(--color-field);
     background: transparent;
     color: var(--color-ink);
   }
   .btn-outline:hover {
-    background: var(--color-ink);
-    color: var(--color-on-primary);
-  }
-  /* On the map: the summit-gold button. */
-  .btn-glow {
-    background: var(--color-summit);
-    color: var(--color-night);
-    box-shadow: var(--shadow-glow);
-  }
-  .btn-glow:hover {
-    transform: translateY(-1px);
-  }
-  .btn-ghost {
-    border: 1px solid rgb(255 255 255 / .25);
-    color: var(--color-night-text);
-  }
-  .btn-ghost:hover {
-    background: rgb(255 255 255 / .08);
+    background: var(--color-raised);
+    border-color: var(--color-ink);
   }
   .btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
-  /* A card: white, hairline, soft layered shadow. */
+  /* Text links read as links without a colour of their own. */
+  a.text-pen:not(.btn),
+  a.text-primary:not(.btn) {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+  /* A card: surface, hairline, soft shadow in light. */
   .card {
     background: var(--color-surface);
     border: 1px solid var(--color-hairline);
@@ -122,7 +110,7 @@ body {
 
 ::selection {
   background: var(--color-summit);
-  color: var(--color-ink);
+  color: var(--color-on-summit);
 }
 
 button:disabled {
@@ -133,7 +121,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgb(31 115 86 / .18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 22%, transparent);
   outline: none;
 }
 
@@ -143,14 +131,12 @@ textarea:focus-visible {
 }
 .hover-lift:hover,
 .hover-lift:focus-visible {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-float);
 }
 
 @media (prefers-reduced-motion: reduce) {
   /* Hover lift is motion too: keep the colour change, drop the movement. */
-  .btn-primary:hover,
-  .btn-glow:hover,
   .hover-lift:hover,
   .hover-lift:focus-visible {
     transform: none;
@@ -168,5 +154,38 @@ textarea:focus-visible {
   ::view-transition-old(*),
   ::view-transition-new(*) {
     animation: none !important;
+  }
+}
+
+@layer base {
+  /* A control's intrinsic width would otherwise push it over its neighbour in a grid track. */
+  label,
+  input,
+  select,
+  textarea {
+    min-width: 0;
+  }
+  input:not([type="checkbox"], [type="radio"]),
+  select,
+  textarea {
+    max-width: 100%;
+  }
+}
+
+@layer components {
+  /* Section tabs: one scrolling row on a phone, wrapped on a screen with room. */
+  .subnav {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-radius: var(--radius-lg);
+    background: var(--color-raised);
+    padding: 0.25rem;
+  }
+  @media (min-width: 40rem) {
+    .subnav {
+      flex-wrap: wrap;
+    }
   }
 }

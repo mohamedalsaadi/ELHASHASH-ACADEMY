@@ -243,6 +243,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
           </form>
         )}
 
+        {(prev || next) && (
         <nav className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
           {prev ? (
             isOpen(prev.id) ? (
@@ -272,6 +273,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
               </span>
             ))}
         </nav>
+        )}
 
         {homework.length > 0 && (
           <section className="grid gap-2 card p-4">

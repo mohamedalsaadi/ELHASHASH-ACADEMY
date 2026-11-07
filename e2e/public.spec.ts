@@ -4,7 +4,7 @@ test("home renders in the right language and direction, with the intro mark", as
   await page.goto(`/${loc}`);
   await expect(page.locator("html")).toHaveAttribute("lang", loc);
   await expect(page.locator("html")).toHaveAttribute("dir", loc === "ar" ? "rtl" : "ltr");
-  await expect(page.locator(".as-hop [data-dot]")).toHaveCount(1);
+  await expect(page.locator(".as-intro [data-dot]")).toHaveCount(1);
   // The intro guard is a same-origin file, not an inline script, so the CSP can forbid inline script.
   await expect(page.locator('script[src="/intro-guard.js"]')).toHaveCount(1);
   const text = await page.locator("body").innerText();

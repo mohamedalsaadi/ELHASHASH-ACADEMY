@@ -54,10 +54,10 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
         font,
         colors: {
           ramp: ["contour-1", "contour-2", "contour-3", "contour-4", "contour-6"].map(token),
-          card: token("night-2"),
-          cardEdge: token("contour-6"),
-          ink: token("night-text"),
-          muted: token("night-muted"),
+          card: token("surface"),
+          cardEdge: token("hairline"),
+          ink: token("ink"),
+          muted: token("ink-muted"),
           pen: token(`line-${countryCode.toLowerCase()}`) || token("contour-5"),
           glow: token("contour-3"),
         },
@@ -191,7 +191,7 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
             aria-pressed={i === selected}
             onClick={() => setSelected(i)}
             className={`min-h-11 shrink-0 rounded-full border px-4 text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out) ${
-              i === selected ? "border-night-text bg-night-text text-night" : "border-night-muted/40 text-night-text hover:border-night-text"
+              i === selected ? "border-ink bg-primary text-on-primary" : "border-field text-ink hover:border-ink"
             }`}
           >
             {s.name}
@@ -199,7 +199,7 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
         ))}
       </div>
       {current && (
-        <a href={`#${current.anchor}`} className="btn btn-glow justify-self-center">
+        <a href={`#${current.anchor}`} className="btn btn-primary justify-self-center">
           {current.cta}
           <Arrow aria-hidden="true" className="size-4" strokeWidth={2.5} />
         </a>

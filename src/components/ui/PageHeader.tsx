@@ -1,4 +1,4 @@
-import { Mark } from "@/components/brand/Mark";
+import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
 /** One header shape for the course, lesson and live pages: back link, eyebrow, title, meta, actions. */
@@ -19,7 +19,7 @@ export function PageHeader({
     <div className="grid gap-3">
       {back && (
         <Link href={back.href} className="flex min-h-11 w-fit items-center gap-2 rounded-full text-small text-ink-muted transition-colors duration-(--dur-fast) ease-(--ease-out) hover:text-ink">
-          <Mark size={18} />
+          <ChevronLeft aria-hidden="true" className="size-4 rtl:-scale-x-100" />
           <span>{back.label}</span>
         </Link>
       )}

@@ -338,7 +338,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       )}
 
       {summary.length > 0 && (
-        <section className="card grid gap-3 p-5">
+        <section className="grid gap-3">
           <h2 className="font-display text-h2 font-semibold">{t("summary.title")}</h2>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {summary.map((s) => (

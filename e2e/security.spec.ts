@@ -41,8 +41,9 @@ test("a password reset ends the session that was already signed in", async ({ pa
   const { phone, raw } = await userWithResetToken(`invalidate-${loc}-${test.info().project.name}`);
 
   await signInAs(page, loc, phone);
-  await page.goto(`/${loc}/dashboard`);
-  await expect(page).toHaveURL(new RegExp(`/${loc}/dashboard`));
+  // /account, not /dashboard: this user has no grade, so the dashboard sends it to complete its profile.
+  await page.goto(`/${loc}/account`);
+  await expect(page).toHaveURL(new RegExp(`/${loc}/account`));
 
   await page.goto(`/${loc}/reset/${raw}`);
   await page.locator('input[name="password"]').fill("brand-new-pass-9");

@@ -85,7 +85,7 @@ export async function notifyOrderPaid(orderId: string) {
     await createNotification({
       userId: order.beneficiaryId,
       kind: "ORDER_PAID",
-      titleAr: "أهداك ولي أمرك كورسًا",
+      titleAr: "أهداك ولي أمرك دورة",
       titleEn: "A guardian bought you a course",
       bodyAr: "تم تفعيل وصولك. الإيصال جاهز في حسابك.",
       bodyEn: "Your access is active. Your receipt is ready in your account.",

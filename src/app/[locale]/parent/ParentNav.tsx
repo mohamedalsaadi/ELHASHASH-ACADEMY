@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
-const tab = "shrink-0 rounded-full px-4 py-2 text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out)";
+const tab = "inline-flex min-h-11 shrink-0 items-center rounded-full px-4 py-2 text-small font-medium transition-colors duration-(--dur-fast) ease-(--ease-out)";
 
 /** The parent's sections, like TeacherNav: children, messages, and the catalogue to buy for a child. */
 export async function ParentNav({ current }: { current: "children" | "requests" }) {
@@ -12,7 +12,7 @@ export async function ParentNav({ current }: { current: "children" | "requests" 
     { key: "courses", href: "/courses", label: t("navCourses") },
   ] as const;
   return (
-    <nav className="flex flex-wrap gap-1 rounded-full bg-raised p-1 justify-self-start">
+    <nav className="subnav justify-self-start">
       {items.map((i) => (
         <Link
           key={i.key}

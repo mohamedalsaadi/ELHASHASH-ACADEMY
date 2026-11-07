@@ -1,95 +1,62 @@
-/* Brand motion (DESIGN.md "Contour"). Marketing only: the map stage, the intro, scroll reveals and the route loader. */
+/* Brand motion (DESIGN.md §6). Marketing only: the intro and the route loader. GSAP drives the scroll work (components/motion). */
 
-/* The map: night navy, a little lighter where the summit catches the light, a faint field of still contour lines and a
-   fine paper grain. Still: a map does not move. The home hero, the student-home hero and the closing band. */
-/* Trail green is too dark on navy for a focus ring; on the map it is summit gold. */
-.stage :focus-visible { outline-color: var(--color-summit); }
-
-.stage {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background:
-    radial-gradient(70% 60% at 30% 25%, rgb(232 176 75 / .06), transparent 70%),
-    radial-gradient(120% 90% at 50% 40%, var(--color-night-2), var(--color-night) 75%);
-  color: var(--color-night-text);
-}
-.stage::before {
-  content: "";
-  position: absolute;
+/* Intro, about 2.6 s, once per tab session (guard: /intro-guard.js, timeline: components/brand/Intro.tsx).
+   "play" holds the page behind the ground until the timeline is ready. "run" is the timeline. "skip" shows the end at once. */
+.as-intro { display: none; }
+html[data-intro] .as-intro {
+  display: grid;
+  position: fixed;
   inset: 0;
-  z-index: -1;
-  opacity: .5;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='360' viewBox='0 0 520 360'%3E%3Cg fill='none' stroke='%235D7FA0' stroke-opacity='.22' stroke-width='1'%3E%3Cpath d='M-20 300C80 280 140 200 260 190S440 250 540 240'/%3E%3Cpath d='M-20 330C90 310 150 236 260 226S430 280 540 272'/%3E%3Cpath d='M60 150C110 90 200 70 250 96S330 170 300 200 160 210 60 150Z'/%3E%3Cpath d='M110 140C140 106 200 96 236 112S280 160 262 176 170 182 110 140Z'/%3E%3Cpath d='M380 60C430 40 500 60 520 90M360 90C420 66 490 84 540 120'/%3E%3C/g%3E%3C/svg%3E") center / 520px 360px,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-  pointer-events: none;
+  z-index: 50;
+  place-items: center;
+  background: var(--color-ground);
+  color: var(--color-ink);
 }
-/* Behind the intro mark the still field steps back, so the mark is the only drawing in the hero. */
-.stage:has(> svg)::before { opacity: .18; }
-
-/* The footer's closing rule: three contour lines rising to one summit-gold point. */
-.contour-rule {
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 28' preserveAspectRatio='none'%3E%3Cg fill='none' stroke-width='1.2' stroke-linecap='round' vector-effect='non-scaling-stroke'%3E%3Cpath d='M0 24C40 22 70 14 120 12S200 20 240 22' stroke='%233E5C7A'/%3E%3Cpath d='M0 18C40 16 72 9 120 7S198 14 240 16' stroke='%235D7FA0'/%3E%3Cpath d='M0 12C42 10 74 4 120 3S196 8 240 10' stroke='%238FB0C9'/%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat;
-  position: relative;
-}
-.contour-rule::after {
-  content: "";
-  position: absolute;
-  inset-block-start: 1px;
-  inset-inline-start: calc(50% - 3px);
-  width: 6px;
-  height: 6px;
-  border-radius: var(--radius-full);
-  background: var(--color-summit);
-}
-
-/* Intro, 4 s, once per tab session (guard in Intro.tsx). The mark draws and its gold point hops onto the peak,
-   and the hero copy waits off-stage and rises at 3.2 s. Skipping shows the copy at once. */
-.as-intro-skip { display: none; }
-html[data-intro="play"] .as-intro-skip, html[data-intro="run"] .as-intro-skip { display: inline-flex; }
-/* "play": waiting for the scene, mark and copy hidden. "run": the scene started the clock; the copy rises 3.2 s later. */
-html[data-intro="play"] .as-hop { visibility: hidden; }
-html[data-intro="play"] .as-hero-copy > * { opacity: 0; }
+html[data-intro="play"] .as-intro svg { visibility: hidden; }
+html[data-intro="skip"] .as-intro { display: none; }
+html[data-intro] [data-header-mark] { opacity: 0; }
+html[data-intro="skip"] [data-header-mark] { opacity: 1; }
+html[data-intro] .as-hero-copy > * { opacity: 0; }
 html[data-intro="run"] .as-hero-copy > * {
-  opacity: 0;
   animation: as-rise var(--dur-reveal) var(--ease-out) forwards;
-  animation-delay: calc(3200ms + var(--i, 0) * var(--stagger));
+  animation-delay: calc(1800ms + var(--i, 0) * var(--stagger));
 }
-html[data-intro="skip"] .as-hero-copy > * { animation-delay: 0ms; }
+html[data-intro="skip"] .as-hero-copy > * { animation: as-rise var(--dur-base) var(--ease-out) forwards; }
 
 @keyframes as-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
-/* Scroll reveal: content rises 16px once as it enters. Complete at rest where the browser lacks view timelines. */
-@supports (animation-timeline: view()) {
-  .reveal {
-    animation: as-rise linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 40%;
-  }
-}
-
-/* Route loader: a contour line climbing from low ground to the summit draws across the top while a page really loads. */
-.as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 3px; overflow: hidden; }
+/* Route loader: a hairline draws across the top while a page really loads. */
+.as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 2px; overflow: hidden; }
 .as-loader::after {
   content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 100%;
-  background: linear-gradient(90deg, var(--color-contour-1), var(--color-contour-3), var(--color-summit));
+  background: var(--color-ink);
   transform-origin: var(--as-origin, right);
   animation: as-load 1400ms var(--ease-out) infinite;
 }
-[dir="rtl"] .as-loader::after { background: linear-gradient(270deg, var(--color-contour-1), var(--color-contour-3), var(--color-summit)); }
 [dir="ltr"] .as-loader { --as-origin: left; }
 @keyframes as-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
-/* The network map (country pages still draw it). Hover lights one line and dims the others. */
+/* The network drawing on country pages. Hover lights one line and dims the others. */
 .net-line { transition: opacity var(--dur-fast) var(--ease-out); }
 .net:has(.net-line:is(:hover, :focus-within)) .net-line:not(:hover, :focus-within) { opacity: .25; }
 .net-label { font-size: 22px; }
 @media (max-width: 40rem) { .net-label { font-size: 34px; } }
 
+/* The floating header: glass only here, on the functional layer. Solid when the reader asks for less transparency. */
+.glass {
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  backdrop-filter: blur(24px) saturate(1.8);
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .glass { background: var(--color-surface); backdrop-filter: none; }
+}
+
+/* Room under the page for the phone tab bar. */
+@media (max-width: 47.99rem) {
+  body:has(.tab-bar) { padding-bottom: calc(3.75rem + env(safe-area-inset-bottom)); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .reveal { animation: none; }
   html[data-intro] .as-hero-copy > * { opacity: 1; animation: none; }
-  html[data-intro] .as-hop { visibility: visible; }
   .as-loader::after { animation: none; transform: scaleX(.4); }
 }

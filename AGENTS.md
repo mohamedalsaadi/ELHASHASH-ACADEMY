@@ -17,7 +17,7 @@ Start with `docs/WORKLOG.md`: the running log of what changed, why, and what is 
 - **No push, deploy, merge, DNS change, or spending without the owner's approval** through the Manager.
 - Never run destructive DB commands (`prisma migrate reset`, `DROP`, mass `delete`) against the real database.
 - Never commit secrets or `.env*` files.
-- Design follows `DESIGN.md`: show real numbers from stored data, never invented social proof. Motion stays on marketing pages; app pages stay calm; honour `prefers-reduced-motion`.
+- Design follows `DESIGN.md`: show real numbers from stored data, never invented social proof. GSAP stays on marketing pages, on native scroll with no wheel hijacking; app pages stay calm; honour `prefers-reduced-motion`.
 
 ## Roles
 | Agent | Owns |

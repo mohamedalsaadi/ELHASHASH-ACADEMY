@@ -82,6 +82,7 @@ export async function consentLive(studentPhone: string) {
     `INSERT INTO "GuardianConsent" ("studentId","parentId","guardianName","rulesVersion","verifiedAt")
      SELECT s.id, p.id, p.name, 'e2e', now() FROM "User" s, "User" p
      WHERE s.phone = $1 AND p.role = 'PARENT'
+     LIMIT 1
      ON CONFLICT ("studentId") DO UPDATE SET "verifiedAt" = now()`,
     [studentPhone],
   );

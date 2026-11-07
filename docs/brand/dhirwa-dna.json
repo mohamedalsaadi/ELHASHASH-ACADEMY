@@ -1,88 +1,77 @@
 {
   "meta": {
-    "name": "Dhirwa · Contour",
-    "version": "1.0",
-    "date": "2026-11-02",
+    "name": "Dhirwa",
+    "version": "2.0",
+    "date": "2026-11-07",
     "references": [
-      "Described style, no image reference: a topographic survey map, contour lines closing in on one summit (ذروة, the peak)",
-      "The dot of ذ, the first letter of the name, read as the summit point on a map",
-      "Kept from Chalkboard/Aurora: layout, spacing, radii, motion timing, the two 3D hero mechanics (home intro, student-home ride)"
+      "Apple Human Interface Guidelines as the review standard, read through dickwu/apple-design-skill (not copied into this repo)",
+      "The dot of ذ, the first letter of the name, read as the summit point",
+      "Kept from earlier identities: the name, the ridge-and-gold-point mark, the country accents, the Genjitsu directives"
     ],
     "audience": "Arabic-speaking secondary students (grades 10-12) across the GCC and Egypt, the parents who pay, and the teachers who sell",
-    "notes": "Colours are chosen, not measured (no reference image), so there is no measured_palette and no verify step. Contrast ratios are WCAG 2.x and listed in DESIGN.md §0."
+    "notes": "Colours are chosen, not measured from a reference image. tokens.css is authoritative; DESIGN.md explains the rules."
   },
   "design_system": {
     "color": {
-      "surface": { "background": "#F6F3EC", "card": "#FFFFFF", "raised": "#EEEAE0", "usage": "Warm survey-paper for every page; white cards on it" },
-      "primary": { "hex": "#1F7356", "name": "trail green", "usage": "Actions, links, focus ring. White on it 5.8:1" },
-      "secondary": { "hex": "#0F1B2D", "name": "night map", "usage": "The map stage: home hero, closing band, student-home hero" },
-      "accent": { "hex": "#E8B04B", "name": "summit gold", "usage": "The summit point, the one highlighted word per heading (contour underline), the stage's primary button, what a student earned. Never text on paper; night on it 8.9:1" },
-      "contour": {
-        "1": "#3E5C7A",
-        "2": "#5D7FA0",
-        "3": "#8FB0C9",
-        "4": "#C3D3DE",
-        "5": "#2F8F6B",
-        "6": "#EEF0EA",
-        "usage": "Elevation ramp, low to high (1-4), the trail line (5), snow line (6). Contour lines on the map, the footer rule, the ride's track. Never body text on paper"
+      "surface": {
+        "light": { "background": "#F5F5F7", "card": "#FFFFFF", "raised": "#EDEDF0" },
+        "dark": { "background": "#000000", "card": "#1C1C1E", "raised": "#2C2C2E" },
+        "usage": "Neutral grounds. The device picks the theme; a toggle can force one"
       },
+      "primary": { "light": "#1D1D1F", "dark": "#F5F5F7", "usage": "Actions are ink pills, white pills in dark. Text on them flips with them" },
+      "accent": { "hex": "#E8B04B", "name": "summit gold", "usage": "One meaning: the summit point and what a student reached or earned. Never text on the ground" },
       "neutral": {
-        "scale": ["#FFFFFF", "#F6F3EC", "#EEEAE0", "#E4DFD3", "#CBC4B4", "#888272", "#586273", "#13202F"],
-        "usage": "Lightest to darkest. #13202F is ink on paper; #EEF0EA is text on the map, #9FAABB muted text on the map"
+        "light": ["#FFFFFF", "#F5F5F7", "#EDEDF0", "#E2E2E6", "#C7C7CC", "#86868B", "#636366", "#1D1D1F"],
+        "dark": ["#000000", "#1C1C1E", "#2C2C2E", "#2F2F32", "#48484A", "#8E8E93", "#A1A1A6", "#F5F5F7"],
+        "usage": "Lightest to darkest in light, darkest to lightest in dark"
       },
-      "semantic": { "success": "#16834A", "error": "#C8343E", "warning": "#E8B04B", "info": "#1F7356" },
-      "countries": { "eg": "#D1293D", "sa": "#16834A", "ae": "#1F6FD1", "kw": "#00807E", "qa": "#8A1538", "bh": "#E8761C", "om": "#7A3E9D", "usage": "Unchanged: one trail colour per country" }
+      "semantic": { "up": { "light": "#0F6B3B", "dark": "#32D74B" }, "down": { "light": "#C8343E", "dark": "#FF6B61" } },
+      "countries": { "eg": "#D1293D", "sa": "#16834A", "ae": "#1F6FD1", "kw": "#00807E", "qa": "#8A1538", "bh": "#E8761C", "om": "#7A3E9D", "dark_overrides": { "qa": "#C2325F", "om": "#9458B8" }, "usage": "Carry data: one accent per country" }
     },
     "typography": {
       "families": {
-        "display": "Readex Pro (Arabic + Latin), 500-700",
-        "body": "IBM Plex Sans Arabic, 400-700",
-        "mark": "Reem Kufi 700: the Arabic wordmark ذروة and words set on the map only. Geometric Kufi, drawn like survey lettering. Never body text, never in app pages",
+        "display": "Readex Pro (Arabic + Latin)",
+        "body": "IBM Plex Sans Arabic",
+        "mark": "Reem Kufi 700: the Arabic wordmark only",
         "data": "IBM Plex Sans Arabic, tabular numerals"
       },
-      "scale": { "hero": "clamp(2.75rem, 1.5rem + 5vw, 6rem)", "display": "clamp(2.1rem, 1.5rem + 2.4vw, 3.5rem)", "h1": "clamp(1.75rem, 1.45rem + 1.2vw, 2.5rem)", "h2": "clamp(1.375rem, 1.25rem + .6vw, 1.75rem)", "h3": "1.25rem", "body_ar": "1.0625rem", "body": "1rem", "small": ".875rem", "label": ".8125rem", "figure": "2rem" },
-      "weights": "400 body, 600 labels and buttons, 700 headings",
-      "line_height": "1.65 Latin body, 1.85 Arabic body, 1.15 headings",
-      "letter_spacing": "Latin wordmark +0.04em; uppercase labels +0.06em; Arabic never letter-spaced"
+      "scale": { "hero": "clamp(3rem, 1.4rem + 6.4vw, 7rem)", "display": "clamp(2.25rem, 1.5rem + 3vw, 4.25rem)", "h1": "clamp(1.875rem, 1.5rem + 1.5vw, 2.75rem)", "h2": "clamp(1.375rem, 1.25rem + .6vw, 1.75rem)", "h3": "1.25rem", "lede": "clamp(1.125rem, 1.05rem + .4vw, 1.375rem)", "body_ar": "1.0625rem", "body": "1rem", "small": ".875rem", "label": ".8125rem", "figure": "2rem" },
+      "line_height": "1.65 Latin body, 1.85 Arabic body",
+      "letter_spacing": "Latin wordmark +0.04em; Arabic never letter-spaced"
     },
-    "spacing": { "base": "4px", "density": "comfortable", "section_gap": "96px desktop / 64px phone", "card_padding": "24px" },
-    "layout": { "max_width": "78rem page, 46rem reading", "grid": "12 columns desktop, 4 phone", "direction": "RTL first; logical properties only" },
-    "shape": { "radius": { "sm": "10px", "md": "14px", "lg": "24px", "pill": "9999px" }, "borders": "1px warm hairline on cards, 1.5px strong", "dividers": "a contour line: thin, slightly wavy, in the elevation ramp" },
-    "elevation": { "paper": "0 1px 2px rgb(19 32 47 / .06), 0 8px 24px -12px rgb(19 32 47 / .12)", "float": "0 2px 4px rgb(19 32 47 / .06), 0 24px 48px -16px rgb(19 32 47 / .22)", "glow": "0 0 0 1px rgb(255 255 255 / .3), 0 10px 32px -10px rgb(232 176 75 / .6)" },
-    "iconography": { "style": "1.75px stroke, rounded joins, 24px grid, currentColor", "mark": "Three nested contour rings forming a peak, a summit-gold dot on top (the dot of ذ). 64×48 grid" },
-    "motion": { "easing": "cubic-bezier(.16, 1, .3, 1)", "durations": { "fast": "160ms", "base": "280ms", "reveal": "700ms", "count": "700ms", "press": "80ms", "stagger": "60ms" }, "reduced_motion": "All durations 0; 3D scenes render their final frame once" },
+    "spacing": { "base": "4px", "density": "airy on marketing pages, comfortable in the app, dense in admin tables" },
+    "layout": { "max_width": "76rem page, 46rem reading", "direction": "RTL first; logical properties only", "phone_navigation": "Bottom tab bar for signed-in users" },
+    "shape": { "radius": { "sm": "10px", "md": "14px", "lg": "22px", "pill": "9999px" }, "borders": "1px hairline on cards" },
+    "elevation": { "paper": "0 1px 2px rgb(0 0 0 / .04), 0 8px 24px -14px rgb(0 0 0 / .12)", "float": "0 2px 6px rgb(0 0 0 / .05), 0 22px 44px -18px rgb(0 0 0 / .2)", "dark": "No paper shadow; surfaces separate by value" },
+    "iconography": { "style": "Lucide, 1.75px stroke, currentColor", "mark": "Three nested ridge lines closing on one peak, a gold point above them. 64×48 grid. Never flipped" },
+    "motion": { "easing": "cubic-bezier(.16, 1, .3, 1)", "durations": { "fast": "160ms", "base": "280ms", "reveal": "700ms", "count": "700ms", "press": "80ms", "stagger": "60ms" }, "reduced_motion": "All durations 0; GSAP shows the final frame" },
     "components": {
-      "button": "Pill, 44px high, trail green on paper; on the map the primary button is summit gold with night text (.btn-glow)",
-      "card": "White, 24px radius, hairline, paper shadow; lifts 3px on hover",
-      "heading_accent": ".marker: one word per heading underlined by a hand-drawn contour line in summit gold; on the map the word itself turns gold",
-      "footer": "Closes on a thin band of stacked contour lines in the elevation ramp"
+      "button": "Pill, 44px minimum, ink fill or hairline outline",
+      "card": "Surface, 22px radius, hairline, soft shadow in light",
+      "tab_bar": "Glass, fixed to the bottom on phones, icons with labels, current tab bold"
     }
   },
   "design_style": {
-    "aesthetic": "Survey map meets exercise book: precise, quiet, ambitious",
-    "visual_language": "Nested contour lines, elevation as progress, one summit point. Lines are the only ornament",
-    "composition": "Paper pages with generous whitespace; one dark map stage per marketing page at most; content in clear columns, never over the map's lines",
-    "imagery": "No stock photos. The map, the subject icons, country flags and real course covers only",
-    "interaction_feel": "Rise, then rest: things rise from flat to their place at a calm pace, then stay still",
+    "aesthetic": "Quiet, neutral, exact",
+    "visual_language": "Large type, generous space, one colour with one meaning",
+    "composition": "One idea per section; fewer boxes",
+    "imagery": "No stock photos. Subject icons, country flags, real course covers, and sample UI labelled as an example",
+    "interaction_feel": "Marketing moves once and rests; the app stays calm",
     "brand_voice_in_ui": "Encouraging, exact, never hype. 'Your next step' over 'Unlock your potential'"
   },
   "visual_effects": {
-    "overview": { "effect_intensity": "medium on the home hero, none in app pages", "performance_tier": "mid: one WebGL canvas per page, DPR capped at 2, paused off-screen" },
-    "background_effects": { "enabled": true, "description": ".stage: night map gradient, a faint static contour pattern (SVG) and fine paper grain; all still" },
+    "overview": { "effect_intensity": "medium on marketing pages, none in app pages", "performance_tier": "SVG and transforms on marketing pages; one WebGL canvas, the subject trail on the student home" },
+    "background_effects": { "enabled": false },
     "particle_systems": { "enabled": false },
-    "3d_elements": {
-      "enabled": true,
-      "home_intro": "Hop (src/components/three/hop-scene.ts, owner's choice 2026-11-03): the flat brand mark, exactly as in the header, SVG only. The three ridges draw out from the peak; the gold point hops in from the start side, lands on the outer ridge, the ridges give like a springboard and launch it to its place; one soft ring, then it floats. 4.0 s, copy rises at 3.2 s; reduced motion shows the finished mark.",
-      "student_home": "The ride keeps its mechanics; its track becomes a trail with waypoints, coloured with the contour ramp and the country line"
-    },
+    "3d_elements": { "enabled": true, "description": "The subject trail on the student home (components/three/ride-scene.ts), moved only by the student" },
     "shader_effects": { "enabled": false },
-    "scroll_effects": { "enabled": true, "description": "CSS animation-timeline: view() reveals, 16px rise + fade, marketing pages only" },
+    "scroll_effects": { "enabled": true, "description": "GSAP ScrollTrigger on native scroll: reveals and pinned sections on marketing pages, pinning through CSS sticky. No wheel hijacking" },
     "text_effects": { "enabled": false },
-    "cursor_effects": { "enabled": true, "description": "Pointer parallax on the hero scene only, at most 3 degrees" },
+    "cursor_effects": { "enabled": false },
     "image_effects": { "enabled": false },
-    "glassmorphism_neumorphism": { "enabled": true, "description": "The sticky header only" },
+    "glassmorphism_neumorphism": { "enabled": true, "description": "The floating header and phone tab bar only; solid under reduced transparency and increased contrast" },
     "canvas_drawings": { "enabled": false },
-    "svg_animations": { "enabled": true, "description": "The contour underline draws once on reveal (stroke-dashoffset, 700ms)" },
-    "composite_notes": "The word ذروة / Dhirwa is DOM text over the canvas, never drawn into it, so it stays translatable and selectable. Diagrams are never mirrored; only the column order swaps in RTL."
+    "svg_animations": { "enabled": true, "description": "The intro: ridges draw, the gold point climbs to the peak, the mark shrinks into its header position. About 2.6 s, once per tab session, any input skips" },
+    "composite_notes": "The word ذروة / Dhirwa is DOM text, so it stays translatable and selectable. The mark never mirrors in RTL."
   }
 }

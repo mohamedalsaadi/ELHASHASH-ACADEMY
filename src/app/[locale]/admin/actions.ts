@@ -590,7 +590,7 @@ export async function inviteTeacher(_: InviteState, form: FormData): Promise<Inv
         ar ? "دعوة للتدريس في ذروة" : "An invitation to teach at Dhirwa",
         [
           ar
-            ? `مرحبًا ${base.data.name}، تمت دعوتك للانضمام إلى ذروة كمدرّس. الرابط صالح لسبعة أيام ولمرة واحدة.`
+            ? `مرحبًا ${base.data.name}، تمت دعوتك للانضمام إلى ذروة كمعلم. الرابط صالح لسبعة أيام ولمرة واحدة.`
             : `Hello ${base.data.name}, you have been invited to teach at Dhirwa. The link is valid for seven days and works once.`,
         ],
         { href: link, label: ar ? "قبول الدعوة" : "Accept the invitation" },

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { ActiveLink } from "@/components/ActiveLink";
 import { LocaleSwitch } from "@/components/LocaleSwitch";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
 
@@ -48,7 +49,7 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
           ref.current?.showModal();
           setOpen(true);
         }}
-        className="grid size-11 place-items-center rounded-full border border-hairline bg-surface text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised md:hidden"
+        className="grid size-11 place-items-center rounded-full text-ink transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised md:hidden"
       >
         <Menu aria-hidden="true" className="size-5" />
       </button>
@@ -57,7 +58,7 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
         ref={ref}
         onClose={() => setOpen(false)}
         aria-label={t("menu")}
-        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-surface p-0 text-ink backdrop:bg-night/50 md:hidden"
+        className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none border-0 bg-surface p-0 text-ink backdrop:bg-black/50 md:hidden"
       >
         <div className="flex h-full flex-col gap-5 overflow-y-auto p-5">
           <div className="flex justify-end">
@@ -91,7 +92,10 @@ export function MobileNav({ items, signOut }: { items: Item[]; signOut?: () => P
           </nav>
 
           <div className="mt-auto grid gap-3 border-t border-hairline pt-4">
-            <LocaleSwitch />
+            <div className="flex items-center justify-between gap-3">
+              <LocaleSwitch />
+              <ThemeToggle withLabel />
+            </div>
             {signOut && (
               <form action={signOut}>
                 <SubmitButton pendingLabel={t("signingOut")} className="min-h-11 rounded-full px-4 py-2 text-start font-display text-small text-ink-muted hover:bg-raised">

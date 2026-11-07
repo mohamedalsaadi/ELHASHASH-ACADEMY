@@ -31,7 +31,7 @@ export async function completeProfile(form: FormData) {
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const code =
-      issue.message === "too_young" || issue.message === "guardian_required" || issue.message === "invalid_birthdate"
+      issue.message === "too_young" || issue.message === "guardian_required" || issue.message === "invalid_birthdate" || issue.message === "terms_required"
         ? issue.message
         : issue.path[0] === "phone"
           ? "invalid_phone"
@@ -49,7 +49,7 @@ export async function completeProfile(form: FormData) {
   const tokenHash = token ? hashToken(token) : null;
   try {
     await db.$transaction(async (trx) => {
-      await trx.user.update({ where: { id: user.id }, data: { phone: d.phone, gradeId: d.gradeId, dateOfBirth: dob } });
+      await trx.user.update({ where: { id: user.id }, data: { phone: d.phone, gradeId: d.gradeId, dateOfBirth: dob, termsAcceptedAt: new Date() } });
       if (minor) {
         await trx.guardianConsent.upsert({
           where: { studentId: user.id },

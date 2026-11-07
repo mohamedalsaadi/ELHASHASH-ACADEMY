@@ -73,6 +73,7 @@ export const completeProfileSchema = z
     guardianName: z.string().trim().min(2).max(80).optional(),
     guardianEmail: z.email().trim().toLowerCase().optional(),
     guardianConsent: z.coerce.boolean().default(false),
+    acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
   })
   .superRefine((d, ctx) => {
     const dob = parseBirthDate(d.dateOfBirth);

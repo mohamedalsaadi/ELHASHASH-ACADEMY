@@ -39,6 +39,8 @@ export async function askJson<T>(input: {
   parts: AiPart[];
   schema: z.ZodType<T>;
   maxTokens?: number;
+  /** A long summary needs longer than the 10 s a short reply gets. */
+  timeoutMs?: number;
 }): Promise<AiResult<T> | null> {
   if (!aiEnabled()) return null;
   const key = process.env.GEMINI_API_KEY!;
@@ -47,7 +49,7 @@ export async function askJson<T>(input: {
     {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(input.timeoutMs ?? 10_000),
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: input.system }] },
         contents: [{ role: "user", parts: input.parts }],

@@ -820,6 +820,18 @@
       "noReceipts": "No receipts yet."
     }
   },
+  "suggest": {
+    "title": "Suggestion box",
+    "lede": "Tell us what to build, fix or keep. It is anonymous: we do not ask for your name or email, and we cannot reply. For a problem with your account or a payment, use Contact us instead.",
+    "kind": "What is it?",
+    "kinds": { "idea": "An idea", "problem": "A problem", "praise": "Something that works well" },
+    "message": "Your suggestion",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Thank you. We read every suggestion.",
+    "errors": { "invalid": "Write between 10 and 1500 characters.", "limited": "Too many suggestions from this connection. Try again later." },
+    "privacyNote": "Do not write personal details. An AI tool summarises suggestions for the owner."
+  },
   "footer": {
     "terms": "Terms of use",
     "refund": "Refund policy",
@@ -830,7 +842,8 @@
     "contact": "Contact us",
     "rights": "Dhirwa (ذروة), United Arab Emirates",
     "tagline": "Every lesson is a step toward the peak.",
-    "sellerLicence": "Trade licence no. {no}"
+    "sellerLicence": "Trade licence no. {no}",
+    "suggest": "Suggestion box"
   },
   "teacher": {
     "hello": "Hello, {name}",
@@ -1025,6 +1038,7 @@
       "marketing": "Marketing",
       "requests": "Teacher requests",
       "support": "Support",
+      "suggestions": "Suggestions",
       "analytics": "Behaviour",
       "funnel": "Funnel",
       "finance": "Tax",
@@ -1205,6 +1219,25 @@
     "noQuestions": "No questions yet.",
     "openRequests": "Open requests",
     "openTickets": "Open support messages",
+    "suggestions": {
+      "hint": "Anonymous notes from the suggestion box. The AI groups the new ones into themes and next steps; read the notes below it, they are the source.",
+      "new": "New since the last summary: {n}",
+      "summarise": "Summarise the new ones",
+      "summarising": "Summarising…",
+      "failed": "The summary did not work (AI off, or the model gave nothing usable). The notes stay unread for the next try.",
+      "none": "Nothing new to summarise.",
+      "latest": "Latest summary",
+      "covered": "{n} notes · {when}",
+      "themes": "Themes",
+      "urgent": "Needs attention",
+      "actions": "Suggested next steps",
+      "examples": "In their words",
+      "recent": "Recent notes",
+      "empty": "No suggestions yet.",
+      "aiOff": "AI is off (no GEMINI_API_KEY), so summaries are unavailable. The notes are still collected.",
+      "kind": { "idea": "Idea", "problem": "Problem", "praise": "Praise" },
+      "role": { "VISITOR": "Visitor", "STUDENT": "Student", "PARENT": "Parent", "INSTRUCTOR": "Teacher", "ADMIN": "Admin" }
+    },
     "support": {
       "hint": "Messages from the contact form. The AI writes a first draft; read it, edit it and send. Nothing is sent without you.",
       "empty": "No support messages yet.",

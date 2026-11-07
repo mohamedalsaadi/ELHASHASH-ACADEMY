@@ -1649,3 +1649,29 @@ model SupportTicket {
 
   @@index([status, createdAt])
 }
+
+/// The suggestion box: anonymous on purpose (no name, no email, no user id), so there is nothing to erase.
+model Suggestion {
+  id        String            @id @default(cuid())
+  kind      String            @db.VarChar(12)
+  message   String            @db.VarChar(1500)
+  /// Visitor, STUDENT, PARENT or INSTRUCTOR: lets the summary tell who asked, without saying who.
+  role      String            @db.VarChar(12)
+  locale    String            @db.VarChar(2)
+  /// Set once a digest has covered it, so the next digest only reads what is new.
+  digestId  String?
+  digest    SuggestionDigest? @relation(fields: [digestId], references: [id], onDelete: SetNull)
+  createdAt DateTime          @default(now())
+
+  @@index([digestId, createdAt])
+}
+
+/// An AI summary of the suggestions received since the previous one.
+model SuggestionDigest {
+  id          String       @id @default(cuid())
+  locale      String       @db.VarChar(2)
+  count       Int
+  data        Json
+  suggestions Suggestion[]
+  createdAt   DateTime     @default(now())
+}

@@ -22,7 +22,7 @@ export async function SiteFooter() {
           {seller.licence && <span>{t("sellerLicence", { no: seller.licence })}</span>}
         </div>
         <nav aria-label={t("legalNav")} className="flex flex-wrap items-center gap-x-6">
-          {(["terms", "refund", "privacy", "accessibility", "faq", "contact"] as const).map((k) => (
+          {(["terms", "refund", "privacy", "accessibility", "faq", "contact", "suggest"] as const).map((k) => (
             <Link key={k} href={`/${k}`} className={footLink}>
               {t(k)}
             </Link>

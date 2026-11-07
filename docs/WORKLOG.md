@@ -24,6 +24,13 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-07: Suggestion box with AI summary, terms tick on the Google step (local commit, not pushed)
+
+- **Suggestion box:** public page `/suggest` (footer link). Anonymous on purpose: stores kind, text (phone numbers and emails masked), the signed-in role and locale, no name, email or user id. Tables `Suggestion` and `SuggestionDigest`, migration `20261110200000_suggestions` (the production build applies it on push). 5 notes an hour per address, honeypot field.
+- **AI summary:** `/admin/suggestions` has a button that sends the notes no digest has covered yet (up to 100, each cut to 600 characters, masked again) to Gemini and stores themes, urgent items and next steps in the page language; the notes it read are marked so the next run reads only new ones. Needs `GEMINI_API_KEY`. Not tried against the live model: e2e runs with AI off, so only the box, the list and the schema are tested. The model call has a 45 s limit (`timeoutMs` in `askJson`).
+- **Privacy page** now says the box is anonymous and the text goes to Google (Gemini) for the summary. Lawyer read still open. No retention rule yet for old suggestions.
+- **Google profile step** now has the required terms tick; `termsAcceptedAt` is stored.
+
 ## 2026-11-07: Signup polish (local commit, not pushed)
 
 - **Phone:** a country-code list (UAE, Saudi, Kuwait, Qatar, Bahrain, Oman, Egypt, or "other" to type +code) beside the number, in signup, the teacher form and the Google profile step (`src/components/ui/PhoneField.tsx`, `src/lib/phone.ts`). New numbers are stored as `+<code><number>`. Sign-in still accepts a local number: it tries the exact text, then every picker country (`phoneCandidates`), so old and new accounts both work.

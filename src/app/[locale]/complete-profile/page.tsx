@@ -6,6 +6,7 @@ import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { field } from "@/components/ui/form";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
+import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { gradeGroups } from "@/lib/catalog";
 import { completeProfile } from "./actions";
@@ -91,6 +92,24 @@ export default async function CompleteProfilePage({
         <label className="flex min-h-11 items-center gap-3 text-small">
           <input type="checkbox" name="guardianConsent" className="size-5 shrink-0" />
           <span>{t("guardianConsent")}</span>
+        </label>
+        <label className="flex min-h-11 items-center gap-3 text-small">
+          <input type="checkbox" name="acceptTerms" required className="size-5 shrink-0" />
+          <span>
+            <span aria-hidden="true" className="text-down">* </span>
+            {t.rich("acceptTerms", {
+              terms: (chunks) => (
+                <Link href="/terms" className="text-ink underline underline-offset-4">
+                  {chunks}
+                </Link>
+              ),
+              privacy: (chunks) => (
+                <Link href="/privacy" className="text-ink underline underline-offset-4">
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </span>
         </label>
         {error && (
           <p role="alert" className="text-small text-down">

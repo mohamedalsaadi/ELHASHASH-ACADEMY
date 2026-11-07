@@ -18,6 +18,7 @@ export const PUBLIC_CLIENT_NAMESPACES = [
   "invite",
   "forgot",
   "contactForm",
+  "suggest",
   "checkout",
   "catalog",
 ] as const;

@@ -16,7 +16,7 @@ test("a reset link sets a new password, and works only once", async ({ page, loc
   await page.goto(`/${loc}/reset/${raw}`);
   await page.locator('input[name="password"]').fill("another-pass-123");
   await page.locator("form button").last().click();
-  await expect(page.locator("[role=alert]")).toBeVisible();
+  await expect(page.locator("main [role=alert]")).toBeVisible();
 });
 
 test("a too-short password is refused", async ({ page, loc }) => {
@@ -26,7 +26,7 @@ test("a too-short password is refused", async ({ page, loc }) => {
   await page.locator('input[name="password"]').evaluate((el: HTMLInputElement) => el.removeAttribute("minlength"));
   await page.locator('input[name="password"]').fill("short");
   await page.locator("form button").last().click();
-  await expect(page.locator("[role=alert]")).toBeVisible();
+  await expect(page.locator("main [role=alert]")).toBeVisible();
 });
 
 test("the forgot form answers the same for a known and an unknown email", async ({ page, loc }) => {
@@ -35,8 +35,9 @@ test("the forgot form answers the same for a known and an unknown email", async 
     await page.goto(`/${loc}/forgot`);
     await page.locator('input[name="email"]').fill(email);
     await page.locator("form button").last().click();
-    await page.locator("[role=status]").waitFor();
-    answers.push(await page.locator("[role=status]").innerText());
+    const status = page.locator("main [role=status]").filter({ hasText: /\S/ });
+    await status.waitFor();
+    answers.push(await status.innerText());
   }
   expect(answers[0]).toBe(answers[1]);
 });

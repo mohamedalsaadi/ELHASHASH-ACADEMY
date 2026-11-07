@@ -1623,7 +1623,7 @@
     "change": "Change it in your account",
     "pickCountryTitle": "Which country are you studying in?",
     "pickCountryHint": "Choose your country and we show only its subjects. You can change it any time.",
-    "gradeCount": "{count} grades",
+    "gradeCount": "{count, plural, one {# grade} other {# grades}}",
     "pickGradeIn": "Pick your grade in {country}",
     "changeCountry": "Change country",
     "pickTitle": "Pick your grade",

@@ -1,6 +1,6 @@
 // Live lectures: the teacher hosts outside the app, so the only thing that can go wrong silently is
 // who sees the link. These tests cover the ladder, the guardian consent gate and the approval gate.
-import { test, expect, signInAs } from "./fixtures";
+import { test, expect, isRefused, signInAs } from "./fixtures";
 import { clearConsent, clearDevice, consentLive, freshStudent, liveOf, setLiveApproved } from "./db";
 import { PERSONAS } from "./personas";
 
@@ -104,11 +104,7 @@ test("a session for an unapproved teacher is not reachable", async ({ page, loc 
   await setLiveApproved(teacher.phone, false);
   try {
     await signInAs(page, loc, STUDENT);
-    await page.goto(`/${loc}/live/${live}`);
-    // notFound(): the page either redirects away or renders the not-found marker.
-    const url = new URL(page.url());
-    const refused = !url.pathname.includes(`/live/${live}`) || (await page.locator("[data-not-found]").count()) > 0;
-    expect(refused).toBe(true);
+    expect(await isRefused(page, `/${loc}/live/${live}`)).toBe(true);
     await expect(page.locator(LINK)).toHaveCount(0);
   } finally {
     await setLiveApproved(teacher.phone, true);

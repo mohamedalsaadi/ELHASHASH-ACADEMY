@@ -68,6 +68,9 @@ export default function middleware(req: NextRequest) {
   const headers = new Headers(req.headers);
   headers.set("content-security-policy", csp);
   headers.set("x-nonce", nonce);
+  // The signed-in rewrite below skips the intl middleware, which normally sets this. Without it next-intl can resolve
+  // the locale before setRequestLocale runs, and the whole English page comes out in the default language.
+  if (home) headers.set("X-NEXT-INTL-LOCALE", home[1]);
   const withCsp = new NextRequest(req, { headers });
 
   const res = home && signedIn

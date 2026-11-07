@@ -14,6 +14,14 @@ test("Egypt student sees Egypt courses on the home, not UAE ones", async ({ page
   await expect(body).not.toContainText(/NaN|undefined/);
 });
 
+test("the signed-in home stays in the language of its address", async ({ page, loc, signIn }) => {
+  await signIn("studentEg");
+  await page.goto(`/${loc}`);
+  const terms = page.locator(`footer a[href="/${loc}/terms"]`);
+  await expect(terms).toHaveText(loc === "ar" ? /الشروط/ : /Terms/);
+  await expect(page.locator('a[href^="/en/en"]')).toHaveCount(0);
+});
+
 test("checkout shows the course and its stored price before payment", async ({ page, loc, signIn }) => {
   // studentAe owns this course (the live spec needs that), so use the student with no entitlement.
   await signIn("studentAe2");

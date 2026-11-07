@@ -194,7 +194,8 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     }).catch(() => {});
   }
 
-  const target = safeNext(form.get("next"), `/${locale}/${isParent ? "parent" : "courses"}`);
+  // A student lands on the home page ("/" shows their country, grade and courses once they are signed in).
+  const target = safeNext(form.get("next"), isParent ? `/${locale}/parent` : `/${locale}`);
   await signIn("credentials", { login: phone, password, redirectTo: target });
   return null;
 }

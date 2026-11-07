@@ -14,7 +14,7 @@ import { formatMoney, formatWhen } from "@/lib/format";
 import { getStudentHome } from "@/lib/student-home-server";
 import { resolveCountry, RIDE_COUNTRY } from "@/lib/student-home";
 import PublicHome from "../page";
-import { clearCountry, setCountry } from "./actions";
+import { setCountry } from "./actions";
 
 // Reached by a rewrite of "/" when a session cookie is present (src/middleware.ts); the address stays "/".
 export const dynamic = "force-dynamic";
@@ -43,7 +43,8 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
     include: { _count: { select: { grades: { where: { active: true } } } } },
   });
   const chosen = (await cookies()).get(RIDE_COUNTRY)?.value;
-  const pick = resolveCountry(chosen, countries.map((c) => c.id));
+  const me = await db.user.findUnique({ where: { id: session.user.id }, select: { gradeId: true, grade: { select: { countryId: true } } } });
+  const pick = resolveCountry(chosen, countries.map((c) => c.id), me?.grade?.countryId);
 
   if (pick.mode === "ask") {
     return (
@@ -72,7 +73,6 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
   }
 
   const country = countries.find((c) => c.id === pick.countryId)!;
-  const me = await db.user.findUnique({ where: { id: session.user.id }, select: { gradeId: true, grade: { select: { countryId: true } } } });
   const gradeId = me?.grade?.countryId === country.id ? (me.gradeId ?? undefined) : undefined;
   const home = gradeId ? await getStudentHome(session.user.id, now, gradeId) : null;
 
@@ -83,9 +83,9 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
         <h1 className="font-display text-h1 font-bold">{t("pickGradeIn", { country: pickText(ar, country.nameAr, country.nameEn) })}</h1>
         <p className="text-ink-muted">{t("pickHint")}</p>
         <GradePicker groups={groups} current={null} label={t("grade")} save={t("pickSave")} />
-        <form action={clearCountry}>
-          <button className="text-small text-ink-muted underline underline-offset-4">{t("changeCountry")}</button>
-        </form>
+        <Link href="/account" className="text-small text-ink-muted underline underline-offset-4">
+          {t("changeCountry")}
+        </Link>
       </main>
     );
   }
@@ -125,9 +125,6 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
               {t("title", { grade: gradeName, country: countryName })}
             </h1>
             <p className="text-ink-muted">{t("lede", { count: ready.length })}</p>
-            <form action={clearCountry}>
-              <button className="min-h-11 text-small text-ink-muted underline underline-offset-4">{t("changeCountry")}</button>
-            </form>
           </div>
           <Ride subjects={ride} rtl={ar} countryCode={grade.country.code} label={t("subjects")} />
           {ride.length > 0 ? (

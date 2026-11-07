@@ -25,6 +25,9 @@
     "back": "Back to the home page"
   },
   "common": {
+    "dialCode": "Country code",
+    "dialOther": "Other country (type +code)",
+    "requiredNote": "Fields marked * are required.",
     "saving": "Saving…",
     "saved": "Saved",
     "loading": "Loading…",
@@ -724,7 +727,7 @@
     "typeParent": "Parent",
     "parentHint": "A parent follows their children after linking them with a code from the student's account.",
     "phone": "Phone number",
-    "phoneHint": "Egypt: 01xxxxxxxxx · Gulf: 05xxxxxxxx or 8 digits · elsewhere: +country code",
+    "phoneHint": "Pick your country, then type your mobile number. You will sign in with it.",
     "grade": "Grade",
     "gradePick": "Choose your grade",
     "password": "Password",
@@ -1631,7 +1634,7 @@
     "pickCountryHint": "Choose your country and we show only its subjects. You can change it any time.",
     "gradeCount": "{count, plural, one {# grade} other {# grades}}",
     "pickGradeIn": "Pick your grade in {country}",
-    "changeCountry": "Change country",
+    "changeCountry": "Change country or grade",
     "pickTitle": "Pick your grade",
     "pickHint": "Tell us your grade and we will show every subject and course for it.",
     "grade": "Grade",
@@ -1653,6 +1656,7 @@
     "submit": "Send my application",
     "submitting": "Sending…",
     "sent": "We received your application. We will review it and reply by email.",
+    "goHome": "Go to the home page",
     "errors": {
       "invalid": "Please check the fields, and tick at least one country.",
       "taken": "This email or phone already has an account or a pending application.",

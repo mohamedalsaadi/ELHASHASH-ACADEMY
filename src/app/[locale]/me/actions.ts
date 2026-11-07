@@ -19,9 +19,3 @@ export async function setCountry(form: FormData) {
   });
   revalidatePath("/[locale]/me", "page");
 }
-
-/** Forgets it, so the home asks for the country again. */
-export async function clearCountry() {
-  (await cookies()).delete(RIDE_COUNTRY);
-  revalidatePath("/[locale]/me", "page");
-}

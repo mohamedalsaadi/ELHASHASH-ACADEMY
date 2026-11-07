@@ -24,6 +24,14 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-07: Signup polish (local commit, not pushed)
+
+- **Phone:** a country-code list (UAE, Saudi, Kuwait, Qatar, Bahrain, Oman, Egypt, or "other" to type +code) beside the number, in signup, the teacher form and the Google profile step (`src/components/ui/PhoneField.tsx`, `src/lib/phone.ts`). New numbers are stored as `+<code><number>`. Sign-in still accepts a local number: it tries the exact text, then every picker country (`phoneCandidates`), so old and new accounts both work.
+- **Red star** after each mandatory label (`Req`), plus a "* required" note, with `required` on the inputs.
+- **After signup** a student lands on the home page; a teacher, whose application waits for approval, gets a "Go to the home page" button.
+- **Country:** the home now takes the country from the student's grade, so it is never asked again. Changing country means changing grade in Account (link on the home). `clearCountry` is gone.
+- Open: a legacy local number and a new +code number for the same phone are two different strings, so signup will not catch that duplicate.
+
 ## 2026-11-07: Security and compliance audit fixes (local commit, not pushed)
 
 - **Why.** The owner asked for a 12-domain security audit and a 20-point legal check, then for every fix that can be made in code. The findings were reported in chat, not in this public repository.

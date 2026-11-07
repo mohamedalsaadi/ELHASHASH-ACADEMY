@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { BCRYPT_COST, signInSchema } from "@/lib/schemas/auth";
+import { phoneCandidates } from "@/lib/phone";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
@@ -54,7 +55,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // 10 wrong passwords per account per 15 minutes. The limit counts failures, not attempts:
         // refusing before the comparison let anyone lock a student out with ten guesses.
         const key = `login:${login}`;
-        const user = await db.user.findUnique({ where: login.includes("@") ? { email: login } : { phone: login } });
+        const user = login.includes("@")
+          ? await db.user.findUnique({ where: { email: login } })
+          : ((await db.user.findUnique({ where: { phone: login } })) ??
+            // A local number typed by someone whose account was made with the country-code picker.
+            (login.startsWith("+") ? null : await db.user.findFirst({ where: { phone: { in: phoneCandidates(login) } } })));
         // An erased account keeps its row for the money record but can never sign in again.
         if (user?.deletedAt) return null;
         // Compare against a throwaway hash when there is no account, so a missing login takes as long as a wrong password.

@@ -18,7 +18,7 @@ async function fillStudent(page: import("@playwright/test").Page, loc: string, p
   await page.goto(`/${loc}/signup`);
   await page.fill('input[name="name"]', "E2E Signup Student");
   await page.fill('input[name="email"]', email);
-  await page.fill('input[name="phone"]', phone);
+  await page.fill('input[type="tel"]', phone.slice(4)); // the picker starts on +971
   await page.selectOption('select[name="gradeId"]', { index: 1 });
   await page.fill('input[name="dateOfBirth"]', "2012-01-01");
   await page.fill('input[name="password"]', "e2e-pass-1234");
@@ -29,12 +29,14 @@ async function fillStudent(page: import("@playwright/test").Page, loc: string, p
 
 test("an under-18 student gets an unverified consent record with the guardian email", async ({ page, loc }) => {
   const stamp = String(Date.now());
-  const phone = `05${stamp.slice(-8)}`;
+  const phone = `+9715${stamp.slice(-8)}`;
   await fillStudent(page, loc, phone, `signup-${stamp}@example.com`);
   await page.check('input[name="guardianConsent"]');
   const form = page.locator('form:has(input[name="guardianName"])');
   await form.locator('button:not([type]), button[type="submit"]').last().click();
   await page.waitForURL((u) => !u.pathname.endsWith("/signup"), { timeout: 30_000 });
+  // Signing up lands the student on the home page.
+  await expect(page).toHaveURL(new RegExp(`/${loc}/?$`));
 
   const rows = await sql<Consent>(
     `SELECT gc."source", gc."guardianName", gc."guardianEmail", gc."parentId", gc."rulesVersion", gc."verifiedAt"
@@ -56,9 +58,18 @@ test("an under-18 student gets an unverified consent record with the guardian em
   expect(accepted[0].termsAcceptedAt).not.toBeNull();
 });
 
+test("mandatory signup fields carry a red star and the phone has a country-code list", async ({ page, loc }) => {
+  await page.goto(`/${loc}/signup`);
+  const form = page.locator('form:has(input[name="guardianName"])');
+  await expect(form.locator('select[aria-label] option[value="966"]')).toHaveCount(1);
+  // Every required control is announced by the browser as required; the star is its visible twin.
+  const required = await form.locator("[required]").count();
+  await expect(form.locator('span[aria-hidden="true"].text-down')).toHaveCount(required);
+});
+
 test("the server refuses an account when the terms are not accepted", async ({ page, loc }) => {
   const stamp = String(Date.now());
-  const phone = `07${stamp.slice(-8)}`;
+  const phone = `+9717${stamp.slice(-8)}`;
   await fillStudent(page, loc, phone, `noterms-${stamp}@example.com`);
   await page.check('input[name="guardianConsent"]');
   await page.uncheck('input[name="acceptTerms"]');
@@ -72,7 +83,7 @@ test("the server refuses an account when the terms are not accepted", async ({ p
 
 test("the server refuses a student account with no guardian consent", async ({ page, loc }) => {
   const stamp = String(Date.now());
-  const phone = `06${stamp.slice(-8)}`;
+  const phone = `+9716${stamp.slice(-8)}`;
   await fillStudent(page, loc, phone, `noguardian-${stamp}@example.com`);
   // Submit past the browser's `required` on the checkbox, so the server-side rule is what answers.
   await page.locator('form:has(input[name="guardianName"])').evaluate((f: HTMLFormElement) => f.submit());
@@ -84,7 +95,7 @@ test("the server refuses a student account with no guardian consent", async ({ p
 
 test("the server refuses a student under 13", async ({ page, loc }) => {
   const stamp = String(Date.now());
-  const phone = `06${stamp.slice(-8)}`;
+  const phone = `+9716${stamp.slice(-8)}`;
   await fillStudent(page, loc, phone, `tooyoung-${stamp}@example.com`);
   await page.fill('input[name="dateOfBirth"]', "2020-01-01");
   await page.check('input[name="guardianConsent"]');

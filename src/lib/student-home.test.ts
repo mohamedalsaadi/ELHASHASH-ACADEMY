@@ -50,6 +50,11 @@ describe("resolveCountry", () => {
     expect(resolveCountry("eg", ["ae", "eg"])).toEqual({ mode: "use", countryId: "eg" });
     expect(resolveCountry("sa", ["ae", "eg"])).toEqual({ mode: "ask" });
   });
+  it("never asks a student whose grade already names the country, even over an old choice", () => {
+    expect(resolveCountry(undefined, ["ae", "eg"], "eg")).toEqual({ mode: "use", countryId: "eg" });
+    expect(resolveCountry("ae", ["ae", "eg"], "eg")).toEqual({ mode: "use", countryId: "eg" });
+    expect(resolveCountry(undefined, ["ae", "eg"], "sa")).toEqual({ mode: "ask" });
+  });
   it("skips the question when only one country is active", () => {
     expect(resolveCountry(undefined, ["ae"])).toEqual({ mode: "use", countryId: "ae" });
   });

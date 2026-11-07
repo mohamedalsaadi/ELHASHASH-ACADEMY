@@ -10,7 +10,7 @@ test("teacher application → admin approval → teacher sign-in", async ({ page
   await page.goto(`/${loc}/teach`);
   await page.locator('input[name="name"]').fill(name);
   await page.locator('input[name="email"]').fill(`applicant-${loc}@example.test`);
-  await page.locator('input[name="phone"]').fill(phone);
+  await page.locator('input[type="tel"]').fill(phone);
   await page.locator('input[name="countryId"]').first().check();
   await page.locator('input[name="subjectsNote"]').fill("Mathematics");
   await page.locator('input[name="password"]').fill("applicant-pass-1");

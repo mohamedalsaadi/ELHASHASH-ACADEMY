@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { field } from "@/components/ui/form";
+import { PhoneField } from "@/components/ui/PhoneField";
+import { Req } from "@/components/ui/Req";
 import { db } from "@/lib/db";
 import { gradeGroups } from "@/lib/catalog";
 import { completeProfile } from "./actions";
@@ -39,6 +41,7 @@ export default async function CompleteProfilePage({
   if (user.phone && user.gradeId) redirect(`/${locale}/dashboard`);
 
   const t = await getTranslations("signup");
+  const tc = await getTranslations("common");
   const groups = await gradeGroups(locale);
 
   return (
@@ -47,13 +50,14 @@ export default async function CompleteProfilePage({
       <p className="text-small text-ink-muted">{t("completeHint")}</p>
       <form action={completeProfile} className="grid gap-4">
         <input type="hidden" name="locale" value={locale} />
-        <label className="grid gap-2 text-label text-ink-muted">
-          {t("phone")}
-          <input name="phone" type="tel" inputMode="tel" autoComplete="tel" dir="ltr" required className={field} />
+        <p className="text-label text-ink-muted">{tc("requiredNote")}</p>
+        <div className="grid gap-2 text-label text-ink-muted">
+          <Req>{t("phone")}</Req>
+          <PhoneField />
           <span className="text-label">{t("phoneHint")}</span>
-        </label>
+        </div>
         <label className="grid gap-2 text-label text-ink-muted">
-          {t("grade")}
+          <Req>{t("grade")}</Req>
           <select name="gradeId" required defaultValue="" className={field}>
             <option value="" disabled>
               {t("gradePick")}
@@ -70,7 +74,7 @@ export default async function CompleteProfilePage({
           </select>
         </label>
         <label className="grid gap-2 text-label text-ink-muted">
-          {t("dateOfBirth")}
+          <Req>{t("dateOfBirth")}</Req>
           <input type="date" name="dateOfBirth" required max={new Date().toISOString().slice(0, 10)} dir="ltr" className={field} />
           <span className="text-label">{t("dateOfBirthHint")}</span>
         </label>

@@ -5,6 +5,8 @@ import { field, label } from "@/components/ui/form";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { PasswordField } from "@/components/ui/PasswordField";
+import { PhoneField } from "@/components/ui/PhoneField";
+import { Req } from "@/components/ui/Req";
 import { Link } from "@/i18n/navigation";
 import { signUp } from "./actions";
 
@@ -24,6 +26,7 @@ function Submit({ disabled }: { disabled?: boolean }) {
 
 export function SignUpForm({ groups, locale, next, parent }: { groups: { label: string; grades: { id: string; name: string }[] }[]; locale: string; next: string; parent?: boolean }) {
   const t = useTranslations("signup");
+  const tc = useTranslations("common");
   const [state, action] = useActionState(signUp, null);
   const v = state?.values;
   const [type, setType] = useState<"STUDENT" | "PARENT">((v ? v.type === "PARENT" : parent) ? "PARENT" : "STUDENT");
@@ -31,6 +34,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
   return (
     // React resets the form after each submit; the key remounts it with what the student typed.
     <form key={JSON.stringify(state)} action={action} className="grid gap-4">
+      <p className="text-label text-ink-muted">{tc("requiredNote")}</p>
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="next" value={next} />
       <label className={label}>
@@ -41,7 +45,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
         </select>
       </label>
       <label className={label}>
-        {t("name")}
+        <Req>{t("name")}</Req>
         <input
           name="name"
           autoComplete="name"
@@ -56,7 +60,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
         />
       </label>
       <label className={label}>
-        {t("email")}
+        <Req>{t("email")}</Req>
         <input
           name="email"
           type="email"
@@ -70,25 +74,14 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
         />
         <span className="text-label">{t("emailHint")}</span>
       </label>
-      <label className={label}>
-        {t("phone")}
-        <input
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          dir="ltr"
-          required
-          defaultValue={v?.phone}
-          aria-invalid={state?.error === "invalid_phone"}
-          aria-describedby="signup-error"
-          className={field}
-        />
+      <div className={label}>
+        <Req>{t("phone")}</Req>
+        <PhoneField defaultValue={v?.phone} invalid={state?.error === "invalid_phone"} describedBy="signup-error" />
         <span className="text-label">{t("phoneHint")}</span>
-      </label>
+      </div>
       {type === "STUDENT" ? (
         <label className={label}>
-          {t("grade")}
+          <Req>{t("grade")}</Req>
           <select name="gradeId" required defaultValue={v?.gradeId ?? ""} aria-invalid={state?.error === "invalid_grade"} aria-describedby="signup-error" className={field}>
             <option value="" disabled>
               {t("gradePick")}
@@ -111,7 +104,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
       {type === "STUDENT" && (
         <>
           <label className={label}>
-            {t("dateOfBirth")}
+            <Req>{t("dateOfBirth")}</Req>
             <input
               type="date"
               name="dateOfBirth"
@@ -168,7 +161,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
         </>
       )}
       <label className={label}>
-        {t("password")}
+        <Req>{t("password")}</Req>
         <PasswordField
           name="password"
           autoComplete="new-password"
@@ -196,6 +189,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
           aria-describedby="signup-error"
         />
         <span>
+          <span aria-hidden="true" className="text-down">* </span>
           {t.rich("acceptTerms", {
             terms: (chunks) => (
               <Link href="/terms" className="text-ink underline underline-offset-4">

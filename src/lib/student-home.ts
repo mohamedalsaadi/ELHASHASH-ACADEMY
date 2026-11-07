@@ -77,9 +77,13 @@ export function buildHome(input: {
   return { subjects, owned: input.courses.filter((c) => owned.has(c.id)), bundle };
 }
 
-/** Which country the ride shows: the one the student chose (remembered), the only active one, or none yet, so it asks first. */
-export function resolveCountry(chosen: string | undefined, activeIds: string[]): { mode: "use"; countryId: string } | { mode: "ask" } {
+/**
+ * Which country the home shows. The student's grade already says it, so a signed-up student is never asked;
+ * the choice in the cookie covers a student with no grade yet. With nothing known and a choice of countries, it asks.
+ */
+export function resolveCountry(chosen: string | undefined, activeIds: string[], gradeCountryId?: string | null): { mode: "use"; countryId: string } | { mode: "ask" } {
   if (activeIds.length === 1) return { mode: "use", countryId: activeIds[0] };
+  if (gradeCountryId && activeIds.includes(gradeCountryId)) return { mode: "use", countryId: gradeCountryId };
   if (chosen && activeIds.includes(chosen)) return { mode: "use", countryId: chosen };
   return { mode: "ask" };
 }

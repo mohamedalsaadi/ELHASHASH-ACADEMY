@@ -20,7 +20,7 @@ This is the single place for: **what has not been verified**, **what only the ow
 ## 1. The order to go live on a real domain
 
 **Gate 0 — prove the database is the same one.**
-- [ ] Vercel → Settings → Environment Variables → `DATABASE_URL`. The host must be `ep-twilight-feather-b97jpk23-pooler.c-7.eu-central-1.aws.neon.tech`. If it is a different database, run `npx prisma migrate deploy` against it and re-run `npx tsx prisma/seed-uae-prices.ts --apply` first. Without this, every signed-in screen errors on missing tables.
+- [ ] Vercel → Settings → Environment Variables → `DATABASE_URL`. The host must be the pooled Frankfurt endpoint shown in the Neon console (it is not written here: this repository is public). If it is a different database, run `npx prisma migrate deploy` against it and re-run `npx tsx prisma/seed-uae-prices.ts --apply` first. Without this, every signed-in screen errors on missing tables.
 
 **Domain and handles (owner).** The trade name is Dhirwa, ذروة ("the peak"; reserved 2026-11-02). Nothing is bought yet. On 2026-11-02 `dhirwa.net`, `dhirwa.org` and `dhirwa.ae` (the .ae by DNS only) and Instagram `@dhirwa` were free; `dhirwa.com` is taken. TikTok was not checked.
 - [ ] Reserve `@dhirwa` on Instagram (and check TikTok) the same day the domains are bought.
@@ -128,7 +128,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
   international-card fee (about 4.1% + AED 1), and whether Egyptian-issued cards are accepted. Factor the fee
   into the platform share; the ledger does not record gateway fees.
 - [ ] **Seller identity for documents.** Fill `sellerLegalName`, `sellerAddress` and `sellerLicenceNo` in Admin → Settings. Add the TRN to the UAE country row in Admin → Catalog. Documents omit a missing line; they never print a placeholder.
-- [ ] **VAT registration.** Do not tick the master VAT switch or the UAE country switch until the TRN is issued. The rate and TRN then print on every tax invoice.
+- [ ] **VAT registration.** Do not tick the master VAT switch or the UAE country switch until the TRN is issued. The rate and TRN then print on every tax invoice. Before switching it on, check with an adviser whether prices shown to UAE consumers must include VAT: checkout currently adds VAT on top of the listed price, which can read as a hidden fee.
 - [ ] **Corporate-tax contribution.** Confirm the 9% base with the accountant. The switch is off; when on, it deducts from the teacher’s share and appears only on statements.
 - [ ] **DPAs and ROPA.** Accept and file a DPA for every supplier in `docs/compliance/processors.md`. Review `docs/compliance/ropa.md` with the privacy adviser.
 - [ ] **Age assurance.** Signup now asks for a date of birth; under-18 accounts need a guardian email confirmation. Review the privacy notice wording and the under-13 block.

@@ -14,6 +14,9 @@ export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 72;
 export const passwordSchema = z.string().min(PASSWORD_MIN, "password_too_short").max(PASSWORD_MAX);
 
+/** bcrypt work factor for every new hash. Old hashes keep the cost they were made with and still verify. */
+export const BCRYPT_COST = 12;
+
 // Students sign in with their mobile; staff accounts may use an email instead.
 // Sign-in checks the credential, not the policy: an old account with a shorter password must still get in.
 export const signInSchema = z.object({
@@ -37,6 +40,8 @@ export const signUpSchema = z
     /// A student joins with a guardian's consent; the model has no birth date, so every STUDENT is a minor.
     guardianName: z.string().trim().min(2).max(80).optional(),
     guardianConsent: z.coerce.boolean().default(false),
+    /// The terms and privacy policy, ticked by the person creating the account. Kept as a timestamp on the user.
+    acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
   })
   .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" })
   .superRefine((d, ctx) => {

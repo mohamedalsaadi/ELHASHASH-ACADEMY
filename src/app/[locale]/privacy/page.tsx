@@ -1,6 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { LegalPage, Mail, type Section } from "@/components/LegalPage";
+import { SellerLine } from "@/components/SellerLine";
 import { Link } from "@/i18n/navigation";
+import { PRIVACY_VERSION } from "@/lib/legal";
 import { alternates } from "@/lib/seo";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -11,10 +13,13 @@ const ar: Section[] = [
   {
     h: "من نحن",
     body: (
-      <p>
-        ذروة (Dhirwa) منصة تعليمية في الإمارات العربية المتحدة. تشرح هذه السياسة ما نجمعه وكيف نستخدمه. للتواصل بشأن الخصوصية:{" "}
-        <Mail />.
-      </p>
+      <>
+        <p>
+          ذروة (Dhirwa) منصة تعليمية في الإمارات العربية المتحدة. تشرح هذه السياسة ما نجمعه وكيف نستخدمه. للتواصل بشأن الخصوصية:{" "}
+          <Mail />.
+        </p>
+        <SellerLine locale="ar" />
+      </>
     ),
   },
   {
@@ -53,7 +58,7 @@ const ar: Section[] = [
     h: "ملفات الكوكيز",
     body: (
       <p>
-        نستخدم كوكيز ضرورية فقط: جلسة تسجيل الدخول، وكوكي الجهاز لتطبيق قاعدة الجهاز الواحد، وكوكي اختيار الدولة.
+        نستخدم كوكيز ضرورية فقط: جلسة تسجيل الدخول، وكوكي الجهاز لتطبيق قاعدة الجهاز الواحد، وكوكي اختيار الدولة، وكوكي اللغة الذي يحفظ لغة الواجهة.
         ونسجّل أحداث استخدام داخلية في قاعدتنا (مثل فتح درس أو إتمام شراء) لقياس ما يعمل وما لا يعمل، مربوطة بحسابك
         أو بمعرّف جهازك. لا نستخدم أي متتبع إعلاني أو خدمة تحليلات من طرف ثالث، ولا نبيع هذه البيانات. وإذا أضفنا
         متتبعًا خارجيًا لاحقًا سنضيف بانر موافقة ونحدّث هذه السياسة.
@@ -83,7 +88,30 @@ const ar: Section[] = [
     body: (
       <p>
         يمكنك طلب نسخة من بياناتك أو تصحيحها أو حذفها عبر <Link href="/contact">صفحة التواصل</Link> باختيار موضوع
-        «طلب خصوصية». نستهدف الرد خلال 30 يومًا. قد نحتفظ بسجلات الدفع التي يفرض القانون الاحتفاظ بها.
+        «طلب خصوصية». نستهدف الرد خلال 30 يومًا. ويستطيع الطالب وولي الأمر حذف الحساب بأنفسهم من صفحة الحساب.
+        تحمل الرسائل الاختيارية (التذكيرات والإجابات وتقارير التقدم) رابطًا لإيقافها، ويمكن إيقافها من صفحة الحساب أيضًا،
+        أما إيصالات الدفع ورسائل أمان الحساب فتصلك دائمًا. قد نحتفظ بسجلات الدفع التي يفرض القانون الاحتفاظ بها.
+      </p>
+    ),
+  },
+  {
+    h: "أين تُعالج البيانات",
+    body: (
+      <p>
+        قاعدة البيانات مستضافة لدى Neon في فرانكفورت بألمانيا، والملفات المرفوعة وإيصالات PDF لدى Vercel في باريس بفرنسا،
+        ويعمل الموقع من منطقة دبي. يُرسَل البريد عبر Resend في الولايات المتحدة، ويُشغَّل الفيديو المحمي عبر VdoCipher، وتُعالَج
+        طلبات التصحيح الآلي لدى Google في الولايات المتحدة. أي أن بياناتك قد تُعالَج خارج الإمارات. نرسل لكل مزوّد ما يلزمه
+        لخدمتك فقط، ونعتمد اتفاقيات معالجة البيانات التي يقدّمها.
+      </p>
+    ),
+  },
+  {
+    h: "الأساس القانوني",
+    body: (
+      <p>
+        نعالج بياناتك لتنفيذ العقد بيننا (الحساب والدروس والدفع)، وبموافقتك حين تضع علامة في مربع الشروط وسياسة الخصوصية عند
+        التسجيل، ويوافق ولي الأمر عمّن هم دون 18 عامًا، وللوفاء بالتزامات قانونية مثل المحاسبة. يمكنك سحب موافقتك في أي وقت
+        بحذف حسابك.
       </p>
     ),
   },
@@ -97,10 +125,13 @@ const en: Section[] = [
   {
     h: "Who we are",
     body: (
-      <p>
-        ذروة (Dhirwa) is an education platform in the United Arab Emirates. This policy explains what we collect and how we use it.
-        For privacy questions: <Mail />.
-      </p>
+      <>
+        <p>
+          ذروة (Dhirwa) is an education platform in the United Arab Emirates. This policy explains what we collect and how we use it.
+          For privacy questions: <Mail />.
+        </p>
+        <SellerLine locale="en" />
+      </>
     ),
   },
   {
@@ -140,8 +171,8 @@ const en: Section[] = [
     h: "Cookies",
     body: (
       <p>
-        We use strictly necessary cookies only: the sign-in session, the device cookie for the one-device rule, and the
-        country you picked. We also record first-party usage events in our own database (for example a lesson opened or a
+        We use strictly necessary cookies only: the sign-in session, the device cookie for the one-device rule, the
+        country you picked, and the language cookie that remembers the language of the pages. We also record first-party usage events in our own database (for example a lesson opened or a
         purchase completed) to see what works, tied to your account or your device id. There is no advertising tracker and
         no third-party analytics service, and we do not sell this data. If an external tracker is added later, we will add
         a consent banner and update this policy.
@@ -173,8 +204,32 @@ your account at any time.
     body: (
       <p>
         You can request a copy of your data, correct it, or delete it through the <Link href="/contact">contact page</Link> by
-        choosing the “Privacy request” topic. We aim to reply within 30 days. Some payment records must be kept where the law
-        requires it.
+        choosing the “Privacy request” topic. We aim to reply within 30 days. Students and parents can also delete their own
+        account from the account page. Optional emails (reminders, answers and progress notes) carry a link to switch them off,
+        and the account page has the same switch. Payment receipts and account security emails always reach you. Some payment
+        records must be kept where the law requires it.
+      </p>
+    ),
+  },
+  {
+    h: "Where data is processed",
+    body: (
+      <p>
+        The database is hosted by Neon in Frankfurt, Germany. Uploaded files and PDF receipts are stored by Vercel in Paris,
+        France, and the site runs from Vercel&apos;s Dubai region. Email is sent through Resend in the United States, protected
+        video is played through VdoCipher, and automatic-grading requests are processed by Google in the United States. So your
+        data may be processed outside the UAE. We send each provider only what it needs to serve you, and we rely on the data
+        processing terms each one offers.
+      </p>
+    ),
+  },
+  {
+    h: "Legal basis",
+    body: (
+      <p>
+        We process your data to carry out the contract between us (your account, lessons and payments), with your consent when
+        you tick the terms and privacy policy box at sign-up (a guardian agrees for anyone under 18), and to meet legal duties
+        such as accounting. You can withdraw your consent at any time by deleting your account.
       </p>
     ),
   },
@@ -188,5 +243,5 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
   const { locale } = await params;
   setRequestLocale(locale);
   const isAr = locale === "ar";
-  return <LegalPage locale={locale} title={isAr ? "سياسة الخصوصية" : "Privacy policy"} sections={isAr ? ar : en} />;
+  return <LegalPage locale={locale} title={isAr ? "سياسة الخصوصية" : "Privacy policy"} sections={isAr ? ar : en} updated={PRIVACY_VERSION} />;
 }

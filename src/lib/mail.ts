@@ -18,7 +18,14 @@ export function esc(s: string): string {
 
 /** Minimal branded layout (Contour: survey paper, a night-map band with the name and its summit-gold point, a trail-green
  * button). Hex is allowed here only: email clients cannot read CSS variables. `lines` are plain text and are escaped. */
-export function emailLayout(title: string, lines: string[], cta: { href: string; label: string } | undefined, locale: "ar" | "en"): string {
+export function emailLayout(
+  title: string,
+  lines: string[],
+  cta: { href: string; label: string } | undefined,
+  locale: "ar" | "en",
+  /** Optional mail carries this link; receipts and security mail leave it out. */
+  unsubscribe?: string,
+): string {
   const ar = locale === "ar";
   const dir = ar ? "rtl" : "ltr";
   return `<!doctype html><html dir="${dir}" lang="${locale}"><body style="margin:0;background:#F6F3EC;font-family:Tahoma,Arial,sans-serif;color:#13202F">
@@ -30,6 +37,7 @@ export function emailLayout(title: string, lines: string[], cta: { href: string;
       ${cta ? `<p style="margin:20px 0 0"><a href="${esc(cta.href)}" style="background:#1F7356;color:#FFFFFF;text-decoration:none;padding:12px 20px;border-radius:999px;display:inline-block;font-weight:600">${esc(cta.label)}</a></p>` : ""}
     </div>
     <p style="color:#586273;font-size:12px;text-align:center;margin-top:16px">${ar ? "كل درس خطوة نحو الذروة." : "Every lesson is a step toward the peak."}</p>
+    ${unsubscribe ? `<p style="color:#586273;font-size:12px;text-align:center;margin-top:4px"><a href="${esc(unsubscribe)}" style="color:#586273">${ar ? "إيقاف الرسائل الاختيارية" : "Turn off optional emails"}</a></p>` : ""}
   </div>
 </body></html>`;
 }
@@ -45,7 +53,9 @@ const toText = (html: string) =>
     .trim();
 
 /** Sends one message and says what Resend answered: `ok` with its message id, or the reason it was refused. */
-export async function sendMailDetailed({ to, subject, html, replyTo }: { to: string; subject: string; html: string; replyTo?: string }): Promise<{ ok: boolean; detail: string }> {
+type Mail = { to: string; subject: string; html: string; replyTo?: string; /** Adds the List-Unsubscribe headers mail clients show as an unsubscribe button. */ unsubscribe?: string };
+
+export async function sendMailDetailed({ to, subject, html, replyTo, unsubscribe }: Mail): Promise<{ ok: boolean; detail: string }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn(`[mail] skipped (no RESEND_API_KEY): ${subject}`);
@@ -55,7 +65,15 @@ export async function sendMailDetailed({ to, subject, html, replyTo }: { to: str
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM, to, subject, html, text: toText(html), ...(replyTo ? { reply_to: replyTo } : {}) }),
+      body: JSON.stringify({
+        from: FROM,
+        to,
+        subject,
+        html,
+        text: toText(html),
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(unsubscribe ? { headers: { "List-Unsubscribe": `<${unsubscribe}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } } : {}),
+      }),
       signal: AbortSignal.timeout(10_000),
     });
     const body = await res.text();
@@ -72,6 +90,6 @@ export async function sendMailDetailed({ to, subject, html, replyTo }: { to: str
   }
 }
 
-export async function sendMail(m: { to: string; subject: string; html: string; replyTo?: string }): Promise<boolean> {
+export async function sendMail(m: Mail): Promise<boolean> {
   return (await sendMailDetailed(m)).ok;
 }

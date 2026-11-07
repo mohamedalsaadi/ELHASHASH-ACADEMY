@@ -4,6 +4,7 @@ import { Prisma, type NotificationKind } from "@/generated/prisma/client";
 import { db } from "./db";
 import { formatMoney } from "./format";
 import { appUrl, emailLayout, sendMail } from "./mail";
+import { isOptionalKind, unsubscribeUrl } from "./unsubscribe";
 
 type NotificationInput = {
   userId: string;
@@ -21,7 +22,7 @@ type NotificationInput = {
 
 /** Stores an in-app notice and emails the user once, if they have an address. */
 export async function createNotification(input: NotificationInput) {
-  const user = await db.user.findUnique({ where: { id: input.userId }, select: { email: true, locale: true } });
+  const user = await db.user.findUnique({ where: { id: input.userId }, select: { email: true, locale: true, emailOptOutAt: true } });
   if (!user) return null;
 
   let notification;
@@ -44,16 +45,24 @@ export async function createNotification(input: NotificationInput) {
     throw e;
   }
 
-  if (input.email !== false && user.email) {
+  // Someone who unsubscribed still gets receipts and system mail, and still sees every notice in the app.
+  if (input.email !== false && user.email && !(user.emailOptOutAt && isOptionalKind(input.kind))) {
     const to = user.email;
     const ar = user.locale === "ar";
     const title = pick(ar, input.titleAr, input.titleEn);
     const body = (pick(ar, input.bodyAr, input.bodyEn)) ?? null;
+    const optional = isOptionalKind(input.kind);
+    const unsubscribe = optional ? unsubscribeUrl(appUrl(), input.userId) : undefined;
     const cta = input.href ? { href: `${appUrl()}${input.href}`, label: ar ? "افتح ذروة" : "Open Dhirwa" } : undefined;
     // After the response: a slow mail provider must never hold up the action that caused the notice
     // (or stall a cron pass that sends dozens of them).
     after(async () => {
-      const sent = await sendMail({ to, subject: title, html: emailLayout(title, body ? [body] : [], cta, ar ? "ar" : "en") });
+      const sent = await sendMail({
+        to,
+        subject: title,
+        html: emailLayout(title, body ? [body] : [], cta, ar ? "ar" : "en", unsubscribe),
+        unsubscribe,
+      });
       if (sent) await db.notification.update({ where: { id: notification.id }, data: { emailedAt: new Date() } });
     });
   }

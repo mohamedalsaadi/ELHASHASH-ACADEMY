@@ -15,7 +15,7 @@ import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { hashToken, newToken } from "@/lib/token-utils";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
 import { safeNext } from "@/lib/safe-redirect";
-import { signUpSchema } from "@/lib/schemas/auth";
+import { BCRYPT_COST, signUpSchema } from "@/lib/schemas/auth";
 
 export type SignUpState = {
   error?:
@@ -27,6 +27,7 @@ export type SignUpState = {
     | "invalid_birthdate"
     | "too_young"
     | "guardian_required"
+    | "terms_required"
     | "check_email"
     | "too_many";
   values?: {
@@ -39,6 +40,7 @@ export type SignUpState = {
     guardianEmail: string;
     dateOfBirth: string;
     guardianConsent: boolean;
+    acceptTerms: boolean;
   };
 } | null;
 
@@ -54,17 +56,21 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     dateOfBirth: String(form.get("dateOfBirth") ?? ""),
     // Returned with the error so the guardian does not have to tick it again after a typo elsewhere.
     guardianConsent: form.get("guardianConsent") === "on",
+    acceptTerms: form.get("acceptTerms") === "on",
   };
   const parsed = signUpSchema.safeParse({
     ...values,
     password: form.get("password"),
     guardianConsent: form.get("guardianConsent") === "on",
+    acceptTerms: form.get("acceptTerms") === "on",
   });
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const field = issue.path[0];
     const error =
-      field === "name"
+      field === "acceptTerms"
+        ? "terms_required"
+        : field === "name"
         ? "invalid_name"
         : field === "email"
           ? "invalid_email"
@@ -113,7 +119,8 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
           role: isParent ? "PARENT" : "STUDENT",
           locale,
           dateOfBirth: isParent ? null : dob,
-          passwordHash: await bcrypt.hash(password, 10),
+          termsAcceptedAt: new Date(),
+          passwordHash: await bcrypt.hash(password, BCRYPT_COST),
         },
       });
       if (!isParent && minor) {

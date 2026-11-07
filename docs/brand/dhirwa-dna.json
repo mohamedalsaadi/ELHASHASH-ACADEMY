@@ -26,7 +26,7 @@
         "usage": "Lightest to darkest in light, darkest to lightest in dark"
       },
       "semantic": { "up": { "light": "#0F6B3B", "dark": "#32D74B" }, "down": { "light": "#C8343E", "dark": "#FF6B61" } },
-      "countries": { "eg": "#D1293D", "sa": "#16834A", "ae": "#1F6FD1", "kw": "#00807E", "qa": "#8A1538", "bh": "#E8761C", "om": "#7A3E9D", "dark_overrides": { "qa": "#C2325F", "om": "#9458B8" }, "usage": "Carry data: one accent per country" }
+      "countries": { "eg": "#D1293D", "sa": "#127A43", "ae": "#1F6FD1", "kw": "#007573", "qa": "#8A1538", "bh": "#B85400", "om": "#7A3E9D", "dark_overrides": { "qa": "#C2325F", "om": "#9458B8" }, "usage": "Carry data: one accent per country" }
     },
     "typography": {
       "families": {

@@ -13,7 +13,7 @@ import { formatMoney } from "@/lib/format";
 import { appUrl } from "@/lib/mail";
 import { getOrCreateReferralCode } from "@/lib/referral";
 import { DeleteAccountForm, ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
-import { sendVerification, unlinkParent } from "./actions";
+import { sendVerification, setEmailOptOut, unlinkParent } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +105,19 @@ export default async function AccountPage({
         <h2 className="font-display text-h3 font-semibold">{t("passwordTitle")}</h2>
         <PasswordForm />
       </section>
+
+      {u.email && (
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("emailTitle")}</h2>
+          <p className="text-small text-ink-muted">{t("emailHint")}</p>
+          <form action={setEmailOptOut}>
+            <input type="hidden" name="off" value={u.emailOptOutAt ? "0" : "1"} />
+            <SubmitButton pendingLabel={t("sending")} className={smallButton}>
+              {u.emailOptOutAt ? t("emailResume") : t("emailStop")}
+            </SubmitButton>
+          </form>
+        </section>
+      )}
 
       <section className={panel}>
         <h2 className="font-display text-h3 font-semibold">{t("appearanceTitle")}</h2>

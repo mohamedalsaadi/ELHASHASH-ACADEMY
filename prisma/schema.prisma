@@ -106,6 +106,10 @@ model User {
   /// Set when the person asked for erasure. The row stays so paid orders keep their foreign key;
   /// every personal field is blank and the account can no longer sign in.
   deletedAt       DateTime?
+  /// When the person ticked the terms and privacy policy at sign-up. Null for accounts made before the tick box existed.
+  termsAcceptedAt DateTime?
+  /// Set when the person used an unsubscribe link. Receipts, security and consent mail still go out.
+  emailOptOutAt   DateTime?
   gradeId         String?
   /// Teacher profile, shown on the public teacher page. photoUrl is a private Blob pathname.
   photoUrl        String?

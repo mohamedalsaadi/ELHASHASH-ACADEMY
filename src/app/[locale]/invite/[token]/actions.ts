@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { BCRYPT_COST, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
@@ -10,7 +11,6 @@ import { logEvent } from "@/lib/analytics";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
-import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { hashToken } from "@/lib/token-utils";
 
 export type InviteAcceptState = { error: "invalid" | "too_many" | "password" | "weak" } | null;
@@ -75,7 +75,7 @@ export async function acceptInvite(_: InviteAcceptState, form: FormData): Promis
             email: invite.email,
             phone: invite.phone,
             role: "INSTRUCTOR",
-            passwordHash: await bcrypt.hash(password, 10),
+            passwordHash: await bcrypt.hash(password, BCRYPT_COST),
             emailVerifiedAt: invite.email ? new Date() : null,
             locale,
           },

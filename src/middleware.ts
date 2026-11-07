@@ -5,6 +5,9 @@ import { DEVICE_COOKIE } from "./lib/device";
 
 const intl = createMiddleware(routing);
 
+/** Pages that only make sense signed in. `/teach` and `/teachers` are public and must not match. */
+const PRIVATE_AREA = /^\/(ar|en)\/(?:admin|teacher|parent|orders|account|dashboard|notifications|complete-profile)(?:\/|$)/;
+
 // A real script policy. The App Router streams its payload in inline scripts, so `'self'` alone
 // would break hydration; Next adds a nonce to every script it renders *when the request carries a
 // CSP header containing one*. That is why the header is set on the request as well as the response.
@@ -73,9 +76,16 @@ export default function middleware(req: NextRequest) {
   if (home) headers.set("X-NEXT-INTL-LOCALE", home[1]);
   const withCsp = new NextRequest(req, { headers });
 
-  const res = home && signedIn
-    ? NextResponse.rewrite(new URL(`/${home[1]}/me${req.nextUrl.search}`, req.url), { request: { headers } })
-    : intl(withCsp);
+  // Private areas answer a signed-out visitor with a real redirect. Each page also checks the session, but a page that
+  // streams answers 200 before its guard runs, so scanners could not tell a closed door from an open one.
+  const privateArea = PRIVATE_AREA.exec(req.nextUrl.pathname);
+  const res = privateArea && !signedIn
+    ? NextResponse.redirect(
+        new URL(`/${privateArea[1]}/signin?next=${encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search)}`, req.url),
+      )
+    : home && signedIn
+      ? NextResponse.rewrite(new URL(`/${home[1]}/me${req.nextUrl.search}`, req.url), { request: { headers } })
+      : intl(withCsp);
   // The policy goes on the document; /api and static files are outside the matcher.
   res.headers.set("Content-Security-Policy", csp);
   if (!req.cookies.has(DEVICE_COOKIE)) {

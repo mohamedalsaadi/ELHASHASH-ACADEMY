@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { BCRYPT_COST, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
@@ -11,7 +12,6 @@ import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { eraseAccount } from "@/lib/erasure";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
-import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { newCode, hashToken } from "@/lib/token-utils";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
@@ -74,8 +74,15 @@ export async function changeOwnPassword(_: unknown, form: FormData): Promise<"ok
     await recordAttempt(`chpw:${user.id}`);
     return "wrong";
   }
-  await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });
+  await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, BCRYPT_COST), passwordChangedAt: new Date() } });
   return "ok";
+}
+
+/** Turns optional email (reminders, answers, progress notes) off or on. Receipts and system mail are never affected. */
+export async function setEmailOptOut(form: FormData) {
+  const user = await me();
+  await db.user.update({ where: { id: user.id }, data: { emailOptOutAt: form.get("off") === "1" ? new Date() : null } });
+  revalidatePath("/[locale]/account", "page");
 }
 
 export async function sendVerification() {

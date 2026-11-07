@@ -29,6 +29,7 @@ describe("password policy", () => {
     gradeId: "g1",
     email: "s@example.com",
     dateOfBirth: "2000-01-01",
+    acceptTerms: true,
   };
   it("rejects under 8 characters", () => {
     expect(signUpSchema.safeParse({ ...base, password: "short12" }).success).toBe(false);
@@ -47,6 +48,7 @@ describe("signUpSchema", () => {
     password: "password1234",
     gradeId: "g1",
     dateOfBirth: "2000-01-01",
+    acceptTerms: true,
   };
   const minor = {
     ...base,
@@ -55,6 +57,13 @@ describe("signUpSchema", () => {
     guardianEmail: "guardian@example.com",
     guardianConsent: true,
   };
+
+  it("refuses an account unless the terms are accepted", () => {
+    const input = { ...base, email: "s@example.com" };
+    expect(signUpSchema.safeParse(input).success).toBe(true);
+    expect(signUpSchema.safeParse({ ...input, acceptTerms: false }).success).toBe(false);
+    expect(signUpSchema.safeParse({ ...input, acceptTerms: undefined }).success).toBe(false);
+  });
 
   it("requires a valid email and lowercases it", () => {
     const r = signUpSchema.safeParse({ ...base, email: "Student@Example.COM" });
@@ -68,7 +77,7 @@ describe("signUpSchema", () => {
   });
 
   it("requires a grade for a student but not for a parent", () => {
-    const parent = { type: "PARENT" as const, name: "ولي", email: "parent@example.com", phone: "01012345678", password: "password1234" };
+    const parent = { type: "PARENT" as const, name: "ولي", email: "parent@example.com", phone: "01012345678", password: "password1234", acceptTerms: true };
     expect(signUpSchema.safeParse(parent).success).toBe(true);
     expect(signUpSchema.safeParse({ ...parent, type: "STUDENT" as const }).success).toBe(false);
   });

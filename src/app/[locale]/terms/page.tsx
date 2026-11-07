@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { LegalPage, Mail, type Section } from "@/components/LegalPage";
+import { SellerLine } from "@/components/SellerLine";
 import { Link } from "@/i18n/navigation";
 import { alternates } from "@/lib/seo";
 
@@ -11,10 +12,13 @@ const ar: Section[] = [
   {
     h: "من نحن",
     body: (
-      <p>
-        ذروة (Dhirwa) منصة تعليمية في الإمارات العربية المتحدة تقدم شروحات فيديو للمناهج الدراسية. باستخدامك للموقع أو شرائك
-        لأي باقة فأنت توافق على هذه الشروط. للتواصل: <Mail />.
-      </p>
+      <>
+        <p>
+          ذروة (Dhirwa) منصة تعليمية في الإمارات العربية المتحدة تقدم شروحات فيديو للمناهج الدراسية. باستخدامك للموقع أو شرائك
+          لأي باقة فأنت توافق على هذه الشروط. للتواصل: <Mail />.
+        </p>
+        <SellerLine locale="ar" />
+      </>
     ),
   },
   {
@@ -119,10 +123,13 @@ const en: Section[] = [
   {
     h: "Who we are",
     body: (
-      <p>
-        ذروة (Dhirwa) is an education platform in the United Arab Emirates offering video lessons for school
-        curricula. By using the site or buying any package you agree to these terms. Contact: <Mail />.
-      </p>
+      <>
+        <p>
+          ذروة (Dhirwa) is an education platform in the United Arab Emirates offering video lessons for school
+          curricula. By using the site or buying any package you agree to these terms. Contact: <Mail />.
+        </p>
+        <SellerLine locale="en" />
+      </>
     ),
   },
   {

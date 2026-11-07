@@ -2,11 +2,11 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
+import { BCRYPT_COST, signInSchema } from "@/lib/schemas/auth";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
-import { signInSchema } from "@/lib/schemas/auth";
 import type { Role } from "@/generated/prisma/client";
 
 declare module "@auth/core/jwt" {
@@ -36,6 +36,8 @@ export const RECHECK_MS = Number(process.env.SESSION_RECHECK_MS ?? 5 * 60_000);
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
+const NO_ACCOUNT_HASH = bcrypt.hashSync(randomUUID(), BCRYPT_COST);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt", maxAge: SEVEN_DAYS },
   pages: { signIn: "/signin" },
@@ -55,7 +57,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await db.user.findUnique({ where: login.includes("@") ? { email: login } : { phone: login } });
         // An erased account keeps its row for the money record but can never sign in again.
         if (user?.deletedAt) return null;
-        const ok = user ? await bcrypt.compare(parsed.data.password, user.passwordHash) : false;
+        // Compare against a throwaway hash when there is no account, so a missing login takes as long as a wrong password.
+        const ok = (await bcrypt.compare(parsed.data.password, user?.passwordHash ?? NO_ACCOUNT_HASH)) && !!user;
         if (!ok || !user) {
           if (!(await isLimited(key, 10, 15 * 60_000))) await recordAttempt(key);
           await recordAttempt(ipKey);
@@ -69,8 +72,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET ? [Google] : []),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider !== "google") return true;
+      // Linking by email is only safe when Google vouches for the address.
+      if (profile?.email_verified !== true) return false;
       const email = user.email?.trim().toLowerCase();
       if (!email) return false;
       const existing = await db.user.findUnique({
@@ -79,6 +84,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
       if (existing) {
         if (existing.deletedAt) return false;
+        // Staff keep password sign-in only: a Google account must never open an admin or teacher account.
+        if (existing.role !== "STUDENT" && existing.role !== "PARENT") return false;
         user.id = existing.id;
         user.role = existing.role;
         user.pwdAt = existing.passwordChangedAt?.getTime() ?? 0;
@@ -97,7 +104,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email,
           role: "STUDENT",
           locale: "ar",
-          passwordHash: await bcrypt.hash(randomUUID(), 10),
+          passwordHash: await bcrypt.hash(randomUUID(), BCRYPT_COST),
           emailVerifiedAt: new Date(),
         },
         update: {},

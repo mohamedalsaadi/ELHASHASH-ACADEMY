@@ -35,11 +35,11 @@
 
   /* Country accents carry data: one colour each. White type passes 4.5:1 on all but bh, which carries ink. */
   --color-line-eg: #D1293D;
-  --color-line-sa: #16834A;
+  --color-line-sa: #127A43;
   --color-line-ae: #1F6FD1;
-  --color-line-kw: #00807E;
+  --color-line-kw: #007573;
   --color-line-qa: #8A1538;
-  --color-line-bh: #E8761C;
+  --color-line-bh: #B85400;
   --color-line-om: #7A3E9D;
 
   --font-display: var(--font-readex), var(--font-plex), "Segoe UI", Tahoma, system-ui, sans-serif;

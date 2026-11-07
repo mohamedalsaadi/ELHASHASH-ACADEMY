@@ -2,8 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic, Readex_Pro, Reem_Kufi } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { ViewTransitions } from "next-view-transitions";
+import { PUBLIC_CLIENT_NAMESPACES, pickMessages } from "@/i18n/client-messages";
 import { routing } from "@/i18n/routing";
 import { RouteAnnouncer } from "@/components/RouteAnnouncer";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -68,7 +69,7 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
-  const t = await getTranslations("nav");
+  const [t, messages] = await Promise.all([getTranslations("nav"), getMessages()]);
 
   return (
     <html suppressHydrationWarning lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${plex.variable} ${readex.variable} ${reem.variable}`}>
@@ -86,7 +87,7 @@ export default async function LocaleLayout({
         </a>
         <PwaRegister />
         <ViewTransitions>
-          <NextIntlClientProvider>
+          <NextIntlClientProvider messages={pickMessages(messages, PUBLIC_CLIENT_NAMESPACES)}>
             <MarketingOnly>
               <NewsBanner />
             </MarketingOnly>

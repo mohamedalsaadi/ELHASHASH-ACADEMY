@@ -56,3 +56,6 @@ graphify-out/
 # Playwright
 /playwright-report/
 /test-results/
+
+# Private business documents. Keep them out of this public repository.
+/Alsaadi Academy Development Plan.docx

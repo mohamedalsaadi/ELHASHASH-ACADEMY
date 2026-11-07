@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { createNotification } from "@/lib/notify";
+import { unsubscribeUrl } from "@/lib/unsubscribe";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
 
   const links = await db.parentLink.findMany({
     select: {
-      parent: { select: { id: true, email: true, locale: true } },
+      parent: { select: { id: true, email: true, locale: true, emailOptOutAt: true } },
       student: { select: { id: true, name: true } },
     },
   });
@@ -54,7 +55,8 @@ export async function GET(request: Request) {
       skipped += 1;
       continue;
     }
-    if (!parent.email) continue;
+    // The in-app note above is enough for someone who turned optional email off.
+    if (!parent.email || parent.emailOptOutAt) continue;
 
     const locale = parent.locale === "en" ? "en" : "ar";
     const month = new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", {
@@ -104,19 +106,17 @@ export async function GET(request: Request) {
     }
 
     const title = locale === "ar" ? `تقدم أبنائك — ${month}` : `Your children's progress — ${month}`;
+    const unsubscribe = unsubscribeUrl(appUrl(), parent.id);
     const ok = await sendMail({
       to: parent.email,
       subject: title,
+      unsubscribe,
       html: emailLayout(
         title,
-        [
-          ...lines,
-          locale === "ar"
-            ? "لإيقاف هذه الرسائل، أزل ربط الطالب من لوحة ولي الأمر."
-            : "To stop these notes, remove the student link in the parent dashboard.",
-        ],
+        lines,
         { href: `${appUrl()}/${locale}/parent`, label: locale === "ar" ? "افتح لوحة ولي الأمر" : "Open the parent dashboard" },
         locale,
+        unsubscribe,
       ),
     });
     if (ok) sent += 1;

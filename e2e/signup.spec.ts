@@ -22,6 +22,7 @@ async function fillStudent(page: import("@playwright/test").Page, loc: string, p
   await page.selectOption('select[name="gradeId"]', { index: 1 });
   await page.fill('input[name="dateOfBirth"]', "2012-01-01");
   await page.fill('input[name="password"]', "e2e-pass-1234");
+  await page.check('input[name="acceptTerms"]');
   await page.fill('input[name="guardianName"]', "E2E Guardian");
   await page.fill('input[name="guardianEmail"]', "guardian-e2e@example.com");
 }
@@ -50,6 +51,23 @@ test("an under-18 student gets an unverified consent record with the guardian em
   expect(rows[0].rulesVersion).toBe(PRIVACY_VERSION);
   // A signup declaration is not verification; the guardian still has to open the email link.
   expect(rows[0].verifiedAt).toBeNull();
+  // The terms tick is recorded with the account.
+  const accepted = await sql<{ termsAcceptedAt: string | null }>(`SELECT "termsAcceptedAt" FROM "User" WHERE phone = $1`, [phone]);
+  expect(accepted[0].termsAcceptedAt).not.toBeNull();
+});
+
+test("the server refuses an account when the terms are not accepted", async ({ page, loc }) => {
+  const stamp = String(Date.now());
+  const phone = `07${stamp.slice(-8)}`;
+  await fillStudent(page, loc, phone, `noterms-${stamp}@example.com`);
+  await page.check('input[name="guardianConsent"]');
+  await page.uncheck('input[name="acceptTerms"]');
+  // Submit past the browser's own `required`, so the server rule is what answers.
+  await page.locator('form:has(input[name="guardianName"])').evaluate((f: HTMLFormElement) => f.submit());
+  await expect(page.locator("#signup-error")).toBeVisible();
+
+  const rows = await sql<{ id: string }>(`SELECT id FROM "User" WHERE phone = $1`, [phone]);
+  expect(rows).toHaveLength(0);
 });
 
 test("the server refuses a student account with no guardian consent", async ({ page, loc }) => {

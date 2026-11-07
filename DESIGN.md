@@ -78,11 +78,11 @@ Accessibility answers: `prefers-contrast: more` turns muted text into ink, makes
 | Token | Light | Dark | Country |
 |---|---|---|---|
 | `--color-line-eg` | `#D1293D` | same | Egypt |
-| `--color-line-sa` | `#16834A` | same | Saudi Arabia |
+| `--color-line-sa` | `#127A43` | same | Saudi Arabia |
 | `--color-line-ae` | `#1F6FD1` | same | UAE |
-| `--color-line-kw` | `#00807E` | same | Kuwait |
+| `--color-line-kw` | `#007573` | same | Kuwait |
 | `--color-line-qa` | `#8A1538` | `#C2325F` | Qatar |
-| `--color-line-bh` | `#E8761C` | same | Bahrain |
+| `--color-line-bh` | `#B85400` | same | Bahrain |
 | `--color-line-om` | `#7A3E9D` | `#9458B8` | Oman |
 
 A country with no token falls back to `--color-field`. `tokens.css` uses `@theme static`, so every colour is emitted even when read only through `var()` in inline styles.

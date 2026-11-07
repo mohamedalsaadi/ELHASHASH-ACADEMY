@@ -730,7 +730,6 @@
     "password": "Password",
     "passwordHint": "At least 8 characters",
     "noGrades": "No grades are open for registration yet. Contact support.",
-    "terms": "By creating an account you agree to the <terms>terms of use</terms> and the <privacy>privacy policy</privacy>.",
     "submit": "Create account",
     "submitting": "Creating account…",
     "haveAccount": "Already have an account?",
@@ -753,10 +752,12 @@
       "too_many": "Too many new accounts from this network. Try again in an hour.",
       "guardian_required": "A guardian's name, email and consent are required for a student under 18.",
       "phone_taken": "That phone number is already used by another account. Sign in, or use another number.",
-      "check_email": "If that email or phone already has an account, we sent it a sign-in note. Otherwise sign in, or reset your password."
+      "check_email": "If that email or phone already has an account, we sent it a sign-in note. Otherwise sign in, or reset your password.",
+      "terms_required": "Tick the box to accept the terms and the privacy policy."
     },
     "teacherQ": "Are you a teacher who wants to join?",
-    "teacherLink": "Register as a teacher"
+    "teacherLink": "Register as a teacher",
+    "acceptTerms": "I have read and accept the <terms>terms of use</terms> and the <privacy>privacy policy</privacy>."
   },
   "guardianConfirm": {
     "title": "Guardian consent",
@@ -825,7 +826,8 @@
     "accessibility": "Accessibility",
     "contact": "Contact us",
     "rights": "Dhirwa (ذروة), United Arab Emirates",
-    "tagline": "Every lesson is a step toward the peak."
+    "tagline": "Every lesson is a step toward the peak.",
+    "sellerLicence": "Trade licence no. {no}"
   },
   "teacher": {
     "hello": "Hello, {name}",
@@ -1290,7 +1292,11 @@
       "limited": "Too many attempts. Try again in 15 minutes.",
       "denied": "Staff accounts are removed through support."
     },
-    "appearanceTitle": "Appearance"
+    "appearanceTitle": "Appearance",
+    "emailTitle": "Email",
+    "emailHint": "Receipts and account security emails always reach you. Reminders, answers and progress notes are optional.",
+    "emailStop": "Turn off optional emails",
+    "emailResume": "Turn optional emails back on"
   },
   "forgot": {
     "title": "Forgot your password?",

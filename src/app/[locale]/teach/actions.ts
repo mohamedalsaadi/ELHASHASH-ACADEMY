@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { BCRYPT_COST } from "@/lib/schemas/auth";
 import { headers } from "next/headers";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
@@ -37,7 +38,7 @@ export async function applyToTeach(_: TeachState, form: FormData): Promise<Teach
       name,
       email: a.email,
       phone: a.phone,
-      passwordHash: await bcrypt.hash(a.password, 10),
+      passwordHash: await bcrypt.hash(a.password, BCRYPT_COST),
       locale: a.locale,
       bio: a.bio ? maskContacts(a.bio).text : null,
       subjectsNote: a.subjectsNote,

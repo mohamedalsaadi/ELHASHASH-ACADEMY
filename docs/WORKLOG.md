@@ -24,6 +24,19 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-07: Security and compliance audit fixes (local commit, not pushed)
+
+- **Why.** The owner asked for a 12-domain security audit and a 20-point legal check, then for every fix that can be made in code. The findings were reported in chat, not in this public repository.
+- **Sign-in.** A missing account now costs the same time as a wrong password (`NO_ACCOUNT_HASH` in `src/auth.ts`). Google sign-in needs `email_verified` and no longer links into an admin or teacher account: staff sign in with a password. New hashes use `BCRYPT_COST` (12, `src/lib/schemas/auth.ts`); old hashes keep verifying.
+- **Cookies and routes.** The country and language cookies are `HttpOnly`/`Secure` in production. `src/middleware.ts` redirects a signed-out visitor from `/admin`, `/teacher`, `/parent`, `/orders`, `/account`, `/dashboard`, `/notifications` and `/complete-profile` to sign-in, because a streamed page answered 200 before its guard ran. `/api/blob/upload` answers a bad body with 400, not 500.
+- **Messages.** The browser gets only the namespaces client components read (`src/i18n/client-messages.ts`); `/admin` and `/teacher` add the staff dictionary through `StaffMessages`. A vitest check fails the build if a client component reads a namespace that is not listed. This removes the admin labels from every visitor's page and cuts the dictionary by about 64%.
+- **Legal.** Signup has a required terms and privacy tick box, and the time is stored in `User.termsAcceptedAt`. The privacy policy now states where data is processed, the legal basis, the language cookie and the unsubscribe switch, and shows its real date (`PRIVACY_VERSION` is `2026-11-07`). The footer, privacy and terms show the seller name, address and licence number only once the owner fills them in the admin settings. **The new privacy wording needs a lawyer's read.**
+- **Email.** Optional mail (reminders, answers, progress notes) carries an unsubscribe link and the `List-Unsubscribe` one-click headers. `/api/unsubscribe` checks an HMAC of the user id. The account page has the same switch. Receipts and system mail always send (`isOptionalKind` in `src/lib/unsubscribe.ts`).
+- **Colour.** The light-mode Saudi, Kuwaiti and Bahraini line colours were darkened to pass contrast (Bahrain was 2.74:1).
+- **Repo.** The business-plan `.docx` is untracked and ignored (its history stays until the repo is private). The Neon host is gone from the docs. `docs/db-least-privilege.sql` creates the limited app role.
+- **Before this is pushed.** Apply migration `20261110100000_email_optout_terms` to Neon first. Both columns are nullable, but every `User` query selects them, so code that ships before the migration fails with P2022 everywhere (the 2026-11-05 outage). `/api/health` now checks both columns.
+- **Owner actions left.** Make the GitHub repository private. Run `docs/db-least-privilege.sql` and point Vercel's `DATABASE_URL` at the new role. Fill the seller name, address and licence in the admin settings. Create a support mailbox and set `SUPPORT_EMAIL`. Decide VAT-inclusive display before VAT is switched on. Dependency advisories (postcss inside Next, a nested zod) stay as the owner decided in audit item #23.
+
 ## 2026-11-07: Full redesign, intro, dark mode and reworded copy (branch `redesign-2026`)
 
 - **Why.** The owner asked for the whole site and the intro redone with Apple's guidelines and GSAP, and the wording
@@ -52,8 +65,10 @@ Git history has the rest (`git log --oneline`).
   `e2e/student.spec.ts` stays strict and fails on this: 214 passed, 4 failed, 2 skipped on the production build.
 - **Test fixes.** The reset tests matched Next's route announcer as well as the real message, and `live.spec.ts` checked
   the refusal before it had happened. The grade count on the student home now uses a plural.
-- **Open.** Merged into local `main`. Pushing is the owner's call, and the footer contact address still needs an owner
-  decision (`CONTACT_EMAIL`).
+- **Released.** The owner approved the push on 2026-11-07. `39b307d` is on `origin/main` and live on dhirwa.ae, checked
+  signed out in `ar` and `en` on phone and desktop. The English fix is confirmed there with a fake session cookie.
+- **Open.** The stale page after a server action, and the footer contact address (`CONTACT_EMAIL`), which still shows a
+  personal Gmail.
 
 ## 2026-11-06: Receipts CSV, teacher receipt columns, referral list, existing-student DOB
 
@@ -213,7 +228,7 @@ about. It now says `sslmode=verify-full` in `.env.local` and in Vercel Productio
 
 The Vercel variable is sensitive, so it cannot be read back: `vercel env pull` returns `[SENSITIVE]`. It was
 replaced through `vercel env update` with the same connection string used locally, after checking that host
-(`ep-twilight-feather-b97jpk23-pooler...`), database (`neondb`) and role (`neondb_owner`) match what the launch
+(the pooled Frankfurt endpoint), database and role match what the launch
 checklist documents for production. The production deployment was then rebuilt from the same source
 (`vercel redeploy`, no local upload) and re-aliased to dhirwa.ae.
 

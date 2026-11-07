@@ -24,7 +24,7 @@ import { applyPaymentOutcome } from "@/lib/payments";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { safeNext } from "@/lib/safe-redirect";
 import { countryInput, gradeInput, rangesOverlap, stageInput, subjectInput } from "@/lib/schemas/catalog-admin";
-import { PASSWORD_MIN, passwordSchema, phoneSchema } from "@/lib/schemas/auth";
+import { BCRYPT_COST, PASSWORD_MIN, passwordSchema, phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, assertSlot, requireAdmin, requireStaff } from "@/lib/staff";
 import { stripe } from "@/lib/stripe";
 
@@ -517,7 +517,7 @@ export async function changePassword(_: unknown, form: FormData): Promise<"ok" |
     await recordAttempt(`chpw:${me.id}`);
     return "wrong";
   }
-  await db.user.update({ where: { id: me.id }, data: { passwordHash: await bcrypt.hash(next, 10), passwordChangedAt: new Date() } });
+  await db.user.update({ where: { id: me.id }, data: { passwordHash: await bcrypt.hash(next, BCRYPT_COST), passwordChangedAt: new Date() } });
   return "ok";
 }
 
@@ -534,7 +534,7 @@ export async function addTeacher(_: unknown, form: FormData): Promise<"ok" | "ta
   const { name, login, password } = d.data;
   try {
     await db.user.create({
-      data: { name, role: "INSTRUCTOR", passwordHash: await bcrypt.hash(password, 10), ...(login.includes("@") ? { email: login } : { phone: login }) },
+      data: { name, role: "INSTRUCTOR", passwordHash: await bcrypt.hash(password, BCRYPT_COST), ...(login.includes("@") ? { email: login } : { phone: login }) },
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return "taken";
@@ -904,7 +904,7 @@ export async function resetPassword(_: unknown, form: FormData): Promise<"ok" | 
   if (!d.success) return "invalid";
   const { count } = await db.user.updateMany({
     where: { id: d.data.userId, role: { not: "ADMIN" } },
-    data: { passwordHash: await bcrypt.hash(d.data.password, 10), passwordChangedAt: new Date() },
+    data: { passwordHash: await bcrypt.hash(d.data.password, BCRYPT_COST), passwordChangedAt: new Date() },
   });
   return count ? "ok" : "invalid";
 }

@@ -5,4 +5,4 @@
  * Live-lecture guardian consent keeps its own version in `live-rules.ts`: it is a different document.
  */
 export const TERMS_VERSION = "2026-11-06";
-export const PRIVACY_VERSION = "2026-11-06";
+export const PRIVACY_VERSION = "2026-11-07";

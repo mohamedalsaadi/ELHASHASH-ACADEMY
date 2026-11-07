@@ -185,20 +185,31 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
           {t(`errors.${state.error}`)}
         </p>
       )}
-      <p className="text-small text-ink-muted">
-        {t.rich("terms", {
-          terms: (chunks) => (
-            <Link href="/terms" className="text-ink underline underline-offset-4">
-              {chunks}
-            </Link>
-          ),
-          privacy: (chunks) => (
-            <Link href="/privacy" className="text-ink underline underline-offset-4">
-              {chunks}
-            </Link>
-          ),
-        })}
-      </p>
+      <label className="flex min-h-11 items-center gap-3 text-small">
+        <input
+          type="checkbox"
+          name="acceptTerms"
+          required
+          defaultChecked={v?.acceptTerms ?? false}
+          className="size-5 shrink-0"
+          aria-invalid={state?.error === "terms_required"}
+          aria-describedby="signup-error"
+        />
+        <span>
+          {t.rich("acceptTerms", {
+            terms: (chunks) => (
+              <Link href="/terms" className="text-ink underline underline-offset-4">
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link href="/privacy" className="text-ink underline underline-offset-4">
+                {chunks}
+              </Link>
+            ),
+          })}
+        </span>
+      </label>
       <Submit disabled={type === "STUDENT" && !hasGrades} />
     </form>
   );

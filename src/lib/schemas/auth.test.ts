@@ -18,6 +18,7 @@ describe("one password rule", () => {
       gradeId: "g1",
       guardianName: "Guardian",
       guardianConsent: true,
+      acceptTerms: true,
     });
     expect(student.success).toBe(false);
 

@@ -26,8 +26,8 @@ const Purpose = z.union([
 
 /** Mints a short-lived token so the browser can upload straight to Blob. Never receives file bytes. */
 export async function POST(request: Request) {
-  const body = (await request.json()) as HandleUploadBody;
   try {
+    const body = (await request.json()) as HandleUploadBody;
     const result = await handleUpload({
       body,
       request,

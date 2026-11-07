@@ -1623,7 +1623,7 @@
     "change": "غيّره من حسابك",
     "pickCountryTitle": "في أي دولة تدرس؟",
     "pickCountryHint": "اختر دولتك لنعرض لك موادها فقط. يمكنك تغييرها في أي وقت.",
-    "gradeCount": "{count} صفوف",
+    "gradeCount": "{count, plural, zero {لا صفوف} one {صف واحد} two {صفان} few {# صفوف} many {# صفًا} other {# صف}}",
     "pickGradeIn": "اختر صفك في {country}",
     "changeCountry": "تغيير الدولة",
     "pickTitle": "اختر صفك",

@@ -39,8 +39,21 @@ Git history has the rest (`git log --oneline`).
   not كورس, across the site. `messages-parity.test.ts` guards keys and placeholders. Unused keys were deleted.
 - **Preview.** `node scripts/preview.mjs` (launch config `seeded`) runs port 3200 on a throwaway database and seed.
 - **Out of scope.** Transactional emails and PDF receipts keep the old look.
-- **Open.** Nothing is committed, pushed or deployed until the owner has reviewed it. Rebuild the graph after the commit
-  (`python -m graphify update .`).
+- **Release check on a production build.** `next dev` hid two bugs, so the suite was also run against `next build` and
+  `next start`. Both bugs are in `main`, and neither comes from the redesign.
+- **Fixed: English signed-in home in Arabic.** The signed-in rewrite in `src/middleware.ts` skips the intl middleware, so
+  no locale header was set and next-intl could fall back to Arabic. It was live: `https://dhirwa.ae/en` with a session
+  cookie served `/ar/...` and `/en/en` links. The rewrite now sets the header, and `e2e/student.spec.ts` covers it.
+- **Open: a tap can leave the page stale in production.** After a server action the page sometimes keeps the old view
+  until a reload. Choosing a country is the clearest case. The action saves and the response holds the new page, but React
+  never commits it: the transition lane stays suspended with no ping, and every promise it waited on is fulfilled. Measured
+  with a local probe: the page updated in 6 of 12 fresh visits, 7 of 12 with the service worker blocked, 9 of 12 returning
+  visits. Cause not found. The confidence tap on a lesson failed the same way in earlier runs. The country test in
+  `e2e/student.spec.ts` stays strict and fails on this: 214 passed, 4 failed, 2 skipped on the production build.
+- **Test fixes.** The reset tests matched Next's route announcer as well as the real message, and `live.spec.ts` checked
+  the refusal before it had happened. The grade count on the student home now uses a plural.
+- **Open.** Merged into local `main`. Pushing is the owner's call, and the footer contact address still needs an owner
+  decision (`CONTACT_EMAIL`).
 
 ## 2026-11-06: Receipts CSV, teacher receipt columns, referral list, existing-student DOB
 

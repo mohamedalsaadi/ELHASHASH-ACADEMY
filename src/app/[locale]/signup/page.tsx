@@ -1,6 +1,8 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
+import { redirect } from "next/navigation";
+import { whatsappEnabled } from "@/lib/whatsapp";
 import { SocialButtons } from "@/components/auth/SocialButtons";
 import { Link } from "@/i18n/navigation";
 import { logEventLater } from "@/lib/analytics";
@@ -23,6 +25,8 @@ export default async function SignUpPage({
   const { locale } = await params;
   const { next, type } = await searchParams;
   setRequestLocale(locale);
+  // One front door: with WhatsApp set up, sign-in and sign-up are the same screen.
+  if (whatsappEnabled()) redirect(`/${locale}/signin?${new URLSearchParams({ ...(next ? { next } : {}), ...(type ? { type } : {}) })}`);
   const t = await getTranslations("signup");
   const groups = await gradeGroups(locale);
 

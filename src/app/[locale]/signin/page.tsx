@@ -6,6 +6,9 @@ import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { SocialButtons } from "@/components/auth/SocialButtons";
+import { OtpFlow } from "./OtpFlow";
+import { gradeGroups } from "@/lib/catalog";
+import { whatsappEnabled } from "@/lib/whatsapp";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
@@ -21,12 +24,13 @@ export default async function SignInPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string; next?: string; verified?: string; reset?: string; login?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; verified?: string; reset?: string; login?: string; password?: string; type?: string }>;
 }) {
   const { locale } = await params;
-  const { error, next, verified, reset, login } = await searchParams;
+  const { error, next, verified, reset, login, password, type } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("signin");
+  const o = await getTranslations("otp");
   const target = safeNext(next, `/${locale}/dashboard`);
 
   async function action(form: FormData) {
@@ -40,6 +44,24 @@ export default async function SignInPage({
       }
       throw e;
     }
+  }
+
+  // With WhatsApp set up, phone sign-in is the front door and the password form is one link away.
+  const whatsapp = whatsappEnabled();
+  if (whatsapp && password !== "1") {
+    const to = (extra: Record<string, string>) => ({ pathname: "/signin" as const, query: { ...(next ? { next } : {}), ...extra } });
+    return (
+      <AuthShell>
+        <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
+        <SocialButtons locale={locale} next={next} />
+        <OtpFlow groups={await gradeGroups(locale)} locale={locale} next={next ?? ""} parent={type === "PARENT"} />
+        <p className="text-small text-ink-muted">
+          <Link href={to({ password: "1" })} className="text-ink underline underline-offset-4">
+            {o("usePassword")}
+          </Link>
+        </p>
+      </AuthShell>
+    );
   }
 
   return (
@@ -99,6 +121,13 @@ export default async function SignInPage({
           {t("forgot")}
         </Link>
       </p>
+      {whatsapp && (
+        <p className="text-small text-ink-muted">
+          <Link href={{ pathname: "/signin", query: next ? { next } : {} }} className="text-ink underline underline-offset-4">
+            {o("useWhatsapp")}
+          </Link>
+        </p>
+      )}
       <p className="text-small text-ink-muted">
         {t("noAccount")}{" "}
         <Link href={{ pathname: "/signup", query: next ? { next } : {} }} className="text-ink underline underline-offset-4">

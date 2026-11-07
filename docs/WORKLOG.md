@@ -24,6 +24,15 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-08: Phone sign-in with WhatsApp codes (local commit, not pushed, switched off)
+
+- **Flow** (`signin/OtpFlow.tsx`, `signin/otp-actions.ts`): number with the country-code list, 6-digit code on WhatsApp, then a short profile for a new number. `/signup` redirects to `/signin` when it is on; a "use a password instead" link keeps the old form. Off until `WHATSAPP_PHONE_NUMBER_ID` and `WHATSAPP_ACCESS_TOKEN` are set, so production is unchanged today.
+- **Model:** table `OtpCode` (migration `20261110300000_otp_codes`): keyed hash only, 10 minutes, 5 tries, single use. A signed proof (`lib/otp.ts`) carries "this phone was verified" to the final step; the `otp` credentials provider in `auth.ts` turns it into a session. Teachers and admins are refused (password only). Sender: `lib/whatsapp.ts` (Meta Cloud API template; `WHATSAPP_API_BASE` overrides the host for tests).
+- **Limits:** 3 codes per number per 15 min, 10 per network address per hour, 10 code checks per number per 15 min. No daily global cap. The code request never reveals whether a number has an account.
+- **Legacy numbers** stored as typed (`0501234567`) are not opened by a code (that text fits several countries); the owner signs in with the password. Open: a link-your-number step.
+- Tested with a stand-in for the Meta API (`e2e/otp.spec.ts`, skipped unless the variables are set; see `docs/whatsapp-otp.md`). **Not tested against real WhatsApp.** The setup guide for Meta, Google and Microsoft is in `docs/whatsapp-otp.md`.
+- Password reset, receipts and consent mail still go by email.
+
 ## 2026-11-07: Easier sign-up (local commit, not pushed)
 
 - **Social buttons** (`components/auth/SocialButtons.tsx`) on both `/signin` and `/signup`, each shown only when its keys are set. Google was already coded; **Microsoft** (`microsoft-entra-id`, keys `AUTH_MICROSOFT_ENTRA_ID_ID` and `_SECRET`) is new. Microsoft may create a student account but never opens an existing one (it does not vouch for the email like Google), and its account stays unverified until the email link is used. Neither is live: no keys are set in production.

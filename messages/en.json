@@ -833,6 +833,32 @@
     "errors": { "invalid": "Write between 10 and 1500 characters.", "limited": "Too many suggestions from this connection. Try again later." },
     "privacyNote": "Do not write personal details. An AI tool summarises suggestions for the owner."
   },
+  "otp": {
+    "phone": "Mobile number",
+    "phoneHint": "We send a 6-digit code to your WhatsApp. No password needed.",
+    "send": "Send code on WhatsApp",
+    "sending": "Sending…",
+    "codeHint": "We sent a 6-digit code to {phone} on WhatsApp. It works for 10 minutes.",
+    "code": "Code",
+    "verify": "Continue",
+    "checking": "Checking…",
+    "resend": "Send a new code",
+    "finishHint": "Your number is confirmed. Tell us a little about you to finish.",
+    "email": "Email (optional)",
+    "emailHint": "For receipts and lesson reminders. You can add it later.",
+    "usePassword": "Use a password instead",
+    "useWhatsapp": "Use a WhatsApp code instead",
+    "errors": {
+      "invalid_phone": "Choose your country and type a valid mobile number.",
+      "too_many": "Too many tries. Wait a few minutes and try again.",
+      "send_failed": "We could not send the code. Check the number, or use a password.",
+      "bad_code": "That code is wrong or has expired. Check it, or send a new one.",
+      "legacy": "This number already has a Dhirwa account made earlier. Sign in once with its password.",
+      "staff": "Teacher and admin accounts sign in with a password.",
+      "expired": "This step timed out. Start again with your number.",
+      "taken": "This email or number already has an account."
+    }
+  },
   "footer": {
     "terms": "Terms of use",
     "refund": "Refund policy",

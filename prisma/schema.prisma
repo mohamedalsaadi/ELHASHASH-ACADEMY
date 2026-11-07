@@ -1675,3 +1675,16 @@ model SuggestionDigest {
   suggestions Suggestion[]
   createdAt   DateTime     @default(now())
 }
+
+/// A six-digit code sent to a phone on WhatsApp. Only a keyed hash is stored; it lives ten minutes and allows five tries.
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String    @db.VarChar(20)
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}

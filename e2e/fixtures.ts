@@ -16,7 +16,8 @@ export const test = base.extend<Fixtures & { signIn: (who: Persona) => Promise<v
 export { expect };
 
 export async function signInAs(page: Page, loc: string, login: string, password = PASSWORD) {
-  await page.goto(`/${loc}/signin`);
+  // The password form; with WhatsApp set up, the phone-code screen is the front door.
+  await page.goto(`/${loc}/signin?password=1`);
   await page.locator('input[name="login"]').fill(login);
   await page.locator('input[name="password"]').fill(password);
   await page.locator('form button[type="submit"], form button:not([type])').last().click();

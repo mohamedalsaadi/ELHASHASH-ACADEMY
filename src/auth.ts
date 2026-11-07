@@ -7,6 +7,7 @@ import { logEvent } from "@/lib/analytics";
 import bcrypt from "bcryptjs";
 import { BCRYPT_COST, signInSchema } from "@/lib/schemas/auth";
 import { findUserByPhone } from "@/lib/user-phone";
+import { readProof } from "@/lib/otp";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
@@ -70,6 +71,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await recordAttempt(ipKey);
           return null;
         }
+        return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };
+      },
+    }),
+    // Phone sign-in: a server action has already checked the WhatsApp code and hands over a signed proof.
+    // Staff stay on passwords, so a stolen phone number can never open an admin or teacher account.
+    Credentials({
+      id: "otp",
+      credentials: { proof: {} },
+      async authorize(raw) {
+        const phone = typeof raw?.proof === "string" ? readProof(raw.proof) : null;
+        if (!phone) return null;
+        const user = await db.user.findUnique({ where: { phone } });
+        if (!user || user.deletedAt || (user.role !== "STUDENT" && user.role !== "PARENT")) return null;
         return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };
       },
     }),

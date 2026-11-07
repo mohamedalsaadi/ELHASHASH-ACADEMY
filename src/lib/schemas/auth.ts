@@ -24,6 +24,25 @@ export const signInSchema = z.object({
   password: z.string().min(1).max(PASSWORD_MAX),
 });
 
+type StudentFields = { dateOfBirth?: string; guardianConsent: boolean; guardianName?: string; guardianEmail?: string };
+
+/** A student needs a real birth date, is at least 13, and under 18 brings a guardian name, email and consent. */
+function studentRules(d: StudentFields, ctx: z.RefinementCtx) {
+    const dob = parseBirthDate(d.dateOfBirth);
+    if (!dob) {
+      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "invalid_birthdate" });
+      return;
+    }
+    const age = ageOn(dob);
+    if (age < 13) {
+      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "too_young" });
+      return;
+    }
+    if (age < 18 && (!d.guardianConsent || !d.guardianName || !d.guardianEmail)) {
+      ctx.addIssue({ code: "custom", path: ["guardianConsent"], message: "guardian_required" });
+    }
+}
+
 export const signUpSchema = z
   .object({
     type: z.enum(["STUDENT", "PARENT"]).default("STUDENT"),
@@ -46,19 +65,7 @@ export const signUpSchema = z
   .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" })
   .superRefine((d, ctx) => {
     if (d.type === "PARENT") return;
-    const dob = parseBirthDate(d.dateOfBirth);
-    if (!dob) {
-      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "invalid_birthdate" });
-      return;
-    }
-    const age = ageOn(dob);
-    if (age < 13) {
-      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "too_young" });
-      return;
-    }
-    if (age < 18 && (!d.guardianConsent || !d.guardianName || !d.guardianEmail)) {
-      ctx.addIssue({ code: "custom", path: ["guardianConsent"], message: "guardian_required" });
-    }
+    studentRules(d, ctx);
   });
 
 export type SignInInput = z.infer<typeof signInSchema>;
@@ -75,18 +82,24 @@ export const completeProfileSchema = z
     guardianConsent: z.coerce.boolean().default(false),
     acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
   })
+  .superRefine(studentRules);
+
+/** The last step of a phone sign-up: what a new account needs once WhatsApp has proved the number. */
+export const otpFinishSchema = z
+  .object({
+    type: z.enum(["STUDENT", "PARENT"]).default("STUDENT"),
+    name: z.string().trim().min(2).max(80),
+    /// Optional here: the phone is the sign-in. An address is kept for receipts and reminders.
+    email: z.union([z.literal(""), z.email().trim().toLowerCase()]).optional(),
+    gradeId: z.string().optional(),
+    dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate").optional(),
+    guardianEmail: z.email().trim().toLowerCase().optional(),
+    guardianName: z.string().trim().min(2).max(80).optional(),
+    guardianConsent: z.coerce.boolean().default(false),
+    acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
+  })
+  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" })
   .superRefine((d, ctx) => {
-    const dob = parseBirthDate(d.dateOfBirth);
-    if (!dob) {
-      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "invalid_birthdate" });
-      return;
-    }
-    const age = ageOn(dob);
-    if (age < 13) {
-      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "too_young" });
-      return;
-    }
-    if (age < 18 && (!d.guardianConsent || !d.guardianName || !d.guardianEmail)) {
-      ctx.addIssue({ code: "custom", path: ["guardianConsent"], message: "guardian_required" });
-    }
+    if (d.type === "PARENT") return;
+    studentRules(d, ctx);
   });

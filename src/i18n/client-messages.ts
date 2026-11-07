@@ -19,6 +19,7 @@ export const PUBLIC_CLIENT_NAMESPACES = [
   "forgot",
   "contactForm",
   "suggest",
+  "otp",
   "checkout",
   "catalog",
 ] as const;

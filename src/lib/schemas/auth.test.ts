@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PASSWORD_MAX, PASSWORD_MIN, completeProfileSchema, passwordSchema, signInSchema, signUpSchema } from "./auth";
+import { PASSWORD_MAX, PASSWORD_MIN, completeProfileSchema, otpFinishSchema, passwordSchema, signInSchema, signUpSchema } from "./auth";
 import { teacherApplicationInput } from "./teacher-application";
 
 const eight = "12345678";
@@ -81,5 +81,19 @@ describe("finishing a Google account", () => {
 
   it("refuses a phone the rest of the app would not accept", () => {
     expect(completeProfileSchema.safeParse({ ...base, phone: "1234", dateOfBirth: yearsAgo(16) }).success).toBe(false);
+  });
+});
+
+describe("the phone sign-up finish step", () => {
+  const base = { type: "STUDENT" as const, name: "طالب", gradeId: "g1", dateOfBirth: "1990-01-01", acceptTerms: true };
+  it("needs no email and no password: the phone is the sign-in", () => {
+    expect(otpFinishSchema.safeParse(base).success).toBe(true);
+    expect(otpFinishSchema.safeParse({ ...base, email: "" }).success).toBe(true);
+  });
+  it("still needs the terms, a grade for a student, and a guardian for a minor", () => {
+    expect(otpFinishSchema.safeParse({ ...base, acceptTerms: false }).success).toBe(false);
+    expect(otpFinishSchema.safeParse({ ...base, gradeId: undefined }).success).toBe(false);
+    expect(otpFinishSchema.safeParse({ ...base, dateOfBirth: "2012-01-01" }).success).toBe(false);
+    expect(otpFinishSchema.safeParse({ type: "PARENT", name: "ولي", acceptTerms: true }).success).toBe(true);
   });
 });

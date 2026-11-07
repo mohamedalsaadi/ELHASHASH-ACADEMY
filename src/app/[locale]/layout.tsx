@@ -9,6 +9,7 @@ import { routing } from "@/i18n/routing";
 import { RouteAnnouncer } from "@/components/RouteAnnouncer";
 import { SiteFooter } from "@/components/SiteFooter";
 import { MarketingOnly } from "@/components/MarketingOnly";
+import { MarketingBackdrop } from "@/components/motion/MarketingBackdrop";
 import { NewsBanner } from "@/components/NewsBanner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PwaRegister } from "@/components/PwaRegister";
@@ -91,6 +92,7 @@ export default async function LocaleLayout({
             <MarketingOnly>
               <NewsBanner />
             </MarketingOnly>
+            <MarketingBackdrop />
             <SiteHeader />
             <div id="main-content" tabIndex={-1} className="outline-none">
               {children}

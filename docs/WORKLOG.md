@@ -24,6 +24,10 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-07: Dynamic marketing backdrop (local commit, not pushed)
+
+- New GSAP backdrop (`src/components/motion/Backdrop.tsx`, `MarketingBackdrop.tsx`, mounted in `[locale]/layout.tsx`): drifting ridgelines with scroll parallax, two soft lights, a pointer-led gold summit. Home, catalogue and `/teach` only; lazy chunk, so app pages never load GSAP. The intro is unchanged. Looked at in the browser in light, dark, Arabic and a 375 px phone (no console errors, no sideways scroll); not measured for frame rate. The signed-in student home is the same address as the public home, so it shows the backdrop too.
+
 ## 2026-11-07: Suggestion box with AI summary, terms tick on the Google step (local commit, not pushed)
 
 - **Suggestion box:** public page `/suggest` (footer link). Anonymous on purpose: stores kind, text (phone numbers and emails masked), the signed-in role and locale, no name, email or user id. Tables `Suggestion` and `SuggestionDigest`, migration `20261110200000_suggestions` (the production build applies it on push). 5 notes an hour per address, honeypot field.

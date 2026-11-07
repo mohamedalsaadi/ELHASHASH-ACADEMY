@@ -24,6 +24,14 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-07: Easier sign-up (local commit, not pushed)
+
+- **Social buttons** (`components/auth/SocialButtons.tsx`) on both `/signin` and `/signup`, each shown only when its keys are set. Google was already coded; **Microsoft** (`microsoft-entra-id`, keys `AUTH_MICROSOFT_ENTRA_ID_ID` and `_SECRET`) is new. Microsoft may create a student account but never opens an existing one (it does not vouch for the email like Google), and its account stays unverified until the email link is used. Neither is live: no keys are set in production.
+- A social account now takes its language from the page the visitor was on (it was always Arabic), logs `signup_completed` with `method`, and lands on the home page after the finish step. Password sign-ups log `method: password`.
+- **Guardian fields** show only after a birth date under 18.
+- **Phone lookups** (sign-in, parent link, parent checkout) go through `findUserByPhone`, so a local number finds an account stored as `+971…`. This also fixes the parent paths, which only matched the exact text.
+- Not done from the review: phone optional at sign-up, one combined sign-in/sign-up screen, email one-time codes, the terms line instead of a tick (lawyer first), Apple.
+
 ## 2026-11-07: Dynamic marketing backdrop (local commit, not pushed)
 
 - New GSAP backdrop (`src/components/motion/Backdrop.tsx`, `MarketingBackdrop.tsx`, mounted in `[locale]/layout.tsx`): drifting ridgelines with scroll parallax, two soft lights, a pointer-led gold summit. Home, catalogue and `/teach` only; lazy chunk, so app pages never load GSAP. The intro is unchanged. Looked at in the browser in light, dark, Arabic and a 375 px phone (no console errors, no sideways scroll); not measured for frame rate. The signed-in student home is the same address as the public home, so it shows the backdrop too.

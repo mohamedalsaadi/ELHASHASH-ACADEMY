@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
+import { SocialButtons } from "@/components/auth/SocialButtons";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Link } from "@/i18n/navigation";
@@ -27,7 +28,6 @@ export default async function SignInPage({
   setRequestLocale(locale);
   const t = await getTranslations("signin");
   const target = safeNext(next, `/${locale}/dashboard`);
-  const googleEnabled = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 
   async function action(form: FormData) {
     "use server";
@@ -42,23 +42,10 @@ export default async function SignInPage({
     }
   }
 
-  async function googleAction(form: FormData) {
-    "use server";
-    await signIn("google", { redirectTo: safeNext(String(form.get("next") ?? ""), `/${locale}/dashboard`) });
-  }
-
   return (
     <AuthShell>
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
-      {googleEnabled && (
-        <div className="grid gap-4">
-          <form action={googleAction}>
-            <input type="hidden" name="next" value={next ?? ""} />
-            <button className="btn btn-outline w-full">{t("google")}</button>
-          </form>
-          <p className="text-center text-small text-ink-muted">{t("or")}</p>
-        </div>
-      )}
+      <SocialButtons locale={locale} next={next} />
       <form action={action} className="grid gap-4">
         <label className="grid gap-2 text-label text-ink-muted">
           {t("phone")}

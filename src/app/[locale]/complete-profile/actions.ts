@@ -94,5 +94,6 @@ export async function completeProfile(form: FormData) {
   }
 
   revalidatePath("/[locale]/dashboard", "page");
-  redirect(`/${locale}/dashboard`);
+  // The home page shows the student's country, grade and courses.
+  redirect(`/${locale}`);
 }

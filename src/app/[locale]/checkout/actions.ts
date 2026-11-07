@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { db } from "@/lib/db";
+import { findUserByPhone } from "@/lib/user-phone";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { phoneSchema } from "@/lib/schemas/auth";
 
@@ -31,10 +31,7 @@ export async function lookupStudent(rawPhone: string): Promise<StudentLookup> {
   const parsed = phoneSchema.safeParse(rawPhone);
   if (!parsed.success) return { ok: false, reason: "invalid" };
 
-  const student = await db.user.findUnique({
-    where: { phone: parsed.data },
-    select: { id: true, role: true, name: true },
-  });
+  const student = await findUserByPhone(parsed.data);
   if (!student || student.role !== "STUDENT" || student.id === session.user.id) return { ok: false, reason: "not_found" };
   return { ok: true, name: maskedName(student.name) };
 }

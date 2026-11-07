@@ -160,7 +160,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     throw e;
   }
   await recordAttempt(key);
-  await logEvent({ name: "signup_completed", userId, props: { role: isParent ? "PARENT" : "STUDENT" } });
+  await logEvent({ name: "signup_completed", userId, props: { role: isParent ? "PARENT" : "STUDENT", method: "password" } });
 
   const token = await issueToken(userId, "VERIFY", VERIFY_TTL);
   const ar = locale === "ar";

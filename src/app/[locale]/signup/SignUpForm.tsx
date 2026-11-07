@@ -8,6 +8,7 @@ import { PasswordField } from "@/components/ui/PasswordField";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
 import { Link } from "@/i18n/navigation";
+import { ageOn, parseBirthDate } from "@/lib/age";
 import { signUp } from "./actions";
 
 
@@ -30,6 +31,10 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
   const [state, action] = useActionState(signUp, null);
   const v = state?.values;
   const [type, setType] = useState<"STUDENT" | "PARENT">((v ? v.type === "PARENT" : parent) ? "PARENT" : "STUDENT");
+  // A guardian is asked for only when the birth date says the student is under 18.
+  const [dob, setDob] = useState(v?.dateOfBirth ?? "");
+  const born = parseBirthDate(dob);
+  const minor = born !== null && ageOn(born) < 18;
   const hasGrades = groups.some((group) => group.grades.length > 0);
   return (
     // React resets the form after each submit; the key remounts it with what the student typed.
@@ -110,7 +115,8 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
               name="dateOfBirth"
               required
               max={new Date().toISOString().slice(0, 10)}
-              defaultValue={v?.dateOfBirth}
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
               dir="ltr"
               aria-invalid={state?.error === "invalid_birthdate" || state?.error === "too_young"}
               aria-describedby="signup-error"
@@ -118,6 +124,8 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
             />
             <span className="text-label">{t("dateOfBirthHint")}</span>
           </label>
+          {minor && (
+            <>
           <label className={label}>
             {t("guardianName")}
             <input
@@ -158,6 +166,8 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
             />
             <span>{t("guardianConsent")}</span>
           </label>
+            </>
+          )}
         </>
       )}
       <label className={label}>

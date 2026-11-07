@@ -1,9 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
+import { cookies } from "next/headers";
+import { logEvent } from "@/lib/analytics";
 import bcrypt from "bcryptjs";
 import { BCRYPT_COST, signInSchema } from "@/lib/schemas/auth";
-import { phoneCandidates } from "@/lib/phone";
+import { findUserByPhone } from "@/lib/user-phone";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
@@ -57,9 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const key = `login:${login}`;
         const user = login.includes("@")
           ? await db.user.findUnique({ where: { email: login } })
-          : ((await db.user.findUnique({ where: { phone: login } })) ??
-            // A local number typed by someone whose account was made with the country-code picker.
-            (login.startsWith("+") ? null : await db.user.findFirst({ where: { phone: { in: phoneCandidates(login) } } })));
+          : await findUserByPhone(login);
         // An erased account keeps its row for the money record but can never sign in again.
         if (user?.deletedAt) return null;
         // Compare against a throwaway hash when there is no account, so a missing login takes as long as a wrong password.
@@ -75,20 +76,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // Google is added only when its OAuth client is configured. Existing accounts match by email;
     // a new Google user becomes a student and finishes phone, grade and guardian details first.
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET ? [Google] : []),
+    // Same rule for Microsoft (personal, school and work accounts). It may create an account but never opens an existing one.
+    ...(process.env.AUTH_MICROSOFT_ENTRA_ID_ID && process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET ? [MicrosoftEntraID] : []),
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider !== "google") return true;
+      const google = account?.provider === "google";
+      if (!google && account?.provider !== "microsoft-entra-id") return true;
       // Linking by email is only safe when Google vouches for the address.
-      if (profile?.email_verified !== true) return false;
-      const email = user.email?.trim().toLowerCase();
-      if (!email) return false;
+      if (google && profile?.email_verified !== true) return false;
+      const email = (user.email ?? (profile as { preferred_username?: string } | undefined)?.preferred_username)?.trim().toLowerCase();
+      if (!email?.includes("@")) return false;
       const existing = await db.user.findUnique({
         where: { email },
         select: { id: true, role: true, deletedAt: true, emailVerifiedAt: true, passwordChangedAt: true },
       });
       if (existing) {
         if (existing.deletedAt) return false;
+        // Microsoft does not vouch for the address the way Google does (a work tenant can claim any email), so it never opens an account that already exists.
+        if (!google) return false;
         // Staff keep password sign-in only: a Google account must never open an admin or teacher account.
         if (existing.role !== "STUDENT" && existing.role !== "PARENT") return false;
         user.id = existing.id;
@@ -102,18 +108,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       // A first Google sign-in creates the row. The random password keeps credentials login closed
       // until the student chooses a password, and the profile page fills phone, grade and consent.
+      // The language of the page the visitor was on, else the one their browser gave Google, else Arabic.
+      const page = (await cookies()).get("NEXT_LOCALE")?.value;
+      const locale = page === "en" || page === "ar" ? page : String((profile as { locale?: string } | undefined)?.locale ?? "").startsWith("en") ? "en" : "ar";
       const created = await db.user.upsert({
         where: { email },
         create: {
           name: user.name?.trim() || email.split("@")[0] || "Student",
           email,
           role: "STUDENT",
-          locale: "ar",
+          locale,
           passwordHash: await bcrypt.hash(randomUUID(), BCRYPT_COST),
-          emailVerifiedAt: new Date(),
+          emailVerifiedAt: google ? new Date() : null,
         },
         update: {},
       });
+      await logEvent({ name: "signup_completed", userId: created.id, props: { role: "STUDENT", method: google ? "google" : "microsoft" } });
       user.id = created.id;
       user.role = created.role;
       user.pwdAt = created.passwordChangedAt?.getTime() ?? 0;

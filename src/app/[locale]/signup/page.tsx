@@ -1,6 +1,7 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
+import { SocialButtons } from "@/components/auth/SocialButtons";
 import { Link } from "@/i18n/navigation";
 import { logEventLater } from "@/lib/analytics";
 import { gradeGroups } from "@/lib/catalog";
@@ -30,6 +31,7 @@ export default async function SignUpPage({
   return (
     <AuthShell>
       <h1 className="font-display text-h1 font-semibold">{t("title")}</h1>
+      <SocialButtons locale={locale} next={next} />
       <SignUpForm groups={groups} locale={locale} next={next ?? ""} parent={type === "PARENT"} />
       <p className="text-small text-ink-muted">
         {t("haveAccount")}{" "}

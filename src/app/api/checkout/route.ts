@@ -7,6 +7,7 @@ import { resolveBeneficiary } from "@/lib/checkout-beneficiary";
 import { CONSENT_VERSION } from "@/lib/live-rules";
 import { resolveDiscount } from "@/lib/referral";
 import { db } from "@/lib/db";
+import { findUserByPhone } from "@/lib/user-phone";
 import { taxConfigFor, vatFor } from "@/lib/tax";
 import { activeGateway, stripeTestKeyInProduction, stripeUnitAmount, type Method } from "@/lib/gateway";
 import { createIntention } from "@/lib/paymob";
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
       });
       linkedStudentIds = link ? [link.studentId] : [];
     } else if (forStudentPhone) {
-      const student = await db.user.findUnique({ where: { phone: forStudentPhone }, select: { id: true, role: true } });
+      const student = await findUserByPhone(forStudentPhone);
       studentIdByPhone = student?.role === "STUDENT" ? student.id : null;
     }
   }

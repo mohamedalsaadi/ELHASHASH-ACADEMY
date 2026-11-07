@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { test, expect, signInAs } from "./fixtures";
 import { sql } from "./db";
 import { PRIVACY_VERSION } from "../src/lib/legal";
 
@@ -56,15 +56,29 @@ test("an under-18 student gets an unverified consent record with the guardian em
   // The terms tick is recorded with the account.
   const accepted = await sql<{ termsAcceptedAt: string | null }>(`SELECT "termsAcceptedAt" FROM "User" WHERE phone = $1`, [phone]);
   expect(accepted[0].termsAcceptedAt).not.toBeNull();
+
+  // The account is stored as +971…, and the student can still sign in with the local number they know.
+  await page.context().clearCookies();
+  await signInAs(page, loc, `0${phone.slice(4)}`, "e2e-pass-1234");
+  await expect(page).not.toHaveURL(/signin/);
 });
 
 test("mandatory signup fields carry a red star and the phone has a country-code list", async ({ page, loc }) => {
   await page.goto(`/${loc}/signup`);
-  const form = page.locator('form:has(input[name="guardianName"])');
+  const form = page.locator('form:has(input[name="acceptTerms"])');
   await expect(form.locator('select[aria-label] option[value="966"]')).toHaveCount(1);
   // Every required control is announced by the browser as required; the star is its visible twin.
   const required = await form.locator("[required]").count();
   await expect(form.locator('span[aria-hidden="true"].text-down')).toHaveCount(required);
+});
+
+test("the guardian fields appear only for a student under 18", async ({ page, loc }) => {
+  await page.goto(`/${loc}/signup`);
+  await expect(page.locator('input[name="guardianName"]')).toHaveCount(0);
+  await page.fill('input[name="dateOfBirth"]', "1990-01-01");
+  await expect(page.locator('input[name="guardianName"]')).toHaveCount(0);
+  await page.fill('input[name="dateOfBirth"]', "2012-01-01");
+  await expect(page.locator('input[name="guardianName"]')).toHaveCount(1);
 });
 
 test("the server refuses an account when the terms are not accepted", async ({ page, loc }) => {

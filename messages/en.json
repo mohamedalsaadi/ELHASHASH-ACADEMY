@@ -193,8 +193,9 @@
     "resetDone": "Your password was changed. Sign in.",
     "submitting": "Signing in…",
     "google": "Continue with Google",
+    "microsoft": "Continue with Microsoft",
     "or": "or",
-    "googleFailed": "Google sign-in did not complete. Try again, or sign in with your phone and password."
+    "googleFailed": "That sign-in did not complete. If this email already has a Dhirwa account, sign in with its password. Otherwise try again."
   },
   "checkout": {
     "title": "Complete your purchase",

@@ -6,6 +6,7 @@ import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { findUserByPhone } from "@/lib/user-phone";
 import { CONSENT_VERSION } from "@/lib/live-rules";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { phoneSchema } from "@/lib/schemas/auth";
@@ -39,7 +40,7 @@ export async function linkChild(_: unknown, form: FormData): Promise<"ok" | "not
     return "bad_code";
   }
 
-  const student = await db.user.findUnique({ where: { phone: d.data.phone }, select: { id: true, role: true } });
+  const student = await findUserByPhone(d.data.phone);
   if (!student || student.role !== "STUDENT") {
     await recordAttempt(key);
     return "not_found";

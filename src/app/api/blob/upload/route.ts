@@ -11,6 +11,7 @@ import {
   avatarPrefix,
   coverPrefix,
   homeworkPrefix,
+  lessonPagesPrefix,
   submissionPrefix,
 } from "@/lib/blob";
 import { db } from "@/lib/db";
@@ -21,6 +22,7 @@ const Purpose = z.union([
   z.object({ purpose: z.literal("assignment"), courseId: z.string().min(1) }),
   z.object({ purpose: z.literal("submission"), assignmentId: z.string().min(1) }),
   z.object({ purpose: z.literal("cover"), courseId: z.string().min(1) }),
+  z.object({ purpose: z.literal("lessonpage"), courseId: z.string().min(1) }),
   z.object({ purpose: z.literal("avatar"), userId: z.string().min(1) }),
 ]);
 
@@ -36,8 +38,8 @@ export async function POST(request: Request) {
         if (!session?.user) throw new Error("Sign in first");
         const me = { id: session.user.id, role: session.user.role };
         // Each token allows a 20 MB file: without a cap one account can fill the store.
-        if (await isLimited(`upload:${me.id}`, 50, 86_400_000)) throw new Error("Too many uploads today");
         const payload = Purpose.parse(JSON.parse(clientPayload ?? "{}"));
+        if (payload.purpose !== "lessonpage" && (await isLimited(`upload:${me.id}`, 50, 86_400_000))) throw new Error("Too many uploads today");
 
         let allowedContentTypes = ALLOWED_CONTENT_TYPES;
         let maximumSizeInBytes = MAX_FILE_BYTES;
@@ -55,6 +57,12 @@ export async function POST(request: Request) {
           const grants = await grantsFor(me.id, assignment.courseId);
           if (!opensAssignment(assignment, grants, new Date())) throw new Error("This assignment is not open to you");
           if (!pathname.startsWith(submissionPrefix(assignment.id, me.id))) throw new Error("Unexpected path");
+        } else if (payload.purpose === "lessonpage") {
+          if (!(await isCourseStaffDb(session.user.id, payload.courseId))) throw new Error("Not your course");
+          if (!pathname.startsWith(lessonPagesPrefix(payload.courseId))) throw new Error("Unexpected path");
+          allowedContentTypes = ["image/jpeg"];
+          maximumSizeInBytes = MAX_IMAGE_BYTES;
+          // A lesson can be 150 pages, so the daily upload cap above would stop it halfway.
         } else if (payload.purpose === "cover") {
           if (!(await isCourseStaffDb(session.user.id, payload.courseId))) throw new Error("Not your course");
           if (!pathname.startsWith(coverPrefix(payload.courseId))) throw new Error("Unexpected path");

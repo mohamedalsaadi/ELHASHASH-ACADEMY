@@ -344,6 +344,8 @@ model Lesson {
   videoId      String?
   /// Storage key of the PDF; served only through short-lived signed URLs.
   pdfKey       String?
+  /// Private Blob pathnames of the lesson's PDF pages, one JPEG each, in reading order. Students only ever receive these images.
+  pdfPages     String[]   @default([])
   /// Who recorded the video; null means the course's instructor.
   instructorId String?
   /// Month of the school year (1 = first month) the lecture belongs to; a MONTHLY plan opens its month's lectures.

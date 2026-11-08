@@ -1082,3 +1082,16 @@ Committed; not deployed.
 - Not run against a real VdoCipher account: the secret key must be in Vercel first. Upload and the `ended` event are untested live.
 - The 15-minute "still watching" window is still a guess; the player now has events that could replace it.
 - Not committed or deployed. Grades 10 to 12 Advanced rows still have to be created in admin.
+
+## 2026-11-09: PDF lessons shown as page images
+
+- A PDF lesson has `Lesson.pdfPages` (private Blob pathnames, one JPEG per page). The teacher picks a PDF in the lesson editor
+  (lesson kind must be PDF and saved first); their browser renders each page with pdfjs-dist at 1400 px and uploads it
+  (`purpose: "lessonpage"` in `/api/blob/upload`, no daily cap for these). The teacher presses Save.
+- Students get only the images, through `/api/lesson-pages/<lessonId>/<n>`, which checks the same access as the lesson page and
+  sends `no-store`. `PdfPages` has no download button, no selection or context menu, hides when printing, and overlays name · phone.
+- Copying a unit copies the page list. Migration `20261113100000_lesson_pdf_pages` is additive.
+
+**Open**
+- Not tried with a real PDF in a browser or against the live store. Screenshots and developer tools can still save a page.
+- Existing PDF lessons have no pages until a teacher uploads them.

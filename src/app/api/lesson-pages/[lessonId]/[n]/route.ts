@@ -1,0 +1,29 @@
+import { auth } from "@/auth";
+import { grantsFor, learnerFor, lessonScope } from "@/lib/catalog";
+import { streamBlob } from "@/lib/blob";
+import { db } from "@/lib/db";
+import { opensLesson } from "@/lib/plans";
+import { isCourseStaffDb } from "@/lib/staff";
+
+export const dynamic = "force-dynamic";
+
+/** One page image of a lesson PDF. Only people who may open the lesson get it, and nothing is cached or offered as a download. */
+export async function GET(_: Request, { params }: { params: Promise<{ lessonId: string; n: string }> }) {
+  const { lessonId, n } = await params;
+  const session = await auth();
+  if (!session?.user) return new Response(null, { status: 404 });
+  const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { unit: true } });
+  const path = lesson?.pdfPages[Number(n)];
+  if (!lesson || !path) return new Response(null, { status: 404 });
+
+  const courseId = lesson.unit.courseId;
+  const now = new Date();
+  let allowed = lesson.unit.isFree || (await isCourseStaffDb(session.user.id, courseId));
+  if (!allowed) {
+    const learnerId = await learnerFor(session.user, courseId, now);
+    const scope = lessonScope(lesson);
+    allowed = (await grantsFor(learnerId, courseId, now)).some((g) => opensLesson(g, scope, now));
+  }
+  if (!allowed) return new Response(null, { status: 404 });
+  return streamBlob(path, "image/jpeg", "private, no-store");
+}

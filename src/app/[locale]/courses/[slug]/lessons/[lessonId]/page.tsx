@@ -21,6 +21,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { AskForm } from "./AskForm";
+import { PdfPages } from "@/components/learning/PdfPages";
 import { VdoFrame } from "@/components/learning/VdoFrame";
 import { completeFromPlayer, markLessonComplete, setConfidence } from "./actions";
 
@@ -203,6 +204,8 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const onward = nextOpenLesson(entries, active, completed, now, lesson.id);
 
   const video = lesson.video;
+  const viewer = userId && lesson.kind === "PDF" ? await db.user.findUnique({ where: { id: userId }, select: { name: true, phone: true } }) : null;
+  const pdfMark = [viewer?.name, viewer?.phone].filter(Boolean).join(" · ");
   const title = pick(ar, lesson.titleAr, lesson.titleEn);
   const courseTitle = pick(ar, outline.titleAr, outline.titleEn);
   const courseHref = `/courses/${slug}`;
@@ -226,7 +229,11 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
 
         <div className="aspect-video overflow-hidden card">
           {lesson.kind === "PDF" ? (
-            <Notice>{tp("pdfUnavailable")}</Notice>
+            lesson.pdfPages.length > 0 ? (
+              <PdfPages lessonId={lesson.id} count={lesson.pdfPages.length} mark={pdfMark} title={title} />
+            ) : (
+              <Notice>{tp("pdfUnavailable")}</Notice>
+            )
           ) : video?.provider === "YOUTUBE" ? (
             <iframe
               src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.externalId)}?rel=0`}

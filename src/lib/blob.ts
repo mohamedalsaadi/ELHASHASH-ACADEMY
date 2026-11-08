@@ -20,6 +20,7 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 /** Path prefixes: an assignment file lives under its course, a submission under its assignment and student. */
 export const homeworkPrefix = (courseId: string) => `homework/${courseId}/`;
 export const submissionPrefix = (assignmentId: string, studentId: string) => `submissions/${assignmentId}/${studentId}/`;
+export const lessonPagesPrefix = (courseId: string) => `lesson-pages/${courseId}/`;
 export const coverPrefix = (courseId: string) => `covers/${courseId}/`;
 export const avatarPrefix = (userId: string) => `avatars/${userId}/`;
 

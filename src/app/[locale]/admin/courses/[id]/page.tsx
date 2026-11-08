@@ -2,6 +2,7 @@ import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ImageUpload } from "@/components/ImageUpload";
+import { PdfUpload } from "@/components/admin/PdfUpload";
 import { VdoUpload } from "@/components/admin/VdoUpload";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
@@ -239,6 +240,13 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     <input name="externalId" defaultValue={l.video?.externalId ?? ""} dir="ltr" className={field} />
                   </label>
                 </div>
+                {l.kind === "PDF" && (
+                  <PdfUpload
+                    courseId={course.id}
+                    defaultPages={l.pdfPages}
+                    labels={{ pick: t("pdfPick"), sending: t("pdfSending"), done: t("pdfDone"), failed: t("pdfFailed"), pages: t("pdfPages") }}
+                  />
+                )}
                 <VdoUpload title={`${course.titleEn} · ${l.titleEn}`} labels={{ pick: t("uploadPick"), sending: t("uploading"), done: t("uploadDone"), failed: t("uploadFailed") }} />
                 <label className={label}>
                   {t("lessonMonth")}

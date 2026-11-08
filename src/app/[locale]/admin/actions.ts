@@ -9,7 +9,7 @@ import { randomUUID } from "node:crypto";
 import { accessEnd } from "@/lib/access";
 import { logEvent } from "@/lib/analytics";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
-import { blobInfo, coverPrefix } from "@/lib/blob";
+import { blobInfo, coverPrefix, lessonPagesPrefix } from "@/lib/blob";
 import type { FinanceConfig } from "@/lib/finance";
 import { saveFinanceConfig } from "@/lib/platform-settings";
 import { refundIntent } from "@/lib/ziina";
@@ -129,7 +129,7 @@ export async function copyUnit(form: FormData) {
       titleEn: src.titleEn,
       term: src.term,
       lessons: {
-        create: src.lessons.map((l) => ({ order: l.order, kind: l.kind, titleAr: l.titleAr, titleEn: l.titleEn, videoId: l.videoId, pdfKey: l.pdfKey, instructorId: l.instructorId, month: l.month })),
+        create: src.lessons.map((l) => ({ order: l.order, kind: l.kind, titleAr: l.titleAr, titleEn: l.titleEn, videoId: l.videoId, pdfKey: l.pdfKey, pdfPages: l.pdfPages, instructorId: l.instructorId, month: l.month })),
       },
     },
   });
@@ -178,9 +178,13 @@ export async function updateLesson(form: FormData) {
       externalId: z.string().trim().max(200),
       instructorId: z.string().optional(),
       month,
+      pdfPages: z.string().max(60_000).default("[]"),
     })
     .parse(Object.fromEntries(form));
-  await assertCourse(me, await lessonCourse(d.id));
+  const courseId = await lessonCourse(d.id);
+  await assertCourse(me, courseId);
+  // The page list comes from the browser: keep only this course's own page objects.
+  const pdfPages = z.array(z.string()).max(400).catch([]).parse(JSON.parse(d.pdfPages || "[]")).filter((p) => p.startsWith(lessonPagesPrefix(courseId)));
   // The admin picks who recorded it ("" = the course's teacher); a teacher editing a lesson becomes its instructor.
   const instructorId = me.role !== "ADMIN" ? me.id : d.instructorId ? await teacherId.parseAsync(d.instructorId) : null;
 
@@ -195,7 +199,7 @@ export async function updateLesson(form: FormData) {
     });
     videoId = video.id;
   }
-  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId, month: d.month } });
+  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId, month: d.month, pdfPages } });
   done();
 }
 

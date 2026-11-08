@@ -19,7 +19,7 @@ async function main() {
   });
   const eg12 = await db.grade.findFirstOrThrow({ where: { countryId: eg.id, level: 12 } });
   const ae12 = await db.grade.upsert({
-    where: { countryId_curriculum_level: { countryId: ae.id, curriculum: "MOE", level: 12 } },
+    where: { countryId_curriculum_level_track: { countryId: ae.id, curriculum: "MOE", level: 12, track: "GENERAL" } },
     update: {},
     create: { countryId: ae.id, curriculum: "MOE", level: 12, nameAr: "الصف الثاني عشر", nameEn: "Grade 12", isTerminal: true },
   });

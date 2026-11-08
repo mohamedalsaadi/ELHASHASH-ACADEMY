@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { teacherStats } from "@/lib/teachers";
-import { addTeacherSlot, disableTeacher, removeTeacherSlot, setTeacherLive } from "../../actions";
+import { addTeacherSlot, disableTeacher, removeTeacherSlot, setTeacherDiscountCap, setTeacherLive } from "../../actions";
 import { AdminNav, panel, stat } from "../../AdminNav";
 import { field, label } from "../../styles";
 import { DeleteButton, ResetPasswordForm, SaveButton } from "../../ui";
@@ -35,6 +35,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
       email: true,
       role: true,
       liveApproved: true,
+      maxDiscountPct: true,
       courses: { orderBy: { slug: "asc" }, select: { id: true, titleAr: true, titleEn: true, published: true } },
       teacherSlots: {
         orderBy: { createdAt: "asc" },
@@ -141,6 +142,19 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="live" value={x.liveApproved ? "off" : "on"} />
               <SaveButton>{x.liveApproved ? t("liveTurnOff") : t("liveTurnOn")}</SaveButton>
+            </form>
+          </section>
+          <section className={panel}>
+            <h2 className="font-display text-h3 font-semibold">{t("discountCap")}</h2>
+            <p className="text-small text-ink-muted">{t("discountCapHint")}</p>
+            <form action={setTeacherDiscountCap} className="flex flex-wrap items-end gap-3">
+              <input type="hidden" name="id" value={x.id} />
+              <input type="hidden" name="locale" value={locale} />
+              <label className="grid gap-1 text-small font-medium">
+                {t("discountCapLabel")}
+                <input name="pct" type="number" min="0" max="100" step="1" defaultValue={x.maxDiscountPct} dir="ltr" className="num w-28 rounded-md border border-hairline bg-surface px-3 py-2" />
+              </label>
+              <SaveButton />
             </form>
           </section>
           <section className={panel}>

@@ -24,13 +24,13 @@ async function main() {
   ];
   for (const g of grades) {
     await db.grade.upsert({
-      where: { countryId_curriculum_level: { countryId: eg.id, curriculum: "NATIONAL_EG", level: g.level } },
+      where: { countryId_curriculum_level_track: { countryId: eg.id, curriculum: "NATIONAL_EG", level: g.level, track: "GENERAL" } },
       update: {},
       create: { ...g, countryId: eg.id, curriculum: "NATIONAL_EG", isTerminal: g.level === 12 },
     });
   }
   const g12 = await db.grade.findUniqueOrThrow({
-    where: { countryId_curriculum_level: { countryId: eg.id, curriculum: "NATIONAL_EG", level: 12 } },
+    where: { countryId_curriculum_level_track: { countryId: eg.id, curriculum: "NATIONAL_EG", level: 12, track: "GENERAL" } },
   });
 
   const subjects = [

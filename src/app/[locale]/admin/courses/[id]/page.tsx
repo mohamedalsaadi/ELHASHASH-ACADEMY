@@ -2,6 +2,7 @@ import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ImageUpload } from "@/components/ImageUpload";
+import { VdoUpload } from "@/components/admin/VdoUpload";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { pick } from "@/lib/content";
@@ -9,7 +10,7 @@ import { db } from "@/lib/db";
 import { minorPerUnit } from "@/lib/format";
 import { lecturesIn } from "@/lib/plans";
 import { assertCourse, requireStaff } from "@/lib/staff";
-import { addLesson, addRental, addSku, addUnit, deleteCourse, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
+import { addLesson, addRental, addSku, addUnit, copyUnit, deleteCourse, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
 import { field, label } from "../../styles";
 import { DeleteButton, PlanPrice, SaveButton } from "../../ui";
 
@@ -42,6 +43,13 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   });
   if (!course) notFound();
   const zone = course.grade?.country.timeZone ?? "Asia/Dubai";
+  // Where a topic can be copied to: the other courses this person may edit.
+  const otherCourses = await db.course.findMany({
+    where: { id: { not: id }, ...(isAdmin ? {} : { instructorId: me.id }) },
+    orderBy: [{ gradeId: "asc" }, { titleEn: "asc" }],
+    select: { id: true, titleAr: true, titleEn: true },
+    take: 200,
+  });
   const teachers = isAdmin
     ? await db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } })
     : [];
@@ -114,7 +122,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <input type="checkbox" name="aiGrading" defaultChecked={course.aiGrading} className="size-4" />
           {t("aiGradingHint")}
         </label>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <label className={label}>
             {t("maxPlays")}
             <input name="maxPlays" type="number" min="1" max="1000" step="1" defaultValue={course.maxPlays ?? ""} dir="ltr" className={`${field} num`} />
@@ -122,6 +130,10 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <label className={label}>
             {t("maxIps")}
             <input name="maxIps" type="number" min="1" max="50" step="1" defaultValue={course.maxIps ?? ""} dir="ltr" className={`${field} num`} />
+          </label>
+          <label className={label}>
+            {t("maxDevices")}
+            <input name="maxDevices" type="number" min="1" max="20" step="1" defaultValue={course.maxDevices ?? ""} dir="ltr" className={`${field} num`} />
           </label>
         </div>
         <p className="text-label text-ink-muted">{t("limitsHint")}</p>
@@ -173,6 +185,22 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
               </label>
               <SaveButton />
             </form>
+            {otherCourses.length > 0 && (
+              <form action={copyUnit} className="flex flex-wrap items-end gap-2">
+                <input type="hidden" name="unitId" value={u.id} />
+                <label className={label}>
+                  {t("copyUnitTo")}
+                  <select name="courseId" className={field}>
+                    {otherCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {pick(locale === "ar", c.titleAr, c.titleEn)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <SaveButton>{t("copyUnit")}</SaveButton>
+              </form>
+            )}
 
             {u.lessons.map((l) => (
               <form key={`${l.id}:${renderedAt}`} action={updateLesson} className={tile}>
@@ -211,6 +239,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     <input name="externalId" defaultValue={l.video?.externalId ?? ""} dir="ltr" className={field} />
                   </label>
                 </div>
+                <VdoUpload title={`${course.titleEn} · ${l.titleEn}`} labels={{ pick: t("uploadPick"), sending: t("uploading"), done: t("uploadDone"), failed: t("uploadFailed") }} />
                 <label className={label}>
                   {t("lessonMonth")}
                   <select name="month" defaultValue={l.month ?? ""} className={field}>

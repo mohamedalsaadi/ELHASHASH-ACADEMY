@@ -37,6 +37,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
       id: true,
       title: true,
       instructions: true,
+      linkUrl: true,
       dueAt: true,
       maxScore: true,
       allowResubmit: true,
@@ -97,6 +98,12 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
         <p dir="auto" className="text-ink-muted whitespace-pre-line break-words">
           {assignment.instructions}
         </p>
+      )}
+
+      {assignment.linkUrl && (
+        <a href={assignment.linkUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-fit">
+          {t("openLink")}
+        </a>
       )}
 
       <Block title={t("files")}>

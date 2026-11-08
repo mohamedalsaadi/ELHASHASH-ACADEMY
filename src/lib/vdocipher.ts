@@ -25,6 +25,24 @@ export async function getPlayback(videoId: string, watermark: string): Promise<P
   return res.json();
 }
 
+export type UploadTicket = { videoId: string; uploadLink: string; fields: Record<string, string> };
+
+/** Opens an upload slot on the academy's one VdoCipher account; the browser then sends the file straight to the returned link. */
+export async function createUpload(title: string): Promise<UploadTicket> {
+  const secret = process.env.VDOCIPHER_API_SECRET;
+  if (!secret) throw new Error("VDOCIPHER_API_SECRET is not set");
+  const res = await fetch(`https://dev.vdocipher.com/api/videos?title=${encodeURIComponent(title.slice(0, 120))}`, {
+    method: "PUT",
+    headers: { Authorization: `Apisecret ${secret}`, Accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`VdoCipher upload slot failed: ${res.status}`);
+  const { clientPayload, videoId } = (await res.json()) as { clientPayload: Record<string, string>; videoId: string };
+  const { uploadLink, ...fields } = clientPayload;
+  return { videoId, uploadLink, fields };
+}
+
 export function playerUrl({ otp, playbackInfo }: Playback) {
   return `https://player.vdocipher.com/v2/?otp=${encodeURIComponent(otp)}&playbackInfo=${encodeURIComponent(playbackInfo)}`;
 }

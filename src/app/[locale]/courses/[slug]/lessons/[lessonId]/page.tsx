@@ -3,7 +3,7 @@ import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { auth } from "@/auth";
 import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { LessonRow } from "@/components/learning/LessonRow";
@@ -11,21 +11,23 @@ import { Link } from "@/i18n/navigation";
 import { logEventLater } from "@/lib/analytics";
 import { canAsk, grantsFor, isCourseStaff, learnerFor, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { DEVICE_COOKIE } from "@/lib/device";
 import { courseZone, formatDate } from "@/lib/format";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
 import { neighbours, nextOpenLesson, orderedLessons } from "@/lib/learning";
 import { opensLesson } from "@/lib/plans";
-import { IP_WINDOW_MS, judgePlay, REPLAY_WINDOW_MS } from "@/lib/play-limits";
+import { DEVICE_WINDOW_MS, IP_WINDOW_MS, judgePlay, REPLAY_WINDOW_MS } from "@/lib/play-limits";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { AskForm } from "./AskForm";
-import { markLessonComplete, setConfidence } from "./actions";
+import { VdoFrame } from "@/components/learning/VdoFrame";
+import { completeFromPlayer, markLessonComplete, setConfidence } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 /** DRM player: signed-in only, one device per account, watermark with name · phone · IP. */
-type Limits = { lessonId: string; learnerId: string; maxPlays: number | null; maxIps: number | null };
+type Limits = { lessonId: string; learnerId: string; maxPlays: number | null; maxIps: number | null; maxDevices: number | null };
 
 async function SecurePlayer({ videoId, title, path, limits }: { videoId: string; title: string; path: string; limits: Limits | null }) {
   const t = await getTranslations("player");
@@ -50,20 +52,28 @@ async function SecurePlayer({ videoId, title, path, limits }: { videoId: string;
   if (limits) {
     const now = Date.now();
     const country = (await headers()).get("x-vercel-ip-country")?.slice(0, 2).toUpperCase() || null;
-    const [lessonPlays, recent] = await Promise.all([
+    const deviceId = (await cookies()).get(DEVICE_COOKIE)?.value ?? null;
+    const [lessonPlays, recent, devices] = await Promise.all([
       db.playEvent.count({ where: { learnerId: limits.learnerId, lessonId: limits.lessonId } }),
       db.playEvent.findMany({
         where: { learnerId: limits.learnerId, at: { gt: new Date(now - IP_WINDOW_MS) } },
         select: { userId: true, lessonId: true, ip: true, country: true, at: true },
       }),
+      limits.maxDevices == null
+        ? []
+        : db.playEvent.findMany({
+            where: { learnerId: limits.learnerId, deviceId: { not: null }, at: { gt: new Date(now - DEVICE_WINDOW_MS) } },
+            distinct: ["deviceId"],
+            select: { deviceId: true },
+          }),
     ]);
     const events = recent.map((e) => ({ ...e, at: e.at.getTime() }));
-    const verdict = judgePlay({ now, viewerId: userId, lessonId: limits.lessonId, ip, country, events, lessonPlays, maxPlays: limits.maxPlays, maxIps: limits.maxIps });
+    const verdict = judgePlay({ now, viewerId: userId, lessonId: limits.lessonId, ip, country, events, lessonPlays, maxPlays: limits.maxPlays, maxIps: limits.maxIps, deviceId, knownDevices: devices.map((d) => d.deviceId!), maxDevices: limits.maxDevices });
     if (verdict === "plays") return <Notice>{t("playsUsed", { count: limits.maxPlays ?? 0 })}</Notice>;
     if (verdict !== "ok") return <Notice>{t(verdict)}</Notice>;
     // A refresh is the same play: only a play that is not a repeat is stored.
     const repeat = events.some((e) => e.userId === userId && e.lessonId === limits.lessonId && e.ip === ip && now - e.at < REPLAY_WINDOW_MS);
-    if (!repeat) await db.playEvent.create({ data: { userId, learnerId: limits.learnerId, lessonId: limits.lessonId, ip, country } });
+    if (!repeat) await db.playEvent.create({ data: { userId, learnerId: limits.learnerId, lessonId: limits.lessonId, ip, country, deviceId } });
   }
 
   const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, phone: true } });
@@ -74,7 +84,8 @@ async function SecurePlayer({ videoId, title, path, limits }: { videoId: string;
     console.error(e);
     return <Notice>{t("unavailable")}</Notice>;
   }
-  return <iframe src={src} title={title} allow="encrypted-media; fullscreen" allowFullScreen className="size-full" />;
+  // A student finishing the video completes the lesson; staff previews do not touch progress.
+  return <VdoFrame src={src} title={title} onEnded={limits ? completeFromPlayer.bind(null, limits.lessonId) : undefined} />;
 }
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -228,7 +239,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
               videoId={video.externalId}
               title={title}
               path={`/${locale}/courses/${slug}/lessons/${lesson.id}`}
-              limits={staff || !learnerId ? null : { lessonId: lesson.id, learnerId, maxPlays: course.maxPlays, maxIps: course.maxIps }}
+              limits={staff || !learnerId ? null : { lessonId: lesson.id, learnerId, maxPlays: course.maxPlays, maxIps: course.maxIps, maxDevices: course.maxDevices }}
             />
           ) : (
             <Notice>{tc("videoSoon")}</Notice>
@@ -249,6 +260,8 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
                   <span className="text-small text-ink-muted">{tp("lastLesson")}</span>
                 )}
               </>
+            ) : video?.provider === "VDOCIPHER" ? (
+              <span className="text-small text-ink-muted">{tp("autoComplete")}</span>
             ) : (
               <SubmitButton className="btn btn-outline w-fit px-4 py-2 text-small">{tp("markComplete")}</SubmitButton>
             )}

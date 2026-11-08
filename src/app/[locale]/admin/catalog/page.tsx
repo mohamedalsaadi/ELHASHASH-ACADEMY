@@ -182,6 +182,16 @@ export default async function CatalogPage({
         <input name="level" type="number" min="1" max="12" step="1" defaultValue={g?.level ?? 1} required dir="ltr" className={`${field} num`} />
       </label>
       <label className={label}>
+        {t("track")}
+        <select name="track" defaultValue={g?.track ?? "GENERAL"} className={field}>
+          {(["GENERAL", "ADVANCED"] as const).map((x) => (
+            <option key={x} value={x}>
+              {t(`tracks.${x}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={label}>
         {t("titleAr")}
         <input name="nameAr" defaultValue={g?.nameAr ?? ""} required maxLength={80} dir="rtl" className={field} />
       </label>

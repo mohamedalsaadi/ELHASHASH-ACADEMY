@@ -27,6 +27,8 @@ import { countryInput, gradeInput, rangesOverlap, stageInput, subjectInput } fro
 import { BCRYPT_COST, PASSWORD_MIN, passwordSchema, phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, assertSlot, requireAdmin, requireStaff } from "@/lib/staff";
 import { stripe } from "@/lib/stripe";
+import { notifyNewCourse } from "@/lib/new-course-alerts";
+import { discountAllowed } from "@/lib/discount-cap";
 
 // Every action re-checks the role: server actions are public endpoints, whatever page renders them.
 
@@ -72,6 +74,7 @@ export async function updateCourse(form: FormData) {
       aiGrading: checkbox,
       maxPlays: z.coerce.number().int().min(1).max(1000).optional().catch(undefined),
       maxIps: z.coerce.number().int().min(1).max(50).optional().catch(undefined),
+      maxDevices: z.coerce.number().int().min(1).max(20).optional().catch(undefined),
       coverKey: z.string().trim().max(500).default(""),
     })
     .parse(Object.fromEntries(form));
@@ -89,8 +92,11 @@ export async function updateCourse(form: FormData) {
   }
 
   // An empty box clears the limit (maxPlays: unlimited, maxIps: IP check off).
-  await db.course.update({ where: { id }, data: { ...data, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, ...cover } });
-  if (data.published && wasHidden) await logEvent({ name: "course_published", userId: me.id, courseId: id });
+  await db.course.update({ where: { id }, data: { ...data, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, maxDevices: data.maxDevices ?? null, ...cover } });
+  if (data.published && wasHidden) {
+    await logEvent({ name: "course_published", userId: me.id, courseId: id });
+    await notifyNewCourse(id);
+  }
   done();
 }
 
@@ -101,6 +107,32 @@ export async function updateUnit(form: FormData) {
     .parse(Object.fromEntries(form));
   await assertCourse(me, await unitCourse(id));
   await db.unit.update({ where: { id }, data });
+  done();
+}
+
+/**
+ * Shares a topic between two courses (General and Advanced tracks): the unit and its lessons are copied to the end of
+ * the other course and point at the same video, so nothing is uploaded twice. Homework, questions and exams are not copied.
+ */
+export async function copyUnit(form: FormData) {
+  const me = await requireStaff();
+  const { unitId, courseId } = z.object({ unitId: z.string(), courseId: z.string() }).parse(Object.fromEntries(form));
+  await assertCourse(me, await unitCourse(unitId));
+  await assertCourse(me, courseId);
+  const src = await db.unit.findUniqueOrThrow({ where: { id: unitId }, include: { lessons: { orderBy: { order: "asc" } } } });
+  const last = await db.unit.findFirst({ where: { courseId }, orderBy: { order: "desc" } });
+  await db.unit.create({
+    data: {
+      courseId,
+      order: (last?.order ?? 0) + 1,
+      titleAr: src.titleAr,
+      titleEn: src.titleEn,
+      term: src.term,
+      lessons: {
+        create: src.lessons.map((l) => ({ order: l.order, kind: l.kind, titleAr: l.titleAr, titleEn: l.titleEn, videoId: l.videoId, pdfKey: l.pdfKey, instructorId: l.instructorId, month: l.month })),
+      },
+    },
+  });
   done();
 }
 
@@ -205,6 +237,11 @@ export async function updateSku(form: FormData) {
   const { currency } = sku;
   const { timeZone } = await courseLocation(sku.courseId);
   const localPrice = toMinor(d.price, currency);
+  // A teacher may discount only up to the percentage the owner granted them (10 unless raised); the owner is not capped.
+  if (me.role !== "ADMIN" && d.discountPrice !== null) {
+    const cap = (await db.user.findUniqueOrThrow({ where: { id: me.id }, select: { maxDiscountPct: true } })).maxDiscountPct;
+    if (!discountAllowed(localPrice, toMinor(d.discountPrice, currency), cap)) throw new Error(`Discount is above your ${cap}% limit`);
+  }
   // An explicit AED price wins. With an empty AED price and "use rate", compute it from the saved
   // rate; if no rate is saved, keep the existing AED price rather than clearing it silently.
   let aedPrice: number | null | undefined;
@@ -800,6 +837,7 @@ export async function saveGrade(form: FormData) {
     countryId: d.countryId,
     curriculum: d.curriculum,
     level: d.level,
+    track: d.track,
     nameAr: d.nameAr,
     nameEn: d.nameEn,
     isTerminal: d.isTerminal,
@@ -920,6 +958,15 @@ export async function disableTeacher(form: FormData) {
   await db.user.updateMany({ where: { id, role: "INSTRUCTOR" }, data: { role: "STUDENT" } });
   done();
   redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/teachers`);
+}
+
+/** The owner decides how big a discount each teacher may give (default 10%). */
+export async function setTeacherDiscountCap(form: FormData) {
+  await requireAdmin();
+  const { id, pct } = z.object({ id: z.string(), pct: z.coerce.number().int().min(0).max(100) }).parse(Object.fromEntries(form));
+  await db.user.updateMany({ where: { id, role: "INSTRUCTOR" }, data: { maxDiscountPct: pct } });
+  done();
+  redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/teachers/${id}`);
 }
 
 /**

@@ -31,3 +31,16 @@ describe("judgePlay", () => {
   it("ignores an unknown country", () =>
     expect(judgePlay({ ...base, viewerId: "mum", country: null, events: [ev({ at: now - 60 * MIN })] })).toBe("ok"));
 });
+
+describe("device cap", () => {
+  const base = { now: 1_000_000, viewerId: "u", lessonId: "l", ip: "1", country: null, events: [], lessonPlays: 0, maxPlays: null, maxIps: null };
+  it("blocks a new browser once the cap is reached", () => {
+    expect(judgePlay({ ...base, deviceId: "c", knownDevices: ["a", "b"], maxDevices: 2 })).toBe("devices");
+  });
+  it("lets a known browser, a free slot, a missing cookie, or no cap through", () => {
+    expect(judgePlay({ ...base, deviceId: "a", knownDevices: ["a", "b"], maxDevices: 2 })).toBe("ok");
+    expect(judgePlay({ ...base, deviceId: "c", knownDevices: ["a"], maxDevices: 2 })).toBe("ok");
+    expect(judgePlay({ ...base, deviceId: null, knownDevices: ["a", "b"], maxDevices: 2 })).toBe("ok");
+    expect(judgePlay({ ...base, deviceId: "c", knownDevices: ["a", "b"], maxDevices: null })).toBe("ok");
+  });
+});

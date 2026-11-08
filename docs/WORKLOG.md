@@ -1060,3 +1060,25 @@ Committed; not deployed.
 - Still once per tab session, still off under reduced motion, still skipped by `?intro=off`.
 - `e2e/public.spec.ts` gains a phone test that opts back into motion, because the whole suite runs under
   `reducedMotion: "reduce"` and could never catch this. It fails if a width gate returns.
+
+## 2026-11-08: VdoCipher upload and auto-complete, tracks, teacher discount caps, device cap
+
+- **Auto-complete:** `VdoFrame` listens for the player's `ended` event and calls `completeFromPlayer`; the "Mark complete"
+  button is hidden on VdoCipher lessons (YouTube and PDF lessons keep it). Needs a stored play first. The watch count is the
+  existing per-course `maxPlays`, set by the teacher.
+- **Upload from the platform:** teachers and the owner press "Upload" in the lesson editor; `/api/vdocipher/upload` opens a slot
+  on the one academy account and the browser sends the file straight to VdoCipher. The form is filled; the teacher presses Save.
+  CSP now allows `player.vdocipher.com` scripts and `*.amazonaws.com` connections.
+- **Tracks:** `Grade.track` (GENERAL or ADVANCED), set in admin catalog; the unique key is now country, curriculum, level, track.
+  "Copy this unit to another course" shares a topic between tracks and reuses the same video.
+- **Discount cap:** `User.maxDiscountPct` (default 10) limits the package discount a teacher can save; the owner sets it per
+  teacher on the teacher page and is not capped. Over the cap throws an error page (no friendly message yet).
+- **Device cap:** `Course.maxDevices` counts distinct `eh_device` cookies per learner in 30 days. A missing cookie skips the check.
+- **Homework link:** `Assignment.linkUrl` (https only), shown as a button on the student page.
+- **New-course alerts:** publishing a school course notifies students of that grade who hold another course of the same subject.
+- Migration `20261112100000_tracks_discounts_devices` is additive except the Grade unique index swap.
+
+**Open**
+- Not run against a real VdoCipher account: the secret key must be in Vercel first. Upload and the `ended` event are untested live.
+- The 15-minute "still watching" window is still a guess; the player now has events that could replace it.
+- Not committed or deployed. Grades 10 to 12 Advanced rows still have to be created in admin.

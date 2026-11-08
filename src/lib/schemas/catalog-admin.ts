@@ -55,6 +55,7 @@ export const gradeInput = z.object({
   countryId: z.string().min(1),
   curriculum: curriculumSchema,
   level: levelSchema,
+  track: z.enum(["GENERAL", "ADVANCED"]).default("GENERAL"),
   nameAr: z.string().trim().min(1).max(80),
   nameEn: z.string().trim().min(1).max(80),
   isTerminal: checkbox,

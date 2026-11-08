@@ -132,7 +132,7 @@ async function main() {
       const names = gradeName(c.code, level);
       const isTerminal = c.code === "EG" && level === 12;
       const grade = await db.grade.upsert({
-        where: { countryId_curriculum_level: { countryId: country.id, curriculum, level } },
+        where: { countryId_curriculum_level_track: { countryId: country.id, curriculum, level, track: "GENERAL" } },
         update: { ...names, isTerminal },
         create: { ...names, isTerminal, countryId: country.id, curriculum, level, order: level },
       });

@@ -118,6 +118,8 @@ model User {
   bioEn           String?
   /// Live streaming is off for every teacher by default; an admin turns it on per teacher.
   liveApproved    Boolean   @default(false)
+  /// The biggest discount (percent) this teacher may put on their own packages. The owner raises it per teacher.
+  maxDiscountPct  Int       @default(10)
   /// Public credentials a teacher fills in themselves. Shown on the teacher page so "who teaches" is checkable.
   yearsTeaching   Int?
   qualification   String?   @db.VarChar(120)
@@ -217,6 +219,8 @@ model Grade {
   countryId  String
   curriculum Curriculum
   level      Int
+  /// UAE grades 10-12 split into General and Advanced; each is its own grade with its own courses.
+  track      GradeTrack @default(GENERAL)
   nameAr     String
   nameEn     String
   isTerminal Boolean    @default(false)
@@ -231,7 +235,12 @@ model Grade {
   teacherSlots TeacherSlot[]
   inviteSlots  TeacherInviteSlot[]
 
-  @@unique([countryId, curriculum, level])
+  @@unique([countryId, curriculum, level, track])
+}
+
+enum GradeTrack {
+  GENERAL
+  ADVANCED
 }
 
 model Subject {
@@ -290,6 +299,8 @@ model Course {
   maxPlays     Int?
   /// Distinct IP addresses one account may watch from in 24 hours, across all courses; null turns the check off.
   maxIps       Int?       @default(4)
+  /// Distinct browsers (a cookie id) one account may watch from in 30 days; null turns the check off.
+  maxDevices   Int?
   createdAt    DateTime   @default(now())
 
   grade           Grade?           @relation(fields: [gradeId], references: [id], onDelete: Restrict)
@@ -730,6 +741,7 @@ enum NotificationKind {
   SUBMISSION_GRADED
   REQUEST_NEW
   REQUEST_REPLY
+  NEW_COURSE
 }
 
 /// In-app notice; `dedupeKey` stops a reminder from firing twice, and `emailedAt` records the email.
@@ -846,6 +858,8 @@ model PlayEvent {
   ip       String
   /// Two-letter country from the platform's geo header, when it sent one.
   country  String?
+  /// Random id kept in a cookie on the viewer's browser; drives the per-course device cap.
+  deviceId String?
   at       DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -930,6 +944,8 @@ model Assignment {
   kind          AssignmentKind @default(HOMEWORK)
   title         String         @db.VarChar(200)
   instructions  String?        @db.VarChar(8000)
+  /// An outside link to the work (a form, a shared PDF). Shown as a button next to the instructions.
+  linkUrl       String?        @db.VarChar(500)
   /// Null means open-ended: never overdue, never late.
   dueAt         DateTime?
   maxScore      Int            @default(100)

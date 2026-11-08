@@ -49,6 +49,26 @@ export async function markLessonComplete(form: FormData) {
 }
 
 /**
+ * Called by the VdoCipher player when the video reaches its end. Only a protected-video lesson the student
+ * opened (a stored play) and may watch is completed this way; the button is hidden for these lessons.
+ */
+export async function completeFromPlayer(lessonId: string) {
+  const session = await auth();
+  if (!session?.user) notFound();
+  const userId = session.user.id;
+  const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { unit: true, video: { select: { provider: true } } } });
+  if (!lesson || lesson.video?.provider !== "VDOCIPHER") notFound();
+  if (!lesson.unit.isFree && !(await hasLessonAccess(userId, lesson.unit.courseId, lessonScope(lesson)))) notFound();
+  if (!(await db.playEvent.count({ where: { userId, lessonId } }))) return;
+  await db.lessonView.upsert({
+    where: { userId_lessonId: { userId, lessonId } },
+    create: { userId, lessonId, completedAt: new Date() },
+    update: { completedAt: new Date(), lastSeenAt: new Date() },
+  });
+  revalidatePath("/[locale]/dashboard", "page");
+}
+
+/**
  * The one-tap confidence answer after a finished lesson. Overwrites freely: it is the student's
  * current feeling, not a historical record, and it is what the readiness index reads.
  */

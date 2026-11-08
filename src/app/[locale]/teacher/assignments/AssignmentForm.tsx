@@ -14,6 +14,7 @@ export type AssignmentValues = {
   lessonId?: string | null;
   title?: string;
   instructions?: string | null;
+  linkUrl?: string | null;
   dueAt?: string;
   maxScore?: number;
   allowResubmit?: boolean;
@@ -30,7 +31,7 @@ export function AssignmentForm({
   action: (prev: AssignmentError, form: FormData) => Promise<AssignmentError>;
   courses: CourseOption[];
   values?: AssignmentValues;
-  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string };
+  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string };
 }) {
   const [state, formAction] = useActionState(action, null);
   const [courseId, setCourseId] = useState(values.courseId ?? courses[0]?.id ?? "");
@@ -80,6 +81,11 @@ export function AssignmentForm({
       <label className={label}>
         {labels.instructions}
         <textarea name="instructions" defaultValue={values.instructions ?? ""} maxLength={8000} rows={4} dir="auto" className={`${field} py-2`} />
+      </label>
+
+      <label className={label}>
+        {labels.linkUrl}
+        <input name="linkUrl" type="url" pattern="https://.*" defaultValue={values.linkUrl ?? ""} maxLength={500} dir="ltr" placeholder="https://" className={field} />
       </label>
 
       <div className="flex flex-wrap items-end gap-4">

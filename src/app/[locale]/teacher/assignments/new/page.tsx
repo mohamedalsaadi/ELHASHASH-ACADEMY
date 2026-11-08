@@ -55,6 +55,7 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
             lessonNone: t("lessonNone"),
             title: t("name"),
             instructions: t("instructions"),
+            linkUrl: t("linkUrl"),
             due: t("due"),
             maxScore: t("maxScore"),
             allowResubmit: t("allowResubmit"),

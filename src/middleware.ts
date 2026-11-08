@@ -25,7 +25,7 @@ function policy(nonce: string) {
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     // VdoCipher uploads go straight from the teacher's browser to its storage (src/components/admin/VdoUpload.tsx).
-    `connect-src 'self' https://*.amazonaws.com${isDev ? " ws: wss:" : ""}`,
+    `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com https://*.amazonaws.com${isDev ? " ws: wss:" : ""}`,
     "frame-src https://www.youtube-nocookie.com https://player.vdocipher.com",
     "frame-ancestors 'none'",
     "object-src 'none'",

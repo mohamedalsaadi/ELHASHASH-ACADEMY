@@ -122,3 +122,14 @@ describe("livePhase", () => {
     expect([g.now, g.soon, g.later].map((list) => list.map((s) => s.id))).toEqual([["now"], ["soon"], ["later"]]);
   });
 });
+
+describe("nextOpenLesson for staff", () => {
+  const entries = [
+    { lesson: { id: "a", order: 1, month: null }, term: 1, isFree: false },
+    { lesson: { id: "b", order: 2, month: null }, term: 2, isFree: false },
+  ];
+  it("finds nothing for a plan that does not open the next lesson, and the lesson for staff", () => {
+    expect(nextOpenLesson(entries, [], new Set(), new Date(), "a")).toBeUndefined();
+    expect(nextOpenLesson(entries, [], new Set(), new Date(), "a", true)?.lesson.id).toBe("b");
+  });
+});

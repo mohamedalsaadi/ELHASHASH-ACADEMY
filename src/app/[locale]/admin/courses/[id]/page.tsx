@@ -240,13 +240,15 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     <input name="externalId" defaultValue={l.video?.externalId ?? ""} dir="ltr" className={field} />
                   </label>
                 </div>
-                {l.kind === "PDF" && (
-                  <PdfUpload
+                <PdfUpload
                     courseId={course.id}
+                    savedKind={l.kind}
                     defaultPages={l.pdfPages}
                     labels={{ pick: t("pdfPick"), sending: t("pdfSending"), done: t("pdfDone"), failed: t("pdfFailed"), pages: t("pdfPages") }}
                   />
-                )}
+                <Link href={`/courses/${course.slug}/lessons/${l.id}`} className="w-fit text-small text-pen underline underline-offset-4">
+                  {t("viewLesson")}
+                </Link>
                 <VdoUpload title={`${course.titleEn} · ${l.titleEn}`} labels={{ pick: t("uploadPick"), sending: t("uploading"), done: t("uploadDone"), failed: t("uploadFailed") }} />
                 <label className={label}>
                   {t("lessonMonth")}

@@ -61,9 +61,11 @@ export function nextOpenLesson<L extends LessonNode>(
   completed: Set<string>,
   now: Date,
   fromId?: string,
+  /** Staff can open every lesson of their course. */
+  all = false,
 ): LessonEntry<L> | undefined {
   const start = fromId ? entries.findIndex((e) => e.lesson.id === fromId) + 1 : 0;
-  return entries.slice(start).find((e) => !completed.has(e.lesson.id) && opens(e, grants, now));
+  return entries.slice(start).find((e) => !completed.has(e.lesson.id) && (all || opens(e, grants, now)));
 }
 
 export type LivePhase = "now" | "soon" | "later" | "ended";

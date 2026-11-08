@@ -30,7 +30,9 @@ export const dynamic = "force-dynamic";
 /** DRM player: signed-in only, one device per account, watermark with name · phone · IP. */
 type Limits = { lessonId: string; learnerId: string; maxPlays: number | null; maxIps: number | null; maxDevices: number | null };
 
-async function SecurePlayer({ videoId, title, path, limits }: { videoId: string; title: string; path: string; limits: Limits | null }) {
+type Onward = { href: string; label: string; doneLabel: string } | null;
+
+async function SecurePlayer({ videoId, title, path, limits, onward }: { videoId: string; title: string; path: string; limits: Limits | null; onward: Onward }) {
   const t = await getTranslations("player");
   const session = await auth();
   if (!session?.user) {
@@ -86,7 +88,7 @@ async function SecurePlayer({ videoId, title, path, limits }: { videoId: string;
     return <Notice>{t("unavailable")}</Notice>;
   }
   // A student finishing the video completes the lesson; staff previews do not touch progress.
-  return <VdoFrame src={src} title={title} onEnded={limits ? completeFromPlayer.bind(null, limits.lessonId) : undefined} />;
+  return <VdoFrame key={limits?.lessonId ?? path} src={src} title={title} onWatched={limits ? completeFromPlayer.bind(null, limits.lessonId) : undefined} next={onward} />;
 }
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -101,10 +103,13 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const tpr = await getTranslations("practice");
   const ar = locale === "ar";
   const now = new Date();
+  const early = await auth();
+  // The owner and the course's teacher can open a draft course's lessons; everyone else only published ones.
+  const visible = early?.user?.role === "ADMIN" ? {} : early?.user ? { OR: [{ published: true }, { instructorId: early.user.id }] } : { published: true };
 
   const [lesson, outline] = await Promise.all([
     db.lesson.findFirst({
-      where: { id: lessonId, unit: { course: { slug, published: true } } },
+      where: { id: lessonId, unit: { course: { slug, ...visible } } },
       include: {
         video: true,
         instructor: { select: { name: true } },
@@ -121,8 +126,8 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
         },
       },
     }),
-    db.course.findUnique({
-      where: { slug, published: true },
+    db.course.findFirst({
+      where: { slug, ...visible },
       select: {
         id: true,
         instructorId: true,
@@ -147,7 +152,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const { unit } = lesson;
   const course = unit.course;
 
-  const session = await auth();
+  const session = early;
   const userId = session?.user?.id;
   const staff = isCourseStaff(session?.user, { instructorId: outline.instructorId });
   // A parent of a child under 13 watches on the child's plans.
@@ -161,10 +166,10 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
     staff || free || active.some((g) => opensLesson(g, { id: l.id, month: l.month, term }, now));
   if (!openable(lesson, unit.term, unit.isFree)) redirect(`/${locale}/courses/${slug}#packages`);
 
-  if (userId) {
+  if (userId && learnerId) {
     await db.lessonView.upsert({
-      where: { userId_lessonId: { userId, lessonId: lesson.id } },
-      create: { userId, lessonId: lesson.id },
+      where: { userId_lessonId: { userId: learnerId, lessonId: lesson.id } },
+      create: { userId: learnerId, lessonId: lesson.id },
       update: { lastSeenAt: now },
     });
   }
@@ -176,9 +181,9 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
     userId
       ? db.question.findMany({ where: { lessonId: lesson.id, userId }, orderBy: { createdAt: "desc" }, include: { answeredBy: { select: { name: true } } } })
       : [],
-    userId ? db.lessonView.findUnique({ where: { userId_lessonId: { userId, lessonId: lesson.id } }, select: { completedAt: true, confidence: true } }) : null,
-    userId
-      ? db.lessonView.findMany({ where: { userId, lessonId: { in: outlineLessonIds }, completedAt: { not: null } }, select: { lessonId: true } })
+    learnerId ? db.lessonView.findUnique({ where: { userId_lessonId: { userId: learnerId, lessonId: lesson.id } }, select: { completedAt: true, confidence: true } }) : null,
+    learnerId
+      ? db.lessonView.findMany({ where: { userId: learnerId, lessonId: { in: outlineLessonIds }, completedAt: { not: null } }, select: { lessonId: true } })
       : [],
     userId
       ? db.assignment.findMany({
@@ -190,6 +195,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   ]);
   const completed = new Set(completedRows.map((v) => v.lessonId));
 
+  const video = lesson.video;
   const entries = outline.units.flatMap((u) =>
     u.lessons.map((l) => ({ lesson: l, term: u.term, isFree: u.isFree })),
   );
@@ -201,9 +207,12 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
     const l = u.lessons.find((x) => x.id === id)!;
     return openable(l, u.term, u.isFree);
   };
-  const onward = nextOpenLesson(entries, active, completed, now, lesson.id);
+  const onward = nextOpenLesson(entries, active, completed, now, lesson.id, staff);
+  // A later lesson exists but this plan does not open it: say so instead of "last lesson".
+  const lockedNext = !onward && entries.slice(entries.findIndex((e) => e.lesson.id === lesson.id) + 1).some((e) => !completed.has(e.lesson.id));
+  // The student finishes by watching; staff and anyone without a learner use the button.
+  const autoDone = video?.provider === "VDOCIPHER" && !staff && !!learnerId;
 
-  const video = lesson.video;
   const viewer = userId && lesson.kind === "PDF" ? await db.user.findUnique({ where: { id: userId }, select: { name: true, phone: true } }) : null;
   const pdfMark = [viewer?.name, viewer?.phone].filter(Boolean).join(" · ");
   const title = pick(ar, lesson.titleAr, lesson.titleEn);
@@ -227,9 +236,11 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
           }
         />
 
-        <div className="aspect-video overflow-hidden card">
+        <div className={lesson.kind === "PDF" ? "card overflow-hidden" : "aspect-video overflow-hidden card"}>
           {lesson.kind === "PDF" ? (
-            lesson.pdfPages.length > 0 ? (
+            lesson.pdfPages.length > 0 && !userId ? (
+              <Notice>{tp("signIn")}</Notice>
+            ) : lesson.pdfPages.length > 0 ? (
               <PdfPages lessonId={lesson.id} count={lesson.pdfPages.length} mark={pdfMark} title={title} />
             ) : (
               <Notice>{tp("pdfUnavailable")}</Notice>
@@ -247,6 +258,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
               title={title}
               path={`/${locale}/courses/${slug}/lessons/${lesson.id}`}
               limits={staff || !learnerId ? null : { lessonId: lesson.id, learnerId, maxPlays: course.maxPlays, maxIps: course.maxIps, maxDevices: course.maxDevices }}
+              onward={onward ? { href: lessonHref(onward.lesson.id), label: tp("nextAfterComplete"), doneLabel: tp("completed") } : { href: "", label: "", doneLabel: tp("completed") }}
             />
           ) : (
             <Notice>{tc("videoSoon")}</Notice>
@@ -263,11 +275,15 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
                   <Link href={lessonHref(onward.lesson.id)} className="btn btn-outline px-4 py-2 text-small">
                     {tp("nextAfterComplete")}
                   </Link>
+                ) : lockedNext ? (
+                  <Link href={`${courseHref}#packages`} className="text-small font-semibold text-pen">
+                    {tp("nextLocked")}
+                  </Link>
                 ) : (
                   <span className="text-small text-ink-muted">{tp("lastLesson")}</span>
                 )}
               </>
-            ) : video?.provider === "VDOCIPHER" ? (
+            ) : autoDone ? (
               <span className="text-small text-ink-muted">{tp("autoComplete")}</span>
             ) : (
               <SubmitButton className="btn btn-outline w-fit px-4 py-2 text-small">{tp("markComplete")}</SubmitButton>

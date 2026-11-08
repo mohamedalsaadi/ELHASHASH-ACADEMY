@@ -61,6 +61,7 @@ export function UploadField({
         <input
           type="file"
           multiple
+          accept="image/jpeg,image/png,image/webp,application/pdf,.docx"
           disabled={busy || files.length >= max}
           onChange={(e) => {
             void add(e.target.files);

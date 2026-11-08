@@ -153,6 +153,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
               limited: t("limited"),
               ok: t("submitOk"),
               masked: t("masked"),
+              filesLost: t("filesLost"),
               answer: t("yourAnswer"),
               hint: t("answerHint"),
               submit: sub ? t("resubmit") : t("submit"),

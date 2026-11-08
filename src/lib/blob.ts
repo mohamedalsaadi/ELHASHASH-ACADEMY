@@ -31,11 +31,14 @@ export function safeDownloadName(name: string): string {
   return (cleaned || "file").slice(0, 200);
 }
 
+/** Types a browser may show in place. Never HTML or SVG: those run script. */
+export const INLINE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
+
 /** RFC 6266: an ASCII fallback plus the real UTF-8 name, so Arabic filenames survive. */
-export function contentDisposition(name: string): string {
+export function contentDisposition(name: string, inline = false): string {
   const safe = safeDownloadName(name);
   const ascii = safe.replace(/[^\x20-\x7e]/g, "_");
-  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
+  return `${inline ? "inline" : "attachment"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
 }
 
 /** The stored size and type, read from Blob rather than trusted from the client. Null when it is gone. */

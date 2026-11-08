@@ -1,7 +1,7 @@
 "use client";
 
 import { upload } from "@vercel/blob/client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Labels = { pick: string; sending: string; done: string; failed: string; pages: string };
 
@@ -9,17 +9,30 @@ type Labels = { pick: string; sending: string; done: string; failed: string; pag
  * Turns a PDF into one JPEG per page in the teacher's browser and uploads the pages to the private store.
  * Students never receive the PDF itself. The page list rides in a hidden field; the teacher presses Save.
  */
-export function PdfUpload({ courseId, defaultPages, labels }: { courseId: string; defaultPages: string[]; labels: Labels }) {
+export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { courseId: string; defaultPages: string[]; savedKind: string; labels: Labels }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [show, setShow] = useState(savedKind === "PDF");
   const [pages, setPages] = useState<string[]>(defaultPages);
   const [state, setState] = useState<"idle" | "sending" | "done" | "failed">("idle");
   const [progress, setProgress] = useState("");
 
+  // Visible as soon as the lesson's kind select says PDF, without saving first.
+  useEffect(() => {
+    const kind = box.current?.closest("form")?.elements.namedItem("kind");
+    if (!(kind instanceof HTMLSelectElement)) return;
+    const sync = () => setShow(kind.value === "PDF");
+    sync();
+    kind.addEventListener("change", sync);
+    return () => kind.removeEventListener("change", sync);
+  }, []);
+
   async function convert(file: File) {
     setState("sending");
     try {
-      const pdfjs = await import("pdfjs-dist");
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url).toString();
       const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+      if (doc.numPages > 400) throw new Error("too long");
       const out: string[] = [];
       for (let n = 1; n <= doc.numPages; n++) {
         setProgress(`${n} / ${doc.numPages}`);
@@ -47,9 +60,9 @@ export function PdfUpload({ courseId, defaultPages, labels }: { courseId: string
   }
 
   return (
-    <div className="grid gap-1 text-small">
+    <div ref={box} className="grid gap-1 text-small">
       <input type="hidden" name="pdfPages" value={JSON.stringify(pages)} />
-      <label className="grid gap-1">
+      <label className={show ? "grid gap-1" : "hidden"}>
         <span className="font-semibold">{labels.pick}</span>
         <input
           type="file"
@@ -63,7 +76,7 @@ export function PdfUpload({ courseId, defaultPages, labels }: { courseId: string
           className="text-small"
         />
       </label>
-      <span className="text-ink-muted" aria-live="polite">
+      <span className={show ? "text-ink-muted" : "hidden"} aria-live="polite">
         {state === "sending" ? `${labels.sending} ${progress}` : state === "done" ? labels.done : state === "failed" ? labels.failed : pages.length ? `${labels.pages}: ${pages.length}` : ""}
       </span>
     </div>

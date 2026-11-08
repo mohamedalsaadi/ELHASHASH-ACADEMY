@@ -9,7 +9,7 @@ import { randomUUID } from "node:crypto";
 import { accessEnd } from "@/lib/access";
 import { logEvent } from "@/lib/analytics";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
-import { blobInfo, coverPrefix, lessonPagesPrefix } from "@/lib/blob";
+import { blobInfo, coverPrefix } from "@/lib/blob";
 import type { FinanceConfig } from "@/lib/finance";
 import { saveFinanceConfig } from "@/lib/platform-settings";
 import { refundIntent } from "@/lib/ziina";
@@ -184,7 +184,7 @@ export async function updateLesson(form: FormData) {
   const courseId = await lessonCourse(d.id);
   await assertCourse(me, courseId);
   // The page list comes from the browser: keep only this course's own page objects.
-  const pdfPages = z.array(z.string()).max(400).catch([]).parse(JSON.parse(d.pdfPages || "[]")).filter((p) => p.startsWith(lessonPagesPrefix(courseId)));
+  const pdfPages = z.array(z.string()).max(400).parse(JSON.parse(d.pdfPages || "[]")).filter((p) => p.startsWith("lesson-pages/"));
   // The admin picks who recorded it ("" = the course's teacher); a teacher editing a lesson becomes its instructor.
   const instructorId = me.role !== "ADMIN" ? me.id : d.instructorId ? await teacherId.parseAsync(d.instructorId) : null;
 

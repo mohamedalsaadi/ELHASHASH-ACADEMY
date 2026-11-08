@@ -1,7 +1,7 @@
 import { get } from "@vercel/blob";
 import { auth } from "@/auth";
 import { opensAssignment } from "@/lib/assignments";
-import { contentDisposition } from "@/lib/blob";
+import { contentDisposition, INLINE_TYPES } from "@/lib/blob";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { isCourseStaffDb } from "@/lib/staff";
@@ -12,7 +12,7 @@ const notFound = () => new Response(null, { status: 404 });
  * Streams a private Blob object to someone who is allowed to read it. Authorisation happens here, in the
  * route: /api sits outside the locale middleware, so nothing upstream decides who may read what.
  */
-export async function GET(_request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
   const { kind, id } = await params;
   const session = await auth();
   if (!session?.user) return notFound();
@@ -79,7 +79,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
   return new Response(blob.stream, {
     headers: {
       "Content-Type": contentType,
-      "Content-Disposition": contentDisposition(downloadName),
+      "Content-Disposition": contentDisposition(downloadName, new URL(request.url).searchParams.has("inline") && INLINE_TYPES.includes(contentType)),
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-cache",
     },

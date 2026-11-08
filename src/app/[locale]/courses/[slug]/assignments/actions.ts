@@ -14,7 +14,7 @@ import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 
-export type SubmitError = "invalid" | "closed" | "already" | "limited" | "ok" | "masked" | null;
+export type SubmitError = "invalid" | "closed" | "already" | "limited" | "ok" | "masked" | "filesLost" | null;
 
 const uploaded = z.array(z.object({ pathname: z.string().min(1), downloadName: z.string().min(1).max(255) }));
 
@@ -74,6 +74,7 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   });
 
   let submissionId: string;
+  let kept = 0;
   if (existing) {
     // Returning the work is the instructor asking for a redo, so it always reopens once. The switch only
     // covers the other case: resubmitting after a grade the teacher did not ask to see again.
@@ -97,13 +98,13 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
         },
       }),
     ]);
-    await saveFiles(existing.id, assignment.id, studentId, files);
+    kept = await saveFiles(existing.id, assignment.id, studentId, files);
     submissionId = existing.id;
   } else {
     const created = await db.submission.create({
       data: { assignmentId: assignment.id, studentId, text, submittedAt: now, status: "SUBMITTED" },
     });
-    await saveFiles(created.id, assignment.id, studentId, files);
+    kept = await saveFiles(created.id, assignment.id, studentId, files);
     submissionId = created.id;
   }
 
@@ -134,18 +135,23 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
   revalidatePath("/[locale]/dashboard", "page");
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
+  // The work is in, but a file that could not be stored must not look like it arrived.
+  if (kept < files.length) return "filesLost";
   return masked ? "masked" : "ok";
 }
 
 /** Only blobs under this student's prefix, with the size Blob reports rather than the client's. */
 async function saveFiles(submissionId: string, assignmentId: string, studentId: string, files: { pathname: string; downloadName: string }[]) {
   const prefix = submissionPrefix(assignmentId, studentId);
+  let kept = 0;
   for (const f of files) {
     if (!f.pathname.startsWith(prefix)) continue;
     const info = await blobInfo(f.pathname);
     if (!info || info.size > MAX_FILE_BYTES) continue;
+    kept += 1;
     await db.submissionFile.create({
       data: { submissionId, pathname: f.pathname, downloadName: f.downloadName, contentType: info.contentType, size: info.size },
     });
   }
+  return kept;
 }

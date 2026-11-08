@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { canAsk, hasLessonAccess, lessonScope } from "@/lib/catalog";
+import { canAsk, hasLessonAccess, isCourseStaff, learnerFor, lessonScope } from "@/lib/catalog";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -30,42 +30,51 @@ export async function askQuestion(_: unknown, form: FormData): Promise<"ok" | "m
   return scan.masked ? "masked" : "ok";
 }
 
-/** Marks a lesson the student can open as completed; used by the button under the player. */
-export async function markLessonComplete(form: FormData) {
+/**
+ * Who the progress belongs to and whether they may open the lesson. A parent watching for a child under 13 records the
+ * child's progress; staff may open any lesson of their own course; everyone else needs a plan that opens it.
+ */
+async function lessonProgress(lessonId: string) {
   const session = await auth();
   if (!session?.user) notFound();
-  const { lessonId } = z.object({ lessonId: z.string() }).parse(Object.fromEntries(form));
-  const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { unit: true } });
+  const lesson = await db.lesson.findUnique({
+    where: { id: lessonId },
+    include: { unit: { include: { course: { select: { instructorId: true } } } }, video: { select: { provider: true } } },
+  });
   if (!lesson) notFound();
-  if (!lesson.unit.isFree && !(await hasLessonAccess(session.user.id, lesson.unit.courseId, lessonScope(lesson)))) notFound();
+  const courseId = lesson.unit.courseId;
+  const staff = isCourseStaff(session.user, lesson.unit.course);
+  const learnerId = (await learnerFor(session.user, courseId)) ?? session.user.id;
+  if (!staff && !lesson.unit.isFree && !(await hasLessonAccess(learnerId, courseId, lessonScope(lesson)))) notFound();
+  return { viewerId: session.user.id, learnerId, staff, lesson };
+}
 
+async function markDone(learnerId: string, lessonId: string) {
   await db.lessonView.upsert({
-    where: { userId_lessonId: { userId: session.user.id, lessonId } },
-    create: { userId: session.user.id, lessonId, completedAt: new Date() },
+    where: { userId_lessonId: { userId: learnerId, lessonId } },
+    create: { userId: learnerId, lessonId, completedAt: new Date() },
     update: { completedAt: new Date(), lastSeenAt: new Date() },
   });
   revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
   revalidatePath("/[locale]/dashboard", "page");
 }
 
+/** Marks a lesson the viewer can open as completed; used by the button under the player. */
+export async function markLessonComplete(form: FormData) {
+  const { lessonId } = z.object({ lessonId: z.string() }).parse(Object.fromEntries(form));
+  const { learnerId } = await lessonProgress(lessonId);
+  await markDone(learnerId, lessonId);
+}
+
 /**
- * Called by the VdoCipher player when the video reaches its end. Only a protected-video lesson the student
- * opened (a stored play) and may watch is completed this way; the button is hidden for these lessons.
+ * Called by the VdoCipher player when the student has watched the video (end, or 90% of it). A student needs a stored
+ * play of this lesson first, so the call cannot complete a lesson that was never opened. Staff previews use the button.
  */
 export async function completeFromPlayer(lessonId: string) {
-  const session = await auth();
-  if (!session?.user) notFound();
-  const userId = session.user.id;
-  const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { unit: true, video: { select: { provider: true } } } });
-  if (!lesson || lesson.video?.provider !== "VDOCIPHER") notFound();
-  if (!lesson.unit.isFree && !(await hasLessonAccess(userId, lesson.unit.courseId, lessonScope(lesson)))) notFound();
-  if (!(await db.playEvent.count({ where: { userId, lessonId } }))) return;
-  await db.lessonView.upsert({
-    where: { userId_lessonId: { userId, lessonId } },
-    create: { userId, lessonId, completedAt: new Date() },
-    update: { completedAt: new Date(), lastSeenAt: new Date() },
-  });
-  revalidatePath("/[locale]/dashboard", "page");
+  const { viewerId, learnerId, staff, lesson } = await lessonProgress(lessonId);
+  if (lesson.video?.provider !== "VDOCIPHER") notFound();
+  if (!staff && !(await db.playEvent.count({ where: { userId: viewerId, learnerId, lessonId } }))) return;
+  await markDone(learnerId, lessonId);
 }
 
 /**
@@ -73,18 +82,13 @@ export async function completeFromPlayer(lessonId: string) {
  * current feeling, not a historical record, and it is what the readiness index reads.
  */
 export async function setConfidence(form: FormData) {
-  const session = await auth();
-  if (!session?.user) notFound();
   const { lessonId, confidence } = z
     .object({ lessonId: z.string(), confidence: z.enum(["GOT_IT", "SHAKY", "LOST"]) })
     .parse(Object.fromEntries(form));
-  const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { unit: true } });
-  if (!lesson) notFound();
-  if (!lesson.unit.isFree && !(await hasLessonAccess(session.user.id, lesson.unit.courseId, lessonScope(lesson)))) notFound();
-
+  const { learnerId } = await lessonProgress(lessonId);
   await db.lessonView.upsert({
-    where: { userId_lessonId: { userId: session.user.id, lessonId } },
-    create: { userId: session.user.id, lessonId, confidence },
+    where: { userId_lessonId: { userId: learnerId, lessonId } },
+    create: { userId: learnerId, lessonId, confidence },
     update: { confidence, lastSeenAt: new Date() },
   });
   revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");

@@ -1095,3 +1095,24 @@ Committed; not deployed.
 **Open**
 - Not tried with a real PDF in a browser or against the live store. Screenshots and developer tools can still save a page.
 - Existing PDF lessons have no pages until a teacher uploads them.
+
+## 2026-11-10: Fixes after the owner's first test
+
+- **Lesson completion:** staff, teachers and admins now get the normal "Mark complete" button on VdoCipher lessons (the
+  auto-complete text only shows to a student). The actions check the learner (a parent watching for a child under 13
+  records the child's progress) and let course staff through. The player marks the lesson done at 90% watched or on the end
+  event, shows a "completed / next lesson" pill in the player corner, and no longer refreshes the page (a refresh spent a play).
+  "Next lesson" works for staff; a lesson locked by the plan says so instead of "last lesson".
+- **PDF:** the viewer is no longer clipped inside the 16:9 box; the CSP now allows browser-direct Blob uploads
+  (`vercel.com`, `*.blob.vercel-storage.com`), which had blocked every upload (PDF pages, homework, covers, avatars);
+  the upload button appears as soon as the kind select says PDF; pdf.js uses the legacy build for older phones;
+  a signed-out visitor gets a sign-in notice; the owner and the course's teacher can open lessons of a draft course, and
+  the editor has a "view the lesson" link.
+- **Answers:** files show inline (image thumbnails, PDFs in a new tab) through `?inline=1` on `/api/files`, which only
+  serves images and PDFs that way. A submit that loses a file now says so. The file picker lists the allowed types.
+
+**Open**
+- Not tested in a browser as a signed-in student, parent or teacher (no usable accounts locally). Test: finish a VdoCipher
+  lesson as a student, upload a multi-page PDF, upload a photo answer and open it as the teacher.
+- VdoCipher's `timeupdate`, `currentTime` and `duration` names come from memory of the v2 docs; the `ended` event is the safe path.
+- pdf.js standard fonts and CMaps are not served, so a PDF that does not embed its fonts may render blank text.

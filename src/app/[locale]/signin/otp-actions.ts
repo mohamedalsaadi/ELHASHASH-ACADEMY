@@ -13,7 +13,6 @@ import { clientIp } from "@/lib/client-ip";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
-import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { checkOtp, issueOtp, readProof, signProof } from "@/lib/otp";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { safeNext } from "@/lib/safe-redirect";

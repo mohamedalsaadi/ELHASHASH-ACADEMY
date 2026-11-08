@@ -138,7 +138,7 @@ const en: Section[] = [
       <ul>
         <li>An account is personal to one student, and your details must be accurate.</li>
         <li>Videos play on one device at a time. Starting playback on a new device stops the previous one.</li>
-        <li>You keep your password private. If you are under 13, a parent or guardian must approve your account. A student's lessons may not be watched from two devices or networks at the same time, and we may limit plays and IP addresses to stop account sharing.</li>
+        <li>You keep your password private. If you are under 13, a parent or guardian must approve your account. A student&apos;s lessons may not be watched from two devices or networks at the same time, and we may limit plays and IP addresses to stop account sharing.</li>
       </ul>
     ),
   },

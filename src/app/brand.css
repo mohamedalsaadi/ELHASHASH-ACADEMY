@@ -60,3 +60,18 @@ html[data-intro="skip"] .as-hero-copy > * { animation: as-rise var(--dur-base) v
   html[data-intro] .as-hero-copy > * { opacity: 1; animation: none; }
   .as-loader::after { animation: none; transform: scaleX(.4); }
 }
+
+/* New-course strip: a looping row of cards. Native, calm: it pauses on hover or focus and holds still for reduced motion. */
+.roller { overflow-x: clip; }
+.roller-track { display: flex; width: max-content; animation: as-roll 60s linear infinite; }
+.roller-item { width: 18rem; flex: none; margin-inline-end: 1rem; }
+.roller:is(:hover, :focus-within) .roller-track { animation-play-state: paused; }
+@keyframes as-roll { to { transform: translateX(-50%); } }
+[dir="rtl"] .roller-track { animation-name: as-roll-rtl; }
+@keyframes as-roll-rtl { to { transform: translateX(50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .roller { overflow-x: auto; scroll-snap-type: x proximity; }
+  .roller-track { animation: none; }
+  .roller-item { scroll-snap-align: start; }
+  .roller-item[aria-hidden="true"] { display: none; }
+}

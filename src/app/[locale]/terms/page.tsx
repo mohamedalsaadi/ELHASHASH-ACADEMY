@@ -27,7 +27,7 @@ const ar: Section[] = [
       <ul>
         <li>الحساب شخصي لطالب واحد، ويجب أن تكون بياناتك صحيحة.</li>
         <li>يمكن مشاهدة الفيديوهات على جهاز واحد في نفس الوقت. التشغيل على جهاز جديد يوقف الجهاز السابق.</li>
-        <li>أنت مسؤول عن سرية كلمة المرور. إذا كان عمرك أقل من 18 عامًا فيجب أن يوافق ولي أمرك على الاشتراك.</li>
+        <li>أنت مسؤول عن سرية كلمة المرور. إذا كان عمرك أقل من 13 عامًا فيجب أن يوافق ولي أمرك على الحساب. لا يجوز مشاهدة دروس الطالب من جهازين أو شبكتين في الوقت نفسه، وقد نحدّ عدد مرات التشغيل وعناوين IP لمنع مشاركة الحسابات.</li>
       </ul>
     ),
   },
@@ -138,7 +138,7 @@ const en: Section[] = [
       <ul>
         <li>An account is personal to one student, and your details must be accurate.</li>
         <li>Videos play on one device at a time. Starting playback on a new device stops the previous one.</li>
-        <li>You keep your password private. If you are under 18, a parent or guardian must agree to the purchase.</li>
+        <li>You keep your password private. If you are under 13, a parent or guardian must approve your account. A student's lessons may not be watched from two devices or networks at the same time, and we may limit plays and IP addresses to stop account sharing.</li>
       </ul>
     ),
   },

@@ -7,7 +7,8 @@ import { headers } from "next/headers";
 import { signIn } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { logEvent } from "@/lib/analytics";
-import { ageOn, parseBirthDate } from "@/lib/age";
+import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
+import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { clientIp } from "@/lib/client-ip";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
@@ -117,6 +118,7 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
     gradeId: String(form.get("gradeId") ?? ""),
     dateOfBirth: String(form.get("dateOfBirth") ?? ""),
     guardianName: String(form.get("guardianName") ?? ""),
+    guardianPhone: String(form.get("guardianPhone") ?? ""),
     guardianEmail: String(form.get("guardianEmail") ?? ""),
     guardianConsent: form.get("guardianConsent") === "on",
     acceptTerms: form.get("acceptTerms") === "on",
@@ -135,7 +137,8 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
   if (!parent && !(await db.grade.findUnique({ where: { id: d.gradeId! }, select: { id: true } }))) return { ...here, error: "invalid_grade" };
 
   const dob = !parent && d.dateOfBirth ? parseBirthDate(d.dateOfBirth) : null;
-  const minor = dob !== null && ageOn(dob) < 18;
+  const minor = dob !== null && ageOn(dob) < MINOR_AGE;
+  if (minor && (d.guardianPhone === phone || (!guardianViaWhatsApp() && !d.guardianEmail))) return { ...here, error: "guardian_required" };
   const guardianToken = minor ? newToken() : null;
   try {
     await db.$transaction(async (trx) => {
@@ -159,7 +162,9 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
             studentId: created.id,
             parentId: null,
             guardianName: d.guardianName!,
-            guardianEmail: d.guardianEmail!,
+            guardianPhone: d.guardianPhone,
+            guardianEmail: d.guardianEmail ?? null,
+            viaWhatsApp: guardianViaWhatsApp(),
             rulesVersion: PRIVACY_VERSION,
             source: "SIGNUP",
             verifyTokenHash: hashToken(guardianToken!),
@@ -175,17 +180,7 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
   }
 
   if (minor && guardianToken) {
-    const ar = locale === "ar";
-    await sendMail({
-      to: d.guardianEmail!,
-      subject: ar ? "تأكيد موافقة ولي الأمر" : "Confirm your consent for a Dhirwa account",
-      html: emailLayout(
-        ar ? "تأكيد موافقة ولي الأمر" : "Confirm your consent",
-        [ar ? `أنشأ ${name} حسابًا على ذروة بموافقتك. اضغط الرابط لتأكيد موافقتك على استخدام المنصة.` : `${name} created a Dhirwa account with your consent. Open the link to confirm that you agree to them using the platform.`],
-        { href: `${appUrl()}/${locale}/guardian/confirm?token=${guardianToken}`, label: ar ? "تأكيد الموافقة" : "Confirm consent" },
-        ar ? "ar" : "en",
-      ),
-    }).catch(() => {});
+    await sendGuardianRequest({ childName: name, guardianPhone: d.guardianPhone!, guardianEmail: d.guardianEmail, token: guardianToken, locale });
   }
   const failed = await openSession(phone, parent ? "PARENT" : "STUDENT", locale, next);
   return { ...here, error: failed ?? "taken" };

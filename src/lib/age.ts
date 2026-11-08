@@ -6,9 +6,12 @@ export function ageOn(dateOfBirth: Date, now = new Date()): number {
   return age;
 }
 
+/** Under this age a parent or guardian must approve the account (UAE Child Digital Safety Law, Decree-Law 26/2025). */
+export const MINOR_AGE = 13;
+
 /** Null (a legacy account with no birth date) is treated as an adult. The migration grandfathers them. */
 export function isMinor(dateOfBirth: Date | null | undefined, now = new Date()): boolean {
-  return Boolean(dateOfBirth && ageOn(dateOfBirth, now) < 18);
+  return Boolean(dateOfBirth && ageOn(dateOfBirth, now) < MINOR_AGE);
 }
 
 /** "YYYY-MM-DD" from a date input. Rejects impossible dates and a future birthday. */

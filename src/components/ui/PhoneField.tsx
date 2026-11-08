@@ -6,7 +6,7 @@ import { DIAL_CODES, joinPhone, splitPhone } from "@/lib/phone";
 import { field } from "./form";
 
 /** A country-code list and the number beside it. The form gets one `phone` value: +<code><number>. */
-export function PhoneField({ defaultValue = "", invalid, describedBy }: { defaultValue?: string; invalid?: boolean; describedBy?: string }) {
+export function PhoneField({ defaultValue = "", invalid, describedBy, name = "phone", required = true }: { defaultValue?: string; invalid?: boolean; describedBy?: string; name?: string; required?: boolean }) {
   const t = useTranslations("common");
   const locale = useLocale();
   const start = splitPhone(defaultValue);
@@ -27,7 +27,7 @@ export function PhoneField({ defaultValue = "", invalid, describedBy }: { defaul
         type="tel"
         inputMode="tel"
         autoComplete={dial ? "tel-national" : "tel"}
-        required
+        required={required}
         value={national}
         onChange={(e) => setNational(e.target.value)}
         placeholder={dial ? "" : "+…"}
@@ -36,7 +36,7 @@ export function PhoneField({ defaultValue = "", invalid, describedBy }: { defaul
         aria-describedby={describedBy}
         className={`${field} min-w-0`}
       />
-      <input type="hidden" name="phone" value={joinPhone(dial, national)} />
+      <input type="hidden" name={name} value={joinPhone(dial, national)} />
     </div>
   );
 }

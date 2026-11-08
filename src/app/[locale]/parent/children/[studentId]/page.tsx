@@ -7,6 +7,8 @@ import { AttachmentList, Block } from "@/components/homework/AttachmentList";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { Link } from "@/i18n/navigation";
+import { isMinor } from "@/lib/age";
 import { db } from "@/lib/db";
 import { dbRole } from "@/lib/staff";
 import { courseZone, formatDate } from "@/lib/format";
@@ -31,7 +33,15 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
   const t = await getTranslations("homework");
   const ar = locale === "ar";
 
-  const student = await db.user.findUniqueOrThrow({ where: { id: studentId }, select: { name: true } });
+  const student = await db.user.findUniqueOrThrow({ where: { id: studentId }, select: { name: true, dateOfBirth: true } });
+  // For a child under 13 the parent watches the child's paid lessons from this account (one person at a time).
+  const watch = isMinor(student.dateOfBirth)
+    ? await db.entitlement.findMany({
+        where: { userId: studentId, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }], lessonId: null, liveSessionId: null },
+        distinct: ["courseId"],
+        select: { course: { select: { slug: true, titleAr: true, titleEn: true, units: { orderBy: { order: "asc" }, take: 1, select: { lessons: { orderBy: { order: "asc" }, take: 1, select: { id: true } } } } } } },
+      })
+    : [];
   const submissions = await db.submission.findMany({
     where: { studentId },
     orderBy: { submittedAt: "desc" },
@@ -101,6 +111,24 @@ export default async function ChildPage({ params }: { params: Promise<{ locale: 
         <p className="text-small text-ink-muted">
           {t("strongest")}: {unitNames.get(shape.strongest.unitId)} · {t("weakest")}: {unitNames.get(shape.weakest.unitId)}
         </p>
+      )}
+
+      {watch.length > 0 && (
+        <Block title={t("watchTitle")}>
+          <p className="text-small text-ink-muted">{t("watchHint")}</p>
+          <ul className="grid gap-2">
+            {watch.map(({ course }) => {
+              const first = course.units[0]?.lessons[0];
+              return (
+                <li key={course.slug}>
+                  <Link href={first ? `/courses/${course.slug}/lessons/${first.id}` : `/courses/${course.slug}`} className="font-semibold text-pen underline-offset-4 hover:underline">
+                    {pick(ar, course.titleAr, course.titleEn)}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Block>
       )}
 
       <Block title={t("examsTitle")}>

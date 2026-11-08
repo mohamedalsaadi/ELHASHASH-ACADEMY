@@ -3,17 +3,19 @@ import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
 import { logEventLater } from "@/lib/analytics";
-import { canAsk, grantsFor, isCourseStaff, lessonScope } from "@/lib/catalog";
+import { canAsk, grantsFor, isCourseStaff, learnerFor, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatDate } from "@/lib/format";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
 import { neighbours, nextOpenLesson, orderedLessons } from "@/lib/learning";
 import { opensLesson } from "@/lib/plans";
+import { IP_WINDOW_MS, judgePlay, REPLAY_WINDOW_MS } from "@/lib/play-limits";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -23,7 +25,9 @@ import { markLessonComplete, setConfidence } from "./actions";
 export const dynamic = "force-dynamic";
 
 /** DRM player: signed-in only, one device per account, watermark with name · phone · IP. */
-async function SecurePlayer({ videoId, title, path }: { videoId: string; title: string; path: string }) {
+type Limits = { lessonId: string; learnerId: string; maxPlays: number | null; maxIps: number | null };
+
+async function SecurePlayer({ videoId, title, path, limits }: { videoId: string; title: string; path: string; limits: Limits | null }) {
   const t = await getTranslations("player");
   const session = await auth();
   if (!session?.user) {
@@ -40,6 +44,27 @@ async function SecurePlayer({ videoId, title, path }: { videoId: string; title: 
   const device = await oneDevice(userId, path);
   if ("block" in device) return device.block;
   const { ip } = device;
+
+  // Staff pass `limits = null`. Caps count per learner, so a parent watching for a child under 13 shares the child's plays,
+  // IPs and "one person at a time" rule. A student is stopped at the first limit hit.
+  if (limits) {
+    const now = Date.now();
+    const country = (await headers()).get("x-vercel-ip-country")?.slice(0, 2).toUpperCase() || null;
+    const [lessonPlays, recent] = await Promise.all([
+      db.playEvent.count({ where: { learnerId: limits.learnerId, lessonId: limits.lessonId } }),
+      db.playEvent.findMany({
+        where: { learnerId: limits.learnerId, at: { gt: new Date(now - IP_WINDOW_MS) } },
+        select: { userId: true, lessonId: true, ip: true, country: true, at: true },
+      }),
+    ]);
+    const events = recent.map((e) => ({ ...e, at: e.at.getTime() }));
+    const verdict = judgePlay({ now, viewerId: userId, lessonId: limits.lessonId, ip, country, events, lessonPlays, maxPlays: limits.maxPlays, maxIps: limits.maxIps });
+    if (verdict === "plays") return <Notice>{t("playsUsed", { count: limits.maxPlays ?? 0 })}</Notice>;
+    if (verdict !== "ok") return <Notice>{t(verdict)}</Notice>;
+    // A refresh is the same play: only a play that is not a repeat is stored.
+    const repeat = events.some((e) => e.userId === userId && e.lessonId === limits.lessonId && e.ip === ip && now - e.at < REPLAY_WINDOW_MS);
+    if (!repeat) await db.playEvent.create({ data: { userId, learnerId: limits.learnerId, lessonId: limits.lessonId, ip, country } });
+  }
 
   const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, phone: true } });
   let src: string;
@@ -113,7 +138,9 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const session = await auth();
   const userId = session?.user?.id;
   const staff = isCourseStaff(session?.user, { instructorId: outline.instructorId });
-  const grants = await grantsFor(userId, course.id, now, { includeEnded: true });
+  // A parent of a child under 13 watches on the child's plans.
+  const learnerId = await learnerFor(session?.user, course.id, now);
+  const grants = await grantsFor(learnerId, course.id, now, { includeEnded: true });
   const active = grants.filter((g) => !g.endsAt || g.endsAt > now);
 
   // Unit 1 is open to everyone; every other lesson needs a plan that opens it, a rental, or staff.
@@ -197,7 +224,12 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
               className="size-full"
             />
           ) : video?.provider === "VDOCIPHER" ? (
-            <SecurePlayer videoId={video.externalId} title={title} path={`/${locale}/courses/${slug}/lessons/${lesson.id}`} />
+            <SecurePlayer
+              videoId={video.externalId}
+              title={title}
+              path={`/${locale}/courses/${slug}/lessons/${lesson.id}`}
+              limits={staff || !learnerId ? null : { lessonId: lesson.id, learnerId, maxPlays: course.maxPlays, maxIps: course.maxIps }}
+            />
           ) : (
             <Notice>{tc("videoSoon")}</Notice>
           )}

@@ -7,7 +7,7 @@ import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
 import { field, label } from "@/components/ui/form";
 import { Link } from "@/i18n/navigation";
-import { ageOn, parseBirthDate } from "@/lib/age";
+import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { otpStep, type OtpState } from "./otp-actions";
 
 function Go({ children, pending, step }: { children: React.ReactNode; pending: string; step?: string }) {
@@ -34,7 +34,7 @@ export function OtpFlow({ groups, locale, next, parent }: { groups: Group[]; loc
   const [type, setType] = useState<"STUDENT" | "PARENT">(parent ? "PARENT" : "STUDENT");
   const [dob, setDob] = useState("");
   const born = parseBirthDate(dob);
-  const minor = born !== null && ageOn(born) < 18;
+  const minor = born !== null && ageOn(born) < MINOR_AGE;
   const hidden = (
     <>
       <input type="hidden" name="locale" value={locale} />
@@ -130,6 +130,11 @@ export function OtpFlow({ groups, locale, next, parent }: { groups: Group[]; loc
                   <input name="guardianName" autoComplete="name" minLength={2} maxLength={80} dir="auto" className={field} />
                   <span className="text-label">{ts("guardianHint")}</span>
                 </label>
+                <div className={label}>
+                  {ts("guardianPhone")}
+                  <PhoneField name="guardianPhone" />
+                  <span className="text-label">{ts("guardianPhoneHint")}</span>
+                </div>
                 <label className={label}>
                   {ts("guardianEmail")}
                   <input type="email" name="guardianEmail" autoComplete="email" dir="ltr" className={field} />

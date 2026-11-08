@@ -114,6 +114,17 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <input type="checkbox" name="aiGrading" defaultChecked={course.aiGrading} className="size-4" />
           {t("aiGradingHint")}
         </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className={label}>
+            {t("maxPlays")}
+            <input name="maxPlays" type="number" min="1" max="1000" step="1" defaultValue={course.maxPlays ?? ""} dir="ltr" className={`${field} num`} />
+          </label>
+          <label className={label}>
+            {t("maxIps")}
+            <input name="maxIps" type="number" min="1" max="50" step="1" defaultValue={course.maxIps ?? ""} dir="ltr" className={`${field} num`} />
+          </label>
+        </div>
+        <p className="text-label text-ink-muted">{t("limitsHint")}</p>
         <div>
           <SaveButton />
         </div>
@@ -303,17 +314,10 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     </select>
                   </label>
                 )}
-                {s.accessType === "FIXED_DAYS" || s.accessType === "MONTHLY" ? (
-                  <label className={label}>
-                    {t("accessDays")}
-                    <input name="accessDays" type="number" min="1" max="3650" step="1" defaultValue={s.accessDays ?? 30} required dir="ltr" className={`${field} num`} />
-                  </label>
-                ) : (
-                  <label className={label}>
-                    {t("accessEndsAt")}
-                    <input name="accessEndsAt" type="date" defaultValue={toDayInput(s.accessEndsAt, zone)} className={field} />
-                  </label>
-                )}
+                <label className={label}>
+                  {t("accessDays")}
+                  <input name="accessDays" type="number" min="1" max="3650" step="1" defaultValue={s.accessDays ?? 30} required dir="ltr" className={`${field} num`} />
+                </label>
                 <label className={label}>
                   {t("saleFrom")}
                   <input name="saleFrom" type="date" defaultValue={toDayInput(s.saleFrom, zone)} className={field} />

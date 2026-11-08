@@ -52,9 +52,9 @@ describe("signUpSchema", () => {
   };
   const minor = {
     ...base,
-    dateOfBirth: "2012-01-01",
+    dateOfBirth: "2018-01-01",
     guardianName: "ولي الأمر",
-    guardianEmail: "guardian@example.com",
+    guardianPhone: "+971509999999",
     guardianConsent: true,
   };
 
@@ -90,14 +90,14 @@ describe("signUpSchema", () => {
     expect(signUpSchema.safeParse({ ...base, email: "s@example.com" }).success).toBe(true);
   });
 
-  it("requires a guardian name, email and consent for a minor", () => {
+  it("requires a guardian name, WhatsApp number and consent for a minor", () => {
     expect(signUpSchema.safeParse({ ...minor, email: "s@example.com" }).success).toBe(true);
     expect(signUpSchema.safeParse({ ...minor, email: "s@example.com", guardianConsent: false }).success).toBe(false);
-    expect(signUpSchema.safeParse({ ...minor, email: "s@example.com", guardianEmail: undefined }).success).toBe(false);
+    expect(signUpSchema.safeParse({ ...minor, email: "s@example.com", guardianPhone: undefined }).success).toBe(false);
     expect(signUpSchema.safeParse({ ...minor, email: "s@example.com", guardianName: undefined }).success).toBe(false);
   });
 
-  it("blocks a student under 13", () => {
-    expect(signUpSchema.safeParse({ ...minor, email: "s@example.com", dateOfBirth: "2020-01-01" }).success).toBe(false);
+  it("lets a student of 13 or more sign up without a guardian", () => {
+    expect(signUpSchema.safeParse({ ...base, email: "s@example.com", dateOfBirth: "2012-01-01" }).success).toBe(true);
   });
 });

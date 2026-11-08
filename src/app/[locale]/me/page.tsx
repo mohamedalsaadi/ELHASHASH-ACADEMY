@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { CourseCard } from "@/components/CourseCard";
 import { GradePicker } from "@/components/GradePicker";
+import { NewRoller } from "@/components/home/NewRoller";
 import { Ride, type RideSubject } from "@/components/three/Ride";
 import { Link } from "@/i18n/navigation";
 import { gradeGroups } from "@/lib/catalog";
@@ -98,8 +99,12 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
   const ownedIds = new Set(owned.map((c) => c.id));
   const name = (s: { nameAr: string; nameEn: string }) => (pickText(ar, s.nameAr, s.nameEn));
 
-  // What can be bought comes first, then what the student already has; empty subjects only get a "coming soon" line.
-  const ready = [...subjects.filter((s) => s.courses.length && !s.owned), ...subjects.filter((s) => s.courses.length && s.owned)];
+  // What the student already has comes first, then what they can still join; empty subjects only get a "coming soon" line.
+  const ready = [...subjects.filter((s) => s.courses.length && s.owned), ...subjects.filter((s) => s.courses.length && !s.owned)];
+  // New courses of this grade (so this country) the student has not joined, newest first, one card per course.
+  const fresh = [...new Map(subjects.flatMap((s) => s.courses).filter((c) => !ownedIds.has(c.id) && now.getTime() - c.createdAt.getTime() < 45 * 86_400_000).map((c) => [c.id, c])).values()].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  );
   const empty = subjects.filter((s) => s.courses.length === 0);
   const ride: RideSubject[] = ready.slice(0, 8).map((s) => ({
     id: s.id,
@@ -136,6 +141,8 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
       </section>
 
       <div className="mx-auto grid max-w-(--container-page) gap-16 px-4 py-16 md:gap-20">
+        <NewRoller courses={fresh} locale={locale} label={t("newTitle")} badge={t("newBadge")} />
+
         {owned.length > 0 && (
           <section className="grid gap-6">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -174,7 +181,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
         )}
 
         <div className="grid gap-14">
-          {ready.map((s) => (
+          {ready.filter((s) => s.courses.some((c) => !ownedIds.has(c.id))).map((s) => (
             <section key={s.id} id={`subject-${s.slug}`} className="grid gap-5">
               <div className="flex items-center gap-3">
                 {/* The country's trail colour marks each waypoint section. */}
@@ -183,12 +190,9 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
                 <span className="text-small text-ink-muted">{t("courses", { count: s.courses.length })}</span>
               </div>
               <ul className="-mx-4 flex snap-x gap-5 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
-                {s.courses.map((c) => (
+                {s.courses.filter((c) => !ownedIds.has(c.id)).map((c) => (
                   <li key={c.id} className="relative w-[82%] shrink-0 snap-start sm:w-auto">
                     <CourseCard course={c} locale={locale} />
-                    {ownedIds.has(c.id) && (
-                      <span className="absolute start-3 top-3 rounded-full bg-up px-2.5 py-0.5 text-label font-semibold text-surface">{t("yours")}</span>
-                    )}
                   </li>
                 ))}
               </ul>

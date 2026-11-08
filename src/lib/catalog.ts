@@ -1,3 +1,4 @@
+import { MINOR_AGE } from "@/lib/age";
 import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { mayAsk, opensLesson, opensLive, type Grant, type LessonScope } from "@/lib/plans";
@@ -36,6 +37,22 @@ export async function grantsFor(
   });
 }
 
+/**
+ * Whose plans open a course for this viewer. A student, a teacher or an admin uses their own. A parent who has an under-13
+ * child enrolled in the course watches on the child's plans (the child's account is the learner); otherwise their own.
+ */
+export async function learnerFor(viewer: { id: string; role: string } | undefined, courseId: string, now = new Date()): Promise<string | undefined> {
+  if (!viewer) return undefined;
+  if (viewer.role !== "PARENT") return viewer.id;
+  // Under 13 means born after this day thirteen years ago.
+  const cutoff = new Date(Date.UTC(now.getUTCFullYear() - MINOR_AGE, now.getUTCMonth(), now.getUTCDate()));
+  const link = await db.parentLink.findFirst({
+    where: { parentId: viewer.id, student: { dateOfBirth: { gt: cutoff }, entitlements: { some: { courseId } } } },
+    select: { studentId: true },
+  });
+  return link?.studentId ?? viewer.id;
+}
+
 /** Admins and the course's own teacher see a course the way its owner does. One rule for every screen. */
 export function isCourseStaff(user: { id: string; role: string } | undefined, course: { instructorId: string }): boolean {
   return !!user && (user.role === "ADMIN" || course.instructorId === user.id);
@@ -65,7 +82,7 @@ export async function liveRole(
 ): Promise<"host" | "student" | null> {
   if (!user) return null;
   if (isCourseStaff(user, session.course)) return "host";
-  return (await grantsFor(user.id, session.courseId, now)).some((g) => opensLive(g, session.id, now)) ? "student" : null;
+  return (await grantsFor(await learnerFor(user, session.courseId, now), session.courseId, now)).some((g) => opensLive(g, session.id, now)) ? "student" : null;
 }
 
 export type StageRow = { id: string; nameAr: string; nameEn: string; fromLevel: number; toLevel: number; order: number };

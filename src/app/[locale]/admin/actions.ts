@@ -6,7 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { randomUUID } from "node:crypto";
-import { accessEnd, schoolYearEnd } from "@/lib/access";
+import { accessEnd } from "@/lib/access";
 import { logEvent } from "@/lib/analytics";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { blobInfo, coverPrefix } from "@/lib/blob";
@@ -70,6 +70,8 @@ export async function updateCourse(form: FormData) {
       descEn: optionalText,
       published: checkbox,
       aiGrading: checkbox,
+      maxPlays: z.coerce.number().int().min(1).max(1000).optional().catch(undefined),
+      maxIps: z.coerce.number().int().min(1).max(50).optional().catch(undefined),
       coverKey: z.string().trim().max(500).default(""),
     })
     .parse(Object.fromEntries(form));
@@ -86,7 +88,8 @@ export async function updateCourse(form: FormData) {
     cover = { coverKey, coverType: info.contentType };
   }
 
-  await db.course.update({ where: { id }, data: { ...data, ...cover } });
+  // An empty box clears the limit (maxPlays: unlimited, maxIps: IP check off).
+  await db.course.update({ where: { id }, data: { ...data, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, ...cover } });
   if (data.published && wasHidden) await logEvent({ name: "course_published", userId: me.id, courseId: id });
   done();
 }
@@ -218,7 +221,8 @@ export async function updateSku(form: FormData) {
     data: {
       price: localPrice,
       active: d.active,
-      accessEndsAt: cairoDay(d.accessEndsAt, "end", timeZone),
+      // The teacher picks the length in days; a leftover fixed end date would override it, so it is cleared.
+      accessEndsAt: d.accessDays ? null : cairoDay(d.accessEndsAt, "end", timeZone),
       accessDays: d.accessDays,
       saleFrom: cairoDay(d.saleFrom, "start", timeZone),
       saleTo: cairoDay(d.saleTo, "end", timeZone),
@@ -249,8 +253,8 @@ export async function addSku(form: FormData) {
       price: 0,
       currency: loc.currency,
       active: false,
-      accessEndsAt: d.accessType === "YEARLY" ? cairoDay(schoolYearEnd(new Date()), "end", loc.timeZone) : null,
-      accessDays: d.accessType === "FIXED_DAYS" ? 90 : d.accessType === "MONTHLY" ? 30 : null,
+      accessEndsAt: null,
+      accessDays: { FIXED_DAYS: 90, MONTHLY: 30, SEMESTER: 120, YEARLY: 365, REVISION: 60 }[d.accessType],
       term: d.accessType === "SEMESTER" ? 1 : null,
       month: d.accessType === "MONTHLY" ? 1 : null,
     },

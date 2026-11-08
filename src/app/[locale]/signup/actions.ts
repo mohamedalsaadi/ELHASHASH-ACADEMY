@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 import { headers } from "next/headers";
 import { signIn } from "@/auth";
 import { logEvent } from "@/lib/analytics";
-import { ageOn, parseBirthDate } from "@/lib/age";
+import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
+import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
@@ -37,6 +38,7 @@ export type SignUpState = {
     phone: string;
     gradeId: string;
     guardianName: string;
+    guardianPhone: string;
     guardianEmail: string;
     dateOfBirth: string;
     guardianConsent: boolean;
@@ -52,6 +54,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     phone: String(form.get("phone") ?? ""),
     gradeId: String(form.get("gradeId") ?? ""),
     guardianName: String(form.get("guardianName") ?? ""),
+    guardianPhone: String(form.get("guardianPhone") ?? ""),
     guardianEmail: String(form.get("guardianEmail") ?? ""),
     dateOfBirth: String(form.get("dateOfBirth") ?? ""),
     // Returned with the error so the guardian does not have to tick it again after a typo elsewhere.
@@ -82,18 +85,20 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
                 ? issue.message === "too_young"
                   ? "too_young"
                   : "invalid_birthdate"
-                : field === "guardianConsent" || field === "guardianName" || field === "guardianEmail"
+                : field === "guardianConsent" || field === "guardianName" || field === "guardianPhone" || field === "guardianEmail"
                   ? "guardian_required"
                   : "password_too_short";
     return { error, values };
   }
-  const { email, phone, password, gradeId, type, guardianName, guardianEmail, dateOfBirth } = parsed.data;
+  const { email, phone, password, gradeId, type, guardianName, guardianPhone, guardianEmail, dateOfBirth } = parsed.data;
   const isParent = type === "PARENT";
   const dob = dateOfBirth ? parseBirthDate(dateOfBirth) : null;
   const age = dob ? ageOn(dob) : null;
-  const minor = age !== null && age < 18;
+  const minor = age !== null && age < MINOR_AGE;
   const name = maskContacts(parsed.data.name).text;
   if (name.trim().length < 2) return { error: "invalid_name", values };
+  // The guardian must be someone else, and the link must have a way to reach them.
+  if (minor && (guardianPhone === phone || (!guardianViaWhatsApp() && !guardianEmail))) return { error: "guardian_required", values };
   if (!isParent && !(await db.grade.findUnique({ where: { id: gradeId! } }))) return { error: "invalid_grade", values };
 
   // The guardian token is generated before the transaction so the hash and the email share one value.
@@ -129,7 +134,9 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
             studentId: created.id,
             parentId: null,
             guardianName: guardianName!,
-            guardianEmail: guardianEmail!,
+            guardianPhone,
+            guardianEmail: guardianEmail ?? null,
+            viaWhatsApp: guardianViaWhatsApp(),
             rulesVersion: PRIVACY_VERSION,
             source: "SIGNUP",
             verifyTokenHash: guardianTokenHash,
@@ -177,21 +184,8 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     ),
   });
 
-  if (!isParent && minor && guardianEmail && guardianToken) {
-    await sendMail({
-      to: guardianEmail,
-      subject: ar ? "تأكيد موافقة ولي الأمر" : "Confirm your consent for a Dhirwa account",
-      html: emailLayout(
-        ar ? "تأكيد موافقة ولي الأمر" : "Confirm your consent",
-        [
-          ar
-            ? `أنشأ ${name} حسابًا على ذروة بموافقتك. اضغط الرابط لتأكيد موافقتك على استخدام المنصة.`
-            : `${name} created a Dhirwa account with your consent. Open the link to confirm that you agree to them using the platform.`,
-        ],
-        { href: `${appUrl()}/${locale}/guardian/confirm?token=${guardianToken}`, label: ar ? "تأكيد الموافقة" : "Confirm consent" },
-        ar ? "ar" : "en",
-      ),
-    }).catch(() => {});
+  if (!isParent && minor && guardianPhone && guardianToken) {
+    await sendGuardianRequest({ childName: name, guardianPhone, guardianEmail, token: guardianToken, locale: ar ? "ar" : "en" });
   }
 
   // A student lands on the home page ("/" shows their country, grade and courses once they are signed in).

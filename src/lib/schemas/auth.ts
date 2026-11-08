@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ageOn, parseBirthDate } from "@/lib/age";
+import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 
 // Local mobile formats of the seven catalog countries, stored as typed:
 // Egypt 01[0125]+8; Saudi/UAE 05+8; Kuwait [569]+7; Qatar [3567]+7; Bahrain [36]+7; Oman [79]+7.
@@ -24,23 +24,21 @@ export const signInSchema = z.object({
   password: z.string().min(1).max(PASSWORD_MAX),
 });
 
-type StudentFields = { dateOfBirth?: string; guardianConsent: boolean; guardianName?: string; guardianEmail?: string };
+/** A form sends "" for a box left empty; treat that as absent. */
+const blankToUndefined = <T extends z.ZodType>(schema: T) => z.preprocess((v) => (v === "" ? undefined : v), schema);
 
-/** A student needs a real birth date, is at least 13, and under 18 brings a guardian name, email and consent. */
+type StudentFields = { dateOfBirth?: string; guardianConsent: boolean; guardianName?: string; guardianPhone?: string };
+
+/** A student needs a real birth date; under 13 also brings a guardian's name, WhatsApp number and consent. */
 function studentRules(d: StudentFields, ctx: z.RefinementCtx) {
-    const dob = parseBirthDate(d.dateOfBirth);
-    if (!dob) {
-      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "invalid_birthdate" });
-      return;
-    }
-    const age = ageOn(dob);
-    if (age < 13) {
-      ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "too_young" });
-      return;
-    }
-    if (age < 18 && (!d.guardianConsent || !d.guardianName || !d.guardianEmail)) {
-      ctx.addIssue({ code: "custom", path: ["guardianConsent"], message: "guardian_required" });
-    }
+  const dob = parseBirthDate(d.dateOfBirth);
+  if (!dob) {
+    ctx.addIssue({ code: "custom", path: ["dateOfBirth"], message: "invalid_birthdate" });
+    return;
+  }
+  if (ageOn(dob) < MINOR_AGE && (!d.guardianConsent || !d.guardianName || !d.guardianPhone)) {
+    ctx.addIssue({ code: "custom", path: ["guardianConsent"], message: "guardian_required" });
+  }
 }
 
 export const signUpSchema = z
@@ -54,8 +52,10 @@ export const signUpSchema = z
     gradeId: z.string().optional(),
     /// Required for a student. The action decides whether the account is a minor.
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate").optional(),
-    /// Required for a minor; the consent link is sent here.
-    guardianEmail: z.email().trim().toLowerCase().optional(),
+    /// Required for a minor: the consent link goes to this WhatsApp number.
+    guardianPhone: blankToUndefined(phoneSchema.optional()),
+    /// Only used when WhatsApp is off, so the link still reaches someone.
+    guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
     /// A student joins with a guardian's consent; the model has no birth date, so every STUDENT is a minor.
     guardianName: z.string().trim().min(2).max(80).optional(),
     guardianConsent: z.coerce.boolean().default(false),
@@ -78,7 +78,8 @@ export const completeProfileSchema = z
     gradeId: z.string().min(1),
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate"),
     guardianName: z.string().trim().min(2).max(80).optional(),
-    guardianEmail: z.email().trim().toLowerCase().optional(),
+    guardianPhone: blankToUndefined(phoneSchema.optional()),
+    guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
     guardianConsent: z.coerce.boolean().default(false),
     acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
   })
@@ -93,7 +94,8 @@ export const otpFinishSchema = z
     email: z.union([z.literal(""), z.email().trim().toLowerCase()]).optional(),
     gradeId: z.string().optional(),
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate").optional(),
-    guardianEmail: z.email().trim().toLowerCase().optional(),
+    guardianPhone: blankToUndefined(phoneSchema.optional()),
+    guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
     guardianName: z.string().trim().min(2).max(80).optional(),
     guardianConsent: z.coerce.boolean().default(false),
     acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),

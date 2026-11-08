@@ -84,6 +84,11 @@ export default async function CompleteProfilePage({
           <input name="guardianName" autoComplete="name" minLength={2} maxLength={80} dir="auto" className={field} />
           <span className="text-label">{t("guardianHint")}</span>
         </label>
+        <div className="grid gap-2 text-label text-ink-muted">
+          {t("guardianPhone")}
+          <PhoneField name="guardianPhone" required={false} />
+          <span className="text-label">{t("guardianPhoneHint")}</span>
+        </div>
         <label className="grid gap-2 text-label text-ink-muted">
           {t("guardianEmail")}
           <input type="email" name="guardianEmail" autoComplete="email" dir="ltr" className={field} />

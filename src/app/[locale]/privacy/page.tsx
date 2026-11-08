@@ -77,9 +77,9 @@ const ar: Section[] = [
     h: "الأطفال وولي الأمر",
     body: (
       <p>
-        من هم تحت 18 عامًا يشتركون بموافقة ولي الأمر. نطلب تاريخ الميلاد عند التسجيل، وإذا كان الطالب تحت 18 نرسل إلى
-        ولي الأمر رابط تأكيد واحدًا. ويستطيع ولي الأمر أيضًا إنشاء حساب ومتابعة التقدم والمدفوعات بعد ربط الطالب بكود
-        يصدره الطالب من حسابه.
+        من هم تحت 13 عامًا يشتركون بموافقة ولي الأمر. نطلب تاريخ الميلاد عند التسجيل، وإذا كان الطالب تحت 13 نرسل إلى
+        ولي الأمر رسالة واتساب برابط تأكيد واحد؛ بالموافقة يُنشأ حساب ولي الأمر ويُربط بالطالب، فيتابع التقدم والمدفوعات
+        ويشاهد الدروس مع ابنه. ونسجّل عنوان IP والدولة عند تشغيل الدروس المسجلة لمنع مشاركة الحسابات.
       </p>
     ),
   },
@@ -110,7 +110,7 @@ const ar: Section[] = [
     body: (
       <p>
         نعالج بياناتك لتنفيذ العقد بيننا (الحساب والدروس والدفع)، وبموافقتك حين تضع علامة في مربع الشروط وسياسة الخصوصية عند
-        التسجيل، ويوافق ولي الأمر عمّن هم دون 18 عامًا، وللوفاء بالتزامات قانونية مثل المحاسبة. يمكنك سحب موافقتك في أي وقت
+        التسجيل، ويوافق ولي الأمر عمّن هم دون 13 عامًا، وللوفاء بالتزامات قانونية مثل المحاسبة. يمكنك سحب موافقتك في أي وقت
         بحذف حسابك.
       </p>
     ),
@@ -193,9 +193,10 @@ your account at any time.
     h: "Children and parents",
     body: (
       <p>
-        Students under 18 join with a guardian&apos;s consent. We ask for a date of birth at sign-up; if the student is under
-        18, we email the guardian a single confirmation link. A parent can also create an account and follow progress and
-        payments after linking the student with a code the student generates in their account.
+        Students under 13 join with a guardian&apos;s consent. We ask for a date of birth at sign-up; if the student is under
+        13, we send the guardian one WhatsApp message with a confirmation link. Approving it creates the guardian&apos;s parent
+        account and links the student, so the parent can follow progress and payments and watch lessons with their child.
+        When recorded lessons are played we log the IP address and country to stop account sharing.
       </p>
     ),
   },
@@ -228,7 +229,7 @@ your account at any time.
     body: (
       <p>
         We process your data to carry out the contract between us (your account, lessons and payments), with your consent when
-        you tick the terms and privacy policy box at sign-up (a guardian agrees for anyone under 18), and to meet legal duties
+        you tick the terms and privacy policy box at sign-up (a guardian agrees for anyone under 13), and to meet legal duties
         such as accounting. You can withdraw your consent at any time by deleting your account.
       </p>
     ),

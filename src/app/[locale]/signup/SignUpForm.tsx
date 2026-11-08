@@ -8,7 +8,7 @@ import { PasswordField } from "@/components/ui/PasswordField";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
 import { Link } from "@/i18n/navigation";
-import { ageOn, parseBirthDate } from "@/lib/age";
+import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { signUp } from "./actions";
 
 
@@ -34,7 +34,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
   // A guardian is asked for only when the birth date says the student is under 18.
   const [dob, setDob] = useState(v?.dateOfBirth ?? "");
   const born = parseBirthDate(dob);
-  const minor = born !== null && ageOn(born) < 18;
+  const minor = born !== null && ageOn(born) < MINOR_AGE;
   const hasGrades = groups.some((group) => group.grades.length > 0);
   return (
     // React resets the form after each submit; the key remounts it with what the student typed.
@@ -141,6 +141,11 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
             />
             <span className="text-label">{t("guardianHint")}</span>
           </label>
+          <div className={label}>
+            {t("guardianPhone")}
+            <PhoneField name="guardianPhone" defaultValue={v?.guardianPhone} />
+            <span className="text-label">{t("guardianPhoneHint")}</span>
+          </div>
           <label className={label}>
             {t("guardianEmail")}
             <input

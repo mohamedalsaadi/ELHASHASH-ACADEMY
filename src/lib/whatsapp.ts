@@ -30,3 +30,30 @@ export async function sendWhatsAppCode(phone: string, code: string, locale: "ar"
   }).catch(() => null);
   return Boolean(res?.ok);
 }
+
+/**
+ * Asks a guardian to approve their child's account. The template (category "Utility", WHATSAPP_GUARDIAN_TEMPLATE) takes the
+ * child's name as {{1}} and has a URL button ending in {{1}} whose base is https://<site>/<lang>/guardian/confirm?token=
+ */
+export async function sendWhatsAppGuardianLink(phone: string, childName: string, token: string, locale: "ar" | "en"): Promise<boolean> {
+  if (!whatsappEnabled()) return false;
+  const res = await fetch(`${process.env.WHATSAPP_API_BASE || "https://graph.facebook.com"}/${VERSION()}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
+    signal: AbortSignal.timeout(10_000),
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: phone.replace(/\D/g, ""),
+      type: "template",
+      template: {
+        name: process.env.WHATSAPP_GUARDIAN_TEMPLATE || "dhirwa_guardian_consent",
+        language: { code: locale },
+        components: [
+          { type: "body", parameters: [{ type: "text", text: childName }] },
+          { type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: token }] },
+        ],
+      },
+    }),
+  }).catch(() => null);
+  return Boolean(res?.ok);
+}

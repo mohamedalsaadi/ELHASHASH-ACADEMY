@@ -51,3 +51,17 @@ WHATSAPP_PHONE_NUMBER_ID=stub WHATSAPP_ACCESS_TOKEN=stub WHATSAPP_API_BASE=http:
 ```
 
 The test plants a code whose hash it knows, so no real message is needed. Without those variables the spec skips itself.
+
+## Second template: parent approval link
+
+Children under 13 need a parent's approval. The app sends the parent one WhatsApp message; one tap on its button
+approves the child, creates the parent's account and signs them in. Create this template in Meta's manager, in
+Arabic and English:
+
+- Name: `dhirwa_guardian_consent` (override with `WHATSAPP_GUARDIAN_TEMPLATE`)
+- Category: **Utility** (not Authentication)
+- Body: `{{1}}` is the child's name, e.g. "{{1}} asked to join Dhirwa. As they are under 13, please approve their account."
+- Button: type URL, dynamic, base `https://dhirwa.ae/ar/guardian/confirm?token=` (English template: `/en/`), suffix `{{1}}`.
+
+Until WhatsApp keys exist, the signup form's optional guardian email is used instead, and approving by email only
+records the consent (no parent account is created, because an email does not prove the phone number).

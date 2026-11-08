@@ -130,6 +130,7 @@ model User {
   ordersReceived      Order[]                 @relation("OrderBeneficiary")
   entitlements        Entitlement[]
   device              DeviceSession?
+  playEvents          PlayEvent[]
   progress            StudentProgress?
   attempts            QuizAttempt[]
   views               LessonView[]
@@ -285,6 +286,10 @@ model Course {
   aiGrading    Boolean    @default(false)
   /// When on, the course shows a weekly XP leaderboard to its own students.
   leaderboard  Boolean    @default(false)
+  /// Plays a student gets per recorded lesson; null means unlimited. A refresh within 5 minutes is not a new play.
+  maxPlays     Int?
+  /// Distinct IP addresses one account may watch from in 24 hours, across all courses; null turns the check off.
+  maxIps       Int?       @default(4)
   createdAt    DateTime   @default(now())
 
   grade           Grade?           @relation(fields: [gradeId], references: [id], onDelete: Restrict)
@@ -338,6 +343,7 @@ model Lesson {
   instructor       User?             @relation("LessonInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
   attempts         QuizAttempt[]
   views            LessonView[]
+  plays            PlayEvent[]
   skus             Sku[]
   entitlements     Entitlement[]
   questions        Question[]
@@ -673,6 +679,10 @@ model GuardianConsent {
   guardianName  String
   /// Where the verification link was sent. Null on legacy rows.
   guardianEmail String?
+  /// The guardian's WhatsApp number; the link goes here and approving it creates their parent account.
+  guardianPhone String?
+  /// True when the link was sent only to guardianPhone on WhatsApp, so clicking it proves the guardian holds that number.
+  viaWhatsApp   Boolean  @default(false)
   source        ConsentSource @default(PARENT)
   /// Bumped when the wording shown at consent changes (CONSENT_VERSION in src/lib/live.ts).
   rulesVersion  String
@@ -823,6 +833,26 @@ enum LessonConfidence {
   GOT_IT
   SHAKY
   LOST
+}
+
+/// One row per video play (OTP issued); drives the per-lesson play cap and the per-account IP cap.
+model PlayEvent {
+  id       String   @id @default(cuid())
+  /// Who pressed play: the student, or a parent watching for a child under 13.
+  userId   String
+  /// Whose access was used. Caps and the one-at-a-time rule count per learner, so a parent and a child share them.
+  learnerId String
+  lessonId String
+  ip       String
+  /// Two-letter country from the platform's geo header, when it sent one.
+  country  String?
+  at       DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([learnerId, at])
+  @@index([learnerId, lessonId])
 }
 
 model LessonView {

@@ -24,6 +24,24 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-11: student home order and new-course strip; teachers' manual
+
+- Signed-in students see `/me` (a rewrite of "/"; the earlier `src/app/[locale]/page.tsx` is the visitor page). Subjects they already hold now come first in the ride and under "Continue learning"; each subject section below lists only the courses they have not joined. New `NewRoller` (`src/components/home/NewRoller.tsx`, CSS `.roller` in `brand.css`) loops cards of courses of their grade created in the last 45 days that they do not hold; it pauses on hover or focus and stays still for reduced motion.
+- Arabic PDF manual for teachers (16 chapters, screenshots of the seeded preview, not of real accounts) was built outside the repo with headless Chrome. It is not committed: the repo is public.
+
+## 2026-11-11: guardian age is 13; parent WhatsApp approval; parent watches for under-13s (local, unpushed)
+
+- `MINOR_AGE = 13` (`src/lib/age.ts`). Under 13 a guardian must approve; 13 and over sign up alone (and may pay; the owner accepted that). Under-13 signups are now allowed (the old "too young" block is gone).
+- Signup, phone signup and Google profile ask for the guardian's WhatsApp number (`guardianPhone`). `src/lib/guardian.ts` sends the link: WhatsApp when keys exist (template in `docs/whatsapp-otp.md`), otherwise the optional guardian email. The link page now needs a button press (`guardian/confirm/actions.ts`); with WhatsApp it creates the parent account by phone, links the child and signs the parent in.
+- A parent of an under-13 child opens the child's lessons and live class from the parent account (`learnerFor` in `catalog.ts`; "Watch with your child" block on the child page). Plays, IPs and the plays cap are counted per learner, so parent and child share them. Rules in `src/lib/play-limits.ts`: never two people at once (15 min window), a second country within 6 hours is blocked, then the IP and play caps.
+- Migrations `20261111100000_play_limits` and `20261111200000_guardian_whatsapp` are not applied yet. Terms and privacy text updated to 13. Open: have a lawyer check the 13 to 17 payment position; live classes have no concurrency check (external meeting link); build not run locally, because the build applies migrations.
+
+## 2026-11-11: teacher-set subscription length and playback limits (local, unpushed)
+
+- Every package type now takes "access days" set by the teacher (semester 120, year 365, revision 60 by default); saving days clears any old fixed end date. `src/app/[locale]/admin/actions.ts`.
+- Per course: `maxPlays` (plays per lesson per student, empty = unlimited) and `maxIps` (distinct IPs per account per 24h, default 4, empty = off). New `PlayEvent` table logs each play; a refresh within 5 minutes is not a new play. Rules in `src/lib/play-limits.ts`, enforced in the VdoCipher player on the lesson page. Staff are exempt.
+- Open: watch-time limits need VdoCipher licence rules (not wired); existing paid entitlements keep their stored end dates.
+
 ## 2026-11-08: Phone sign-in with WhatsApp codes (local commit, not pushed, switched off)
 
 - **Flow** (`signin/OtpFlow.tsx`, `signin/otp-actions.ts`): number with the country-code list, 6-digit code on WhatsApp, then a short profile for a new number. `/signup` redirects to `/signin` when it is on; a "use a password instead" link keeps the old form. Off until `WHATSAPP_PHONE_NUMBER_ID` and `WHATSAPP_ACCESS_TOKEN` are set, so production is unchanged today.

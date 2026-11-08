@@ -493,7 +493,11 @@
       "GOT_IT": "Got it",
       "SHAKY": "Partly",
       "LOST": "Not yet"
-    }
+    },
+    "playsUsed": "You've used all {count} plays allowed for this lesson. Ask your teacher if you need more.",
+    "together": "Someone else is watching this student's lessons right now (a parent and a child can't watch at the same time). Try again in a few minutes.",
+    "location": "This student's lessons were just opened from a different country. For security, wait a few hours or contact support.",
+    "tooManyIps": "This account has been used from too many networks today. Try again tomorrow, or contact support if this is a mistake."
   },
   "admin": {
     "title": "Admin",
@@ -714,12 +718,15 @@
       "bad_range": "The end level is before the start level.",
       "bad_slug": "The slug may contain lowercase letters, digits and dashes only."
     },
-    "aiGradingHint": "Suggested AI grading: each submission is sent to an AI service for a suggested mark the teacher confirms. Leave it off unless the academy has agreed."
+    "aiGradingHint": "Suggested AI grading: each submission is sent to an AI service for a suggested mark the teacher confirms. Leave it off unless the academy has agreed.",
+    "maxPlays": "Plays per lesson per student (empty = unlimited)",
+    "maxIps": "Different IP addresses per student per day (empty = no check)",
+    "limitsHint": "Limits video sharing. A refresh within 5 minutes is not a new play. You and the owner are never limited."
   },
   "signup": {
     "title": "Create an account",
     "completeTitle": "Finish your account",
-    "completeHint": "Add a phone number, your grade and your date of birth. If you are under 18, add a guardian's email.",
+    "completeHint": "Add a phone number, your grade and your date of birth. If you are under 13, add a parent's WhatsApp number.",
     "name": "Full name",
     "email": "Email",
     "emailHint": "Receipts and lesson updates go here.",
@@ -739,11 +746,13 @@
     "haveAccount": "Already have an account?",
     "signIn": "Sign in",
     "guardianName": "Guardian's name",
-    "guardianHint": "A parent or guardian for the student. Required if the student is under 18.",
+    "guardianHint": "A parent or guardian for the student. Required if the student is under 13.",
     "guardianEmail": "Guardian's email",
-    "guardianEmailHint": "Required if the student is under 18. We send one confirmation link.",
+    "guardianPhone": "Parent's WhatsApp number",
+    "guardianPhoneHint": "Required if the student is under 13. We send the parent one WhatsApp message; one tap creates their parent account and approves yours.",
+    "guardianEmailHint": "Optional. Only used while WhatsApp messages are not available.",
     "dateOfBirth": "Date of birth",
-    "dateOfBirthHint": "If you are under 18, a guardian confirms consent by email.",
+    "dateOfBirthHint": "If you are under 13, a parent approves your account on WhatsApp.",
     "guardianConsent": "I am the student's parent or guardian and I agree to the terms and privacy policy on their behalf.",
     "errors": {
       "invalid_name": "Enter your full name (at least 2 letters).",
@@ -752,9 +761,9 @@
       "password_too_short": "The password is too short. Use at least 8 characters.",
       "invalid_grade": "Choose your grade.",
       "invalid_birthdate": "Enter a valid date of birth.",
-      "too_young": "Students under 13 cannot create an account. Contact us about a guardian-managed account.",
+      "too_young": "Enter a valid date of birth.",
       "too_many": "Too many new accounts from this network. Try again in an hour.",
-      "guardian_required": "A guardian's name, email and consent are required for a student under 18.",
+      "guardian_required": "For a student under 13, a parent's name, a different WhatsApp number and consent are required.",
       "phone_taken": "That phone number is already used by another account. Sign in, or use another number.",
       "check_email": "If that email or phone already has an account, we sent it a sign-in note. Otherwise sign in, or reset your password.",
       "terms_required": "Tick the box to accept the terms and the privacy policy."
@@ -766,7 +775,9 @@
   "guardianConfirm": {
     "title": "Guardian consent",
     "ok": "Thank you. Your consent is confirmed and the student can use the platform.",
-    "bad": "This link is invalid or has expired. Ask the student to send a new one."
+    "bad": "This link is invalid or has expired. Ask the student to send a new one.",
+    "intro": "{name} asked to join Dhirwa. Because they are under 13, a parent must approve.",
+    "approve": "I'm the parent — approve"
   },
   "dashboard": {
     "title": "My dashboard",
@@ -825,12 +836,19 @@
     "title": "Suggestion box",
     "lede": "Tell us what to build, fix or keep. It is anonymous: we do not ask for your name or email, and we cannot reply. For a problem with your account or a payment, use Contact us instead.",
     "kind": "What is it?",
-    "kinds": { "idea": "An idea", "problem": "A problem", "praise": "Something that works well" },
+    "kinds": {
+      "idea": "An idea",
+      "problem": "A problem",
+      "praise": "Something that works well"
+    },
     "message": "Your suggestion",
     "send": "Send",
     "sending": "Sending…",
     "sent": "Thank you. We read every suggestion.",
-    "errors": { "invalid": "Write between 10 and 1500 characters.", "limited": "Too many suggestions from this connection. Try again later." },
+    "errors": {
+      "invalid": "Write between 10 and 1500 characters.",
+      "limited": "Too many suggestions from this connection. Try again later."
+    },
     "privacyNote": "Do not write personal details. An AI tool summarises suggestions for the owner."
   },
   "otp": {
@@ -1262,8 +1280,18 @@
       "recent": "Recent notes",
       "empty": "No suggestions yet.",
       "aiOff": "AI is off (no GEMINI_API_KEY), so summaries are unavailable. The notes are still collected.",
-      "kind": { "idea": "Idea", "problem": "Problem", "praise": "Praise" },
-      "role": { "VISITOR": "Visitor", "STUDENT": "Student", "PARENT": "Parent", "INSTRUCTOR": "Teacher", "ADMIN": "Admin" }
+      "kind": {
+        "idea": "Idea",
+        "problem": "Problem",
+        "praise": "Praise"
+      },
+      "role": {
+        "VISITOR": "Visitor",
+        "STUDENT": "Student",
+        "PARENT": "Parent",
+        "INSTRUCTOR": "Teacher",
+        "ADMIN": "Admin"
+      }
     },
     "support": {
       "hint": "Messages from the contact form. The AI writes a first draft; read it, edit it and send. Nothing is sent without you.",
@@ -1572,6 +1600,8 @@
     "aiLimited": "Daily AI grading limit reached. Try tomorrow.",
     "aiOk": "Suggestion received.",
     "aiNone": "Could not grade it. Review by hand.",
+    "watchTitle": "Watch with your child",
+    "watchHint": "Your child is under 13, so you can open their lessons from your account. You and your child can't watch at the same time, and your plays and IP addresses count together.",
     "examsTitle": "Exams",
     "noExams": "No exams taken yet.",
     "awaitingMark": "Awaiting a mark",
@@ -1668,6 +1698,8 @@
     "offer": "Offer"
   },
   "me": {
+    "newTitle": "New for your grade",
+    "newBadge": "New",
     "hello": "Welcome back, {name}",
     "title": "Your {grade}, {country}",
     "lede": "{count, plural, one {# subject} other {# subjects}} in your grade, every teacher in one place. Move along the trail and pick one.",

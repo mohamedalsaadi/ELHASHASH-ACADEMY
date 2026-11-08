@@ -11,9 +11,9 @@ describe("ageOn", () => {
 });
 
 describe("isMinor", () => {
-  it("treats 17 as minor and 18 as adult", () => {
-    expect(isMinor(new Date("2009-01-01T00:00:00Z"), now)).toBe(true);
-    expect(isMinor(new Date("2008-01-01T00:00:00Z"), now)).toBe(false);
+  it("treats 12 as minor and 13 as adult", () => {
+    expect(isMinor(new Date("2014-01-01T00:00:00Z"), now)).toBe(true);
+    expect(isMinor(new Date("2013-01-01T00:00:00Z"), now)).toBe(false);
   });
 
   it("treats an unknown birth date as an adult legacy account", () => {

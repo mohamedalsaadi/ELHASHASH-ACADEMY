@@ -4,10 +4,10 @@ import { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { ageOn, parseBirthDate } from "@/lib/age";
+import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
+import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
-import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { completeProfileSchema } from "@/lib/schemas/auth";
 import { hashToken, newToken } from "@/lib/token-utils";
 
@@ -44,7 +44,10 @@ export async function completeProfile(form: FormData) {
     return redirect(`/${locale}/complete-profile?error=invalid_grade`);
   }
 
-  const minor = ageOn(dob) < 18;
+  const minor = ageOn(dob) < MINOR_AGE;
+  if (minor && (d.guardianPhone === d.phone || (!guardianViaWhatsApp() && !d.guardianEmail))) {
+    return redirect(`/${locale}/complete-profile?error=guardian_required`);
+  }
   const token = minor ? newToken() : null;
   const tokenHash = token ? hashToken(token) : null;
   try {
@@ -57,14 +60,16 @@ export async function completeProfile(form: FormData) {
             studentId: user.id,
             parentId: null,
             guardianName: d.guardianName!,
-            guardianEmail: d.guardianEmail!,
+            guardianPhone: d.guardianPhone,
+            guardianEmail: d.guardianEmail ?? null,
+            viaWhatsApp: guardianViaWhatsApp(),
             rulesVersion: PRIVACY_VERSION,
             source: "SIGNUP",
             verifyTokenHash: tokenHash,
             verifyExpiresAt: new Date(Date.now() + 7 * 86_400_000),
           },
           // A retry gets a fresh verification link; the first guardian name and email still stand.
-          update: { verifyTokenHash: tokenHash, verifyExpiresAt: new Date(Date.now() + 7 * 86_400_000) },
+          update: { guardianPhone: d.guardianPhone, viaWhatsApp: guardianViaWhatsApp(), verifyTokenHash: tokenHash, verifyExpiresAt: new Date(Date.now() + 7 * 86_400_000) },
         });
       }
     });
@@ -75,22 +80,8 @@ export async function completeProfile(form: FormData) {
     throw e;
   }
 
-  if (minor && d.guardianEmail && token) {
-    const ar = locale === "ar";
-    await sendMail({
-      to: d.guardianEmail,
-      subject: ar ? "تأكيد موافقة ولي الأمر" : "Confirm your consent for a Dhirwa account",
-      html: emailLayout(
-        ar ? "تأكيد موافقة ولي الأمر" : "Confirm your consent",
-        [
-          ar
-            ? `أنشأ ${user.name} حسابًا على ذروة بموافقتك. اضغط الرابط لتأكيد موافقتك على استخدام المنصة.`
-            : `${user.name} created a Dhirwa account with your consent. Open the link to confirm that you agree to them using the platform.`,
-        ],
-        { href: `${appUrl()}/${locale}/guardian/confirm?token=${token}`, label: ar ? "تأكيد الموافقة" : "Confirm consent" },
-        ar ? "ar" : "en",
-      ),
-    }).catch(() => {});
+  if (minor && d.guardianPhone && token) {
+    await sendGuardianRequest({ childName: user.name, guardianPhone: d.guardianPhone, guardianEmail: d.guardianEmail, token, locale });
   }
 
   revalidatePath("/[locale]/dashboard", "page");

@@ -47,6 +47,7 @@ async function readPart(pathname: string): Promise<AiPart | null> {
 export async function gradeWithAi(input: {
   title: string;
   instructions: string | null;
+  rubric?: string | null;
   maxScore: number;
   text: string | null;
   files: { pathname: string; contentType: string }[];
@@ -63,7 +64,8 @@ export async function gradeWithAi(input: {
   parts.push({ text: `Maximum score: ${input.maxScore}. Mark it now.` });
 
   const result = await askJson({
-    system: `${SYSTEM}\n\nAssignment: ${input.title}\n${input.instructions ?? ""}`.trim(),
+    system: `${SYSTEM}\n\nAssignment: ${input.title}\n${input.instructions ?? ""}${input.rubric ? `
+Marking guide from the teacher (mark against it): ${input.rubric}` : ""}`.trim(),
     parts,
     schema: Reply,
   });
@@ -91,7 +93,7 @@ export async function suggestGrade(submissionId: string): Promise<boolean> {
       revision: true,
       studentId: true,
       files: { select: { pathname: true, contentType: true } },
-      assignment: { select: { title: true, instructions: true, maxScore: true } },
+      assignment: { select: { title: true, instructions: true, rubric: true, maxScore: true } },
     },
   });
   if (!submission) return false;

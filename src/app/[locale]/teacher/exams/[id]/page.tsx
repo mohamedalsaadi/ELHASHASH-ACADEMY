@@ -45,7 +45,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
           marks: true,
           maxMarks: true,
           user: { select: { name: true } },
-          answers: { select: { id: true, marks: true, text: true, item: { select: { prompt: true, marks: true, kind: true } } } },
+          answers: { select: { id: true, itemId: true, correct: true, marks: true, text: true, item: { select: { prompt: true, marks: true, kind: true } } } },
         },
       },
     },
@@ -59,6 +59,16 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
     select: { id: true, prompt: true, kind: true, marks: true, lesson: { select: { titleAr: true, titleEn: true } } },
   });
   const chosen = new Set(paper.items.map((i) => i.itemId));
+  // Share of marked answers that were right, per question, over the latest 50 attempts: a hard or broken question stands out.
+  const stat = new Map<string, { n: number; ok: number }>();
+  for (const a of paper.attempts)
+    for (const ans of a.answers) {
+      if (ans.correct === null) continue;
+      const s = stat.get(ans.itemId) ?? { n: 0, ok: 0 };
+      s.n += 1;
+      if (ans.correct) s.ok += 1;
+      stat.set(ans.itemId, s);
+    }
 
   return (
     <main className="mx-auto grid max-w-4xl gap-6 px-4 py-12">
@@ -107,6 +117,9 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
                   <span className="block truncate" dir="auto">{item.prompt}</span>
                   <span className="text-label text-ink-muted">
                     {pick(ar, item.lesson.titleAr, item.lesson.titleEn)} · {item.kind} · <span className="num">{item.marks}</span>
+                    {stat.get(item.id) && (
+                      <span className="num"> · {Math.round((stat.get(item.id)!.ok / stat.get(item.id)!.n) * 100)}% ({stat.get(item.id)!.n})</span>
+                    )}
                   </span>
                 </span>
                 <form action={toggleExamItem}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { ExamTimer } from "@/components/exam/ExamTimer";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { field } from "@/components/ui/form";
@@ -21,8 +21,36 @@ export function ExamForm({
   labels: Record<"submit" | "yourAnswer" | "invalid" | "closed" | "limited" | "timeLeft" | "timeUp", string>;
 }) {
   const [state, action] = useActionState(submitExam, null as PracticeError);
+  const form = useRef<HTMLFormElement>(null);
+  const key = `exam:${attemptId}`;
+
+  // Answers are kept in this browser as the student goes, so a refresh or a dropped connection costs nothing.
+  useEffect(() => {
+    const el = form.current;
+    if (!el) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, string>;
+      for (const [name, value] of Object.entries(saved)) {
+        for (const input of Array.from(el.elements).filter((x): x is HTMLInputElement | HTMLTextAreaElement => (x as HTMLInputElement).name === name)) {
+          if (input instanceof HTMLInputElement && input.type === "radio") input.checked = input.value === value;
+          else input.value = value;
+        }
+      }
+    } catch {}
+  }, [key]);
+
+  function save() {
+    const el = form.current;
+    if (!el) return;
+    const out: Record<string, string> = {};
+    for (const [name, value] of new FormData(el)) if (/^(choice|text)_/.test(name) && typeof value === "string" && value) out[name] = value;
+    try {
+      localStorage.setItem(key, JSON.stringify(out));
+    } catch {}
+  }
+
   return (
-    <form action={action} data-exam className="grid gap-5">
+    <form ref={form} action={action} onChange={save} onInput={save} data-exam className="grid gap-5">
       <input type="hidden" name="attemptId" value={attemptId} />
       <ExamTimer at={expiresAt} label={labels.timeLeft} timeUp={labels.timeUp} />
 

@@ -50,7 +50,7 @@ const ar: Section[] = [
       <p>
         نستخدم مزودين يعالجون البيانات نيابة عنا: Neon (قاعدة البيانات)، Vercel (الاستضافة)، Ziina (الدفع)،
         VdoCipher (حماية الفيديو)، وResend (البريد). تُفتح الحصص المباشرة عبر رابط يقدّمه المدرّس (Zoom أو Microsoft Teams أو Google Meet)، ويُستضاف الاجتماع خارج ذروة ولا تسجّله. وعند تفعيل التصحيح الآلي لكورس، يُرسل
-        نص إجابة الطالب والصور التي يرفعها إلى Google (Gemini) لاقتراح درجة يراجعها المدرّس. وصندوق الاقتراحات مجهول: لا نحفظ اسمًا ولا بريدًا، ونُخفي أرقام الهاتف والبريد داخل النص، ثم يُرسل النص إلى Google (Gemini) ليلخّصه للمالك. لا نبيع بياناتك.
+        نص إجابة الطالب والصور التي يرفعها إلى Google (Gemini) لاقتراح درجة يراجعها المدرّس. وصندوق الاقتراحات مجهول: لا نحفظ اسمًا ولا بريدًا، ونُخفي أرقام الهاتف والبريد داخل النص، ثم يُرسل النص إلى Google (Gemini) ليلخّصه للمالك. والملاحظة الأسبوعية لوليّ الأمر يكتبها الذكاء الاصطناعي (Google Gemini) من أرقام التقدّم المخزّنة وتعليقات المدرّس الأخيرة فقط، ولا يُرسل اسم حساب الطفل ولا بريده ولا هاتفه. لا نبيع بياناتك.
       </p>
     ),
   },
@@ -163,7 +163,7 @@ const en: Section[] = [
         We use providers that process data on our behalf: Neon (database), Vercel (hosting), Ziina (payments),
         VdoCipher (video protection) and Resend (email). Live lectures open through a link the teacher provides (Zoom, Microsoft Teams or Google Meet); the meeting is hosted outside Dhirwa and Dhirwa does not record it. When automatic grading is switched on
         for a course, the written answer a student submits and any uploaded photos are sent to Google (Gemini) for a suggested
-        mark that the teacher reviews. The suggestion box is anonymous: we keep no name or email, mask any phone number or email typed into the text, and send the text to Google (Gemini) to summarise it for the owner. We do not sell your data.
+        mark that the teacher reviews. The suggestion box is anonymous: we keep no name or email, mask any phone number or email typed into the text, and send the text to Google (Gemini) to summarise it for the owner. The weekly note to a parent is written by AI (Google Gemini) from stored progress numbers and the latest teacher comments only. The account name, email and phone number of the child are not sent. We do not sell your data.
       </p>
     ),
   },

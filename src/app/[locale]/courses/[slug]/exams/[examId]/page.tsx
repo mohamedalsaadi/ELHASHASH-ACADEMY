@@ -8,6 +8,7 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import { hasPlan } from "@/lib/assignments";
 import { grantsFor, isCourseStaff } from "@/lib/catalog";
 import { db } from "@/lib/db";
+import { shuffled } from "@/lib/exams";
 import { startExam } from "../actions";
 import { ExamForm } from "../ExamForm";
 
@@ -80,7 +81,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
         <ExamForm
           attemptId={attempt.id}
           expiresAt={attempt.expiresAt.toISOString()}
-          items={items.map((q) => ({ id: q.id, kind: q.kind, prompt: q.prompt, marks: q.marks, choices: q.choices }))}
+          items={shuffled(items, attempt.id).map((q) => ({ id: q.id, kind: q.kind, prompt: q.prompt, marks: q.marks, choices: shuffled(q.choices, `${attempt.id}:${q.id}`) }))}
           labels={{
             submit: t("submit"),
             yourAnswer: t("written"),

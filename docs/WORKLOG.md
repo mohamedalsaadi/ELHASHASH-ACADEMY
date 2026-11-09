@@ -1152,3 +1152,17 @@ Committed; not deployed.
 | Click through every signed-in flow as student, parent and teacher | Owner + QA |
 | Stale page after server actions (6 of 12 visits) | Code, open |
 | CI e2e job never seen green | Code, open |
+
+## 2026-11-12: Month packages, and the exam and AI items left open
+
+- **One-month package opened one lesson.** A MONTHLY plan opens lessons by their own `month`, and a teacher had to set it on every
+  lesson. The unit form now has "Month for every lesson in this unit", which writes the month to all its lessons; a lesson added
+  to a unit inherits the month of the previous one. Existing units need the month set once per unit.
+- **Exams:** question and choice order is shuffled per attempt (stable across refresh); answers are kept in the browser as the
+  student types and restored after a refresh; the teacher sees the share of right answers per question on the exam page.
+- **Question bank:** paste-import many questions (`question | choice;choice | correct number | marks`, all or nothing, 100 lines).
+- **AI checker:** optional marking guide (`Assignment.rubric`, migration `20261114100000_assignment_rubric`), sent to the model
+  and never shown to students. Privacy page now says the weekly parent note is AI-written.
+
+**Open**
+- Not tried in a browser. Still not built: sweep of abandoned attempts, marks CSV export, images in questions, more question types.

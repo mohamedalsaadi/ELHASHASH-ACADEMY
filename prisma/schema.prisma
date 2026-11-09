@@ -948,6 +948,8 @@ model Assignment {
   instructions  String?        @db.VarChar(8000)
   /// An outside link to the work (a form, a shared PDF). Shown as a button next to the instructions.
   linkUrl       String?        @db.VarChar(500)
+  /// What a good answer contains. Only the teacher and the AI checker see it; never sent to students.
+  rubric        String?        @db.VarChar(4000)
   /// Null means open-ended: never overdue, never late.
   dueAt         DateTime?
   maxScore      Int            @default(100)

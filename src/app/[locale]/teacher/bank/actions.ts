@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseQuestionCsv } from "@/lib/exams";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
 export type BankError = "invalid" | "ok" | null;
@@ -55,6 +56,34 @@ export async function createItem(_prev: BankError, form: FormData): Promise<Bank
     await db.questionItem.create({ data: { ...common, kind: "SHORT", answer: d.answer } });
   }
 
+  revalidatePath("/[locale]/teacher/bank/[lessonId]", "page");
+  return "ok";
+}
+
+/** Pastes many questions at once: `prompt | choice;choice | correct number | marks`, one per line. All or nothing. */
+export async function importItems(_prev: BankError, form: FormData): Promise<BankError> {
+  const me = await requireStaff();
+  const d = z.object({ lessonId: z.string().min(1), csv: z.string().max(60_000) }).safeParse(Object.fromEntries(form));
+  if (!d.success) return "invalid";
+  const courseId = await courseOfLesson(d.data.lessonId);
+  if (!courseId) return "invalid";
+  await assertCourse(me, courseId);
+
+  const { rows, bad } = parseQuestionCsv(d.data.csv);
+  if (bad.length > 0 || rows.length === 0 || rows.length > 100) return "invalid";
+
+  let order = await db.questionItem.count({ where: { lessonId: d.data.lessonId } });
+  for (const r of rows) {
+    order += 1;
+    const common = { lessonId: d.data.lessonId, createdById: me.id, prompt: r.prompt, marks: r.marks, order };
+    if (r.kind === "MCQ") {
+      await db.questionItem.create({
+        data: { ...common, kind: "MCQ", choices: { create: r.choices.map((label, i) => ({ label, correct: i === r.correct - 1, order: i })) } },
+      });
+    } else {
+      await db.questionItem.create({ data: { ...common, kind: "SHORT", answer: r.answer } });
+    }
+  }
   revalidatePath("/[locale]/teacher/bank/[lessonId]", "page");
   return "ok";
 }

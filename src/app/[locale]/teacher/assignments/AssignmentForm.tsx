@@ -15,6 +15,7 @@ export type AssignmentValues = {
   title?: string;
   instructions?: string | null;
   linkUrl?: string | null;
+  rubric?: string | null;
   dueAt?: string;
   maxScore?: number;
   allowResubmit?: boolean;
@@ -31,7 +32,7 @@ export function AssignmentForm({
   action: (prev: AssignmentError, form: FormData) => Promise<AssignmentError>;
   courses: CourseOption[];
   values?: AssignmentValues;
-  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string };
+  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; rubric: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string };
 }) {
   const [state, formAction] = useActionState(action, null);
   const [courseId, setCourseId] = useState(values.courseId ?? courses[0]?.id ?? "");
@@ -81,6 +82,11 @@ export function AssignmentForm({
       <label className={label}>
         {labels.instructions}
         <textarea name="instructions" defaultValue={values.instructions ?? ""} maxLength={8000} rows={4} dir="auto" className={`${field} py-2`} />
+      </label>
+
+      <label className={label}>
+        {labels.rubric}
+        <textarea name="rubric" defaultValue={values.rubric ?? ""} maxLength={4000} rows={3} dir="auto" className={`${field} py-2`} />
       </label>
 
       <label className={label}>

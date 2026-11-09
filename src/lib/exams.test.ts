@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SUBMIT_GRACE_MS, isExpired, markExam } from "./exams";
+import { SUBMIT_GRACE_MS, isExpired, markExam, parseQuestionCsv, shuffled } from "./exams";
 import type { PracticeItem } from "./practice";
 
 const item = (over: Partial<PracticeItem> & Pick<PracticeItem, "id" | "kind">): PracticeItem => ({
@@ -50,5 +50,25 @@ describe("isExpired", () => {
 
   it("is expired once the grace window passes", () => {
     expect(isExpired(expires, new Date(expires.getTime() + SUBMIT_GRACE_MS + 1))).toBe(true);
+  });
+});
+
+describe("shuffled", () => {
+  it("keeps the same order for the same seed and keeps every item", () => {
+    const list = [1, 2, 3, 4, 5, 6, 7, 8];
+    expect(shuffled(list, "a")).toEqual(shuffled(list, "a"));
+    expect([...shuffled(list, "a")].sort()).toEqual(list);
+    expect(shuffled(list, "a")).not.toEqual(shuffled(list, "b"));
+  });
+});
+
+describe("parseQuestionCsv", () => {
+  it("reads multiple choice and short answers and reports bad lines", () => {
+    const r = parseQuestionCsv(["What is 2+2? | 3;4;5 | 2 | 2", "Name a prime | | 7", "bad | a;b | 9", "", "x"].join("\n"));
+    expect(r.rows).toEqual([
+      { kind: "MCQ", prompt: "What is 2+2?", choices: ["3", "4", "5"], correct: 2, marks: 2 },
+      { kind: "SHORT", prompt: "Name a prime", answer: "7", marks: 1 },
+    ]);
+    expect(r.bad).toEqual([3, 5]);
   });
 });

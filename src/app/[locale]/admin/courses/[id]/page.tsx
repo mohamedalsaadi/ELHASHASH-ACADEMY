@@ -184,6 +184,17 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                   ))}
                 </select>
               </label>
+              <label className={label}>
+                {t("unitMonth")}
+                <select name="month" defaultValue="" className={field}>
+                  <option value="">{t("keepMonths")}</option>
+                  {numbers(1, 12).map((n) => (
+                    <option key={n} value={n}>
+                      {tc("plans.monthN", { n })}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <SaveButton />
             </form>
             {otherCourses.length > 0 && (

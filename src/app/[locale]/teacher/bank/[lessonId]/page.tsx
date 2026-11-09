@@ -9,6 +9,7 @@ import { Block } from "@/components/homework/AttachmentList";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { TeacherNav } from "../../TeacherNav";
+import { ImportForm } from "../ImportForm";
 import { ItemForm } from "../ItemForm";
 import { deleteItem } from "../actions";
 
@@ -120,6 +121,10 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
             saved: t("saved"),
           }}
         />
+      </Block>
+
+      <Block title={t("importBtn")}>
+        <ImportForm lessonId={lesson.id} labels={{ importHint: t("importHint"), importBtn: t("importBtn"), invalid: t("importInvalid"), saved: t("saved") }} />
       </Block>
     </main>
   );

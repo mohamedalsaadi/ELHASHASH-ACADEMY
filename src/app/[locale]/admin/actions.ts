@@ -102,11 +102,14 @@ export async function updateCourse(form: FormData) {
 
 export async function updateUnit(form: FormData) {
   const me = await requireStaff();
-  const { id, ...data } = z
-    .object({ id: z.string(), titleAr: text, titleEn: text, term })
+  const { id, month: unitMonth, ...data } = z
+    .object({ id: z.string(), titleAr: text, titleEn: text, term, month })
     .parse(Object.fromEntries(form));
   await assertCourse(me, await unitCourse(id));
   await db.unit.update({ where: { id }, data });
+  // A month package opens lessons by their own month, so the unit's month is written to every lesson in it.
+  // "No month" leaves each lesson as it is, so a unit can still be split by hand.
+  if (unitMonth !== null) await db.lesson.updateMany({ where: { unitId: id }, data: { month: unitMonth } });
   done();
 }
 
@@ -154,7 +157,7 @@ export async function addLesson(form: FormData) {
   const order = (last?.order ?? 0) + 1;
   // A teacher adding a lesson is the one recording it; an admin's lesson falls back to the course's teacher.
   const instructorId = me.role === "ADMIN" ? null : me.id;
-  await db.lesson.create({ data: { unitId, order, kind: "VIDEO", titleAr: `درس ${order}`, titleEn: `Lesson ${order}`, instructorId } });
+  await db.lesson.create({ data: { unitId, order, kind: "VIDEO", titleAr: `درس ${order}`, titleEn: `Lesson ${order}`, instructorId, month: last?.month ?? null } });
   done();
 }
 

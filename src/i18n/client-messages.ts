@@ -13,6 +13,7 @@ export const PUBLIC_CLIENT_NAMESPACES = [
   "verify",
   "reset",
   "questions",
+  "assistant",
   "pwa",
   "parent",
   "invite",

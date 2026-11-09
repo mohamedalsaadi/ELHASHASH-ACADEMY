@@ -13,6 +13,8 @@ const REQUIRED_COLUMNS: [string, string][] = [
   ["User", "passwordChangedAt"],
   ["User", "liveApproved"],
   ["Course", "aiGrading"],
+  ["Course", "aiAssistant"],
+  ["Lesson", "notes"],
   ["LessonView", "confidence"],
   ["Order", "beneficiaryDeclaredAt"],
   ["Order", "platformDiscount"],

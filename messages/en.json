@@ -470,6 +470,20 @@
     "openCourse": "Open the course",
     "viewProfile": "View profile"
   },
+  "assistant": {
+    "title": "Ask about this lesson",
+    "placeholder": "Type your question about the lesson",
+    "hint": "The assistant answers from this lesson only and can be wrong; check with your teacher when unsure. Your question is not saved.",
+    "send": "Ask",
+    "notCovered": "This question is outside the lesson.",
+    "error": {
+      "off": "The assistant is not available for this lesson.",
+      "consent": "A guardian's consent is needed to use the assistant.",
+      "limited": "You have reached the question limit for now. Try again later.",
+      "invalid": "Write a question of at least 3 characters.",
+      "unavailable": "Could not get an answer right now. Try again."
+    }
+  },
   "player": {
     "title": "Lesson",
     "signIn": "Sign in to watch this lesson.",
@@ -736,6 +750,9 @@
       "bad_slug": "The slug may contain lowercase letters, digits and dashes only."
     },
     "aiGradingHint": "Suggested AI grading: each submission is sent to an AI service for a suggested mark the teacher confirms. Leave it off unless the academy has agreed.",
+    "aiAssistantHint": "AI assistant: students ask questions about the lesson and get answers from its content only; their questions are sent to an AI service. Leave it off unless the academy has agreed.",
+    "lessonNotes": "Lesson notes for the AI assistant",
+    "lessonNotesHint": "The text the assistant answers from. Needed for video lessons, which it cannot watch; PDF lessons are read from their pages automatically.",
     "maxPlays": "Plays per lesson per student (empty = unlimited)",
     "maxIps": "Different IP addresses per student per day (empty = no check)",
     "maxDevices": "Browsers (devices) per student in 30 days (empty = no check)",

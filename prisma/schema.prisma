@@ -293,6 +293,7 @@ model Course {
   /// When on, every submission is sent to an AI grader for a suggested mark the teacher must confirm.
   /// Off by default: the work belongs to a minor, so the teacher opts in per course.
   aiGrading    Boolean    @default(false)
+  aiAssistant  Boolean    @default(false)
   /// When on, the course shows a weekly XP leaderboard to its own students.
   leaderboard  Boolean    @default(false)
   /// Plays a student gets per recorded lesson; null means unlimited. A refresh within 5 minutes is not a new play.
@@ -346,6 +347,7 @@ model Lesson {
   pdfKey       String?
   /// Private Blob pathnames of the lesson's PDF pages, one JPEG each, in reading order. Students only ever receive these images.
   pdfPages     String[]   @default([])
+  notes        String?    @db.VarChar(20000)
   /// Who recorded the video; null means the course's instructor.
   instructorId String?
   /// Month of the school year (1 = first month) the lecture belongs to; a MONTHLY plan opens its month's lectures.

@@ -6,7 +6,11 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { canAsk, hasLessonAccess, isCourseStaff, learnerFor, lessonScope } from "@/lib/catalog";
 import { maskContacts } from "@/lib/contact-guard";
+import { aiEnabled } from "@/lib/ai";
+import { logAiRun } from "@/lib/ai-log";
+import { askLesson, hasLessonSource, MAX_QUESTION } from "@/lib/ai-lesson";
 import { db } from "@/lib/db";
+import { hasGuardianConsent } from "@/lib/live";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 
 const DAY_MS = 86_400_000;
@@ -93,4 +97,36 @@ export async function setConfidence(form: FormData) {
   });
   revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
   revalidatePath("/[locale]/dashboard", "page");
+}
+
+export type AssistantState = { answer?: string; covered?: boolean; error?: "off" | "consent" | "limited" | "invalid" | "unavailable" } | null;
+
+/**
+ * "Ask about this lesson". Same access as the lesson itself, the course must have switched it on, a minor needs the
+ * guardian's consent (the child's, when a parent watches), and it is capped per minute and per day. Nothing is stored.
+ */
+export async function askAssistant(_: AssistantState, form: FormData): Promise<AssistantState> {
+  const d = z.object({ lessonId: z.string(), question: z.string().trim().min(3).max(MAX_QUESTION) }).safeParse(Object.fromEntries(form));
+  if (!d.success) return { error: "invalid" };
+  const { viewerId, learnerId, staff, lesson } = await lessonProgress(d.data.lessonId);
+  const course = await db.course.findUniqueOrThrow({ where: { id: lesson.unit.courseId }, select: { aiAssistant: true } });
+  if (!course.aiAssistant || !aiEnabled() || !hasLessonSource(lesson)) return { error: "off" };
+  if (!staff && !(await hasGuardianConsent(learnerId))) return { error: "consent" };
+
+  const minute = `lessonai:m:${viewerId}`;
+  const day = `lessonai:d:${viewerId}`;
+  if ((await isLimited(minute, 3, 60_000)) || (await isLimited(day, 20, DAY_MS))) return { error: "limited" };
+  await Promise.all([recordAttempt(minute), recordAttempt(day)]);
+
+  const result = await askLesson({ title: lesson.titleEn, notes: lesson.notes, pdfPages: lesson.pdfPages, question: d.data.question });
+  void logAiRun({
+    kind: "assistant",
+    model: result?.model ?? "none",
+    tokensIn: result?.usage.input,
+    tokensOut: result?.usage.output,
+    actorId: viewerId,
+    studentId: learnerId,
+    status: result ? "OK" : "ERROR",
+  });
+  return result ? { answer: result.answer, covered: result.covered } : { error: "unavailable" };
 }

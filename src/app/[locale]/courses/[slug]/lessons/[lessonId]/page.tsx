@@ -21,6 +21,9 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { AskForm } from "./AskForm";
+import { AskLesson } from "./AskLesson";
+import { aiEnabled } from "@/lib/ai";
+import { hasLessonSource } from "@/lib/ai-lesson";
 import { PdfPages } from "@/components/learning/PdfPages";
 import { VdoFrame } from "@/components/learning/VdoFrame";
 import { completeFromPlayer, markLessonComplete, setConfidence } from "./actions";
@@ -293,6 +296,8 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
 
         {/* One tap, once the lesson is finished. No text box, no streak pressure: it only feeds
             the readiness index and the teacher's class pulse. */}
+        {userId && course.aiAssistant && aiEnabled() && hasLessonSource(lesson) && <AskLesson lessonId={lesson.id} />}
+
         {userId && view?.completedAt && (
           <form action={setConfidence} className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="lessonId" value={lesson.id} />

@@ -72,6 +72,7 @@ export async function updateCourse(form: FormData) {
       descEn: optionalText,
       published: checkbox,
       aiGrading: checkbox,
+      aiAssistant: checkbox,
       maxPlays: z.coerce.number().int().min(1).max(1000).optional().catch(undefined),
       maxIps: z.coerce.number().int().min(1).max(50).optional().catch(undefined),
       maxDevices: z.coerce.number().int().min(1).max(20).optional().catch(undefined),
@@ -132,7 +133,7 @@ export async function copyUnit(form: FormData) {
       titleEn: src.titleEn,
       term: src.term,
       lessons: {
-        create: src.lessons.map((l) => ({ order: l.order, kind: l.kind, titleAr: l.titleAr, titleEn: l.titleEn, videoId: l.videoId, pdfKey: l.pdfKey, pdfPages: l.pdfPages, instructorId: l.instructorId, month: l.month })),
+        create: src.lessons.map((l) => ({ order: l.order, kind: l.kind, titleAr: l.titleAr, titleEn: l.titleEn, videoId: l.videoId, pdfKey: l.pdfKey, pdfPages: l.pdfPages, notes: l.notes, instructorId: l.instructorId, month: l.month })),
       },
     },
   });
@@ -182,6 +183,7 @@ export async function updateLesson(form: FormData) {
       instructorId: z.string().optional(),
       month,
       pdfPages: z.string().max(60_000).default("[]"),
+      notes: z.string().trim().max(20_000).default(""),
     })
     .parse(Object.fromEntries(form));
   const courseId = await lessonCourse(d.id);
@@ -202,7 +204,7 @@ export async function updateLesson(form: FormData) {
     });
     videoId = video.id;
   }
-  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId, month: d.month, pdfPages } });
+  await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId, month: d.month, pdfPages, notes: d.notes || null } });
   done();
 }
 

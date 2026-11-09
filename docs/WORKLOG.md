@@ -1175,3 +1175,10 @@ Committed; not deployed.
   fonts still draws its text.
 - Could not reproduce the failure: the local browser pane is hidden and never fires animation frames, so the page draw step
   cannot run there. Needs one try on the live site; the shown reason says whether it is the draw or the upload.
+
+## 2026-11-15: Ask about this lesson
+- **What:** a question box under the lesson. It answers only from the lesson's own material (teacher notes plus the PDF page images), says so when the question is outside the lesson, and refuses to write full solutions. Nothing is stored: `AiRun` keeps token counts only.
+- **Gates:** per-course switch `Course.aiAssistant` (off by default, in the course editor), `GEMINI_API_KEY`, a source (`Lesson.notes` or PDF pages), the same lesson access as the lesson, guardian consent for minors, 3 questions a minute and 20 a day. No timer on purpose: it would punish pausing and rewatching.
+- **Video lessons:** Gemini cannot see DRM video, so a video lesson needs the new "lesson notes" text in the lesson editor; without it the box is hidden.
+- **Code:** `src/lib/ai-lesson.ts` (+ test), `askAssistant` in `lessons/[lessonId]/actions.ts`, `AskLesson.tsx`, migration `20261115100000_lesson_assistant`, privacy sentence.
+- **Owner:** set `GEMINI_API_KEY`, tick the switch on a pilot course, have teachers write notes for video lessons. Not exercised against the real model (no key locally).

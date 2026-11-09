@@ -123,6 +123,10 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <input type="checkbox" name="aiGrading" defaultChecked={course.aiGrading} className="size-4" />
           {t("aiGradingHint")}
         </label>
+        <label className={check}>
+          <input type="checkbox" name="aiAssistant" defaultChecked={course.aiAssistant} className="size-4" />
+          {t("aiAssistantHint")}
+        </label>
         <div className="grid gap-3 sm:grid-cols-3">
           <label className={label}>
             {t("maxPlays")}
@@ -257,6 +261,11 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     defaultPages={l.pdfPages}
                     labels={{ pick: t("pdfPick"), sending: t("pdfSending"), done: t("pdfDone"), failed: t("pdfFailed"), pages: t("pdfPages") }}
                   />
+                <label className={label}>
+                  {t("lessonNotes")}
+                  <textarea name="notes" defaultValue={l.notes ?? ""} rows={4} maxLength={20000} dir="auto" className={`${field} py-2`} />
+                  <span className="text-label font-normal text-ink-muted">{t("lessonNotesHint")}</span>
+                </label>
                 <Link href={`/courses/${course.slug}/lessons/${l.id}`} className="w-fit text-small text-pen underline underline-offset-4">
                   {t("viewLesson")}
                 </Link>

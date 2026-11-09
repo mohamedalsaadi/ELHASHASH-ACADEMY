@@ -34,7 +34,7 @@ const SYSTEM = [
   'Reply with JSON only: {"score": number|null, "confidence": "high"|"medium"|"low", "rationale": string, "needsReview": boolean}',
 ].join(" ");
 
-async function readPart(pathname: string): Promise<AiPart | null> {
+export async function readPart(pathname: string): Promise<AiPart | null> {
   const blob = await get(pathname, { access: "private" });
   if (!blob || blob.statusCode !== 200) return null;
   const buffer = Buffer.from(await new Response(blob.stream).arrayBuffer());

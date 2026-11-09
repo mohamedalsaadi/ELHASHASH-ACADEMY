@@ -183,7 +183,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
                 {(s.text || s.files.length > 0) && (
                   <AiGradeForm
                     id={s.id}
-                    labels={{ aiGrade: t("aiGrade"), unavailable: t("aiUnavailable"), limited: t("aiLimited"), ok: t("aiOk"), invalid: t("invalid") }}
+                    labels={{ aiGrade: t("aiGrade"), unavailable: t("aiUnavailable"), limited: t("aiLimited"), off: t("aiOff"), consent: t("aiConsent"), ok: t("aiOk"), invalid: t("invalid") }}
                   />
                 )}
                 <GradeForm

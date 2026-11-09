@@ -95,8 +95,13 @@ export async function suggestGrade(submissionId: string): Promise<boolean> {
     },
   });
   if (!submission) return false;
-  const result = await gradeWithAi({ ...submission.assignment, text: submission.text, files: submission.files });
-  if (!result) return false;
+  const input = { ...submission.assignment, text: submission.text, files: submission.files };
+  // One retry: a model call fails now and then, and a teacher waiting on a button should not have to press twice.
+  const result = (await gradeWithAi(input)) ?? (await gradeWithAi(input));
+  if (!result) {
+    void logAiRun({ kind: "grade", model: "none", studentId: submission.studentId, status: "ERROR" });
+    return false;
+  }
   // Usage used to be computed and thrown away, so nobody could say what grading costs.
   void logAiRun({
     kind: "grade",
@@ -110,7 +115,7 @@ export async function suggestGrade(submissionId: string): Promise<boolean> {
     where: { id: submissionId, revision: submission.revision },
     data: {
       aiScore: result.score,
-      aiFeedback: [result.rationale, `confidence: ${result.confidence}`].filter(Boolean).join("\n").slice(0, 4000),
+      aiFeedback: [result.rationale, `confidence: ${result.confidence}`, result.needsReview ? "needs review" : ""].filter(Boolean).join("\n").slice(0, 4000),
     },
   });
   return true;

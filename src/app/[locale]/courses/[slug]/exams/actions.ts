@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import { hasPlan } from "@/lib/assignments";
 import { grantsFor, isCourseStaff } from "@/lib/catalog";
 import { db } from "@/lib/db";
-import { markExam } from "@/lib/exams";
+import { isExpired, markExam } from "@/lib/exams";
 import { opensLesson } from "@/lib/plans";
 import type { PracticeError, PracticeReply } from "@/lib/practice";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -62,6 +62,7 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
     select: {
       id: true,
       paperId: true,
+      expiresAt: true,
       paper: {
         select: {
           course: { select: { slug: true } },
@@ -73,6 +74,15 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
   if (!attempt) return "invalid";
   if (await isLimited(`exam:${session.user.id}`, 20, 86_400_000)) return "limited";
 
+  const now = new Date();
+  // The clock is the server's. Past the grace window the answers are not accepted: the attempt closes with
+  // no marks, and the teacher can allow another attempt. The browser timer only submits early enough to avoid this.
+  if (isExpired(attempt.expiresAt, now)) {
+    await db.examAttempt.update({ where: { id: attempt.id }, data: { status: "GRADED", submittedAt: now, gradedAt: now, marks: 0 } });
+    revalidatePath("/[locale]/courses/[slug]/exams/[examId]", "page");
+    redirect(`/courses/${attempt.paper.course.slug}/exams/${attempt.paperId}`);
+  }
+
   const items = attempt.paper.items.map((i) => i.item);
   const replies: PracticeReply[] = items.map((item) => ({
     itemId: item.id,
@@ -81,7 +91,6 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
   }));
 
   const marked = markExam(items, replies);
-  const now = new Date();
 
   await db.$transaction([
     db.examAnswer.deleteMany({ where: { attemptId: attempt.id } }),

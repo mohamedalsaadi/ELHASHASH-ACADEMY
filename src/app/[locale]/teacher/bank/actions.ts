@@ -9,7 +9,7 @@ export type BankError = "invalid" | "ok" | null;
 
 const ItemInput = z.object({
   lessonId: z.string().min(1),
-  kind: z.enum(["MCQ", "SHORT"]),
+  kind: z.enum(["MCQ", "SHORT", "WRITTEN"]),
   prompt: z.string().trim().min(3).max(2000),
   answer: z.string().trim().max(1000).optional(),
   explanation: z.string().trim().max(4000).optional(),
@@ -47,6 +47,9 @@ export async function createItem(_prev: BankError, form: FormData): Promise<Bank
     await db.questionItem.create({
       data: { ...common, kind: "MCQ", choices: { create: labels.map((label, i) => ({ label, correct: i === index, order: i })) } },
     });
+  } else if (d.kind === "WRITTEN") {
+    // Marked by the teacher; the answer field is an optional model answer for them.
+    await db.questionItem.create({ data: { ...common, kind: "WRITTEN", answer: d.answer || null } });
   } else {
     if (!d.answer) return "invalid";
     await db.questionItem.create({ data: { ...common, kind: "SHORT", answer: d.answer } });

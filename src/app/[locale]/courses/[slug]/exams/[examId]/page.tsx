@@ -157,7 +157,8 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
               </div>
               {ans?.text && <p className="text-small text-ink-muted whitespace-pre-line break-words" dir="auto">{ans.text}</p>}
               {ans?.choice && <p className="text-small text-ink-muted" dir="auto">{ans.choice.label}</p>}
-              {!pending && !ans?.correct && item.answer && (
+              {/* The key stays hidden while a retake is left, or the second attempt is just copying it. */}
+              {!pending && !ans?.correct && item.answer && !canRetake && (
                 <p className="text-small text-up" dir="auto">{item.answer}</p>
               )}
               {item.explanation && !pending && <p className="text-small text-ink-muted" dir="auto">{item.explanation}</p>}

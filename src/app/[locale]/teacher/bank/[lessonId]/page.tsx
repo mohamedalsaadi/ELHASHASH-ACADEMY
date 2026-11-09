@@ -109,6 +109,7 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
             kind: t("kind"),
             mcq: t("mcq"),
             short: t("short"),
+            written: t("written"),
             answer: t("answer"),
             choices: t("choices"),
             correctIndex: t("correctIndex"),

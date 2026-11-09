@@ -10,7 +10,7 @@ export function ItemForm({
   labels,
 }: {
   lessonId: string;
-  labels: Record<"addQuestion" | "prompt" | "kind" | "mcq" | "short" | "answer" | "choices" | "correctIndex" | "explanation" | "marks" | "save" | "invalid" | "saved", string>;
+  labels: Record<"addQuestion" | "prompt" | "kind" | "mcq" | "short" | "written" | "answer" | "choices" | "correctIndex" | "explanation" | "marks" | "save" | "invalid" | "saved", string>;
 }) {
   const [state, action] = useActionState(createItem, null);
   return (
@@ -28,6 +28,7 @@ export function ItemForm({
           <select name="kind" defaultValue="MCQ" className={field}>
             <option value="MCQ">{labels.mcq}</option>
             <option value="SHORT">{labels.short}</option>
+            <option value="WRITTEN">{labels.written}</option>
           </select>
         </label>
         <label className={label}>

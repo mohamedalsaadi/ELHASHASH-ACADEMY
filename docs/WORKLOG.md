@@ -1116,3 +1116,39 @@ Committed; not deployed.
   lesson as a student, upload a multi-page PDF, upload a photo answer and open it as the teacher.
 - VdoCipher's `timeupdate`, `currentTime` and `duration` names come from memory of the v2 docs; the `ended` event is the safe path.
 - pdf.js standard fonts and CMaps are not served, so a PDF that does not embed its fonts may render blank text.
+
+## 2026-11-11: Exams and the AI homework checker
+
+- **Exam timer is now enforced on the server.** `submitExam` rejects answers more than 60 seconds after `expiresAt`: the attempt
+  closes with 0 marks and the teacher can raise `maxAttempts` to allow another go. The browser timer still auto-submits at zero.
+- **The answer key no longer leaks on retakes.** The result page shows the correct answer only once no attempt is left.
+- **Written questions can be authored** in the bank (type "Written answer", optional model answer). They appear in exams only;
+  practice already excludes them. The existing teacher mark box handles them.
+- **Result notice:** when the last written answer of an attempt is marked, the student and linked parents get a notification.
+- **AI homework checker:** the manual "AI grade" button now needs the course's `aiGrading` switch and the guardian's consent
+  (the same gates as the automatic run) and says which one is missing. A failed model call is retried once and logged as an
+  `AiRun` with status ERROR. "needs review" is shown in the suggestion. Tests added for `gradeWithAi`.
+
+**Open**
+- Not tried in a browser: sit an exam as a student, let the timer pass, mark a written answer as the teacher.
+- No rubric field per assignment yet; the model marks from the title and instructions only.
+- Not built: autosave while typing, random question order, CSV import, per-question statistics, a sweep of abandoned attempts.
+- Privacy page still lacks the AI-written weekly parent note.
+
+## Open points checklist (owner column)
+
+| Item | Owner |
+|---|---|
+| One real Ziina payment and a refund | Owner |
+| Seller legal name, address, licence number, TRN in Admin; AED price on every package; VAT decision | Owner |
+| Lawyer read of privacy, terms, refund and the 13-17 payment position | Owner |
+| `CRON_SECRET` in Vercel (retention job) | Owner |
+| `VDOCIPHER_API_SECRET` confirmed; create Advanced grades 10-12 in admin | Owner |
+| `GEMINI_API_KEY` in Vercel; tick `aiGrading` on a pilot course; run it on a photographed answer | Owner |
+| Sentry and an uptime monitor; a support mailbox instead of the personal Gmail | Owner |
+| Make the GitHub repo private; Neon least-privilege role and a restore drill | Owner |
+| WhatsApp (Meta templates), Google and Microsoft sign-in keys | Owner |
+| Fill the question bank (about 20 per lesson) | Teachers |
+| Click through every signed-in flow as student, parent and teacher | Owner + QA |
+| Stale page after server actions (6 of 12 visits) | Code, open |
+| CI e2e job never seen green | Code, open |

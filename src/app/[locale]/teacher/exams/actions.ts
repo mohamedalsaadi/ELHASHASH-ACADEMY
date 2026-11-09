@@ -105,6 +105,30 @@ export async function gradeWritten(_prev: ExamError, form: FormData): Promise<Ex
     },
   });
 
+  if (done) {
+    // The student and any linked parent hear once, when the last written answer is marked.
+    const att = await db.examAttempt.findUniqueOrThrow({
+      where: { id: answer.attemptId },
+      select: { userId: true, paper: { select: { id: true, title: true, course: { select: { slug: true } } } } },
+    });
+    const parents = await db.parentLink.findMany({ where: { studentId: att.userId }, select: { parentId: true } });
+    const href = `/courses/${att.paper.course.slug}/exams/${att.paper.id}`;
+    for (const userId of [att.userId, ...parents.map((p) => p.parentId)]) {
+      await db.notification
+        .create({
+          data: {
+            userId,
+            kind: "SUBMISSION_GRADED",
+            titleAr: `نتيجة الاختبار: ${att.paper.title}`,
+            titleEn: `Exam result: ${att.paper.title}`,
+            href,
+            dedupeKey: `exam-graded:${answer.attemptId}:${userId}`,
+          },
+        })
+        .catch(() => null);
+    }
+  }
+
   revalidatePath("/[locale]/teacher/exams/[id]", "page");
   revalidatePath("/[locale]/courses/[slug]/exams/[examId]", "page");
   return "ok";

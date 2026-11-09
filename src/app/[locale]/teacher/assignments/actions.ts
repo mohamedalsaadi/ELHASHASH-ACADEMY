@@ -7,6 +7,7 @@ import { MAX_FILE_BYTES, MAX_FILES, blobInfo, homeworkPrefix } from "@/lib/blob"
 import { suggestGrade } from "@/lib/ai-grading";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
+import { hasGuardianConsent } from "@/lib/live";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
@@ -238,7 +239,7 @@ export async function gradeSubmission(_prev: GradeError, form: FormData): Promis
   return "ok";
 }
 
-export type AiError = "unavailable" | "limited" | "ok" | "invalid" | null;
+export type AiError = "unavailable" | "limited" | "ok" | "invalid" | "off" | "consent" | null;
 
 /** A suggestion, never a grade: it is written beside the teacher's box and the teacher still confirms. */
 export async function gradeWithAi(_prev: AiError, form: FormData): Promise<AiError> {
@@ -248,10 +249,13 @@ export async function gradeWithAi(_prev: AiError, form: FormData): Promise<AiErr
 
   const submission = await db.submission.findUnique({
     where: { id: parsed.data.id },
-    select: { id: true, assignment: { select: { courseId: true } } },
+    select: { id: true, studentId: true, assignment: { select: { courseId: true, course: { select: { aiGrading: true } } } } },
   });
   if (!submission) return "invalid";
   await assertCourse(me, submission.assignment.courseId);
+  // Same two gates as the automatic path: the course opted in, and a guardian consented for this student.
+  if (!submission.assignment.course.aiGrading) return "off";
+  if (!(await hasGuardianConsent(submission.studentId))) return "consent";
   if (await isLimited(`ai-grade:${me.id}`, 100, 86_400_000)) return "limited";
 
   if (!(await suggestGrade(submission.id))) return "unavailable";

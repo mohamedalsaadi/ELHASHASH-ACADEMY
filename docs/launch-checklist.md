@@ -110,6 +110,9 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `STRICT_CURRENCY` | after audit | `1` refuses a SKU whose currency differs from its course country |
 | `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` | recommended | support identity and masking allow-list |
 | `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
+| `SENTRY_DSN` | recommended | server errors go to Sentry (`src/instrumentation.ts`); unset sends nothing |
+| `MIGRATE_DATABASE_URL` | with the limited DB role | owner-role URL used only by the build's `prisma migrate deploy` (`docs/db-least-privilege.sql`) |
+| `VDOCIPHER_WHITELIST_HREF` | recommended | `dhirwa.ae`: a copied player link refuses to play on another site |
 
 - [x] **Vercel Blob store** — created private in `cdg1`; `BLOB_READ_WRITE_TOKEN` is set for Production and Preview. The upload and download paths still need a teacher-session test.
 - [ ] **`sslmode=verify-full` in `DATABASE_URL`** (audit #47). Production logs carry `SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'`, emitted by `pg-connection-string` 8.x. `.env.local` and Neon's default both say `sslmode=require`. Change that one parameter to `verify-full` in Vercel (Production and Preview) and locally. Behaviour does not change under `pg` 8.23 — `require` is already treated as `verify-full` — but the warning stops and the intent becomes explicit. No code change: the value lives in the environment.
@@ -131,7 +134,7 @@ Complete set the app reads, for Vercel **Production and Preview**:
 - [ ] **VAT registration.** Do not tick the master VAT switch or the UAE country switch until the TRN is issued. The rate and TRN then print on every tax invoice. Before switching it on, check with an adviser whether prices shown to UAE consumers must include VAT: checkout currently adds VAT on top of the listed price, which can read as a hidden fee.
 - [ ] **Corporate-tax contribution.** Confirm the 9% base with the accountant. The switch is off; when on, it deducts from the teacher’s share and appears only on statements.
 - [ ] **DPAs and ROPA.** Accept and file a DPA for every supplier in `docs/compliance/processors.md`. Review `docs/compliance/ropa.md` with the privacy adviser.
-- [ ] **Age assurance.** Signup now asks for a date of birth; under-18 accounts need a guardian email confirmation. Review the privacy notice wording and the under-13 block.
+- [ ] **Age assurance.** Signup asks for a date of birth; under 13 needs a guardian (WhatsApp link, email until WhatsApp keys exist). 13 to 17 sign up and pay alone: have a lawyer confirm that, and the privacy wording.
 - [ ] **Referral settings.** Set the new-family and referrer percentages in Admin → Settings. Both are capped at the platform share; zero pauses the programme.
 - [ ] **Privacy review** by the owner's advisor.
 - [ ] **Branded support address** — `SUPPORT_EMAIL` falls back to `chemical.mohammed@gmail.com`.

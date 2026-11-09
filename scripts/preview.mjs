@@ -1,7 +1,7 @@
 // Local preview on a throwaway database: the same embedded Postgres and seed as the e2e suite, with `next dev` on port
 // 3200. For reviewing signed-in pages without touching real accounts. It never reads DATABASE_URL from .env.local, every
 // external service key is blank, and the database is deleted on exit.
-// Usage: node scripts/preview.mjs. Personas and their password are in e2e/seed.ts.
+// Usage: node scripts/preview.mjs [--prod] (--prod builds and runs `next start`, which shows production-only bugs). Personas and their password are in e2e/seed.ts.
 import EmbeddedPostgres from "embedded-postgres";
 import { execSync, spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -31,7 +31,9 @@ run("npx prisma migrate deploy");
 run("npx tsx prisma/seed.ts");
 run("npx tsx e2e/seed.ts");
 
-const app = spawn("npx next dev -p 3200", { stdio: "inherit", env, shell: true });
+const prod = process.argv.includes("--prod");
+if (prod) run("npx next build");
+const app = spawn(prod ? "npx next start -p 3200" : "npx next dev -p 3200", { stdio: "inherit", env, shell: true });
 const stop = async () => {
   app.kill();
   await pg.stop().catch(() => {});

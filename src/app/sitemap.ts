@@ -2,7 +2,8 @@ import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { siteUrl } from "@/lib/seo";
 
-export const revalidate = 3600;
+// Built per request, not at build time: the CI build has no database to read from.
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [countries, courses, subjectRows, teachers] = await Promise.all([

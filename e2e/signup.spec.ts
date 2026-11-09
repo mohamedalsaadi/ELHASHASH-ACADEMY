@@ -20,14 +20,15 @@ async function fillStudent(page: import("@playwright/test").Page, loc: string, p
   await page.fill('input[name="email"]', email);
   await page.fill('input[type="tel"]', phone.slice(4)); // the picker starts on +971
   await page.selectOption('select[name="gradeId"]', { index: 1 });
-  await page.fill('input[name="dateOfBirth"]', "2012-01-01");
+  await page.fill('input[name="dateOfBirth"]', "2016-01-01"); // under 13, so a guardian is asked for
   await page.fill('input[name="password"]', "e2e-pass-1234");
   await page.check('input[name="acceptTerms"]');
   await page.fill('input[name="guardianName"]', "E2E Guardian");
+  await page.locator('input[type="tel"]').nth(1).fill(phone.slice(4, -1) + ((Number(phone.slice(-1)) + 1) % 10)); // the guardian's number: one digit off the student's
   await page.fill('input[name="guardianEmail"]', "guardian-e2e@example.com");
 }
 
-test("an under-18 student gets an unverified consent record with the guardian email", async ({ page, loc }) => {
+test("an under-13 student gets an unverified consent record with the guardian email", async ({ page, loc }) => {
   const stamp = String(Date.now());
   const phone = `+9715${stamp.slice(-8)}`;
   await fillStudent(page, loc, phone, `signup-${stamp}@example.com`);
@@ -72,12 +73,14 @@ test("mandatory signup fields carry a red star and the phone has a country-code 
   await expect(form.locator('span[aria-hidden="true"].text-down')).toHaveCount(required);
 });
 
-test("the guardian fields appear only for a student under 18", async ({ page, loc }) => {
+test("the guardian fields appear only for a student under 13", async ({ page, loc }) => {
   await page.goto(`/${loc}/signup`);
   await expect(page.locator('input[name="guardianName"]')).toHaveCount(0);
   await page.fill('input[name="dateOfBirth"]', "1990-01-01");
   await expect(page.locator('input[name="guardianName"]')).toHaveCount(0);
   await page.fill('input[name="dateOfBirth"]', "2012-01-01");
+  await expect(page.locator('input[name="guardianName"]')).toHaveCount(0);
+  await page.fill('input[name="dateOfBirth"]', "2016-01-01");
   await expect(page.locator('input[name="guardianName"]')).toHaveCount(1);
 });
 
@@ -107,11 +110,11 @@ test("the server refuses a student account with no guardian consent", async ({ p
   expect(rows).toHaveLength(0);
 });
 
-test("the server refuses a student under 13", async ({ page, loc }) => {
+test("the server refuses a guardian number that is the student's own", async ({ page, loc }) => {
   const stamp = String(Date.now());
   const phone = `+9716${stamp.slice(-8)}`;
-  await fillStudent(page, loc, phone, `tooyoung-${stamp}@example.com`);
-  await page.fill('input[name="dateOfBirth"]', "2020-01-01");
+  await fillStudent(page, loc, phone, `sameguardian-${stamp}@example.com`);
+  await page.locator('input[type="tel"]').nth(1).fill(phone.slice(4));
   await page.check('input[name="guardianConsent"]');
   await page.locator('form:has(input[name="guardianName"])').evaluate((f: HTMLFormElement) => f.submit());
   await expect(page.locator("#signup-error")).toBeVisible();

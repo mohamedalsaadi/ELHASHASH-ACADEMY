@@ -29,6 +29,15 @@
         "scripts/preview.mjs"
       ],
       "port": 3200
+    },
+    {
+      "name": "seeded-prod",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/preview.mjs",
+        "--prod"
+      ],
+      "port": 3200
     }
   ]
 }

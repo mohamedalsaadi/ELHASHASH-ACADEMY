@@ -24,6 +24,17 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-10: open-items sweep (CI, Sentry, VdoCipher lock, least-privilege migrations, e2e)
+
+- **CI was red on every push.** `npm ci` failed (lock written by npm 11, CI on Node 22 / npm 10), then the build failed prerendering `/sitemap.xml` with no database. Fixed: Node 24 in `.github/workflows/ci.yml`; `src/app/sitemap.ts` is `force-dynamic`. The check job passed in a clean worktree.
+- **Error reporting.** `src/instrumentation.ts` (`onRequestError`) sends server errors to Sentry through `src/lib/sentry.ts` (plain envelope POST, no SDK; query strings dropped). Does nothing until `SENTRY_DSN` is set in Vercel.
+- **VdoCipher domain lock.** `VDOCIPHER_WHITELIST_HREF=dhirwa.ae` adds `whitelisthref` to each playback token (`src/lib/vdocipher.ts`). Opt-in, so it can be switched off if the plan rejects it.
+- **Least-privilege database.** The build migrates with `MIGRATE_DATABASE_URL` when set (`scripts/migrate-if-production.mjs`), so `DATABASE_URL` can become the limited role from `docs/db-least-privilege.sql`. Order is in the SQL header.
+- **Teacher question import.** `docs/question-import-template.md`: the line format and six sample questions (they parse 6 of 6).
+- **e2e.** Full suite 227 passed, 21 failed: every failure was `e2e/signup.spec.ts` still testing the old under-18 guardian rule. Updated it to `MINOR_AGE = 13` (guardian WhatsApp number; the old "under 13 refused" test now checks that a guardian number equal to the student's is refused). Signup and live specs then passed 52 of 52.
+- `scripts/preview.mjs --prod` (launch config `seeded-prod`) builds and runs `next start` on the throwaway database.
+- **Stale page after a server action: measured, not fixed.** Production preview, a student with no grade picking a country: 12 of 12 fresh visits update; returning visits (cookie cleared, same tab) stay on the old view about 1 in 15 (26/30, 36/40, 59/60, 56/60 across runs). Ruled out: the `/` to `/me` rewrite (stale on `/ar/me` too, and removing the rewrite did not help), a redirect instead of `revalidatePath` (still 1 in 40), hydration timing (still stale after a 1.5 s pause), `next-view-transitions` (its hook only acts on back/forward). Two modes seen: the action finished and set the cookie but React kept the old tree; or the POST had not finished after 8 s. A reload always shows the right page. Next is 15.5.28; next step is a minimal repro for the Next.js tracker, or retrying after a Next upgrade.
+
 ## 2026-11-11: student home order and new-course strip; teachers' manual
 
 - Signed-in students see `/me` (a rewrite of "/"; the earlier `src/app/[locale]/page.tsx` is the visitor page). Subjects they already hold now come first in the ride and under "Continue learning"; each subject section below lists only the courses they have not joined. New `NewRoller` (`src/components/home/NewRoller.tsx`, CSS `.roller` in `brand.css`) loops cards of courses of their grade created in the last 45 days that they do not hold; it pauses on hover or focus and stays still for reduced motion.

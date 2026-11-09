@@ -14,7 +14,10 @@ if (env === "production") {
   // Retrying lets it wait for the winner, which has then applied everything, so the retry is a no-op.
   for (let attempt = 1; ; attempt++) {
     try {
-      execSync("npx prisma migrate deploy", { stdio: "inherit" });
+      // MIGRATE_DATABASE_URL (the owner role) lets the running site use a limited DATABASE_URL role that
+      // cannot create or drop tables (docs/db-least-privilege.sql). Unset: migrate with DATABASE_URL as before.
+      const url = process.env.MIGRATE_DATABASE_URL || process.env.DATABASE_URL;
+      execSync("npx prisma migrate deploy", { stdio: "inherit", env: { ...process.env, DATABASE_URL: url } });
       break;
     } catch (e) {
       if (attempt === 4) throw e;

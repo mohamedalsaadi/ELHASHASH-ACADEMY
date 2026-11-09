@@ -15,6 +15,9 @@ export async function getPlayback(videoId: string, watermark: string): Promise<P
     signal: AbortSignal.timeout(10_000),
     body: JSON.stringify({
       ttl: 300,
+      // Domain lock per token: VDOCIPHER_WHITELIST_HREF=dhirwa.ae makes a copied player link refuse to play elsewhere.
+      // Opt-in so it can be switched off from Vercel if a plan or a preview domain rejects it.
+      ...(process.env.VDOCIPHER_WHITELIST_HREF ? { whitelisthref: process.env.VDOCIPHER_WHITELIST_HREF } : {}),
       annotate: JSON.stringify([
         { type: "rtext", text: watermark, alpha: "0.40", color: "0xECE6DA", size: "15", interval: "10000" },
       ]),

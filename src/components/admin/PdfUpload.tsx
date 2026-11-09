@@ -15,6 +15,7 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
   const [pages, setPages] = useState<string[]>(defaultPages);
   const [state, setState] = useState<"idle" | "sending" | "done" | "failed">("idle");
   const [progress, setProgress] = useState("");
+  const [detail, setDetail] = useState("");
 
   // Visible as soon as the lesson's kind select says PDF, without saving first.
   useEffect(() => {
@@ -28,14 +29,24 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
 
   async function convert(file: File) {
     setState("sending");
+    setDetail("");
+    let stage = "load";
     try {
       const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
       pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url).toString();
-      const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-      if (doc.numPages > 400) throw new Error("too long");
+      stage = "read";
+      // Font and character-map data is served from /pdfjs so a PDF that does not embed its fonts still draws its text.
+      const doc = await pdfjs.getDocument({
+        data: await file.arrayBuffer(),
+        standardFontDataUrl: "/pdfjs/standard_fonts/",
+        cMapUrl: "/pdfjs/cmaps/",
+        cMapPacked: true,
+      }).promise;
+      if (doc.numPages > 400) throw new Error("more than 400 pages");
       const out: string[] = [];
       for (let n = 1; n <= doc.numPages; n++) {
         setProgress(`${n} / ${doc.numPages}`);
+        stage = `page ${n} draw`;
         const page = await doc.getPage(n);
         // 1400 px wide reads well on a phone and keeps a page near 300 KB.
         const base = page.getViewport({ scale: 1 });
@@ -45,6 +56,7 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
         canvas.height = Math.ceil(viewport.height);
         await page.render({ canvasContext: canvas.getContext("2d")!, viewport }).promise;
         const blob = await new Promise<Blob>((ok, bad) => canvas.toBlob((b) => (b ? ok(b) : bad(new Error("encode"))), "image/jpeg", 0.82));
+        stage = `page ${n} upload`;
         const res = await upload(`lesson-pages/${courseId}/page-${n}.jpg`, blob, {
           access: "private",
           handleUploadUrl: "/api/blob/upload",
@@ -54,7 +66,9 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
       }
       setPages(out);
       setState("done");
-    } catch {
+    } catch (e) {
+      // The stage and reason are shown as they are: a teacher can read them out, and the generic message hid the cause.
+      setDetail(`${stage}: ${e instanceof Error ? e.message : String(e)}`);
       setState("failed");
     }
   }
@@ -79,6 +93,7 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
       <span className={show ? "text-ink-muted" : "hidden"} aria-live="polite">
         {state === "sending" ? `${labels.sending} ${progress}` : state === "done" ? labels.done : state === "failed" ? labels.failed : pages.length ? `${labels.pages}: ${pages.length}` : ""}
       </span>
+      {state === "failed" && detail && <code dir="ltr" className="break-all text-label text-down">{detail}</code>}
     </div>
   );
 }

@@ -1166,3 +1166,12 @@ Committed; not deployed.
 
 **Open**
 - Not tried in a browser. Still not built: sweep of abandoned attempts, marks CSV export, images in questions, more question types.
+
+## 2026-11-13: PDF upload failure
+
+- The teacher saw the generic "could not upload the file" and the cause was hidden. The PDF uploader now shows the stage and
+  the real reason under the message (for example `page 3 upload: ...`), so the next failure can be read out.
+- pdf.js font and character-map data is now served from `/pdfjs` (copied from `pdfjs-dist`), so a PDF that does not embed its
+  fonts still draws its text.
+- Could not reproduce the failure: the local browser pane is hidden and never fires animation frames, so the page draw step
+  cannot run there. Needs one try on the live site; the shown reason says whether it is the draw or the upload.

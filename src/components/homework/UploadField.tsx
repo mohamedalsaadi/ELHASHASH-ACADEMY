@@ -2,6 +2,7 @@
 
 import { upload } from "@vercel/blob/client";
 import { useState } from "react";
+import { refusalReason } from "@/components/upload-reason";
 
 export type UploadedFile = { pathname: string; downloadName: string };
 
@@ -47,7 +48,13 @@ export function UploadField({
         setFiles((prev) => (prev.length >= max ? prev : [...prev, { pathname: blob.pathname, downloadName: clean(file.name) }]));
       }
     } catch {
-      setError(failedLabel);
+      // The Blob library hides why; the server knows (not signed in, not your course, store not connected).
+      let why: string | null = null;
+      try {
+        const p = JSON.parse(clientPayload) as { purpose?: string; courseId?: string };
+        if (p.purpose && p.courseId) why = await refusalReason(p.purpose, p.courseId);
+      } catch {}
+      setError(why ? `${failedLabel} (${why})` : failedLabel);
     } finally {
       setBusy(false);
     }

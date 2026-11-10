@@ -122,3 +122,65 @@ export async function suggestGrade(submissionId: string): Promise<boolean> {
   });
   return true;
 }
+
+type WrittenItem = { kind: string; prompt: string; answer: string | null; marks: number; media: string[] };
+
+/** One written answer against its question (typed, or a picture) and the teacher's model answer. Null when AI gave nothing. */
+async function markWritten(item: WrittenItem, text: string | null, studentId: string) {
+  const input = {
+    title: "Question",
+    instructions: item.prompt || "The question is in the attached picture.",
+    rubric: item.answer ? `Model answer: ${item.answer}` : null,
+    maxScore: item.marks,
+    text,
+    // The question's own pages (a picture or a PDF turned into JPEG pages), so the model sees what was asked.
+    files: item.media.map((pathname) => ({ pathname, contentType: "image/jpeg" })),
+  };
+  const result = (await gradeWithAi(input)) ?? (await gradeWithAi(input));
+  if (!result) {
+    void logAiRun({ kind: "grade", model: "none", studentId, status: "ERROR" });
+    return null;
+  }
+  void logAiRun({ kind: "grade", model: result.model, tokensIn: result.usage?.input, tokensOut: result.usage?.output, studentId });
+  return { aiMarks: result.score, aiFeedback: [result.rationale, `confidence: ${result.confidence}`, result.needsReview ? "needs review" : ""].filter(Boolean).join(String.fromCharCode(10)).slice(0, 1000) };
+}
+
+/**
+ * Writes an AI mark suggestion on one written exam answer. Only the teacher sees it (ExamAnswer.aiMarks); the
+ * student's mark stays null until the teacher grades. False when AI gave nothing.
+ */
+export async function suggestAnswer(answerId: string): Promise<boolean> {
+  const a = await db.examAnswer.findUnique({
+    where: { id: answerId },
+    select: { text: true, attempt: { select: { userId: true } }, item: { select: { kind: true, prompt: true, answer: true, marks: true, media: true } } },
+  });
+  if (!a || a.item.kind !== "WRITTEN") return false;
+  const data = await markWritten(a.item, a.text, a.attempt.userId);
+  if (!data) return false;
+  await db.examAnswer.update({ where: { id: answerId }, data });
+  return true;
+}
+
+/** Suggests a mark for every written answer of one submitted exam attempt. Returns how many got one. */
+export async function suggestWritten(attemptId: string): Promise<number> {
+  const answers = await db.examAnswer.findMany({ where: { attemptId, item: { kind: "WRITTEN" }, text: { not: null } }, select: { id: true } });
+  let n = 0;
+  for (const a of answers) if (await suggestAnswer(a.id).catch(() => false)) n += 1;
+  return n;
+}
+
+/** The same for the written answers of one homework or quiz submission. Returns how many got a suggestion. */
+export async function suggestSubmissionAnswers(submissionId: string): Promise<number> {
+  const answers = await db.submissionAnswer.findMany({
+    where: { submissionId, item: { kind: "WRITTEN" }, text: { not: null } },
+    select: { id: true, text: true, submission: { select: { studentId: true } }, item: { select: { kind: true, prompt: true, answer: true, marks: true, media: true } } },
+  });
+  let n = 0;
+  for (const a of answers) {
+    const data = await markWritten(a.item, a.text, a.submission.studentId).catch(() => null);
+    if (!data) continue;
+    await db.submissionAnswer.update({ where: { id: a.id }, data });
+    n += 1;
+  }
+  return n;
+}

@@ -10,6 +10,7 @@ import { grantsFor, isCourseStaff } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { shuffled } from "@/lib/exams";
 import { startExam } from "../actions";
+import { QuestionPages } from "@/components/QuestionPages";
 import { ExamForm } from "../ExamForm";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
   if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/courses/${slug}/exams/${examId}`)}`);
 
   const t = await getTranslations("exam");
+  const tp = await getTranslations("practice");
   const ar = locale === "ar";
 
   const paper = await db.examPaper.findUnique({
@@ -37,7 +39,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
       course: { select: { id: true, slug: true, titleAr: true, titleEn: true, instructorId: true } },
       items: {
         orderBy: { order: "asc" },
-        select: { item: { select: { id: true, kind: true, prompt: true, marks: true, answer: true, explanation: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true } } } } },
+        select: { item: { select: { id: true, kind: true, prompt: true, marks: true, answer: true, explanation: true, media: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true } } } } },
       },
       attempts: {
         where: { userId: session.user.id },
@@ -49,7 +51,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
           marks: true,
           maxMarks: true,
           expiresAt: true,
-          answers: { select: { itemId: true, correct: true, marks: true, text: true, choice: { select: { label: true } } } },
+          answers: { select: { itemId: true, correct: true, marks: true, text: true, choiceIds: true, choice: { select: { label: true } } } },
         },
       },
     },
@@ -81,7 +83,7 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
         <ExamForm
           attemptId={attempt.id}
           expiresAt={attempt.expiresAt.toISOString()}
-          items={shuffled(items, attempt.id).map((q) => ({ id: q.id, kind: q.kind, prompt: q.prompt, marks: q.marks, choices: shuffled(q.choices, `${attempt.id}:${q.id}`) }))}
+          items={shuffled(items, attempt.id).map((q) => ({ id: q.id, kind: q.kind, prompt: q.prompt, marks: q.marks, choices: shuffled(q.choices, `${attempt.id}:${q.id}`), mediaCount: q.media.length }))}
           labels={{
             submit: t("submit"),
             yourAnswer: t("written"),
@@ -90,6 +92,8 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
             limited: t("invalid"),
             timeLeft: t("timeLeft"),
             timeUp: t("timeUp"),
+            pictureAlt: tp("pictureAlt"),
+            pickAll: tp("pickAll"),
           }}
         />
       </main>
@@ -157,7 +161,11 @@ export default async function ExamPage({ params }: { params: Promise<{ locale: s
                 </StatusChip>
               </div>
               {ans?.text && <p className="text-small text-ink-muted whitespace-pre-line break-words" dir="auto">{ans.text}</p>}
+              <QuestionPages itemId={item.id} count={item.media.length} label={tp("pictureAlt")} />
               {ans?.choice && <p className="text-small text-ink-muted" dir="auto">{ans.choice.label}</p>}
+              {item.kind === "MULTI" && ans && ans.choiceIds.length > 0 && (
+                <p className="text-small text-ink-muted" dir="auto">{item.choices.filter((c) => ans.choiceIds.includes(c.id)).map((c) => c.label).join(" · ")}</p>
+              )}
               {/* The key stays hidden while a retake is left, or the second attempt is just copying it. */}
               {!pending && !ans?.correct && item.answer && !canRetake && (
                 <p className="text-small text-up" dir="auto">{item.answer}</p>

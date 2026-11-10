@@ -58,6 +58,7 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
     .object({
       courseId: z.string().min(1),
       lessonId: z.string().optional(),
+      kind: z.enum(["HOMEWORK", "QUIZ"]).default("HOMEWORK"),
       title: z.string().trim().min(3).max(200),
       instructions: z.string().trim().max(8000).optional(),
       linkUrl: z.union([z.literal(""), z.string().trim().url().max(500).regex(/^https:\/\//)]).optional(),
@@ -85,6 +86,7 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
       courseId: d.courseId,
       lessonId,
       createdById: me.id,
+      kind: d.kind,
       title: d.title,
       instructions: d.instructions || null,
       linkUrl: d.linkUrl || null,
@@ -267,4 +269,20 @@ export async function gradeWithAi(_prev: AiError, form: FormData): Promise<AiErr
 
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
   return "ok";
+}
+
+/** Adds a question from the course's bank to this assignment, or takes it off again. Quizzes and homework with questions are made this way. */
+export async function toggleAssignmentItem(form: FormData) {
+  const me = await requireStaff();
+  const d = z.object({ assignmentId: z.string().min(1), itemId: z.string().min(1) }).parse(Object.fromEntries(form));
+  const a = await db.assignment.findUniqueOrThrow({ where: { id: d.assignmentId }, select: { courseId: true } });
+  await assertCourse(me, a.courseId);
+  // Only a question of this course's own lessons.
+  const item = await db.questionItem.findFirst({ where: { id: d.itemId, lesson: { unit: { courseId: a.courseId } } }, select: { id: true } });
+  if (!item) return;
+  const key = { assignmentId_itemId: { assignmentId: d.assignmentId, itemId: d.itemId } };
+  if (await db.assignmentItem.findUnique({ where: key })) await db.assignmentItem.delete({ where: key });
+  else await db.assignmentItem.create({ data: { assignmentId: d.assignmentId, itemId: d.itemId, order: await db.assignmentItem.count({ where: { assignmentId: d.assignmentId } }) } });
+  revalidatePath("/[locale]/teacher/assignments/[id]", "page");
+  revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
 }

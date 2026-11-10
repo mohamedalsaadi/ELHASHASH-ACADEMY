@@ -964,6 +964,8 @@ model Assignment {
   createdBy   User             @relation("AssignmentAuthor", fields: [createdById], references: [id], onDelete: Restrict)
   files       AssignmentFile[]
   submissions Submission[]
+  /// Questions from the bank: a quiz, or homework with questions. None means plain homework (text and files).
+  items       AssignmentItem[]
 
   @@index([courseId, dueAt])
   @@index([lessonId])
@@ -1009,10 +1011,47 @@ model Submission {
   student    User             @relation("Submitter", fields: [studentId], references: [id], onDelete: Cascade)
   gradedBy   User?            @relation("Grader", fields: [gradedById], references: [id], onDelete: SetNull)
   files      SubmissionFile[]
+  answers    SubmissionAnswer[]
 
   @@unique([assignmentId, studentId])
   @@index([studentId, status])
   @@index([assignmentId, status])
+}
+
+/// A bank question set on an assignment, in order.
+model AssignmentItem {
+  id           String @id @default(cuid())
+  assignmentId String
+  itemId       String
+  order        Int    @default(0)
+
+  assignment Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  item       QuestionItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, itemId])
+  @@index([assignmentId, order])
+}
+
+/// One answer to one question inside a submission. Objective items are marked on submit; a written one waits for the teacher.
+model SubmissionAnswer {
+  id           String   @id @default(cuid())
+  submissionId String
+  itemId       String
+  choiceId     String?
+  /// MULTI: every choice the student ticked. MCQ keeps using choiceId.
+  choiceIds    String[]
+  text         String?  @db.VarChar(2000)
+  /// Null while a written answer waits for the teacher.
+  correct      Boolean?
+  marks        Int?
+  /// WRITTEN: what the AI suggests. Only the teacher sees it.
+  aiMarks      Int?
+  aiFeedback   String?  @db.VarChar(1000)
+
+  submission Submission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  item       QuestionItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, itemId])
 }
 
 model SubmissionFile {
@@ -1067,10 +1106,13 @@ model SpecialRequestReply {
 // ---- Practice: the question bank, attempts and XP ---------------------------
 
 enum QuestionKind {
+  /// One correct choice.
   MCQ
   SHORT
-  /// Free response: nothing marks it, the teacher does.
+  /// Free response: the teacher marks it (an AI suggestion may be shown to them).
   WRITTEN
+  /// Several correct choices: right only when the student picks exactly those.
+  MULTI
 }
 
 /// One practice question, attached to a lesson and optionally a concept. SHORT accepts one canonical answer.
@@ -1084,6 +1126,8 @@ model QuestionItem {
   /// SHORT only: the accepted answer, compared after normalising Arabic and spacing.
   answer      String?      @db.VarChar(1000)
   explanation String?      @db.VarChar(4000)
+  /// A picture or a PDF as the question: private Blob pathnames of JPEG pages, in order (the same shape as Lesson.pdfPages).
+  media       String[]
   marks       Int          @default(1)
   order       Int          @default(0)
   active      Boolean      @default(true)
@@ -1096,6 +1140,8 @@ model QuestionItem {
   answers     PracticeAnswer[]
   examItems   ExamItem[]
   examAnswers ExamAnswer[]
+  assignmentItems   AssignmentItem[]
+  submissionAnswers SubmissionAnswer[]
 
   @@index([lessonId, order])
   @@index([conceptId])
@@ -1139,6 +1185,8 @@ model PracticeAnswer {
   attemptId String
   itemId    String
   choiceId  String?
+  /// MULTI: every choice the student ticked. MCQ keeps using choiceId.
+  choiceIds String[]
   text      String? @db.VarChar(1000)
   correct   Boolean
 
@@ -1242,10 +1290,15 @@ model ExamAnswer {
   attemptId String
   itemId    String
   choiceId  String?
+  /// MULTI: every choice the student ticked. MCQ keeps using choiceId.
+  choiceIds String[]
   text      String?  @db.VarChar(2000)
   /// Null until marked: objective items are marked on submit, written ones by the teacher.
   correct   Boolean?
   marks     Int?
+  /// WRITTEN: what the AI suggests. Only the teacher sees it; the student sees the teacher's mark.
+  aiMarks    Int?
+  aiFeedback String? @db.VarChar(1000)
 
   attempt ExamAttempt     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   item    QuestionItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)

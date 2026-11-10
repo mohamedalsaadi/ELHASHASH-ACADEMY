@@ -2,6 +2,9 @@
 
 import { upload } from "@vercel/blob/client";
 import { useEffect, useRef, useState } from "react";
+import { discardPages } from "@/app/[locale]/admin/actions";
+import { eachPdfPage } from "@/components/pdf-pages";
+import { refusalReason } from "@/components/upload-reason";
 
 type Labels = { pick: string; sending: string; done: string; failed: string; pages: string };
 
@@ -31,45 +34,31 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
     setState("sending");
     setDetail("");
     let stage = "load";
+    const uploaded: string[] = [];
     try {
-      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url).toString();
-      stage = "read";
-      // Font and character-map data is served from /pdfjs so a PDF that does not embed its fonts still draws its text.
-      const doc = await pdfjs.getDocument({
-        data: await file.arrayBuffer(),
-        standardFontDataUrl: "/pdfjs/standard_fonts/",
-        cMapUrl: "/pdfjs/cmaps/",
-        cMapPacked: true,
-      }).promise;
-      if (doc.numPages > 400) throw new Error("more than 400 pages");
-      const out: string[] = [];
-      for (let n = 1; n <= doc.numPages; n++) {
-        setProgress(`${n} / ${doc.numPages}`);
-        stage = `page ${n} draw`;
-        const page = await doc.getPage(n);
-        // 1400 px wide reads well on a phone and keeps a page near 300 KB.
-        const base = page.getViewport({ scale: 1 });
-        const viewport = page.getViewport({ scale: 1400 / base.width });
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.ceil(viewport.width);
-        canvas.height = Math.ceil(viewport.height);
-        await page.render({ canvasContext: canvas.getContext("2d")!, viewport }).promise;
-        const blob = await new Promise<Blob>((ok, bad) => canvas.toBlob((b) => (b ? ok(b) : bad(new Error("encode"))), "image/jpeg", 0.82));
-        stage = `page ${n} upload`;
-        const res = await upload(`lesson-pages/${courseId}/page-${n}.jpg`, blob, {
-          access: "private",
-          handleUploadUrl: "/api/blob/upload",
-          clientPayload: JSON.stringify({ purpose: "lessonpage", courseId }),
-        });
-        out.push(res.pathname);
-      }
-      setPages(out);
+      await eachPdfPage(
+        file,
+        async (jpeg, n, total) => {
+          setProgress(`${n} / ${total}`);
+          const res = await upload(`lesson-pages/${courseId}/page-${n}.jpg`, jpeg, {
+            access: "private",
+            handleUploadUrl: "/api/blob/upload",
+            clientPayload: JSON.stringify({ purpose: "lessonpage", courseId }),
+          });
+          uploaded.push(res.pathname);
+        },
+        (s) => (stage = s),
+      );
+      setPages(uploaded);
       setState("done");
     } catch (e) {
       // The stage and reason are shown as they are: a teacher can read them out, and the generic message hid the cause.
-      setDetail(`${stage}: ${e instanceof Error ? e.message : String(e)}`);
+      // The Blob library reports every refusal as "Failed to retrieve the client token", so the server is asked for the real one.
+      const why = await refusalReason("lessonpage", courseId);
+      setDetail(`${stage}: ${why ?? (e instanceof Error ? e.message : String(e))}`);
       setState("failed");
+      // Pages already stored for this attempt are not on any lesson yet: remove them.
+      if (uploaded.length) void discardPages(courseId, uploaded).catch(() => {});
     }
   }
 

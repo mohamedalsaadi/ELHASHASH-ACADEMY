@@ -1,5 +1,6 @@
 "use server";
 
+import { del } from "@vercel/blob";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
@@ -9,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { accessEnd } from "@/lib/access";
 import { logEvent } from "@/lib/analytics";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
-import { blobInfo, coverPrefix } from "@/lib/blob";
+import { blobInfo, coverPrefix, lessonPagesPrefix, ownPaths } from "@/lib/blob";
 import type { FinanceConfig } from "@/lib/finance";
 import { saveFinanceConfig } from "@/lib/platform-settings";
 import { refundIntent } from "@/lib/ziina";
@@ -188,8 +189,9 @@ export async function updateLesson(form: FormData) {
     .parse(Object.fromEntries(form));
   const courseId = await lessonCourse(d.id);
   await assertCourse(me, courseId);
-  // The page list comes from the browser: keep only this course's own page objects.
-  const pdfPages = z.array(z.string()).max(400).parse(JSON.parse(d.pdfPages || "[]")).filter((p) => p.startsWith("lesson-pages/"));
+  // The page list comes from the browser: keep only this course's own page objects (or ones the lesson already has).
+  const current = (await db.lesson.findUniqueOrThrow({ where: { id: d.id }, select: { pdfPages: true } })).pdfPages;
+  const pdfPages = ownPaths(z.array(z.string()).max(400).parse(JSON.parse(d.pdfPages || "[]")), lessonPagesPrefix(courseId), current);
   // The admin picks who recorded it ("" = the course's teacher); a teacher editing a lesson becomes its instructor.
   const instructorId = me.role !== "ADMIN" ? me.id : d.instructorId ? await teacherId.parseAsync(d.instructorId) : null;
 
@@ -206,6 +208,14 @@ export async function updateLesson(form: FormData) {
   }
   await db.lesson.update({ where: { id: d.id }, data: { titleAr: d.titleAr, titleEn: d.titleEn, kind: d.kind, videoId, instructorId, month: d.month, pdfPages, notes: d.notes || null } });
   done();
+}
+
+/** Removes the page images of an upload that failed halfway: only this course's own page objects, and no lesson has them yet. */
+export async function discardPages(courseId: string, paths: string[]) {
+  const me = await requireStaff();
+  await assertCourse(me, courseId);
+  const own = ownPaths(z.array(z.string()).max(400).parse(paths), lessonPagesPrefix(courseId));
+  if (own.length) await del(own).catch(() => {});
 }
 
 /** New packages use the course country's currency and time zone; skill courses have no country and use AED/Dubai. */

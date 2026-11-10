@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
-import { scoreAttempt, type PracticeError, type PracticeReply } from "@/lib/practice";
+import { replyFrom, scoreAttempt, type PracticeError, type PracticeReply } from "@/lib/practice";
 import { awardPractice } from "@/lib/progress-db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { recordReview } from "@/lib/review-db";
@@ -31,7 +31,7 @@ export async function submitPractice(_prev: PracticeError, form: FormData): Prom
       month: true,
       unit: { select: { term: true, isFree: true, courseId: true, course: { select: { slug: true } } } },
       questionItems: {
-        where: { active: true, kind: { in: ["MCQ", "SHORT"] } },
+        where: { active: true, kind: { in: ["MCQ", "MULTI", "SHORT"] } },
         orderBy: { order: "asc" },
         select: { id: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } },
       },
@@ -47,11 +47,7 @@ export async function submitPractice(_prev: PracticeError, form: FormData): Prom
   if (lesson.questionItems.length === 0) return "invalid";
   if (await isLimited(`practice:${userId}`, 50, 86_400_000)) return "limited";
 
-  const replies: PracticeReply[] = lesson.questionItems.map((item) => ({
-    itemId: item.id,
-    choiceId: String(form.get(`choice_${item.id}`) ?? "") || null,
-    text: String(form.get(`text_${item.id}`) ?? "") || null,
-  }));
+  const replies: PracticeReply[] = lesson.questionItems.map((item) => replyFrom(form, item.id));
 
   const score = scoreAttempt(lesson.questionItems, replies);
   const progress = await awardPractice(userId, score.correct, lesson.questionItems.length);
@@ -69,6 +65,7 @@ export async function submitPractice(_prev: PracticeError, form: FormData): Prom
           itemId: r.item.id,
           correct: r.correct,
           choiceId: r.item.kind === "MCQ" ? (replies.find((x) => x.itemId === r.item.id)?.choiceId ?? null) : null,
+          choiceIds: r.item.kind === "MULTI" ? (replies.find((x) => x.itemId === r.item.id)?.choiceIds ?? []) : [],
           text: r.item.kind === "SHORT" ? (replies.find((x) => x.itemId === r.item.id)?.text ?? null) : null,
         })),
       },

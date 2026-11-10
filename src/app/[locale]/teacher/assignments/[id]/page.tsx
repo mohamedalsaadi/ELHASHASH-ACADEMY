@@ -12,7 +12,9 @@ import { TeacherNav } from "../../TeacherNav";
 import { AssignmentForm } from "../AssignmentForm";
 import { AiGradeForm } from "./AiGradeForm";
 import { GradeForm } from "./GradeForm";
-import { deleteAssignment, deleteAssignmentFile, updateAssignment } from "../actions";
+import { deleteAssignment, deleteAssignmentFile, toggleAssignmentItem, updateAssignment } from "../actions";
+import { QuestionPages } from "@/components/QuestionPages";
+import { scaleScore } from "@/lib/exams";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +51,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
         },
       },
       lesson: { select: { titleAr: true, titleEn: true } },
+      items: { orderBy: { order: "asc" }, select: { itemId: true, item: { select: { marks: true } } } },
       files: { select: { id: true, downloadName: true, size: true } },
       submissions: {
         orderBy: { submittedAt: "desc" },
@@ -62,6 +65,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
           feedback: true,
           aiScore: true,
           aiFeedback: true,
+          answers: { select: { id: true, itemId: true, text: true, choiceIds: true, correct: true, marks: true, aiMarks: true, aiFeedback: true, item: { select: { id: true, prompt: true, kind: true, marks: true, media: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true, correct: true } } } } } },
           student: { select: { id: true, name: true } },
           files: { select: { id: true, downloadName: true, size: true } },
         },
@@ -81,6 +85,15 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
     title: pick(ar, c.titleAr, c.titleEn),
     lessons: c.units.flatMap((u) => u.lessons).map((l) => ({ id: l.id, title: pick(ar, l.titleAr, l.titleEn) })),
   }));
+
+  const tq = await getTranslations("practice");
+  const bank = await db.questionItem.findMany({
+    where: { lesson: { unit: { courseId: assignment.courseId } }, active: true },
+    orderBy: [{ lessonId: "asc" }, { order: "asc" }],
+    select: { id: true, prompt: true, kind: true, marks: true, lesson: { select: { titleAr: true, titleEn: true } } },
+  });
+  const chosen = new Set(assignment.items.map((i) => i.itemId));
+  const totalMarks = assignment.items.reduce((sum, i) => sum + i.item.marks, 0);
 
   const waiting = assignment.submissions.filter((s) => s.status === "SUBMITTED").length;
 
@@ -153,6 +166,33 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
         </form>
       </Block>
 
+      <Block title={`${t("questionsBlock")} (${assignment.items.length})`}>
+        <p className="text-small text-ink-muted">{t("questionsHint")}</p>
+        {bank.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("noBank")}</p>
+        ) : (
+          <ul className="grid gap-1">
+            {bank.map((item) => (
+              <li key={item.id} className="flex items-center justify-between gap-3 rounded-sm border border-hairline px-2 py-1.5 text-small">
+                <span className="min-w-0">
+                  <span className="block truncate" dir="auto">{item.prompt || tq("pictureAlt")}</span>
+                  <span className="text-label text-ink-muted">
+                    {pick(ar, item.lesson.titleAr, item.lesson.titleEn)} · {item.kind} · <span className="num">{item.marks}</span>
+                  </span>
+                </span>
+                <form action={toggleAssignmentItem}>
+                  <input type="hidden" name="assignmentId" value={assignment.id} />
+                  <input type="hidden" name="itemId" value={item.id} />
+                  <button className={`shrink-0 rounded-full border px-3 py-1 text-label ${chosen.has(item.id) ? "border-pen text-pen" : "border-hairline text-ink-muted"}`}>
+                    {chosen.has(item.id) ? "✓" : "+"}
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Block>
+
       <Block title={t("submissions")}>
         {assignment.submissions.length === 0 ? (
           <p className="text-small text-ink-muted">{t("noSubmissions")}</p>
@@ -177,6 +217,32 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
                   </p>
                 )}
                 <AttachmentList kind="submission" files={s.files} empty={t("noFiles")} />
+                {s.answers.length > 0 && (
+                  <ul className="grid gap-2">
+                    {s.answers.map((ans) => (
+                      <li key={ans.id} className="grid gap-1 rounded-sm bg-raised p-2 text-small">
+                        <span className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-medium" dir="auto">{ans.item.prompt || tq("pictureAlt")}</span>
+                          <StatusChip tone={ans.correct === null ? "neutral" : ans.correct ? "active" : "expired"}>
+                            {ans.correct === null ? t("waitingMark") : `${ans.marks ?? 0} / ${ans.item.marks}`}
+                          </StatusChip>
+                        </span>
+                        <QuestionPages itemId={ans.item.id} count={ans.item.media.length} label={tq("pictureAlt")} />
+                        {ans.text && <p className="whitespace-pre-line break-words" dir="auto">{ans.text}</p>}
+                        {ans.choiceIds.length > 0 && (
+                          <p className="text-ink-muted" dir="auto">{ans.item.choices.filter((c) => ans.choiceIds.includes(c.id)).map((c) => c.label).join(" · ")}</p>
+                        )}
+                        {(ans.aiMarks !== null || ans.aiFeedback) && (
+                          <div className="rounded-sm border border-hairline bg-surface p-2 text-label text-ink-muted">
+                            <span className="font-semibold">{tq("aiSuggests")}{ans.aiMarks !== null && <span className="num"> {ans.aiMarks} / {ans.item.marks}</span>}</span>
+                            {ans.aiFeedback && <p className="whitespace-pre-line" dir="auto">{ans.aiFeedback}</p>}
+                            <span>{tq("aiNote")}</span>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {s.aiFeedback !== null && (
                   <p className="text-small text-pen" dir="auto">
                     {t("aiSuggestion", { score: s.aiScore ?? "—", max: assignment.maxScore })}
@@ -192,7 +258,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
                 <GradeForm
                   id={s.id}
                   maxScore={assignment.maxScore}
-                  score={s.score ?? s.aiScore}
+                  score={s.score ?? s.aiScore ?? (s.answers.length > 0 ? scaleScore(s.answers.reduce((sum, a) => sum + (a.marks ?? a.aiMarks ?? 0), 0), totalMarks, assignment.maxScore) : null)}
                   feedback={s.feedback}
                   labels={{
                     invalid: t("invalid"),

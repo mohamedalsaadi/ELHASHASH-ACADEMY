@@ -12,6 +12,7 @@ import {
   coverPrefix,
   homeworkPrefix,
   lessonPagesPrefix,
+  questionMediaPrefix,
   submissionPrefix,
 } from "@/lib/blob";
 import { db } from "@/lib/db";
@@ -23,6 +24,7 @@ const Purpose = z.union([
   z.object({ purpose: z.literal("submission"), assignmentId: z.string().min(1) }),
   z.object({ purpose: z.literal("cover"), courseId: z.string().min(1) }),
   z.object({ purpose: z.literal("lessonpage"), courseId: z.string().min(1) }),
+  z.object({ purpose: z.literal("questionmedia"), courseId: z.string().min(1) }),
   z.object({ purpose: z.literal("avatar"), userId: z.string().min(1) }),
 ]);
 
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
         const me = { id: session.user.id, role: session.user.role };
         // Each token allows a 20 MB file: without a cap one account can fill the store.
         const payload = Purpose.parse(JSON.parse(clientPayload ?? "{}"));
-        if (payload.purpose !== "lessonpage" && (await isLimited(`upload:${me.id}`, 50, 86_400_000))) throw new Error("Too many uploads today");
+        if (payload.purpose !== "lessonpage" && payload.purpose !== "questionmedia" && (await isLimited(`upload:${me.id}`, 50, 86_400_000))) throw new Error("Too many uploads today");
 
         let allowedContentTypes = ALLOWED_CONTENT_TYPES;
         let maximumSizeInBytes = MAX_FILE_BYTES;
@@ -63,6 +65,12 @@ export async function POST(request: Request) {
           allowedContentTypes = ["image/jpeg"];
           maximumSizeInBytes = MAX_IMAGE_BYTES;
           // A lesson can be 150 pages, so the daily upload cap above would stop it halfway.
+        } else if (payload.purpose === "questionmedia") {
+          if (!(await isCourseStaffDb(session.user.id, payload.courseId))) throw new Error("Not your course");
+          if (!pathname.startsWith(questionMediaPrefix(payload.courseId))) throw new Error("Unexpected path");
+          allowedContentTypes = ["image/jpeg"];
+          maximumSizeInBytes = MAX_IMAGE_BYTES;
+          // A question PDF can run to many pages, so the daily upload cap is skipped like lesson pages.
         } else if (payload.purpose === "cover") {
           if (!(await isCourseStaffDb(session.user.id, payload.courseId))) throw new Error("Not your course");
           if (!pathname.startsWith(coverPrefix(payload.courseId))) throw new Error("Unexpected path");
@@ -80,6 +88,8 @@ export async function POST(request: Request) {
     });
     return Response.json(result);
   } catch (e) {
+    // The client library hides this message, so it is logged here and /api/blob/check gives the browser the reason.
+    console.error("blob upload refused:", e instanceof Error ? e.message : e);
     return Response.json({ error: e instanceof Error ? e.message : "Upload refused" }, { status: 400 });
   }
 }

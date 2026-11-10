@@ -11,6 +11,7 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import { TeacherNav } from "../../TeacherNav";
 import { ImportForm } from "../ImportForm";
 import { ItemForm } from "../ItemForm";
+import { QuestionPages } from "@/components/QuestionPages";
 import { deleteItem } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -35,12 +36,19 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
       unit: { select: { titleAr: true, titleEn: true, course: { select: { id: true, slug: true, instructorId: true, titleAr: true, titleEn: true } } } },
       questionItems: {
         orderBy: { order: "asc" },
-        select: { id: true, kind: true, prompt: true, answer: true, explanation: true, marks: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true, correct: true } } },
+        select: { id: true, kind: true, prompt: true, answer: true, explanation: true, marks: true, media: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true, correct: true } } },
       },
     },
   });
   if (!lesson) notFound();
   await assertCourse(me, lesson.unit.course.id);
+
+  const formLabels = {
+    addQuestion: t("addQuestion"), prompt: t("prompt"), kind: t("kind"), mcq: t("mcq"), multi: t("multi"), short: t("short"), written: t("written"),
+    answer: t("answer"), explanation: t("explanation"), marks: t("marks"), save: t("save"), invalid: t("invalid"), saved: t("saved"),
+    optionLetter: t("optionLetter"), tickCorrect: t("tickCorrect"), mediaPick: t("mediaPick"), mediaSending: t("mediaSending"),
+    mediaFailed: t("mediaFailed"), mediaRemove: t("mediaRemove"), mediaPages: t("mediaPages"),
+  };
 
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
@@ -69,14 +77,16 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
                     {q.prompt}
                   </span>
                   <span className="flex items-center gap-2">
-                    <StatusChip tone="neutral">{q.kind === "MCQ" ? t("mcq") : t("short")}</StatusChip>
+                    <StatusChip tone="neutral">{{ MCQ: t("mcq"), MULTI: t("multi"), SHORT: t("short"), WRITTEN: t("written") }[q.kind]}</StatusChip>
                     <span className="num text-label text-ink-muted">{q.marks}</span>
                   </span>
                 </div>
-                {q.kind === "MCQ" ? (
+                <QuestionPages itemId={q.id} count={q.media.length} label={t("pictureAlt")} />
+                {q.kind === "MCQ" || q.kind === "MULTI" ? (
                   <ul className="grid gap-0.5">
-                    {q.choices.map((c) => (
+                    {q.choices.map((c, ci) => (
                       <li key={c.id} className={c.correct ? "font-semibold text-up" : "text-ink-muted"} dir="auto">
+                        <span className="num" dir="ltr">{"ABCDEF"[ci]}. </span>
                         {c.label}
                       </li>
                     ))}
@@ -91,10 +101,18 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
                     {t("explanationLabel")}: {q.explanation}
                   </p>
                 )}
-                <form action={deleteItem}>
-                  <input type="hidden" name="id" value={q.id} />
-                  <button className="w-fit text-label text-down underline underline-offset-4">{t("delete")}</button>
-                </form>
+                <div className="flex flex-wrap items-start gap-4">
+                  <details className="w-full">
+                    <summary className="w-fit cursor-pointer text-label underline underline-offset-4">{t("edit")}</summary>
+                    <div className="mt-2">
+                      <ItemForm lessonId={lesson.id} courseId={lesson.unit.course.id} labels={formLabels} item={q} />
+                    </div>
+                  </details>
+                  <form action={deleteItem}>
+                    <input type="hidden" name="id" value={q.id} />
+                    <button className="w-fit text-label text-down underline underline-offset-4">{t("delete")}</button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>
@@ -102,25 +120,7 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
       </Block>
 
       <Block title={t("addQuestion")}>
-        <ItemForm
-          lessonId={lesson.id}
-          labels={{
-            addQuestion: t("addQuestion"),
-            prompt: t("prompt"),
-            kind: t("kind"),
-            mcq: t("mcq"),
-            short: t("short"),
-            written: t("written"),
-            answer: t("answer"),
-            choices: t("choices"),
-            correctIndex: t("correctIndex"),
-            explanation: t("explanation"),
-            marks: t("marks"),
-            save: t("save"),
-            invalid: t("invalid"),
-            saved: t("saved"),
-          }}
-        />
+        <ItemForm lessonId={lesson.id} courseId={lesson.unit.course.id} labels={formLabels} />
       </Block>
 
       <Block title={t("importBtn")}>

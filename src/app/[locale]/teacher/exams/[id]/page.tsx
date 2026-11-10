@@ -5,11 +5,13 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Block } from "@/components/homework/AttachmentList";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { aiEnabled } from "@/lib/ai";
+import { QuestionPages } from "@/components/QuestionPages";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { db } from "@/lib/db";
 import { assertCourse, requireStaff } from "@/lib/staff";
 import { TeacherNav } from "../../TeacherNav";
-import { deleteExam, gradeWrittenForm, toggleExamItem, updateExam } from "../actions";
+import { askAiAboutAnswer, deleteExam, gradeWrittenForm, toggleExamItem, updateExam } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +47,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
           marks: true,
           maxMarks: true,
           user: { select: { name: true } },
-          answers: { select: { id: true, itemId: true, correct: true, marks: true, text: true, item: { select: { prompt: true, marks: true, kind: true } } } },
+          answers: { select: { id: true, itemId: true, correct: true, marks: true, text: true, aiMarks: true, aiFeedback: true, item: { select: { id: true, prompt: true, marks: true, kind: true, media: true } } } },
         },
       },
     },
@@ -114,7 +116,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
             {bank.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-3 rounded-sm border border-hairline px-2 py-1.5 text-small">
                 <span className="min-w-0">
-                  <span className="block truncate" dir="auto">{item.prompt}</span>
+                  <span className="block truncate" dir="auto">{item.prompt || tq("pictureAlt")}</span>
                   <span className="text-label text-ink-muted">
                     {pick(ar, item.lesson.titleAr, item.lesson.titleEn)} · {item.kind} · <span className="num">{item.marks}</span>
                     {stat.get(item.id) && (
@@ -160,12 +162,25 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
                       {written.map((ans) => (
                         <li key={ans.id} className="grid gap-1 rounded-sm bg-raised p-2">
                           <span className="font-medium" dir="auto">{ans.item.prompt}</span>
+                          <QuestionPages itemId={ans.item.id} count={ans.item.media.length} label={tq("pictureAlt")} />
                           <p className="whitespace-pre-line break-words" dir="auto">{ans.text}</p>
+                          {ans.aiFeedback || ans.aiMarks !== null ? (
+                            <div className="rounded-sm border border-hairline bg-surface p-2 text-label text-ink-muted">
+                              <span className="font-semibold">{tq("aiSuggests")}{ans.aiMarks !== null && <span className="num"> {ans.aiMarks} / {ans.item.marks}</span>}</span>
+                              {ans.aiFeedback && <p className="whitespace-pre-line" dir="auto">{ans.aiFeedback}</p>}
+                              <span>{tq("aiNote")}</span>
+                            </div>
+                          ) : aiEnabled() ? (
+                            <form action={askAiAboutAnswer}>
+                              <input type="hidden" name="answerId" value={ans.id} />
+                              <button className="text-label underline underline-offset-4">{tq("aiSuggests")}</button>
+                            </form>
+                          ) : null}
                           <form action={gradeWrittenForm} className="flex items-end gap-2">
                             <input type="hidden" name="answerId" value={ans.id} />
                             <label className="grid gap-1 text-label text-ink-muted">
                               {t("marks")} / {ans.item.marks}
-                              <input name="marks" type="number" min={0} max={ans.item.marks} defaultValue={ans.marks ?? ""} dir="ltr" className="num min-h-9 w-20 rounded-sm border border-field bg-surface px-2" />
+                              <input name="marks" type="number" min={0} max={ans.item.marks} defaultValue={ans.marks ?? ans.aiMarks ?? ""} dir="ltr" className="num min-h-9 w-20 rounded-sm border border-field bg-surface px-2" />
                             </label>
                             <button className="btn btn-outline px-3 py-1.5 text-small">{t("grade")}</button>
                           </form>

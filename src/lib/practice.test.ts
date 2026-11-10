@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gradeItem, normalizeAnswer, scoreAttempt, type PracticeItem } from "./practice";
+import { gradeItem, normalizeAnswer, replyFrom, scoreAttempt, type PracticeItem } from "./practice";
 import { nextStreak, practiceXp } from "./progress";
 
 const mcq = (marks = 1): PracticeItem => ({
@@ -71,5 +71,30 @@ describe("XP and streaks", () => {
     expect(nextStreak(new Date("2026-10-29T08:00:00Z"), 4, today)).toEqual({ streak: 4, counted: false });
     expect(nextStreak(new Date("2026-10-28T23:00:00Z"), 4, today)).toEqual({ streak: 5, counted: true });
     expect(nextStreak(new Date("2026-10-20T10:00:00Z"), 4, today)).toEqual({ streak: 1, counted: true });
+  });
+});
+
+describe("gradeItem MULTI", () => {
+  const multi: PracticeItem = { id: "m", kind: "MULTI", marks: 3, answer: null, choices: [{ id: "a", correct: true }, { id: "b", correct: false }, { id: "c", correct: true }] };
+  it("is right only when exactly the correct boxes are ticked", () => {
+    expect(gradeItem(multi, { itemId: "m", choiceIds: ["c", "a"] })).toEqual({ correct: true, marks: 3 });
+    expect(gradeItem(multi, { itemId: "m", choiceIds: ["a"] }).correct).toBe(false); // a missed box
+    expect(gradeItem(multi, { itemId: "m", choiceIds: ["a", "b", "c"] }).correct).toBe(false); // an extra box
+    expect(gradeItem(multi, { itemId: "m", choiceIds: [] }).correct).toBe(false);
+  });
+  it("ignores an id that is not one of the question's choices", () => {
+    expect(gradeItem(multi, { itemId: "m", choiceIds: ["a", "c", "zzz"] }).correct).toBe(true);
+  });
+  it("is never right when no choice is marked correct", () => {
+    expect(gradeItem({ ...multi, choices: [{ id: "a", correct: false }] }, { itemId: "m", choiceIds: [] }).correct).toBe(false);
+  });
+});
+
+describe("replyFrom", () => {
+  it("reads one radio value and several ticked boxes from the same field name", () => {
+    const f = new FormData();
+    f.append("choice_q", "a"); f.append("choice_q", "c"); f.append("text_q", "  ");
+    expect(replyFrom(f, "q")).toEqual({ itemId: "q", choiceId: "a", choiceIds: ["a", "c"], text: "  " });
+    expect(replyFrom(new FormData(), "x")).toEqual({ itemId: "x", choiceId: null, choiceIds: [], text: null });
   });
 });

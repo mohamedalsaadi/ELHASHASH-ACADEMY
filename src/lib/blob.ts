@@ -21,8 +21,16 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const homeworkPrefix = (courseId: string) => `homework/${courseId}/`;
 export const submissionPrefix = (assignmentId: string, studentId: string) => `submissions/${assignmentId}/${studentId}/`;
 export const lessonPagesPrefix = (courseId: string) => `lesson-pages/${courseId}/`;
+export const questionMediaPrefix = (courseId: string) => `question-media/${courseId}/`;
 export const coverPrefix = (courseId: string) => `covers/${courseId}/`;
 export const avatarPrefix = (userId: string) => `avatars/${userId}/`;
+
+/**
+ * A path list that came from the browser, cut down to objects the record may reference: under this course's prefix, or
+ * already stored on the record (a copied unit keeps the source course's pages).
+ */
+export const ownPaths = (paths: string[], prefix: string, existing: string[] = []) =>
+  paths.filter((p) => !p.includes("..") && (p.startsWith(prefix) || existing.includes(p)));
 
 /** The browser's filename is only a label. Strip anything that could break a header or escape the store. */
 export function safeDownloadName(name: string): string {

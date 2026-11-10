@@ -2,12 +2,13 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { ExamTimer } from "@/components/exam/ExamTimer";
+import { QuestionPages } from "@/components/QuestionPages";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { field } from "@/components/ui/form";
 import { submitExam } from "@/app/[locale]/courses/[slug]/exams/actions";
 import type { PracticeError } from "@/lib/practice";
 
-export type ExamFormItem = { id: string; kind: "MCQ" | "SHORT" | "WRITTEN"; prompt: string; marks: number; choices: { id: string; label: string }[] };
+export type ExamFormItem = { id: string; kind: "MCQ" | "MULTI" | "SHORT" | "WRITTEN"; prompt: string; marks: number; choices: { id: string; label: string }[]; mediaCount?: number };
 
 export function ExamForm({
   attemptId,
@@ -18,7 +19,7 @@ export function ExamForm({
   attemptId: string;
   expiresAt: string;
   items: ExamFormItem[];
-  labels: Record<"submit" | "yourAnswer" | "invalid" | "closed" | "limited" | "timeLeft" | "timeUp", string>;
+  labels: Record<"submit" | "yourAnswer" | "invalid" | "closed" | "limited" | "timeLeft" | "timeUp" | "pictureAlt" | "pickAll", string>;
 }) {
   const [state, action] = useActionState(submitExam, null as PracticeError);
   const form = useRef<HTMLFormElement>(null);
@@ -29,11 +30,13 @@ export function ExamForm({
     const el = form.current;
     if (!el) return;
     try {
-      const saved = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, string>;
+      // A value is a string, or a list of strings for a question with several ticked boxes.
+      const saved = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, string | string[]>;
       for (const [name, value] of Object.entries(saved)) {
+        const values = ([] as string[]).concat(value);
         for (const input of Array.from(el.elements).filter((x): x is HTMLInputElement | HTMLTextAreaElement => (x as HTMLInputElement).name === name)) {
-          if (input instanceof HTMLInputElement && input.type === "radio") input.checked = input.value === value;
-          else input.value = value;
+          if (input instanceof HTMLInputElement && (input.type === "radio" || input.type === "checkbox")) input.checked = values.includes(input.value);
+          else input.value = values[0] ?? "";
         }
       }
     } catch {}
@@ -42,8 +45,8 @@ export function ExamForm({
   function save() {
     const el = form.current;
     if (!el) return;
-    const out: Record<string, string> = {};
-    for (const [name, value] of new FormData(el)) if (/^(choice|text)_/.test(name) && typeof value === "string" && value) out[name] = value;
+    const out: Record<string, string[]> = {};
+    for (const [name, value] of new FormData(el)) if (/^(choice|text)_/.test(name) && typeof value === "string" && value) (out[name] ??= []).push(value);
     try {
       localStorage.setItem(key, JSON.stringify(out));
     } catch {}
@@ -62,11 +65,14 @@ export function ExamForm({
             <span className="font-semibold" dir="auto">{item.prompt}</span>
           </legend>
 
-          {item.kind === "MCQ" ? (
+          <QuestionPages itemId={item.id} count={item.mediaCount ?? 0} label={labels.pictureAlt} />
+          {item.kind === "MCQ" || item.kind === "MULTI" ? (
             <div className="grid gap-1.5">
-              {item.choices.map((c) => (
+              {item.kind === "MULTI" && <span className="text-label text-ink-muted">{labels.pickAll}</span>}
+              {item.choices.map((c, ci) => (
                 <label key={c.id} className="flex items-center gap-2 text-small">
-                  <input type="radio" name={`choice_${item.id}`} value={c.id} className="size-4" />
+                  <input type={item.kind === "MCQ" ? "radio" : "checkbox"} name={`choice_${item.id}`} value={c.id} className="size-4" />
+                  <span className="num w-4 text-label font-semibold" dir="ltr">{"ABCDEF"[ci]}</span>
                   <span dir="auto">{c.label}</span>
                 </label>
               ))}

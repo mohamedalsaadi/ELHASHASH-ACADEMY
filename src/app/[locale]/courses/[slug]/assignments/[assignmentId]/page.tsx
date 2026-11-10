@@ -52,6 +52,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
       },
       lesson: { select: { id: true, month: true, titleAr: true, titleEn: true, unit: { select: { term: true, isFree: true } } } },
       files: { select: { id: true, downloadName: true, size: true } },
+      items: { orderBy: { order: "asc" }, select: { item: { select: { id: true, kind: true, prompt: true, marks: true, media: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true } } } } } },
       submissions: {
         where: { studentId: session.user.id },
         select: {
@@ -62,6 +63,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
           revision: true,
           score: true,
           feedback: true,
+          answers: { select: { itemId: true, text: true, choiceIds: true, correct: true, marks: true } },
           files: { select: { id: true, downloadName: true, size: true } },
         },
       },
@@ -78,6 +80,9 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
 
   const canSubmit = open && (!sub || (assignment.allowResubmit && (sub.status === "GRADED" || sub.status === "RETURNED")));
   const zone = courseZone(assignment.course);
+  const tp = await getTranslations("practice");
+  const questions = assignment.items.map((i) => ({ ...i.item, mediaCount: i.item.media.length }));
+  const answerOf = new Map((sub?.answers ?? []).map((a) => [a.itemId, a]));
 
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
@@ -126,6 +131,23 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
               {` · ${t("revision", { n: sub.revision })}`}
             </span>
           </div>
+          {questions.length > 0 && (
+            <ul className="grid gap-2">
+              {questions.map((q, qi) => {
+                const a = answerOf.get(q.id);
+                return (
+                  <li key={q.id} className="grid gap-1 rounded-sm bg-raised p-3 text-small">
+                    <span className="flex flex-wrap items-start justify-between gap-2">
+                      <span className="font-semibold" dir="auto"><span className="num text-ink-muted">{qi + 1}. </span>{q.prompt}</span>
+                      {a && <StatusChip tone={a.correct === null ? "neutral" : a.correct ? "active" : "expired"}>{a.correct === null ? t("waitingMark") : `${a.marks ?? 0} / ${q.marks}`}</StatusChip>}
+                    </span>
+                    {a?.text && <p className="text-ink-muted whitespace-pre-line break-words" dir="auto">{a.text}</p>}
+                    {a && a.choiceIds.length > 0 && <p className="text-ink-muted" dir="auto">{q.choices.filter((c) => a.choiceIds.includes(c.id)).map((c) => c.label).join(" · ")}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           {sub.text && (
             <p dir="auto" className="rounded-sm bg-raised p-3 text-small whitespace-pre-line break-words">
               {sub.text}
@@ -146,7 +168,12 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
           <SubmitForm
             assignmentId={assignment.id}
             studentId={session.user.id}
+            items={questions}
             labels={{
+              yourAnswer: tp("yourAnswer"),
+              pictureAlt: tp("pictureAlt"),
+              pickAll: tp("pickAll"),
+              extra: t("optionalExtra"),
               invalid: t("emptyAnswer"),
               closed: t("noAccess"),
               already: t("alreadySubmitted"),

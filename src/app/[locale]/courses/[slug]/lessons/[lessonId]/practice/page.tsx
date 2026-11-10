@@ -9,6 +9,7 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
+import { QuestionPages } from "@/components/QuestionPages";
 import { PracticeForm } from "./PracticeForm";
 import { submitPractice } from "./actions";
 
@@ -44,7 +45,7 @@ export default async function PracticePage({
       titleEn: true,
       unit: { select: { term: true, isFree: true, courseId: true, course: { select: { slug: true, titleAr: true, titleEn: true } } } },
       questionItems: {
-        where: { active: true, kind: { in: ["MCQ", "SHORT"] } },
+        where: { active: true, kind: { in: ["MCQ", "MULTI", "SHORT"] } },
         orderBy: { order: "asc" },
         select: {
           id: true,
@@ -53,6 +54,7 @@ export default async function PracticePage({
           answer: true,
           explanation: true,
           marks: true,
+          media: true,
           choices: { orderBy: { order: "asc" }, select: { id: true, label: true } },
         },
       },
@@ -72,7 +74,7 @@ export default async function PracticePage({
           marks: true,
           maxMarks: true,
           xp: true,
-          answers: { select: { itemId: true, correct: true, choiceId: true, text: true } },
+          answers: { select: { itemId: true, correct: true, choiceId: true, choiceIds: true, text: true } },
         },
       })
     : null;
@@ -115,6 +117,10 @@ export default async function PracticePage({
                     {t("yourAnswer")}: {reply.text}
                   </p>
                 )}
+                <QuestionPages itemId={item.id} count={item.media.length} label={t("pictureAlt")} />
+                {item.kind === "MULTI" && reply && reply.choiceIds.length > 0 && (
+                  <p className="text-small text-ink-muted" dir="auto">{item.choices.filter((c) => reply.choiceIds.includes(c.id)).map((c) => c.label).join(" · ")}</p>
+                )}
                 {item.kind === "MCQ" && rightChoice && <p className="text-small text-ink-muted" dir="auto">{rightChoice.label}</p>}
                 {!correct && item.answer && (
                   <p className="text-small text-up" dir="auto">
@@ -147,8 +153,8 @@ export default async function PracticePage({
         <PracticeForm
           action={submitPractice}
           lessonId={lesson.id}
-          items={lesson.questionItems.map((q) => ({ id: q.id, kind: q.kind, prompt: q.prompt, marks: q.marks, choices: q.choices }))}
-          labels={{ submit: t("submit"), choose: t("choose"), yourAnswer: t("yourAnswer"), invalid: t("invalid"), closed: t("noAccess"), limited: t("limited") }}
+          items={lesson.questionItems.map((q) => ({ id: q.id, kind: q.kind, prompt: q.prompt, marks: q.marks, choices: q.choices, mediaCount: q.media.length }))}
+          labels={{ submit: t("submit"), choose: t("choose"), yourAnswer: t("yourAnswer"), invalid: t("invalid"), closed: t("noAccess"), limited: t("limited"), pictureAlt: t("pictureAlt"), pickAll: t("pickAll") }}
         />
       )}
     </main>

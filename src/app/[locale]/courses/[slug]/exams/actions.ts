@@ -1,15 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { hasPlan } from "@/lib/assignments";
 import { grantsFor, isCourseStaff } from "@/lib/catalog";
+import { suggestWritten } from "@/lib/ai-grading";
 import { db } from "@/lib/db";
+import { hasGuardianConsent } from "@/lib/live";
 import { isExpired, markExam } from "@/lib/exams";
 import { opensLesson } from "@/lib/plans";
-import type { PracticeError, PracticeReply } from "@/lib/practice";
+import { replyFrom, type PracticeError, type PracticeReply } from "@/lib/practice";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 
 /** Starts a paper, or resumes the one already open. The clock lives in the database, not the browser. */
@@ -65,7 +68,7 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
       expiresAt: true,
       paper: {
         select: {
-          course: { select: { slug: true } },
+          course: { select: { id: true, slug: true, aiGrading: true } },
           items: { orderBy: { order: "asc" }, select: { item: { select: { id: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } } } } },
         },
       },
@@ -84,11 +87,7 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
   }
 
   const items = attempt.paper.items.map((i) => i.item);
-  const replies: PracticeReply[] = items.map((item) => ({
-    itemId: item.id,
-    choiceId: String(form.get(`choice_${item.id}`) ?? "") || null,
-    text: String(form.get(`text_${item.id}`) ?? "") || null,
-  }));
+  const replies: PracticeReply[] = items.map((item) => replyFrom(form, item.id));
 
   const marked = markExam(items, replies);
 
@@ -104,6 +103,7 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
           correct: r.correct,
           marks: r.marks,
           choiceId: item.kind === "MCQ" ? reply?.choiceId ?? null : null,
+          choiceIds: item.kind === "MULTI" ? reply?.choiceIds ?? [] : [],
           text: item.kind === "SHORT" || item.kind === "WRITTEN" ? reply?.text ?? null : null,
         };
       }),
@@ -121,6 +121,15 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
   ]);
 
   await recordAttempt(`exam:${session.user.id}`);
+  // A suggested mark for each written answer is waiting when the teacher opens the attempt. Only for a course that opted in
+  // (the answer leaves our servers for an AI provider), with a guardian's consent, and capped per course like homework.
+  if (marked.needsGrading && attempt.paper.course.aiGrading && (await hasGuardianConsent(session.user.id))) {
+    const key = `ai-auto:${attempt.paper.course.id}`;
+    after(async () => {
+      if (await isLimited(key, 300, 86_400_000)) return;
+      if ((await suggestWritten(attempt.id).catch(() => 0)) > 0) await recordAttempt(key);
+    });
+  }
   revalidatePath("/[locale]/teacher/exams/[id]", "page");
   revalidatePath("/[locale]/courses/[slug]/exams/[examId]", "page");
   redirect(`/courses/${attempt.paper.course.slug}/exams/${attempt.paperId}`);

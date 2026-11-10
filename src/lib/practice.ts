@@ -4,14 +4,21 @@
 export type PracticeItem = {
   id: string;
   /** WRITTEN never appears in practice or review; it exists so exam answers share the type. */
-  kind: "MCQ" | "SHORT" | "WRITTEN";
+  kind: "MCQ" | "MULTI" | "SHORT" | "WRITTEN";
   marks: number;
   /** SHORT only: the canonical accepted answer. */
   answer: string | null;
   choices: { id: string; correct: boolean }[];
 };
 
-export type PracticeReply = { itemId: string; choiceId?: string | null; text?: string | null };
+/** `choiceId` answers an MCQ; `choiceIds` is every box ticked on a MULTI question. */
+export type PracticeReply = { itemId: string; choiceId?: string | null; choiceIds?: string[]; text?: string | null };
+
+/** One item's answer out of a submitted form: `choice_<id>` is one value for a radio and several for ticked boxes. */
+export function replyFrom(form: FormData, itemId: string): PracticeReply {
+  const ids = form.getAll(`choice_${itemId}`).map(String).filter(Boolean);
+  return { itemId, choiceId: ids[0] ?? null, choiceIds: ids, text: String(form.get(`text_${itemId}`) ?? "") || null };
+}
 
 const TASHKEEL = /[ؐ-ًؚ-ٰٟۖ-ۭ]/g;
 const TATWEEL = /ـ/g;
@@ -43,6 +50,13 @@ export function gradeItem(item: PracticeItem, reply: PracticeReply | undefined):
   if (item.kind === "MCQ") {
     const picked = item.choices.find((c) => c.id === reply.choiceId);
     const correct = !!picked?.correct;
+    return { correct, marks: correct ? item.marks : 0 };
+  }
+  if (item.kind === "MULTI") {
+    // Right only when exactly the correct set is ticked: a missed or an extra box is wrong (no part marks, easy to explain).
+    const want = new Set(item.choices.filter((c) => c.correct).map((c) => c.id));
+    const got = new Set((reply.choiceIds ?? []).filter((id) => item.choices.some((c) => c.id === id)));
+    const correct = want.size > 0 && got.size === want.size && [...want].every((id) => got.has(id));
     return { correct, marks: correct ? item.marks : 0 };
   }
   const expected = item.answer ? normalizeAnswer(item.answer) : "";

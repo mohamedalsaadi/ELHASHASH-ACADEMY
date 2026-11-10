@@ -53,11 +53,12 @@ export function shuffled<T>(list: T[], seed: string): T[] {
 }
 
 /**
- * Bulk question import, one question per line: `prompt | choice;choice;choice | correct number | marks`.
+ * Bulk question import, one question per line: `prompt | choice;choice;choice | correct number (or 1,3 for several) | marks`.
  * With no choices the third column is the accepted short answer. Returns the good rows and the 1-based bad line numbers.
  */
 export type ImportedQuestion =
   | { kind: "MCQ"; prompt: string; choices: string[]; correct: number; marks: number }
+  | { kind: "MULTI"; prompt: string; choices: string[]; correct: number[]; marks: number }
   | { kind: "SHORT"; prompt: string; answer: string; marks: number };
 
 export function parseQuestionCsv(text: string) {
@@ -75,9 +76,16 @@ export function parseQuestionCsv(text: string) {
       rows.push({ kind: "SHORT", prompt, answer: third, marks });
       return;
     }
-    const correct = Number(third);
-    if (choices.length < 2 || !Number.isInteger(correct) || correct < 1 || correct > choices.length) return void bad.push(i + 1);
-    rows.push({ kind: "MCQ", prompt, choices, correct, marks });
+    // "2" is one right answer; "1,3" is several (a MULTI question).
+    const picks = [...new Set(third.split(",").map((s) => Number(s.trim())))];
+    if (choices.length < 2 || picks.some((n) => !Number.isInteger(n) || n < 1 || n > choices.length)) return void bad.push(i + 1);
+    if (picks.length > 1) rows.push({ kind: "MULTI", prompt, choices, correct: picks, marks });
+    else rows.push({ kind: "MCQ", prompt, choices, correct: picks[0], marks });
   });
   return { rows, bad };
+}
+
+/** A quiz's marks scaled to the assignment's maximum score (a 4/5 quiz on a 100-point assignment is 80). */
+export function scaleScore(marks: number, maxMarks: number, maxScore: number): number {
+  return maxMarks > 0 ? Math.min(maxScore, Math.max(0, Math.round((marks / maxMarks) * maxScore))) : 0;
 }

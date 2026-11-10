@@ -32,7 +32,7 @@ export function AssignmentForm({
   action: (prev: AssignmentError, form: FormData) => Promise<AssignmentError>;
   courses: CourseOption[];
   values?: AssignmentValues;
-  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; rubric: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string };
+  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; rubric: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string; kind?: string; kindHomework?: string; kindQuiz?: string };
 }) {
   const [state, formAction] = useActionState(action, null);
   const [courseId, setCourseId] = useState(values.courseId ?? courses[0]?.id ?? "");
@@ -59,6 +59,16 @@ export function AssignmentForm({
           ))}
         </select>
       </label>
+
+      {mode === "new" && labels.kind && (
+        <label className={label}>
+          {labels.kind}
+          <select name="kind" defaultValue="HOMEWORK" className={field}>
+            <option value="HOMEWORK">{labels.kindHomework}</option>
+            <option value="QUIZ">{labels.kindQuiz}</option>
+          </select>
+        </label>
+      )}
 
       {mode === "new" && (
         <label className={label}>

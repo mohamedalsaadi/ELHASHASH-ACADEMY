@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { suggestAnswer } from "@/lib/ai-grading";
 import { db } from "@/lib/db";
+import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
 export type ExamError = "invalid" | "ok" | null;
@@ -137,4 +139,15 @@ export async function gradeWritten(_prev: ExamError, form: FormData): Promise<Ex
 /** Plain-form wrapper: the marks input is constrained, so an invalid post simply does nothing. */
 export async function gradeWrittenForm(form: FormData) {
   await gradeWritten(null, form);
+}
+
+/** Asks AI for a suggested mark on one written answer. The teacher still decides; nothing reaches the student. */
+export async function askAiAboutAnswer(form: FormData) {
+  const me = await requireStaff();
+  const d = z.object({ answerId: z.string().min(1) }).parse(Object.fromEntries(form));
+  const answer = await db.examAnswer.findUniqueOrThrow({ where: { id: d.answerId }, select: { attempt: { select: { paper: { select: { courseId: true } } } } } });
+  await assertCourse(me, answer.attempt.paper.courseId);
+  if (await isLimited(`ai-grade:${me.id}`, 100, 86_400_000)) return;
+  if (await suggestAnswer(d.answerId).catch(() => false)) await recordAttempt(`ai-grade:${me.id}`);
+  revalidatePath("/[locale]/teacher/exams/[id]", "page");
 }

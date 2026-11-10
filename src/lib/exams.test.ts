@@ -72,3 +72,13 @@ describe("parseQuestionCsv", () => {
     expect(r.bad).toEqual([3, 5]);
   });
 });
+
+describe("parseQuestionCsv several answers", () => {
+  it("reads 1,3 as a multiple-answer question and a lone number as a single answer", () => {
+    const r = parseQuestionCsv(["Pick the evens | 1;2;3;4 | 2,4 | 2", "Pick one | a;b;c | 2", "Dup | a;b;c | 2,2"].join(String.fromCharCode(10)));
+    expect(r.rows[0]).toEqual({ kind: "MULTI", prompt: "Pick the evens", choices: ["1", "2", "3", "4"], correct: [2, 4], marks: 2 });
+    expect(r.rows[1]).toMatchObject({ kind: "MCQ", correct: 2 });
+    expect(r.rows[2]).toMatchObject({ kind: "MCQ", correct: 2 }); // the same number twice is still one answer
+    expect(parseQuestionCsv("x is | a;b | 1,9").bad).toEqual([1]); // 9 is out of range
+  });
+});

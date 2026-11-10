@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { ownPaths, questionMediaPrefix } from "@/lib/blob";
 import { parseQuestionCsv } from "@/lib/exams";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
@@ -10,13 +11,12 @@ export type BankError = "invalid" | "ok" | null;
 
 const ItemInput = z.object({
   lessonId: z.string().min(1),
-  kind: z.enum(["MCQ", "SHORT", "WRITTEN"]),
-  prompt: z.string().trim().min(3).max(2000),
+  kind: z.enum(["MCQ", "MULTI", "SHORT", "WRITTEN"]),
+  prompt: z.string().trim().max(2000).default(""),
   answer: z.string().trim().max(1000).optional(),
   explanation: z.string().trim().max(4000).optional(),
   marks: z.coerce.number().int().min(1).max(100).default(1),
-  choices: z.string().optional(),
-  correct: z.string().optional(),
+  media: z.string().max(20_000).default("[]"),
 });
 
 const courseOfLesson = async (lessonId: string) => {
@@ -24,38 +24,84 @@ const courseOfLesson = async (lessonId: string) => {
   return lesson?.unit.courseId ?? null;
 };
 
+/**
+ * Reads the form into one question. Options are the `choice` fields (blank rows are dropped), the ticked `correct` fields are
+ * row numbers. Null when the question cannot stand: no text and no picture, fewer than two options, no correct option,
+ * or more than one correct option on a one-answer question.
+ */
+function readItem(form: FormData, courseId: string) {
+  const parsed = ItemInput.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return null;
+  const d = parsed.data;
+  const media = ownPaths(z.array(z.string()).max(40).catch([]).parse(JSON.parse(d.media || "[]")), questionMediaPrefix(courseId));
+  if (d.prompt.length < 3 && media.length === 0) return null;
+  const prompt = d.prompt || "";
+
+  const labels: string[] = [];
+  const correctRows: number[] = [];
+  if (d.kind === "MCQ" || d.kind === "MULTI") {
+    const rows = form.getAll("choice").map((v) => String(v).trim().slice(0, 500));
+    const ticked = new Set(form.getAll("correct").map(Number));
+    // A blank row is dropped, and the ticks move with their rows.
+    rows.slice(0, 6).forEach((label, i) => {
+      if (!label) return;
+      if (ticked.has(i)) correctRows.push(labels.length);
+      labels.push(label);
+    });
+    if (labels.length < 2 || correctRows.length === 0) return null;
+    if (d.kind === "MCQ" && correctRows.length !== 1) return null;
+  } else if (d.kind === "SHORT" && !d.answer) return null;
+  return { d, prompt, media, labels, correctRows };
+}
+
 export async function createItem(_prev: BankError, form: FormData): Promise<BankError> {
   const me = await requireStaff();
-  const parsed = ItemInput.safeParse(Object.fromEntries(form));
-  if (!parsed.success) return "invalid";
-  const d = parsed.data;
-
-  const courseId = await courseOfLesson(d.lessonId);
+  const lessonId = String(form.get("lessonId") ?? "");
+  const courseId = await courseOfLesson(lessonId);
   if (!courseId) return "invalid";
   await assertCourse(me, courseId);
+  const r = readItem(form, courseId);
+  if (!r) return "invalid";
+  const { d } = r;
 
-  const order = (await db.questionItem.count({ where: { lessonId: d.lessonId } })) + 1;
-  const common = { lessonId: d.lessonId, createdById: me.id, prompt: d.prompt, explanation: d.explanation || null, marks: d.marks, order };
+  const order = (await db.questionItem.count({ where: { lessonId } })) + 1;
+  await db.questionItem.create({
+    data: {
+      lessonId, createdById: me.id, kind: d.kind, prompt: r.prompt, media: r.media, explanation: d.explanation || null, marks: d.marks, order,
+      answer: d.kind === "SHORT" || d.kind === "WRITTEN" ? d.answer || null : null,
+      choices: { create: r.labels.map((label, i) => ({ label, correct: r.correctRows.includes(i), order: i })) },
+    },
+  });
+  revalidatePath("/[locale]/teacher/bank/[lessonId]", "page");
+  return "ok";
+}
 
-  if (d.kind === "MCQ") {
-    const labels = (d.choices ?? "")
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 6);
-    const index = Number(d.correct) - 1;
-    if (labels.length < 2 || !Number.isInteger(index) || index < 0 || index >= labels.length) return "invalid";
-    await db.questionItem.create({
-      data: { ...common, kind: "MCQ", choices: { create: labels.map((label, i) => ({ label, correct: i === index, order: i })) } },
+/** Edits a question. Choices are updated in place by position so past answers keep pointing at their choice. */
+export async function updateItem(_prev: BankError, form: FormData): Promise<BankError> {
+  const me = await requireStaff();
+  const id = String(form.get("id") ?? "");
+  const item = await db.questionItem.findUnique({ where: { id }, select: { lessonId: true, choices: { orderBy: { order: "asc" }, select: { id: true } } } });
+  if (!item) return "invalid";
+  const courseId = await courseOfLesson(item.lessonId);
+  if (!courseId) return "invalid";
+  await assertCourse(me, courseId);
+  const r = readItem(form, courseId);
+  if (!r) return "invalid";
+  const { d } = r;
+
+  await db.$transaction(async (tx) => {
+    await tx.questionItem.update({
+      where: { id },
+      data: { kind: d.kind, prompt: r.prompt, media: r.media, explanation: d.explanation || null, marks: d.marks, answer: d.kind === "SHORT" || d.kind === "WRITTEN" ? d.answer || null : null },
     });
-  } else if (d.kind === "WRITTEN") {
-    // Marked by the teacher; the answer field is an optional model answer for them.
-    await db.questionItem.create({ data: { ...common, kind: "WRITTEN", answer: d.answer || null } });
-  } else {
-    if (!d.answer) return "invalid";
-    await db.questionItem.create({ data: { ...common, kind: "SHORT", answer: d.answer } });
-  }
-
+    for (const [i, label] of r.labels.entries()) {
+      const data = { label, correct: r.correctRows.includes(i), order: i };
+      if (item.choices[i]) await tx.questionChoice.update({ where: { id: item.choices[i].id }, data });
+      else await tx.questionChoice.create({ data: { ...data, itemId: id } });
+    }
+    const drop = item.choices.slice(r.labels.length).map((c) => c.id);
+    if (drop.length) await tx.questionChoice.deleteMany({ where: { id: { in: drop } } });
+  });
   revalidatePath("/[locale]/teacher/bank/[lessonId]", "page");
   return "ok";
 }
@@ -76,9 +122,10 @@ export async function importItems(_prev: BankError, form: FormData): Promise<Ban
   for (const r of rows) {
     order += 1;
     const common = { lessonId: d.data.lessonId, createdById: me.id, prompt: r.prompt, marks: r.marks, order };
-    if (r.kind === "MCQ") {
+    if (r.kind === "MCQ" || r.kind === "MULTI") {
+      const right = r.kind === "MCQ" ? [r.correct] : r.correct;
       await db.questionItem.create({
-        data: { ...common, kind: "MCQ", choices: { create: r.choices.map((label, i) => ({ label, correct: i === r.correct - 1, order: i })) } },
+        data: { ...common, kind: r.kind, choices: { create: r.choices.map((label, i) => ({ label, correct: right.includes(i + 1), order: i })) } },
       });
     } else {
       await db.questionItem.create({ data: { ...common, kind: "SHORT", answer: r.answer } });

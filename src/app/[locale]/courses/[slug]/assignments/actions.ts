@@ -5,7 +5,9 @@ import { after } from "next/server";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { suggestGrade } from "@/lib/ai-grading";
+import { suggestGrade, suggestSubmissionAnswers } from "@/lib/ai-grading";
+import { markExam, scaleScore } from "@/lib/exams";
+import { replyFrom } from "@/lib/practice";
 import { hasGuardianConsent } from "@/lib/live";
 import { opensAssignment } from "@/lib/assignments";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, submissionPrefix } from "@/lib/blob";
@@ -66,7 +68,18 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   const files = fileList(form.get("files"));
   const text = parsed.data.text?.trim() ? maskContacts(parsed.data.text).text : null;
   const masked = parsed.data.text ? maskContacts(parsed.data.text).masked : false;
-  if (!text && files.length === 0) return "invalid";
+
+  // Questions set on this assignment (a quiz, or homework with questions): marked here from the database, never from the client.
+  const items = (
+    await db.assignmentItem.findMany({
+      where: { assignmentId: assignment.id },
+      orderBy: { order: "asc" },
+      select: { item: { select: { id: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } } } },
+    })
+  ).map((i) => i.item);
+  const replies = items.map((item) => replyFrom(form, item.id));
+  const answered = replies.some((r) => r.choiceIds?.length || r.text);
+  if (!text && files.length === 0 && !answered) return "invalid";
 
   const existing = await db.submission.findUnique({
     where: { assignmentId_studentId: { assignmentId: assignment.id, studentId } },
@@ -108,6 +121,38 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
     submissionId = created.id;
   }
 
+  // Store the answers and mark what can be marked. A quiz with nothing for a teacher to read is graded on the spot;
+  // otherwise it waits, with the questions' marks as the suggested score.
+  if (items.length > 0) {
+    const marked = markExam(items, replies);
+    await db.$transaction([
+      db.submissionAnswer.deleteMany({ where: { submissionId } }),
+      db.submissionAnswer.createMany({
+        data: marked.results.map((r) => {
+          const reply = replies.find((x) => x.itemId === r.itemId);
+          const item = items.find((i) => i.id === r.itemId)!;
+          const choice = item.kind === "MCQ" || item.kind === "MULTI";
+          return {
+            submissionId,
+            itemId: r.itemId,
+            correct: r.correct,
+            marks: r.marks,
+            choiceId: item.kind === "MCQ" ? reply?.choiceId ?? null : null,
+            choiceIds: choice ? reply?.choiceIds ?? [] : [],
+            text: item.kind === "SHORT" || item.kind === "WRITTEN" ? reply?.text ?? null : null,
+          };
+        }),
+      }),
+    ]);
+    if (!marked.needsGrading && !text && files.length === 0) {
+      const maxScore = (await db.assignment.findUniqueOrThrow({ where: { id: assignment.id }, select: { maxScore: true } })).maxScore;
+      await db.submission.update({
+        where: { id: submissionId },
+        data: { status: "GRADED", score: scaleScore(marked.autoMarks, marked.maxMarks, maxScore), gradedAt: now, gradedById: null },
+      });
+    }
+  }
+
   await recordAttempt(`submit:${studentId}`);
   // A first mark is waiting when the teacher opens it — only for a course that opted in, because
   // the submission (and any photo of handwritten work) leaves our servers for an AI provider.
@@ -116,7 +161,8 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
     after(async () => {
       const key = `ai-auto:${assignment.courseId}`;
       if (await isLimited(key, 300, 86_400_000)) return;
-      if (await suggestGrade(submissionId).catch(() => false)) await recordAttempt(key);
+      if ((text || files.length > 0) && (await suggestGrade(submissionId).catch(() => false))) await recordAttempt(key);
+      if (items.some((i) => i.kind === "WRITTEN") && (await suggestSubmissionAnswers(submissionId).catch(() => 0)) > 0) await recordAttempt(key);
     });
   }
   await db.notification

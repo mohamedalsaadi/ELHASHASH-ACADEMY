@@ -1193,3 +1193,32 @@ Committed; not deployed.
 - **Video lessons:** Gemini cannot see DRM video, so a video lesson needs the new "lesson notes" text in the lesson editor; without it the box is hidden.
 - **Code:** `src/lib/ai-lesson.ts` (+ test), `askAssistant` in `lessons/[lessonId]/actions.ts`, `AskLesson.tsx`, migration `20261115100000_lesson_assistant`, privacy sentence.
 - **Owner:** set `GEMINI_API_KEY`, tick the switch on a pilot course, have teachers write notes for video lessons. Not exercised against the real model (no key locally).
+
+## 2026-11-10: reels O, P, Q (HyperFrames, new motion)
+- Three new fast reels in `marketing/reels/{o,p,q}/` (git-ignored; renders copied to `marketing/reels/new/`), hand-written HyperFrames compositions, 14.8 to 16.5 s.
+  - **O «درجة درجة»**: a CSS 3D staircase; the gold point fails one big jump, then climbs a step per phrase while the camera swings.
+  - **P «قرّب»**: one endless zoom through nested worlds, then a full pull-out into the gold point on the mark. Voice: Yousuf (a second Emirati library voice, `WcswLmU3iGeMrhxfWXKN`), to compare with Sultan.
+  - **Q «مبعثرة»**: 1,089 canvas points go from chaos to one shape per phrase. Voice: Sultan (also O).
+- `voice.py` has scripts o, p, q; `words.py` prints word timings; `score.py` has `score_o/p/q`. `hyperframes check`: 0 errors. Audio measured at about -14 LUFS, not listened to. Owner has not reviewed them yet; nothing posted.
+
+## 2026-11-10: PDF upload reasons, questions with pictures and several answers, quizzes
+- **PDF upload:** the Blob client library turns every refusal into "Failed to retrieve the client token", so the cause was
+  never visible. New `GET /api/blob/check` says why (not signed in, store token missing, not the course's teacher); `PdfUpload`,
+  `UploadField` and the new question uploader show that reason, and the refusal is logged in `/api/blob/upload`. Not run against the
+  live store (no token here): the owner needs one try, and the reason on screen names the cause. `updateLesson` now keeps only this
+  course's page objects (or ones the lesson already had); pages of an upload that fails halfway are deleted (`discardPages`).
+- **Questions:** a question can be typed, a picture, or a PDF (JPEG pages in `QuestionItem.media`, shown through
+  `/api/question-media/[itemId]/[n]`). New kind `MULTI` (several correct, all or nothing). Options are lettered A to F. The bank has an
+  Edit action (choices are updated in place so past answers keep their choice). Import accepts `2,4` as several answers.
+- **Practice, review, exams:** ticked boxes are stored in `choiceIds`; exams and the bank page show the pictures. Written
+  answers get an AI suggestion (`ExamAnswer.aiMarks`/`aiFeedback`) only for courses with the AI-grading switch, with guardian
+  consent and the same daily caps; the teacher sees it beside the mark box (prefilled, "AI suggests") and confirms. Practice still
+  leaves written questions out, because nobody marks them there.
+- **Quizzes and homework with questions:** `AssignmentItem` (bank questions on an assignment) and `SubmissionAnswer`. The teacher
+  picks questions on the assignment page and can choose Quiz when creating. Objective answers are marked on submit; a quiz with
+  nothing for a teacher to read is graded on the spot and scaled to the assignment's score, otherwise the teacher grades with the
+  suggested score prefilled. Migrations `20261116100000_question_media_multi` and `20261117100000_assignment_questions` are additive.
+- **Checks:** tsc, 393 unit tests, production build, and a new e2e spec (`e2e/questions.spec.ts`: a several-answer question end to
+  end, a quiz marked on the spot). Pictures and PDFs cannot be uploaded in e2e (no store); they need a live try.
+- **Open:** parents are not notified when a quiz is graded on the spot; no per-answer marking screen for homework (the teacher sets one
+  score); receipts are still English-only (Arabic font not embedded).

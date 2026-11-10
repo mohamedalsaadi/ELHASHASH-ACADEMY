@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
-import { scoreAttempt, type PracticeError, type PracticeReply } from "@/lib/practice";
+import { replyFrom, scoreAttempt, type PracticeError, type PracticeReply } from "@/lib/practice";
 import { awardPractice } from "@/lib/progress-db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { recordReview } from "@/lib/review-db";
@@ -30,7 +30,7 @@ export async function submitReview(_prev: PracticeError, form: FormData): Promis
   if (ids.length === 0) return "invalid";
 
   const items = await db.questionItem.findMany({
-    where: { id: { in: ids }, active: true, kind: { in: ["MCQ", "SHORT"] } },
+    where: { id: { in: ids }, active: true, kind: { in: ["MCQ", "MULTI", "SHORT"] } },
     select: { id: true, lessonId: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } },
   });
   if (items.length === 0) return "invalid";
@@ -55,11 +55,7 @@ export async function submitReview(_prev: PracticeError, form: FormData): Promis
 
   if (await isLimited(`practice:${userId}`, 50, 86_400_000)) return "limited";
 
-  const replies: PracticeReply[] = items.map((item) => ({
-    itemId: item.id,
-    choiceId: String(form.get(`choice_${item.id}`) ?? "") || null,
-    text: String(form.get(`text_${item.id}`) ?? "") || null,
-  }));
+  const replies: PracticeReply[] = items.map((item) => replyFrom(form, item.id));
 
   const score = scoreAttempt(items, replies);
   const progress = await awardPractice(userId, score.correct, items.length);
@@ -89,6 +85,7 @@ export async function submitReview(_prev: PracticeError, form: FormData): Promis
             itemId: r.item.id,
             correct: r.correct,
             choiceId: r.item.kind === "MCQ" ? (groupReplies.find((x) => x.itemId === r.item.id)?.choiceId ?? null) : null,
+            choiceIds: r.item.kind === "MULTI" ? (groupReplies.find((x) => x.itemId === r.item.id)?.choiceIds ?? []) : [],
             text: r.item.kind === "SHORT" ? (groupReplies.find((x) => x.itemId === r.item.id)?.text ?? null) : null,
           })),
         },

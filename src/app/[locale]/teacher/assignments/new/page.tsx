@@ -64,6 +64,9 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
             attach: t("attach"),
             removeFile: t("removeFile"),
             uploadFailed: t("uploadFailed"),
+            kind: t("kind"),
+            kindHomework: t("kindHomework"),
+            kindQuiz: t("kindQuiz"),
             save: t("create"),
             invalid: t("invalid"),
           }}

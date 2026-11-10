@@ -50,7 +50,8 @@ export default async function ReviewPage({
           select: {
             correct: true,
             text: true,
-            item: { select: { prompt: true, answer: true, explanation: true, kind: true } },
+            choiceIds: true,
+            item: { select: { id: true, prompt: true, answer: true, explanation: true, kind: true, media: true, choices: { select: { id: true, label: true } } } },
             choice: { select: { label: true } },
           },
         },
@@ -87,6 +88,9 @@ export default async function ReviewPage({
                 <span className="text-label text-ink-muted">{pick(ar, a.lesson.titleAr, a.lesson.titleEn)}</span>
                 {ans.text && <p className="text-small text-ink-muted" dir="auto">{t("yourAnswer")}: {ans.text}</p>}
                 {ans.choice && <p className="text-small text-ink-muted" dir="auto">{ans.choice.label}</p>}
+                {ans.item.kind === "MULTI" && ans.choiceIds.length > 0 && (
+                  <p className="text-small text-ink-muted" dir="auto">{ans.item.choices.filter((c) => ans.choiceIds.includes(c.id)).map((c) => c.label).join(" · ")}</p>
+                )}
                 {!ans.correct && ans.item.answer && (
                   <p className="text-small text-up" dir="auto">{t("rightAnswer", { answer: ans.item.answer })}</p>
                 )}
@@ -110,10 +114,10 @@ export default async function ReviewPage({
   const due = dueNow(schedules, now, 5);
   const items = due.length
     ? await db.questionItem.findMany({
-        where: { lessonId: { in: due.map((d) => d.lessonId) }, active: true, kind: { in: ["MCQ", "SHORT"] } },
+        where: { lessonId: { in: due.map((d) => d.lessonId) }, active: true, kind: { in: ["MCQ", "MULTI", "SHORT"] } },
         orderBy: [{ lessonId: "asc" }, { order: "asc" }],
         take: 10,
-        select: { id: true, kind: true, prompt: true, marks: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true } } },
+        select: { id: true, kind: true, prompt: true, marks: true, media: true, choices: { orderBy: { order: "asc" }, select: { id: true, label: true } } },
       })
     : [];
 
@@ -129,8 +133,8 @@ export default async function ReviewPage({
       ) : (
         <PracticeForm
           action={submitReview}
-          items={items}
-          labels={{ submit: t("submit"), choose: t("choose"), yourAnswer: t("yourAnswer"), invalid: t("invalid"), closed: t("noAccess"), limited: t("limited") }}
+          items={items.map(({ media, ...q }) => ({ ...q, mediaCount: media.length }))}
+          labels={{ submit: t("submit"), choose: t("choose"), yourAnswer: t("yourAnswer"), invalid: t("invalid"), closed: t("noAccess"), limited: t("limited"), pictureAlt: t("pictureAlt"), pickAll: t("pickAll") }}
         />
       )}
     </main>

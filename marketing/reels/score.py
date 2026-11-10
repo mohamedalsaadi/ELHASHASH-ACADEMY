@@ -152,6 +152,64 @@ def score_n(D=15.0):
     return ev, D
 
 
+def score_o(D=16.5):
+    # the failed jump: a run up and a thud. Then one rising note per step, and the resolve on the peak
+    ev = [(round(0.45 + k * 0.06, 3), "glockenspiel", n, 0.5, 0.4, 0.1) for k, n in enumerate(["A4", "C5", "E5", "A5", "C6", "E6"])]
+    ev += [(round(1.05 + k * 0.07, 3), "marimba", n, 0.4, 0.4, -0.1) for k, n in enumerate(["E5", "C5", "A4", "E4", "C4"])]
+    ev.append((1.5, "frame_drum", "large", None, 0.9, 0.0))
+    ev += ostinato(1.75, 11.2, ["A3", "E4", "C4", "E4"], vel=0.4)
+    ev += hits(2.6, 11.2, "hihat", "closed", B / 2, 0.22, 0.3)
+    ev += hits(8.05, 11.2, "frame_drum", "large", B, 0.5)
+    for t, n in [(2.6, "A4"), (2.95, "B4"), (4.45, "C5"), (5.85, "D5"), (7.0, "E5"), (8.05, "G5"), (8.87, "A5"), (9.84, "C6")]:
+        ev.append((t, "glockenspiel", n, 1.2, 0.5, 0.1))
+        ev.append((t, "frame_drum", "small", None, 0.4, 0.2))
+    for t, ch in [(3.64, ["A3", "C4", "E4"]), (5.85, ["F3", "A3", "C4"]), (8.05, ["C4", "E4", "G4"]), (9.84, ["G3", "B3", "D4"])]:
+        ev += chord_events(t, "vibraphone", ch, 1.8, 0.35)
+    # 11.2 -> 11.9: the near-silent bar
+    for t, n in [(12.08, "D6"), (12.4, "E6"), (12.72, "G6")]:
+        ev.append((t, "glockenspiel", n, 0.8, 0.5, 0.1)); ev.append((t, "frame_drum", "small", None, 0.45, 0.2))
+    ev += chord_events(13.34, "vibraphone", ["A3", "C#4", "E4", "A4"], 4.2, 0.5)
+    ev.append((13.34, "frame_drum", "large", None, 0.7, 0.0)); ev.append((13.34, "glockenspiel", "A6", 2.5, 0.5, 0.0))
+    return ev, D
+
+
+def score_p(D=16.3):
+    # a pulse that climbs a tone on every dive, held on what Dhirwa is, then the whole run backwards on the pull-out
+    ev = []
+    dives = [(0.0, "D3"), (1.45, "E3"), (2.3, "F#3"), (4.2, "A3"), (5.05, "B3")]
+    for (t, n), t1 in zip(dives, [1.45, 2.3, 4.2, 5.05, 6.5]):
+        ev += ostinato(t, t1, [n, n], inst="marimba", vel=0.45, step=B / 2)
+    for t, n in [(1.45, "E5"), (2.3, "F#5"), (4.2, "A5"), (5.05, "B5"), (6.5, "D6")]:
+        ev.append((t, "glockenspiel", n, 1.2, 0.5, 0.1)); ev.append((t, "frame_drum", "large", None, 0.6, 0.0))
+    ev += hits(1.45, 6.5, "hihat", "closed", B / 2, 0.22, 0.3)
+    for t, ch in [(6.5, ["D4", "F#4", "A4"]), (8.72, ["G3", "B3", "D4"]), (10.08, ["A3", "C#4", "E4"])]:
+        ev += chord_events(t, "vibraphone", ch, 2.2, 0.4)
+    ev += ostinato(6.5, 11.4, ["D4", "A4", "F#4", "A4"], vel=0.3, step=B / 2)
+    ev += [(round(12.0 + k * 0.17, 3), "glockenspiel", n, 0.6, 0.45, 0.1) for k, n in enumerate(["D6", "B5", "A5", "F#5", "E5", "D5", "A4"])]
+    ev += chord_events(13.2, "vibraphone", ["D4", "F#4", "A4", "D5"], 4.2, 0.5)
+    ev.append((13.2, "frame_drum", "large", None, 0.7, 0.0)); ev.append((13.2, "glockenspiel", "A6", 2.5, 0.5, 0.0))
+    return ev, D
+
+
+def score_q(D=14.8):
+    # chaos: notes with no grid. On the snap everything locks to the beat; one chord per shape
+    ev = [(round(0.07 * k * (1 + 0.37 * ((k * 7) % 5)) % 2.05, 3), "marimba",
+           ["E4", "A#4", "C5", "F#3", "D#5", "G4", "B3", "F5"][k % 8], 0.3, 0.38, 0.6 * ((k % 5) / 2 - 1)) for k in range(26)]
+    ev.append((2.16, "frame_drum", "large", None, 0.85, 0.0))
+    ev += ostinato(2.16, 9.4, ["E4", "B4", "G4", "B4"], vel=0.42)
+    ev += hits(3.2, 9.4, "hihat", "closed", B / 2, 0.22, 0.3)
+    ev += hits(5.09, 9.4, "frame_drum", "large", B * 2, 0.5)
+    for t, ch in [(2.16, ["E3", "G3", "B3"]), (4.33, ["C4", "E4", "G4"]), (5.09, ["G3", "B3", "D4"]), (6.69, ["A3", "C4", "E4"]), (8.19, ["B3", "D#4", "F#4"])]:
+        ev += chord_events(t, "vibraphone", ch, 1.6, 0.38)
+    for t, n in [(3.2, "E5"), (3.71, "G5")]:
+        ev.append((t, "glockenspiel", n, 1.0, 0.45, 0.1))
+    for t, n in [(9.95, "E5"), (10.4, "G5"), (10.67, "B5"), (10.95, "D6"), (11.2, "E6")]:   # one note per step
+        ev.append((t, "glockenspiel", n, 0.9, 0.5, 0.1))
+    ev += chord_events(11.72, "vibraphone", ["E4", "G#4", "B4", "E5"], 3.6, 0.5)
+    ev.append((11.72, "frame_drum", "large", None, 0.7, 0.0)); ev.append((11.72, "glockenspiel", "B6", 2.3, 0.5, 0.0))
+    return ev, D
+
+
 def render(ev, D, room=0.18):
     mix = S.render(ev, dur=D + 1.0)
     mix = S.room(mix, size=0.35, mix=room)
@@ -240,8 +298,8 @@ def mix_j(D=15.0, key="j", score=None):
 
 
 for key in sys.argv[1:]:
-    if key in ("g", "h"):
-        ev, D = {"g": score_g, "h": score_h}[key]()
+    if key in "ghopq":
+        ev, D = {"g": score_g, "h": score_h, "o": score_o, "p": score_p, "q": score_q}[key]()
         sf.write(f"{key}/assets/music.wav", render(ev, D), SR)
         print(key, "music.wav", D)
     else:

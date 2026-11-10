@@ -57,6 +57,12 @@ SCRIPTS.update({
     "m": [(SULTAN, "نص الليل… وسؤال واحد واقف بوجهك؟ " + WHAT + "وتسأل مدرّسك على طول. " + TAG)],
     "n": [(SULTAN, "يا أم سارة… تبين تعرفين بنتك وين وصلت؟ تقدّمها قدامك بالأرقام. " + WHAT + TAG)],
 })
+YOUSUF = "WcswLmU3iGeMrhxfWXKN"  # "Cinematic Emirati Narrator" from the voice library, tried on P next to Sultan
+SCRIPTS.update({
+    "o": [(SULTAN, "[excited] القِمَّة ما توصلها بقفزة! توصلها درجة درجة. " + WHAT + "درس، أسئلة، اختبار بوقت. " + TAG)],
+    "p": [(YOUSUF, "[surprised] قَرِّب… قَرِّب بعد! داخل كل درس: شرح، وأسئلة، وتقدّمك بالأرقام. " + WHAT + TAG)],
+    "q": [(SULTAN, "[excited] ألف معلومة مبعثرة براسك؟ نرتّبها لك، درس درس. " + WHAT + TAG)],
+})
 # C2: C's dialogue, then the narrator says what Dhirwa is before the tagline.
 SCRIPTS["c2"] = SCRIPTS["c"][:-1] + [
     (SULTAN, "ذروة: دروس تقوية أونلاين لطلاب الثانوية، مع مدرّسين."),

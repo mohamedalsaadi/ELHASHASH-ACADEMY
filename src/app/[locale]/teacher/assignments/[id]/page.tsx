@@ -15,7 +15,8 @@ import { GradeForm } from "./GradeForm";
 import { deleteAssignment, deleteAssignmentFile, toggleAssignmentItem, updateAssignment } from "../actions";
 import { QuestionPages } from "@/components/QuestionPages";
 import { scaleScore } from "@/lib/exams";
-import { STUDENT_TOKEN, studentForCode } from "@/lib/external-link";
+import { hasStudentToken, quizCheckScript, studentForCode } from "@/lib/external-link";
+import { siteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -99,7 +100,7 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
 
   // An outside quiz with a {student} placeholder: turn a code from the form's responses back into a student of this course.
   let codeOwner: string | null = null;
-  const usesCodes = !!assignment.linkUrl?.includes(STUDENT_TOKEN);
+  const usesCodes = !!assignment.linkUrl && hasStudentToken(assignment.linkUrl);
   if (usesCodes && code) {
     const holders = await db.entitlement.findMany({ where: { courseId: assignment.courseId }, distinct: ["userId"], select: { userId: true, user: { select: { name: true } } }, take: 3000 });
     const found = studentForCode(code, assignment.id, holders.map((h) => h.userId));
@@ -191,6 +192,25 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
               <button className="btn btn-outline px-4 py-2 text-small">{t("codeFind")}</button>
               {codeOwner !== null && <span className="text-small font-semibold" dir="auto">{codeOwner || t("codeNone")}</span>}
             </form>
+          )}
+          {usesCodes && (
+            <details className="grid gap-2 text-small">
+              <summary className="w-fit cursor-pointer font-semibold underline underline-offset-4">{t("checkTitle")}</summary>
+              <p className="mt-2 text-ink-muted">{t("checkIntro")}</p>
+              <ol className="grid list-decimal gap-1 ps-5 text-ink-muted">
+                {(["checkStep1", "checkStep2", "checkStep3", "checkStep4"] as const).map((k) => (
+                  <li key={k}>{t(k)}</li>
+                ))}
+              </ol>
+              <textarea
+                readOnly
+                rows={12}
+                dir="ltr"
+                className="w-full rounded-sm border border-field bg-surface p-3 font-mono text-label text-ink"
+                defaultValue={quizCheckScript({ endpoint: `${siteUrl}/api/quiz-check`, assignmentId: assignment.id })}
+              />
+              <p className="text-label text-down">{t("checkNote")}</p>
+            </details>
           )}
         </Block>
       )}

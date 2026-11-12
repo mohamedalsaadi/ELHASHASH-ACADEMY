@@ -1244,3 +1244,9 @@ Committed; not deployed.
 - **Message keys:** an earlier scripted edit had put the teacher keys in a nested namespace; moved and checked every added key.
 - **Checks:** tsc, 400 unit tests, build, and new e2e specs (course workspace and true/false quiz, external link gate, teacher coupons).
 - **Open:** a real Google Form end to end, picture and PDF questions on the live store, and a coupon at checkout on test keys still need a manual try.
+
+## 2026-11-12: Google Forms answer check
+- **Fix:** Google's pre-filled link writes `{student}` as `%7Bstudent%7D`; the placeholder is now found in both forms (`hasStudentToken`, `quizUrlFor`).
+- **Check script:** the teacher's assignment page shows a Google Apps Script (outside-quiz block, only when the link has the placeholder). On each form answer it calls `POST /api/quiz-check` with the assignment id, a key and the code, and writes ok / not subscribed / invalid / duplicate to a "Dhirwa check" sheet. The key is an HMAC of the assignment id with AUTH_SECRET (`checkKey`), never stored; a wrong key or assignment gets a plain 404. Duplicates are found by the script itself.
+- **Limit:** it records, it does not block: the student has already submitted when the result arrives. `APP_URL` must be the public address, it is the one written into the script.
+- Tests: `external-link.test.ts`, `e2e/external-quiz.spec.ts` (4 pass on en-desktop).

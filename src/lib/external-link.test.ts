@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAllowedQuizLink, quizUrlFor, STUDENT_TOKEN, studentCode, studentForCode } from "./external-link";
+import { hasStudentToken, isAllowedQuizLink, isCheckKey, quizCheckScript, quizUrlFor, STUDENT_TOKEN, studentCode, studentForCode } from "./external-link";
 
 describe("isAllowedQuizLink", () => {
   it("accepts Google Forms links only", () => {
@@ -26,8 +26,25 @@ describe("student codes", () => {
     const code = studentCode("s1", "a1");
     expect(quizUrlFor(`https://forms.gle/x?entry.5=${STUDENT_TOKEN}`, code)).toBe(`https://forms.gle/x?entry.5=${code}`);
     expect(quizUrlFor("https://forms.gle/x", code)).toBe("https://forms.gle/x");
+    expect(quizUrlFor("https://docs.google.com/forms/d/e/x/viewform?usp=pp_url&entry.5=%7Bstudent%7D", code)).toBe(`https://docs.google.com/forms/d/e/x/viewform?usp=pp_url&entry.5=${code}`);
     expect(studentForCode(code.toLowerCase(), "a1", ["s0", "s1", "s2"])).toBe("s1");
     expect(studentForCode("0000000000", "a1", ["s0", "s1"])).toBeNull();
     expect(studentForCode("", "a1", ["s1"])).toBeNull();
+  });
+});
+
+describe("form check", () => {
+  it("accepts only the key of its own assignment", () => {
+    const script = quizCheckScript({ endpoint: "https://x.test/api/quiz-check", assignmentId: "a1" });
+    const key = /const KEY = "([0-9a-f]{32})"/.exec(script)![1];
+    expect(isCheckKey("a1", key)).toBe(true);
+    expect(isCheckKey("a2", key)).toBe(false);
+    expect(isCheckKey("a1", key.slice(1))).toBe(false);
+    expect(script).toContain('const ASSIGNMENT = "a1"');
+  });
+  it("sees the placeholder plain or percent-encoded", () => {
+    expect(hasStudentToken("https://forms.gle/x?entry.1={student}")).toBe(true);
+    expect(hasStudentToken("https://forms.gle/x?entry.1=%7Bstudent%7D")).toBe(true);
+    expect(hasStudentToken("https://forms.gle/x")).toBe(false);
   });
 });

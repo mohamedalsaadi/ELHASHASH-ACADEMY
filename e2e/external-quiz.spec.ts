@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { test, expect, signInAs } from "./fixtures";
 import { courseIdOf, freshStudent, grantExpired, sql } from "./db";
 import { PERSONAS } from "./personas";
+import { studentCode } from "../src/lib/external-link"; // the e2e run and the server share one AUTH_SECRET
 
 const COURSE = "ae-12-math-e2e";
 const FORM = "https://docs.google.com/forms/d/e/e2e-form/viewform?usp=pp_url&entry.111={student}";
@@ -53,4 +54,25 @@ test("a teacher cannot save a quiz link that is not Google Forms", async ({ page
   await form.locator("button").last().click();
   await expect(form.locator("[role=alert]")).toBeVisible();
   expect((await sql<{ n: number }>(`SELECT count(*)::int AS n FROM "Assignment" WHERE "linkUrl" = 'https://example.com/quiz'`))[0].n).toBe(0);
+});
+
+test("the form script's check marks a subscriber ok, a lapsed plan not subscribed, and a wrong code or key gets nothing", async ({ page, loc }) => {
+  const tag = `${loc}-${test.info().project.name}`;
+  const { id, courseId } = await outsideQuiz(`check-${tag}`);
+  const student = (await sql<{ id: string }>(`SELECT id FROM "User" WHERE phone = $1`, [PERSONAS.studentAe.phone]))[0];
+  const lapsed = await freshStudent(`lapsed-check-${tag}`);
+  await grantExpired(lapsed.id, courseId);
+
+  // The key is in the script the teacher copies from the assignment page.
+  await signInAs(page, loc, PERSONAS.teacherAe.phone);
+  await page.goto(`/${loc}/teacher/assignments/${id}`);
+  const script = await page.locator("textarea[readonly]").inputValue();
+  const key = /const KEY = "([0-9a-f]{32})"/.exec(script)?.[1];
+  expect(key).toBeTruthy();
+
+  const ask = (body: object) => page.request.post("/api/quiz-check", { data: { assignment: id, key, code: studentCode(student.id, id), ...body } });
+  expect(await (await ask({})).json()).toMatchObject({ status: "ok" });
+  expect(await (await ask({ code: studentCode(lapsed.id, id) })).json()).toMatchObject({ status: "not subscribed" });
+  expect(await (await ask({ code: "0000000000" })).json()).toEqual({ status: "invalid" });
+  expect((await ask({ key: "0".repeat(32) })).status()).toBe(404);
 });

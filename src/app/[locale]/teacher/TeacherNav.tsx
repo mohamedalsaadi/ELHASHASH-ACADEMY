@@ -1,4 +1,6 @@
 import { getTranslations } from "next-intl/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { Link } from "@/i18n/navigation";
 
 const tab =
@@ -19,9 +21,13 @@ export async function TeacherNav({
     | "analytics"
     | "questions"
     | "profile"
-    | "earnings";
+    | "earnings"
+    | "coupons";
 }) {
   const t = await getTranslations("teacher");
+  // The discount-codes tab is for the teachers the admin has allowed.
+  const session = await auth();
+  const canCoupons = session?.user ? !!(await db.user.findUnique({ where: { id: session.user.id }, select: { canManageCoupons: true } }))?.canManageCoupons : false;
   const items = [
     { key: "home", href: "/teacher", label: t("navHome") },
     { key: "courses", href: "/teacher#courses", label: t("navCourses") },
@@ -38,6 +44,7 @@ export async function TeacherNav({
     { key: "live", href: "/teacher/live", label: t("navLive") },
     { key: "questions", href: "/teacher/questions", label: t("navQuestions") },
     { key: "requests", href: "/teacher/requests", label: t("navRequests") },
+    ...(canCoupons ? [{ key: "coupons" as const, href: "/teacher/coupons", label: t("navCoupons") }] : []),
     { key: "profile", href: "/teacher/profile", label: t("navProfile") },
   ] as const;
   return (

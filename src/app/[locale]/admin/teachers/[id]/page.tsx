@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { teacherStats } from "@/lib/teachers";
-import { addTeacherSlot, disableTeacher, removeTeacherSlot, setTeacherDiscountCap, setTeacherLive } from "../../actions";
+import { addTeacherSlot, disableTeacher, removeTeacherSlot, setTeacherCoupons, setTeacherDiscountCap, setTeacherLive } from "../../actions";
 import { AdminNav, panel, stat } from "../../AdminNav";
 import { field, label } from "../../styles";
 import { DeleteButton, ResetPasswordForm, SaveButton } from "../../ui";
@@ -36,6 +36,7 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
       role: true,
       liveApproved: true,
       maxDiscountPct: true,
+      canManageCoupons: true,
       courses: { orderBy: { slug: "asc" }, select: { id: true, titleAr: true, titleEn: true, published: true } },
       teacherSlots: {
         orderBy: { createdAt: "asc" },
@@ -142,6 +143,19 @@ export default async function TeacherPage({ params }: { params: Promise<{ locale
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="live" value={x.liveApproved ? "off" : "on"} />
               <SaveButton>{x.liveApproved ? t("liveTurnOff") : t("liveTurnOn")}</SaveButton>
+            </form>
+          </section>
+          <section className={panel}>
+            <h2 className="font-display text-h3 font-semibold">{t("teacherCoupons")}</h2>
+            <p className="text-small text-ink-muted">{t("teacherCouponsHint")}</p>
+            <p className="text-small font-medium">
+              {x.canManageCoupons ? t("teacherCouponsOn", { name: x.name }) : t("teacherCouponsOff", { name: x.name })}
+            </p>
+            <form action={setTeacherCoupons}>
+              <input type="hidden" name="id" value={x.id} />
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="coupons" value={x.canManageCoupons ? "off" : "on"} />
+              <SaveButton>{x.canManageCoupons ? t("teacherCouponsTurnOff") : t("teacherCouponsTurnOn")}</SaveButton>
             </form>
           </section>
           <section className={panel}>

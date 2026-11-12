@@ -137,11 +137,11 @@ export async function POST(req: Request) {
         priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, cfg.platformShareBp);
         couponId = resolved.coupon.id;
       } else {
-        priced = applyCoupon(priced, resolved.coupon);
+        priced = applyCoupon(priced, resolved.coupon, (skuId) => skus.get(skuId)?.courseId ?? null);
         couponId = resolved.coupon.id;
       }
     } catch (e) {
-      if (e instanceof PricingError) return NextResponse.json({ error: "coupon_currency" }, { status: 400 });
+      if (e instanceof PricingError) return NextResponse.json({ error: e.message === "coupon_course" ? "coupon_course" : "coupon_currency" }, { status: 400 });
       throw e;
     }
   }

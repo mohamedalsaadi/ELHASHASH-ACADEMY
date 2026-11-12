@@ -40,7 +40,8 @@ export type Priceable = {
   discountTo?: Date | null;
 };
 
-export type CouponLike = { percentOff: number | null; amountOff: number | null; currency: Currency | null };
+/** `courseId` limits the code to lines of that course (a teacher's own code); null means the whole cart. */
+export type CouponLike = { percentOff: number | null; amountOff: number | null; currency: Currency | null; courseId?: string | null };
 
 export class PricingError extends Error {}
 
@@ -190,22 +191,29 @@ function spreadAcross(available: number[], amount: number, step: number): number
  * Applies a coupon after bundles, to what is left to pay. The amount is spread across lines so every
  * per-line charge stays on the currency's step and the lines still add up to `total` (the gateways verify it).
  */
-export function applyCoupon(cart: PricedCart, coupon: CouponLike): PricedCart {
+export function applyCoupon(cart: PricedCart, coupon: CouponLike, courseOf?: (skuId: string) => string | null): PricedCart {
   if (cart.total <= 0) return cart;
   const step = minorPerUnit(cart.currency) / 100;
   const round = (n: number) => Math.round(n / step) * step;
 
+  // A course-limited code counts only the lines of its course, so it can never discount another teacher's course.
+  const scoped = !!coupon.courseId && !!courseOf;
+  const eligible = (skuId: string) => !scoped || courseOf!(skuId) === coupon.courseId;
+  const payable = cart.lines.map((l) => l.price - l.discount - l.platformDiscount);
+  const available = payable.map((n, i) => (eligible(cart.lines[i].skuId) ? n : 0));
+  if (scoped && available.every((n) => n <= 0)) throw new PricingError("coupon_course");
+  const base = scoped ? available.reduce((sum, n) => sum + n, 0) : cart.total;
+
   let amount: number;
   if (coupon.percentOff) {
-    amount = round((cart.total * coupon.percentOff) / 100);
+    amount = round((base * coupon.percentOff) / 100);
   } else if (coupon.amountOff) {
     if (coupon.currency && coupon.currency !== cart.currency) throw new PricingError("coupon_currency");
     amount = coupon.amountOff;
   } else return cart;
-  amount = Math.min(Math.max(0, amount), cart.total);
+  amount = Math.min(Math.max(0, amount), base);
   if (amount === 0) return cart;
 
-  const available = cart.lines.map((l) => l.price - l.discount - l.platformDiscount);
   const shares = spreadAcross(available, amount, step);
 
   return {

@@ -1222,3 +1222,25 @@ Committed; not deployed.
   end, a quiz marked on the spot). Pictures and PDFs cannot be uploaded in e2e (no store); they need a live try.
 - **Open:** parents are not notified when a quiz is graded on the spot; no per-answer marking screen for homework (the teacher sets one
   score); receipts are still English-only (Arabic font not embedded).
+
+## 2026-11-12: questions area on the course page, Google Forms quiz links, teacher discount codes
+- **Why:** the owner could not find where a teacher adds questions, answers and pictures (it lived under the lesson and felt like a
+  video upload), wanted a quiz on an outside link that only subscribers can open, true/false questions, and a way to choose which
+  teachers manage discount codes.
+- **Questions area:** `/admin/courses/[id]/questions` (a card at the top of the course page opens it). A question now belongs to a
+  course (`QuestionItem.courseId`, backfilled), and its lesson link is optional: a linked question also shows in that lesson's
+  practice, a course-only one is used in quizzes, homework and exams. The workspace adds, edits and imports questions and lists
+  the course's quizzes, homework and exams. The lesson editor shows video fields only for video lessons. True/false is a
+  question type; it is stored as a one-answer multiple-choice question with two fixed options. Migration `20261118100000_question_course`.
+- **Outside quiz link (Google Forms only):** quiz links must be `forms.gle` or `docs.google.com/forms`. The student page shows a
+  button to `/api/out/[assignmentId]`, which checks the plan on every click, then redirects; the raw address is not in the page and a
+  lapsed subscriber no longer sees the link (this was a leak). A `{student}` placeholder in a pre-filled link becomes a per-student
+  code (HMAC), and the teacher can turn a code from the responses back into a name. A subscriber can still share the address they
+  land on; for real protection the form itself needs "sign-in required" and "one response" (hint shown on the form).
+- **Teacher discount codes:** `User.canManageCoupons` (admin toggle on the teacher's page), `Coupon.instructorId` and `courseId`
+  (migration `20261119100000_teacher_coupons`). `/teacher/coupons` is for allowed teachers only: own courses, percent only, never above
+  their discount limit, funded by the teacher; codes are switched off, never deleted. Checkout applies a course-limited code to that
+  course's lines only (`applyCoupon`), and refuses it when the cart has none.
+- **Message keys:** an earlier scripted edit had put the teacher keys in a nested namespace; moved and checked every added key.
+- **Checks:** tsc, 400 unit tests, build, and new e2e specs (course workspace and true/false quiz, external link gate, teacher coupons).
+- **Open:** a real Google Form end to end, picture and PDF questions on the live store, and a coupon at checkout on test keys still need a manual try.

@@ -279,3 +279,32 @@ describe("applyPlatformDiscount", () => {
     for (const l of r.lines) expect(l.platformDiscount % 10).toBe(0);
   });
 });
+
+describe("applyCoupon limited to a course", () => {
+  const math = line("math", 50000);
+  const physics = line("physics", 40000);
+  const cart = price([math, physics], [], now);
+  const courseOf = (skuId: string) => (skuId === math.skuId ? "course-math" : skuId === physics.skuId ? "course-physics" : null);
+  const netOf = (r: typeof cart) => r.lines.reduce((sum, l) => sum + l.price - l.discount - l.couponDiscount, 0);
+
+  it("takes a percent of that course's line only", () => {
+    const r = applyCoupon(cart, { percentOff: 10, amountOff: null, currency: null, courseId: "course-math" }, courseOf);
+    expect(r.couponDiscount).toBe(5000); // 10% of 50000, not of 90000
+    expect(r.lines.find((l) => l.skuId === physics.skuId)!.couponDiscount).toBe(0);
+    expect(netOf(r)).toBe(r.total);
+  });
+
+  it("is refused when the cart has no line of that course", () => {
+    expect(() => applyCoupon(cart, { percentOff: 10, amountOff: null, currency: null, courseId: "course-chemistry" }, courseOf)).toThrow(new PricingError("coupon_course"));
+  });
+
+  it("caps a fixed amount at the course's line", () => {
+    const r = applyCoupon(cart, { percentOff: null, amountOff: 1_000_000, currency: "EGP", courseId: "course-physics" }, courseOf);
+    expect(r.couponDiscount).toBe(40000);
+    expect(r.total).toBe(50000);
+  });
+
+  it("a code without a course still discounts the whole cart", () => {
+    expect(applyCoupon(cart, { percentOff: 10, amountOff: null, currency: null, courseId: null }, courseOf).couponDiscount).toBe(9000);
+  });
+});

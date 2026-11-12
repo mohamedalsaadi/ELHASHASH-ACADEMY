@@ -120,6 +120,8 @@ model User {
   liveApproved    Boolean   @default(false)
   /// The biggest discount (percent) this teacher may put on their own packages. The owner raises it per teacher.
   maxDiscountPct  Int       @default(10)
+  /// The admin lets this teacher create and manage discount codes for their own courses (within maxDiscountPct).
+  canManageCoupons Boolean  @default(false)
   /// Public credentials a teacher fills in themselves. Shown on the teacher page so "who teaches" is checkable.
   yearsTeaching   Int?
   qualification   String?   @db.VarChar(120)
@@ -146,6 +148,7 @@ model User {
   childLinks          ParentLink[]            @relation("Student")
   referralCode        ReferralCode?
   couponsOwned        Coupon[]                @relation("CouponOwner")
+  managedCoupons      Coupon[]                @relation("CouponInstructor")
   referralsMade       Referral[]              @relation("ReferralReferrer")
   referralsReceived   Referral[]              @relation("ReferralReferred")
   receiptAcks         ReceiptAck[]            @relation("ReceiptAcks")
@@ -315,6 +318,7 @@ model Course {
   specialRequests SpecialRequest[]
   examPapers      ExamPaper[]
   questionItems   QuestionItem[]
+  coupons         Coupon[]
 
   @@index([gradeId, subjectId])
 }
@@ -489,11 +493,19 @@ model Coupon {
   funding        CouponFunding @default(STANDARD)
   /// Set on a reward coupon: only this user may redeem the code.
   ownerId        String?
+  /// A teacher's own code: set with courseId, funded by the teacher (STANDARD). Null on the admin's global codes.
+  instructorId   String?
+  /// When set, the code discounts only lines of this course.
+  courseId       String?
   createdAt      DateTime  @default(now())
 
   owner     User?     @relation("CouponOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  instructor User?    @relation("CouponInstructor", fields: [instructorId], references: [id], onDelete: Cascade)
+  course    Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   orders    Order[]
   rewardFor Referral? @relation("ReferralReward")
+
+  @@index([instructorId])
 }
 
 /// One shareable code per person. The code is the referral link's last path segment.

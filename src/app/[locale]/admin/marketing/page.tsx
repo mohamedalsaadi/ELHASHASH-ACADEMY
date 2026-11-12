@@ -29,7 +29,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
     db.promotion.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
     db.coupon.findMany({
       orderBy: { createdAt: "desc" },
-      include: { _count: { select: { orders: { where: { status: "PAID" } } } } },
+      include: { _count: { select: { orders: { where: { status: "PAID" } } } }, instructor: { select: { name: true } }, course: { select: { titleAr: true, titleEn: true } } },
     }),
     db.referral.findMany({
       orderBy: { createdAt: "desc" },
@@ -211,6 +211,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
                 {c.code}
               </span>
               <span className="text-label text-ink-muted">
+                {c.instructor ? `${t("couponOwnerLabel", { name: c.instructor.name })} · ` : ""}
                 {t("couponUsed", { count: c._count.orders })}
                 {c.maxRedemptions != null ? ` / ${c.maxRedemptions}` : ""}
               </span>

@@ -992,6 +992,17 @@ export async function setTeacherDiscountCap(form: FormData) {
  * Live streaming is hidden until an admin approves a teacher, one teacher at a time. Turning it off
  * again hides their live sessions everywhere without touching the sessions themselves.
  */
+/** The admin chooses which teachers may create and manage discount codes (for their own courses, within their discount limit). */
+export async function setTeacherCoupons(form: FormData) {
+  await requireAdmin();
+  const id = z.string().parse(form.get("id"));
+  const on = form.get("coupons") === "on";
+  await db.user.updateMany({ where: { id, role: "INSTRUCTOR" }, data: { canManageCoupons: on } });
+  done();
+  revalidatePath("/[locale]/teacher", "layout");
+  redirect(`/${form.get("locale") === "en" ? "en" : "ar"}/admin/teachers/${id}`);
+}
+
 export async function setTeacherLive(form: FormData) {
   await requireAdmin();
   const id = z.string().parse(form.get("id"));

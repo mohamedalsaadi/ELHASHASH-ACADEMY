@@ -23,6 +23,7 @@ type CouponError =
   | "used_up"
   | "used_by_you"
   | "currency"
+  | "course"
   | "referral_self"
   | "referral_used"
   | "referral_not_first"
@@ -93,11 +94,12 @@ export default async function CheckoutPage({
           priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, finance.platformShareBp);
           appliedCode = resolved.coupon.code;
         } else {
-          priced = applyCoupon(priced, resolved.coupon);
+          priced = applyCoupon(priced, resolved.coupon, (skuId) => result.skus.get(skuId)?.courseId ?? null);
           appliedCode = resolved.coupon.code;
         }
       } catch (e) {
         if (e instanceof PricingError && e.message === "coupon_currency") couponError = "currency";
+        else if (e instanceof PricingError && e.message === "coupon_course") couponError = "course";
         else throw e;
       }
     }

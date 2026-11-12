@@ -20,7 +20,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ assignment
 
   const a = await db.assignment.findUnique({
     where: { id: assignmentId },
-    select: { id: true, courseId: true, linkUrl: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
+    select: { id: true, courseId: true, linkUrl: true, linkEntry: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
   });
   if (!a?.linkUrl) return new Response(null, { status: 404 });
 
@@ -28,7 +28,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ assignment
   const staff = await isCourseStaffDb(session.user.id, a.courseId);
   if (!staff && !opensAssignment(a, await grantsFor(session.user.id, a.courseId, now), now)) return new Response(null, { status: 404 });
 
-  const target = quizUrlFor(a.linkUrl, staff ? "PREVIEW" : studentCode(session.user.id, a.id));
+  const target = quizUrlFor(a.linkUrl, staff ? "PREVIEW" : studentCode(session.user.id, a.id), a.linkEntry);
   let url: URL;
   try {
     url = new URL(target);

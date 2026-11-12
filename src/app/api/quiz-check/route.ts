@@ -17,9 +17,9 @@ export async function POST(req: Request) {
 
   const a = await db.assignment.findUnique({
     where: { id: assignment },
-    select: { id: true, courseId: true, linkUrl: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
+    select: { id: true, courseId: true, linkUrl: true, linkEntry: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
   });
-  if (!a?.linkUrl || !hasStudentToken(a.linkUrl)) return new Response(null, { status: 404 });
+  if (!a?.linkUrl || !(a.linkEntry || hasStudentToken(a.linkUrl))) return new Response(null, { status: 404 });
 
   const holders = await db.entitlement.findMany({ where: { courseId: a.courseId }, distinct: ["userId"], select: { userId: true, user: { select: { name: true } } }, take: 3000 });
   const found = studentForCode(code.slice(0, 20), a.id, holders.map((h) => h.userId));

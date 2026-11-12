@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, homeworkPrefix } from "@/lib/blob";
 import { suggestGrade } from "@/lib/ai-grading";
-import { isAllowedQuizLink } from "@/lib/external-link";
+import { opensAssignment } from "@/lib/assignments";
+import { grantsFor } from "@/lib/catalog";
+import { hasStudentToken, isAllowedQuizLink, studentCode } from "@/lib/external-link";
+import { fetchCodeEntry } from "@/lib/google-form";
+import { buildReport, codeColumn, parseTable, type Report } from "@/lib/quiz-report";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { hasGuardianConsent } from "@/lib/live";
@@ -50,6 +54,17 @@ const refocus = (slug?: string | null) => {
   if (slug) revalidatePath("/[locale]/courses/[slug]", "page");
 };
 
+/**
+ * What to store for a quiz link. A Google Form without the {student} placeholder is opened once here to find its "Student code"
+ * question, so the teacher only pastes the normal link; the stored address is the plain form address (no query).
+ */
+async function prepareLink(kind: "HOMEWORK" | "QUIZ", linkUrl: string | undefined) {
+  if (!linkUrl) return { linkUrl: null, linkEntry: null };
+  if (kind !== "QUIZ" || hasStudentToken(linkUrl)) return { linkUrl, linkEntry: null };
+  const found = await fetchCodeEntry(linkUrl);
+  return found ? { linkUrl: found.url, linkEntry: found.entry } : { linkUrl, linkEntry: null };
+}
+
 /** Form state for the authoring screens: null means "fine", anything else is a message key. */
 export type AssignmentError = "invalid" | "lesson" | "link" | null;
 
@@ -85,6 +100,7 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
     lessonId = d.lessonId;
   }
 
+  const link = await prepareLink(d.kind, d.linkUrl);
   const created = await db.assignment.create({
     data: {
       courseId: d.courseId,
@@ -93,7 +109,7 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
       kind: d.kind,
       title: d.title,
       instructions: d.instructions || null,
-      linkUrl: d.linkUrl || null,
+      ...link,
       rubric: d.rubric || null,
       dueAt: dueAt(form.get("dueAt")),
       maxScore: d.maxScore,
@@ -149,12 +165,13 @@ export async function updateAssignment(_prev: AssignmentError, form: FormData): 
   await assertCourse(me, a.courseId);
   if (a.kind === "QUIZ" && d.linkUrl && !isAllowedQuizLink(d.linkUrl)) return "link";
 
+  const link = await prepareLink(a.kind, d.linkUrl);
   await db.assignment.update({
     where: { id: d.id },
     data: {
       title: d.title,
       instructions: d.instructions || null,
-      linkUrl: d.linkUrl || null,
+      ...link,
       rubric: d.rubric || null,
       dueAt: dueAt(form.get("dueAt")),
       maxScore: d.maxScore,
@@ -290,4 +307,47 @@ export async function toggleAssignmentItem(form: FormData) {
   else await db.assignmentItem.create({ data: { assignmentId: d.assignmentId, itemId: d.itemId, order: await db.assignmentItem.count({ where: { assignmentId: d.assignmentId } }) } });
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
   revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
+}
+
+export type CheckState = { error: "file" | "empty" | "column" | "big" } | { report: Report } | null;
+
+const MAX_ROWS = 1500;
+
+/**
+ * Turns a Google Form's downloaded responses into a report: each row's student code becomes a student of this course, with
+ * a verdict (subscribed, plan ended, not recognised, used twice, no code). Nothing is stored.
+ */
+export async function checkResponses(_prev: CheckState, form: FormData): Promise<CheckState> {
+  const me = await requireStaff();
+  const id = z.string().min(1).parse(form.get("id"));
+  const a = await db.assignment.findUniqueOrThrow({
+    where: { id },
+    select: { id: true, courseId: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
+  });
+  await assertCourse(me, a.courseId);
+
+  const file = form.get("file");
+  if (!(file instanceof File) || file.size === 0 || file.size > 2_000_000) return { error: "file" };
+  const table = parseTable(await file.text());
+  if (table.length < 2) return { error: "empty" };
+  if (table.length > MAX_ROWS + 1) return { error: "big" };
+  const col = codeColumn(table);
+  if (col < 0) return { error: "column" };
+
+  const holders = await db.entitlement.findMany({ where: { courseId: a.courseId }, distinct: ["userId"], select: { userId: true, user: { select: { name: true } } }, take: 3000 });
+  const byCode = new Map(holders.map((h) => [studentCode(h.userId, a.id), h]));
+  const wanted = [...new Set(table.slice(1).map((r) => (r[col] ?? "").trim().toUpperCase()))].map((c) => byCode.get(c)).filter((h) => !!h);
+
+  // Whether each matched student may open the quiz today: checked a few at a time, only for students that appear in the file.
+  const now = new Date();
+  const open = new Map<string, boolean>();
+  for (let i = 0; i < wanted.length; i += 20) {
+    await Promise.all(wanted.slice(i, i + 20).map(async (h) => open.set(h!.userId, opensAssignment(a, await grantsFor(h!.userId, a.courseId, now), now))));
+  }
+
+  const report = buildReport(table, (code) => {
+    const h = byCode.get(code);
+    return h ? { name: h.user.name ?? "", subscribed: open.get(h.userId) ?? false } : null;
+  });
+  return report ? { report } : { error: "column" };
 }

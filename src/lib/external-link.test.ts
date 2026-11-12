@@ -27,6 +27,9 @@ describe("student codes", () => {
     expect(quizUrlFor(`https://forms.gle/x?entry.5=${STUDENT_TOKEN}`, code)).toBe(`https://forms.gle/x?entry.5=${code}`);
     expect(quizUrlFor("https://forms.gle/x", code)).toBe("https://forms.gle/x");
     expect(quizUrlFor("https://docs.google.com/forms/d/e/x/viewform?usp=pp_url&entry.5=%7Bstudent%7D", code)).toBe(`https://docs.google.com/forms/d/e/x/viewform?usp=pp_url&entry.5=${code}`);
+    // A form's own Student code question: the code goes into entry.<id>, and a link with the placeholder is left to the placeholder.
+    expect(quizUrlFor("https://docs.google.com/forms/d/e/x/viewform", code, "1691794639")).toBe(`https://docs.google.com/forms/d/e/x/viewform?usp=pp_url&entry.1691794639=${code}`);
+    expect(quizUrlFor(`https://forms.gle/x?entry.5=${STUDENT_TOKEN}`, code, "1691794639")).toBe(`https://forms.gle/x?entry.5=${code}`);
     expect(studentForCode(code.toLowerCase(), "a1", ["s0", "s1", "s2"])).toBe("s1");
     expect(studentForCode("0000000000", "a1", ["s0", "s1"])).toBeNull();
     expect(studentForCode("", "a1", ["s1"])).toBeNull();

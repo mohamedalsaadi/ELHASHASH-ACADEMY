@@ -1,6 +1,7 @@
 // A quiz on an outside link (Google Forms): only a subscriber is sent there, the address is not in the page, and each
 // student gets a code in place of {student}.
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { test, expect, signInAs } from "./fixtures";
 import { courseIdOf, freshStudent, grantExpired, sql } from "./db";
 import { PERSONAS } from "./personas";
@@ -75,4 +76,46 @@ test("the form script's check marks a subscriber ok, a lapsed plan not subscribe
   expect(await (await ask({ code: studentCode(lapsed.id, id) })).json()).toMatchObject({ status: "not subscribed" });
   expect(await (await ask({ code: "0000000000" })).json()).toEqual({ status: "invalid" });
   expect((await ask({ key: "0".repeat(32) })).status()).toBe(404);
+});
+
+test("a quiz whose form has a Student code question gets the code in its own field, and the teacher can check a responses file", async ({ page, loc }) => {
+  const tag = `${loc}-${test.info().project.name}`;
+  const { id, courseId } = await outsideQuiz(`entry-${tag}`);
+  // The form link has no {student}: the field id was found when the link was saved.
+  await sql(`UPDATE "Assignment" SET "linkUrl" = $2, "linkEntry" = $3 WHERE id = $1`, [id, "https://docs.google.com/forms/d/e/e2e-form/viewform", "1691794639"]);
+  const student = (await sql<{ id: string }>(`SELECT id FROM "User" WHERE phone = $1`, [PERSONAS.studentAe.phone]))[0];
+  const lapsed = await freshStudent(`lapsed-entry-${tag}`);
+  await grantExpired(lapsed.id, courseId);
+
+  await signInAs(page, loc, PERSONAS.studentAe.phone);
+  const res = await page.request.get(`/api/out/${id}`, { maxRedirects: 0 });
+  const to = new URL(res.headers()["location"]);
+  expect(to.pathname).toBe("/forms/d/e/e2e-form/viewform");
+  expect(to.searchParams.get("entry.1691794639")).toBe(studentCode(student.id, id));
+
+  // Responses downloaded from the form: a good code, a lapsed plan, an unknown code, the good code again, and a blank.
+  const ok = studentCode(student.id, id);
+  const csv = ["Timestamp,Score,Student code", `1,5,${ok}`, `2,4,${studentCode(lapsed.id, id)}`, "3,2,0000000000", `4,5,${ok.toLowerCase()}`, "5,1,"].join("\n");
+  await signInAs(page, loc, PERSONAS.teacherAe.phone);
+  await page.goto(`/${loc}/teacher/assignments/${id}`);
+  await page.locator("input[type=file][name=file]").setInputFiles({ name: "responses.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+  await page.locator("form:has(input[type=file][name=file]) button").click();
+  const words = JSON.parse(readFileSync(`messages/${loc}.json`, "utf8")).homework;
+  const rows = page.locator("table tbody tr");
+  await expect(rows).toHaveCount(5);
+  await expect(rows.nth(0)).toContainText(PERSONAS.studentAe.name);
+  await expect(rows.nth(0)).toContainText(words.vOk);
+  await expect(rows.nth(1)).toContainText(words.vNot);
+  await expect(rows.nth(2)).toContainText(words.vBad);
+  await expect(rows.nth(3)).toContainText(words.vDup);
+  await expect(rows.nth(4)).toContainText(words.vNone);
+});
+
+test("the teacher guide for Google Form quizzes opens for a teacher and links the template", async ({ page, loc }) => {
+  await signInAs(page, loc, PERSONAS.teacherAe.phone);
+  await page.goto(`/${loc}/teacher/guide/google-forms`);
+  const words = JSON.parse(readFileSync(`messages/${loc}.json`, "utf8")).quizGuide;
+  await expect(page.locator("h1")).toHaveText(words.title);
+  await expect(page.locator("ol > li")).toHaveCount(6);
+  await expect(page.getByRole("link", { name: words.template })).toHaveAttribute("href", /docs\.google\.com\/forms\/d\/.+\/copy$/);
 });

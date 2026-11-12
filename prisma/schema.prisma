@@ -963,6 +963,8 @@ model Assignment {
   instructions  String?        @db.VarChar(8000)
   /// An outside link to the work (a form, a shared PDF). Shown as a button next to the instructions.
   linkUrl       String?        @db.VarChar(500)
+  /// For a Google Form: the field id (`entry.<id>`) of its "Student code" question, found when the link was saved. Null when there is none.
+  linkEntry     String?        @db.VarChar(40)
   /// What a good answer contains. Only the teacher and the AI checker see it; never sent to students.
   rubric        String?        @db.VarChar(4000)
   /// Null means open-ended: never overdue, never late.

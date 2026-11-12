@@ -12,6 +12,8 @@ import { TeacherNav } from "../../TeacherNav";
 import { AssignmentForm } from "../AssignmentForm";
 import { AiGradeForm } from "./AiGradeForm";
 import { GradeForm } from "./GradeForm";
+import { ResponseCheck } from "./ResponseCheck";
+import { Link } from "@/i18n/navigation";
 import { deleteAssignment, deleteAssignmentFile, toggleAssignmentItem, updateAssignment } from "../actions";
 import { QuestionPages } from "@/components/QuestionPages";
 import { scaleScore } from "@/lib/exams";
@@ -39,6 +41,8 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
       title: true,
       instructions: true,
       linkUrl: true,
+      linkEntry: true,
+      kind: true,
       rubric: true,
       dueAt: true,
       maxScore: true,
@@ -100,7 +104,7 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
 
   // An outside quiz with a {student} placeholder: turn a code from the form's responses back into a student of this course.
   let codeOwner: string | null = null;
-  const usesCodes = !!assignment.linkUrl && hasStudentToken(assignment.linkUrl);
+  const usesCodes = !!assignment.linkUrl && (!!assignment.linkEntry || hasStudentToken(assignment.linkUrl));
   if (usesCodes && code) {
     const holders = await db.entitlement.findMany({ where: { courseId: assignment.courseId }, distinct: ["userId"], select: { userId: true, user: { select: { name: true } } }, take: 3000 });
     const found = studentForCode(code, assignment.id, holders.map((h) => h.userId));
@@ -183,6 +187,8 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
       {assignment.linkUrl && (
         <Block title={t("outsideQuiz")}>
           <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-fit px-4 py-2 text-small">{t("previewLink")}</a>
+          <Link href="/teacher/guide/google-forms" className="w-fit text-small underline underline-offset-4">{t("guideLink")}</Link>
+          {assignment.kind === "QUIZ" && !usesCodes && <p role="alert" className="text-small text-down">{t("noEntryWarn")}</p>}
           {usesCodes && (
             <form method="get" className="flex flex-wrap items-end gap-2">
               <label className="grid gap-1 text-label text-ink-muted">
@@ -192,6 +198,25 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
               <button className="btn btn-outline px-4 py-2 text-small">{t("codeFind")}</button>
               {codeOwner !== null && <span className="text-small font-semibold" dir="auto">{codeOwner || t("codeNone")}</span>}
             </form>
+          )}
+          {usesCodes && (
+            <div className="grid gap-2 border-t border-hairline pt-3">
+              <h3 className="text-small font-semibold">{t("reportTitle")}</h3>
+              <p className="text-small text-ink-muted">{t("reportHint")}</p>
+              <ResponseCheck
+                assignmentId={assignment.id}
+                labels={{
+                  file: t("reportFile"),
+                  run: t("reportRun"),
+                  download: t("reportDownload"),
+                  student: t("reportStudent"),
+                  result: t("reportResult"),
+                  code: t("reportCode"),
+                  errors: { file: t("reportErrFile"), empty: t("reportErrEmpty"), column: t("reportErrColumn"), big: t("reportErrBig") },
+                  verdicts: { ok: t("vOk"), not_subscribed: t("vNot"), invalid: t("vBad"), duplicate: t("vDup"), no_code: t("vNone") },
+                }}
+              />
+            </div>
           )}
           {usesCodes && (
             <details className="grid gap-2 text-small">

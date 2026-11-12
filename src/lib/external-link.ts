@@ -34,7 +34,14 @@ const TOKEN_RE = /\{student\}|%7Bstudent%7D/i;
 export const hasStudentToken = (url: string) => TOKEN_RE.test(url);
 
 /** The teacher's link with this student's code in place of the placeholder (a link without the placeholder is returned as is). */
-export function quizUrlFor(template: string, code: string): string {
+export function quizUrlFor(template: string, code: string, entry?: string | null): string {
+  if (entry && !hasStudentToken(template)) {
+    // The form's own "Student code" question: Google reads a pre-filled value from entry.<id>.
+    const u = new URL(template);
+    u.searchParams.set("usp", "pp_url");
+    u.searchParams.set(`entry.${entry}`, code);
+    return u.toString();
+  }
   return template.replace(new RegExp(TOKEN_RE.source, "gi"), encodeURIComponent(code));
 }
 
@@ -64,7 +71,9 @@ const CODE_QUESTION = "Student code"; // the exact title of the question that ho
 
 // Run this once, then allow the permissions it asks for.
 function setup() {
-  ScriptApp.newTrigger("onSubmit").forForm(FormApp.getActiveForm()).onFormSubmit().create();
+  const form = FormApp.getActiveForm();
+  if (!form) throw new Error("This script must be opened from the form itself: in the form, menu (three dots) > Apps Script.");
+  ScriptApp.newTrigger("onSubmit").forForm(form).onFormSubmit().create();
 }
 
 function onSubmit(e) {

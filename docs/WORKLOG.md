@@ -1259,3 +1259,20 @@ Committed; not deployed.
 - **Template form:** a published "Dhirwa quiz template" Google Form exists in the owner's Google account (`src/lib/quiz-template.ts`). Google Forms offers no read-only sharing, only "anyone with the link can edit", which I did not turn on: other teachers need the owner to approve access, or follow step 1 of the guide without it. **Open:** decide how teachers get the template (share it with each teacher, or leave it out).
 - **Checked live:** the Apps Script path on dhirwa.ae with a real form (invalid, then duplicate); the new form lookup against the real Google pages (fields found for the trial form and the template, also with "Limit to 1 response" on). Not tried live yet: saving a link in the deployed admin and uploading a real responses file, since the code is not deployed.
 - Tests: unit (`google-form`, `quiz-report`, `external-link`), e2e `external-quiz.spec.ts` (6 tests on 4 projects pass), tsc, lint, build.
+
+## 2026-11-12: Google Form quizzes made minimal; scores saved from the responses file (local, unpushed)
+
+- **Save scores:** next to Check on a Google quiz page, the teacher presses Save scores. Each answer whose code is a
+  subscriber's and appears once gets its `Score` (`8 / 10` or `8`, English or Arabic digits) scaled to the assignment's
+  max and stored as a graded `Submission`. Students and parents are notified; dashboard, parent and analytics need no
+  change. Repeat uploads update the same rows. A code that appears twice is never saved. `scoreColumn` and
+  `scoreFromCell` in `src/lib/quiz-report.ts`; the action is `checkResponses(save)`.
+- **Teacher:** the new form asks for a type first (Homework, Quiz on Dhirwa, Quiz on Google Forms) and shows only that
+  type's fields; lesson, rubric, max score and resubmit sit under More options. The quiz page for a Google quiz is
+  Check/Save first, results list, edit collapsed. The code lookup box and the Apps Script block are gone from the page
+  (the generator and `/api/quiz-check` remain). Guide cut to four steps. List shows Quiz or Homework.
+- **Student:** a Google quiz page has one button and one sentence, no text box or upload, and shows the result when
+  saved. Empty Files block hidden. A Google quiz is never marked overdue or "not submitted" on the list.
+- **Fixed on the way:** the "graded" notice linked to the submission id instead of the assignment id, so it opened a
+  404; a new quiz notice said "New homework".
+- **Open:** confirm the exact `Score` format a real Google quiz writes (e2e covers `8 / 10` and plain numbers).

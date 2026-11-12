@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReport, codeColumn, parseTable, reportCsv } from "./quiz-report";
+import { buildReport, codeColumn, parseTable, reportCsv, scoreColumn, scoreFromCell } from "./quiz-report";
 
 describe("parseTable", () => {
   it("reads quotes, doubled quotes and line breaks inside quotes", () => {
@@ -40,5 +40,23 @@ describe("buildReport", () => {
     const csv = reportCsv(buildReport(table, known)!, (v) => v, "Student", "Result");
     expect(csv.split("\r\n")[0]).toBe('\uFEFF"Time","Score","Student code","Student","Result"');
     expect(csv.split("\r\n")[1]).toBe('"1","5","a000000001","Sara","ok"');
+  });
+});
+
+describe("scores", () => {
+  it("finds the Score column in either language", () => {
+    expect(scoreColumn(["Timestamp", "Score", "Student code"])).toBe(1);
+    expect(scoreColumn(["الطابع الزمني", " النتيجة ", "Student code"])).toBe(1);
+    expect(scoreColumn(["Timestamp", "Student code"])).toBe(-1);
+  });
+  it("reads 8 / 10, 8, 8.5 and Arabic digits; blank and text are null", () => {
+    expect(scoreFromCell("8 / 10")).toEqual({ marks: 8, max: 10 });
+    expect(scoreFromCell("8")).toEqual({ marks: 8, max: null });
+    expect(scoreFromCell("8.5/10")).toEqual({ marks: 8.5, max: 10 });
+    expect(scoreFromCell("٨ / ١٠")).toEqual({ marks: 8, max: 10 });
+    expect(scoreFromCell("")).toBeNull();
+    expect(scoreFromCell("great")).toBeNull();
+    expect(scoreFromCell("1/2/3")).toBeNull();
+    expect(scoreFromCell("5 / 0")).toBeNull();
   });
 });

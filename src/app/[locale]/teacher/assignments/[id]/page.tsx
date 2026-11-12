@@ -17,8 +17,8 @@ import { Link } from "@/i18n/navigation";
 import { deleteAssignment, deleteAssignmentFile, toggleAssignmentItem, updateAssignment } from "../actions";
 import { QuestionPages } from "@/components/QuestionPages";
 import { scaleScore } from "@/lib/exams";
-import { hasStudentToken, quizCheckScript, studentForCode } from "@/lib/external-link";
-import { siteUrl } from "@/lib/seo";
+import { hasStudentToken } from "@/lib/external-link";
+import { QUIZ_TEMPLATE_URL } from "@/lib/quiz-template";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +26,8 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/teacher/assignments", "homework", { key: "edit", noindex: true });
 }
 
-export default async function AssignmentDetailPage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ code?: string }> }) {
+export default async function AssignmentDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
-  const { code } = await searchParams;
   setRequestLocale(locale);
   const me = await requireStaff();
   const t = await getTranslations("homework");
@@ -102,35 +101,17 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
   const chosen = new Set(assignment.items.map((i) => i.itemId));
   const totalMarks = assignment.items.reduce((sum, i) => sum + i.item.marks, 0);
 
-  // An outside quiz with a {student} placeholder: turn a code from the form's responses back into a student of this course.
-  let codeOwner: string | null = null;
+  // A quiz on Google Forms is a quiz with a link. It needs the Student code question to match answers to students.
+  const isForm = assignment.kind === "QUIZ" && !!assignment.linkUrl;
+  const isSiteQuiz = assignment.kind === "QUIZ" && !assignment.linkUrl;
   const usesCodes = !!assignment.linkUrl && (!!assignment.linkEntry || hasStudentToken(assignment.linkUrl));
-  if (usesCodes && code) {
-    const holders = await db.entitlement.findMany({ where: { courseId: assignment.courseId }, distinct: ["userId"], select: { userId: true, user: { select: { name: true } } }, take: 3000 });
-    const found = studentForCode(code, assignment.id, holders.map((h) => h.userId));
-    codeOwner = holders.find((h) => h.userId === found)?.user.name ?? "";
-  }
 
   const waiting = assignment.submissions.filter((s) => s.status === "SUBMITTED").length;
 
-  return (
-    <main className="mx-auto grid max-w-4xl gap-6 px-4 py-12">
-      <PageHeader
-        back={{ href: "/teacher/assignments", label: t("title") }}
-        eyebrow={pick(ar, assignment.course.titleAr, assignment.course.titleEn)}
-        title={<span dir="auto">{assignment.title}</span>}
-        meta={
-          <span className="num">
-            {assignment.dueAt ? t("dueLabel", { date: formatDate(assignment.dueAt, courseZone(assignment.course), locale) }) : t("noDue")}
-            {" · "}
-            {t("maxScore")}: {assignment.maxScore}
-            {waiting > 0 && ` · ${t("waiting")}: ${waiting}`}
-          </span>
-        }
-      />
-      <TeacherNav current="assignments" />
-
-      <Block title={t("edit")}>
+  const editBlock = (
+    <details className="card p-4">
+      <summary className="cursor-pointer font-display text-h3 font-semibold">{t("edit")}</summary>
+      <div className="mt-4 grid gap-4">
         <AssignmentForm
           mode="edit"
           action={updateAssignment}
@@ -138,6 +119,7 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
           values={{
             id: assignment.id,
             courseId: assignment.courseId,
+            kind: assignment.kind,
             title: assignment.title,
             instructions: assignment.instructions,
             linkUrl: assignment.linkUrl,
@@ -163,193 +145,215 @@ export default async function AssignmentDetailPage({ params, searchParams }: { p
             uploadFailed: t("uploadFailed"),
             save: t("save"),
             invalid: t("invalid"),
+            more: t("more"),
+            template: t("templateButton"),
+            guide: t("guideLink"),
             link: t("linkNotAllowed"),
             linkHint: t("linkHint"),
           }}
         />
-        <div className="grid gap-2 border-t border-hairline pt-3">
-          <AttachmentList kind="assignment" files={assignment.files} empty={t("noFiles")} />
-          {assignment.files.map((f) => (
-            <form key={f.id} action={deleteAssignmentFile}>
-              <input type="hidden" name="id" value={f.id} />
-              <button className="text-label text-down underline underline-offset-4">
-                {t("removeFile")}: <span dir="auto">{f.downloadName}</span>
-              </button>
-            </form>
-          ))}
-        </div>
+        {assignment.files.length > 0 && (
+          <div className="grid gap-2 border-t border-hairline pt-3">
+            <AttachmentList kind="assignment" files={assignment.files} empty={t("noFiles")} />
+            {assignment.files.map((f) => (
+              <form key={f.id} action={deleteAssignmentFile}>
+                <input type="hidden" name="id" value={f.id} />
+                <button className="text-label text-down underline underline-offset-4">
+                  {t("removeFile")}: <span dir="auto">{f.downloadName}</span>
+                </button>
+              </form>
+            ))}
+          </div>
+        )}
         <form action={deleteAssignment} className="border-t border-hairline pt-3">
           <input type="hidden" name="id" value={assignment.id} />
           <button className="text-small font-semibold text-down underline underline-offset-4">{t("delete")}</button>
         </form>
-      </Block>
+      </div>
+    </details>
+  );
 
-      {assignment.linkUrl && (
-        <Block title={t("outsideQuiz")}>
-          <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-fit px-4 py-2 text-small">{t("previewLink")}</a>
-          <Link href="/teacher/guide/google-forms" className="w-fit text-small underline underline-offset-4">{t("guideLink")}</Link>
-          {assignment.kind === "QUIZ" && !usesCodes && <p role="alert" className="text-small text-down">{t("noEntryWarn")}</p>}
-          {usesCodes && (
-            <form method="get" className="flex flex-wrap items-end gap-2">
-              <label className="grid gap-1 text-label text-ink-muted">
-                {t("codeLookup")}
-                <input name="code" defaultValue={code ?? ""} maxLength={20} dir="ltr" className="num min-h-11 w-44 rounded-sm border border-field bg-surface px-3 text-body text-ink" />
-              </label>
-              <button className="btn btn-outline px-4 py-2 text-small">{t("codeFind")}</button>
-              {codeOwner !== null && <span className="text-small font-semibold" dir="auto">{codeOwner || t("codeNone")}</span>}
-            </form>
-          )}
-          {usesCodes && (
-            <div className="grid gap-2 border-t border-hairline pt-3">
-              <h3 className="text-small font-semibold">{t("reportTitle")}</h3>
-              <p className="text-small text-ink-muted">{t("reportHint")}</p>
-              <ResponseCheck
-                assignmentId={assignment.id}
+  const questionsBlock = (
+    <Block title={`${t("questionsBlock")} (${assignment.items.length})`}>
+      <p className="text-small text-ink-muted">{t("questionsHint")}</p>
+      {bank.length === 0 ? (
+        <p className="text-small text-ink-muted">{t("noBank")}</p>
+      ) : (
+        <ul className="grid gap-1">
+          {bank.map((item) => (
+            <li key={item.id} className="flex items-center justify-between gap-3 rounded-sm border border-hairline px-2 py-1.5 text-small">
+              <span className="min-w-0">
+                <span className="block truncate" dir="auto">{item.prompt || tq("pictureAlt")}</span>
+                <span className="text-label text-ink-muted">
+                  {item.lesson ? pick(ar, item.lesson.titleAr, item.lesson.titleEn) : tq("courseOnly")} · {item.kind} · <span className="num">{item.marks}</span>
+                </span>
+              </span>
+              <form action={toggleAssignmentItem}>
+                <input type="hidden" name="assignmentId" value={assignment.id} />
+                <input type="hidden" name="itemId" value={item.id} />
+                <button className={`shrink-0 rounded-full border px-3 py-1 text-label ${chosen.has(item.id) ? "border-pen text-pen" : "border-hairline text-ink-muted"}`}>
+                  {chosen.has(item.id) ? "✓" : "+"}
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Block>
+  );
+
+  // A Google Form quiz: the score is all there is to see per student, so a short list rather than a grading card.
+  const scoresBlock = assignment.submissions.length > 0 && (
+    <Block title={`${t("scoresTitle")} (${assignment.submissions.length})`}>
+      <ul className="grid gap-1">
+        {assignment.submissions.map((s) => (
+          <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-hairline px-3 py-2 text-small">
+            <span className="font-semibold" dir="auto">{s.student.name}</span>
+            <StatusChip tone={s.status === "GRADED" ? "active" : "neutral"}>{s.status === "GRADED" ? `${s.score} / ${assignment.maxScore}` : t("waiting")}</StatusChip>
+          </li>
+        ))}
+      </ul>
+    </Block>
+  );
+
+  const submissionsBlock = (
+    <Block title={t("submissions")}>
+      {assignment.submissions.length === 0 ? (
+        <p className="text-small text-ink-muted">{t("noSubmissions")}</p>
+      ) : (
+        <ul className="grid gap-4">
+          {assignment.submissions.map((s) => (
+            <li key={s.id} className="grid gap-2 rounded-md border border-hairline p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{s.student.name}</span>
+                <span className="flex items-center gap-2">
+                  {s.status === "GRADED" && <StatusChip tone="active">{`${s.score} / ${assignment.maxScore}`}</StatusChip>}
+                  {s.status === "SUBMITTED" && <StatusChip tone="neutral">{t("waiting")}</StatusChip>}
+                  {s.status === "RETURNED" && <StatusChip tone="expiring">{t("returned")}</StatusChip>}
+                  <span className="num text-label text-ink-muted">
+                    {t("revision", { n: s.revision })} · {formatDate(s.submittedAt, courseZone(assignment.course), locale)}
+                  </span>
+                </span>
+              </div>
+              {s.text && (
+                <p dir="auto" className="rounded-sm bg-raised p-3 text-small whitespace-pre-line break-words">
+                  {s.text}
+                </p>
+              )}
+              <AttachmentList kind="submission" files={s.files} empty={t("noFiles")} />
+              {s.answers.length > 0 && (
+                <ul className="grid gap-2">
+                  {s.answers.map((ans) => (
+                    <li key={ans.id} className="grid gap-1 rounded-sm bg-raised p-2 text-small">
+                      <span className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium" dir="auto">{ans.item.prompt || tq("pictureAlt")}</span>
+                        <StatusChip tone={ans.correct === null ? "neutral" : ans.correct ? "active" : "expired"}>
+                          {ans.correct === null ? t("waitingMark") : `${ans.marks ?? 0} / ${ans.item.marks}`}
+                        </StatusChip>
+                      </span>
+                      <QuestionPages itemId={ans.item.id} count={ans.item.media.length} label={tq("pictureAlt")} />
+                      {ans.text && <p className="whitespace-pre-line break-words" dir="auto">{ans.text}</p>}
+                      {ans.choiceIds.length > 0 && (
+                        <p className="text-ink-muted" dir="auto">{ans.item.choices.filter((c) => ans.choiceIds.includes(c.id)).map((c) => c.label).join(" · ")}</p>
+                      )}
+                      {(ans.aiMarks !== null || ans.aiFeedback) && (
+                        <div className="rounded-sm border border-hairline bg-surface p-2 text-label text-ink-muted">
+                          <span className="font-semibold">{tq("aiSuggests")}{ans.aiMarks !== null && <span className="num"> {ans.aiMarks} / {ans.item.marks}</span>}</span>
+                          {ans.aiFeedback && <p className="whitespace-pre-line" dir="auto">{ans.aiFeedback}</p>}
+                          <span>{tq("aiNote")}</span>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {s.aiFeedback !== null && (
+                <p className="text-small text-pen" dir="auto">
+                  {t("aiSuggestion", { score: s.aiScore ?? "—", max: assignment.maxScore })}
+                  {s.aiFeedback ? ` · ${s.aiFeedback}` : ""}
+                </p>
+              )}
+              {(s.text || s.files.length > 0) && (
+                <AiGradeForm
+                  id={s.id}
+                  labels={{ aiGrade: t("aiGrade"), unavailable: t("aiUnavailable"), limited: t("aiLimited"), off: t("aiOff"), consent: t("aiConsent"), ok: t("aiOk"), invalid: t("invalid") }}
+                />
+              )}
+              <GradeForm
+                id={s.id}
+                maxScore={assignment.maxScore}
+                score={s.score ?? s.aiScore ?? (s.answers.length > 0 ? scaleScore(s.answers.reduce((sum, a) => sum + (a.marks ?? a.aiMarks ?? 0), 0), totalMarks, assignment.maxScore) : null)}
+                feedback={s.feedback}
                 labels={{
-                  file: t("reportFile"),
-                  run: t("reportRun"),
-                  download: t("reportDownload"),
-                  student: t("reportStudent"),
-                  result: t("reportResult"),
-                  code: t("reportCode"),
-                  errors: { file: t("reportErrFile"), empty: t("reportErrEmpty"), column: t("reportErrColumn"), big: t("reportErrBig") },
-                  verdicts: { ok: t("vOk"), not_subscribed: t("vNot"), invalid: t("vBad"), duplicate: t("vDup"), no_code: t("vNone") },
+                  invalid: t("invalid"),
+                  invalid_score: t("invalidScore", { max: assignment.maxScore }),
+                  feedback_required: t("feedbackRequired"),
+                  ok: t("gradedOk"),
+                  score: t("score"),
+                  feedback: t("feedback"),
+                  saveGrade: t("saveGrade"),
+                  returnToStudent: t("returnToStudent"),
                 }}
               />
-            </div>
-          )}
-          {usesCodes && (
-            <details className="grid gap-2 text-small">
-              <summary className="w-fit cursor-pointer font-semibold underline underline-offset-4">{t("checkTitle")}</summary>
-              <p className="mt-2 text-ink-muted">{t("checkIntro")}</p>
-              <ol className="grid list-decimal gap-1 ps-5 text-ink-muted">
-                {(["checkStep1", "checkStep2", "checkStep3", "checkStep4"] as const).map((k) => (
-                  <li key={k}>{t(k)}</li>
-                ))}
-              </ol>
-              <textarea
-                readOnly
-                rows={12}
-                dir="ltr"
-                className="w-full rounded-sm border border-field bg-surface p-3 font-mono text-label text-ink"
-                defaultValue={quizCheckScript({ endpoint: `${siteUrl}/api/quiz-check`, assignmentId: assignment.id })}
-              />
-              <p className="text-label text-down">{t("checkNote")}</p>
-            </details>
-          )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Block>
+  );
+
+  return (
+    <main className="mx-auto grid max-w-4xl gap-6 px-4 py-12">
+      <PageHeader
+        back={{ href: "/teacher/assignments", label: t("title") }}
+        eyebrow={pick(ar, assignment.course.titleAr, assignment.course.titleEn)}
+        title={<span dir="auto">{assignment.title}</span>}
+        meta={
+          <span className="num">
+            {assignment.dueAt ? t("dueLabel", { date: formatDate(assignment.dueAt, courseZone(assignment.course), locale) }) : t("noDue")}
+            {!isForm && ` · ${t("maxScore")}: ${assignment.maxScore}`}
+            {waiting > 0 && ` · ${t("waiting")}: ${waiting}`}
+          </span>
+        }
+      />
+      <TeacherNav current="assignments" />
+
+      {isForm && !usesCodes && (
+        <div role="alert" className="grid gap-2 rounded-lg border border-down p-4">
+          <p className="text-small text-down">{t("noEntryWarn")}</p>
+          <a href={QUIZ_TEMPLATE_URL} target="_blank" rel="noopener noreferrer" className="w-fit text-small font-semibold underline underline-offset-4">{t("templateButton")}</a>
+        </div>
+      )}
+
+      {isForm && (
+        <Block title={t("reportTitle")}>
+          <p className="text-small text-ink-muted">{t("reportHint")}</p>
+          <ResponseCheck
+            assignmentId={assignment.id}
+            labels={{
+              file: t("reportFile"),
+              run: t("reportRun"),
+              save: t("reportSave"),
+              savedText: t("reportSaved", { saved: "{saved}", skipped: "{skipped}" }),
+              download: t("reportDownload"),
+              student: t("reportStudent"),
+              result: t("reportResult"),
+              code: t("reportCode"),
+              errors: { file: t("reportErrFile"), empty: t("reportErrEmpty"), column: t("reportErrColumn"), big: t("reportErrBig"), score: t("reportErrScore") },
+              verdicts: { ok: t("vOk"), not_subscribed: t("vNot"), invalid: t("vBad"), duplicate: t("vDup"), no_code: t("vNone") },
+            }}
+          />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-hairline pt-3 text-small">
+            <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">{t("previewLink")}</a>
+            <Link href="/teacher/guide/google-forms" className="underline underline-offset-4">{t("guideLink")}</Link>
+          </div>
         </Block>
       )}
 
-      <Block title={`${t("questionsBlock")} (${assignment.items.length})`}>
-        <p className="text-small text-ink-muted">{t("questionsHint")}</p>
-        {bank.length === 0 ? (
-          <p className="text-small text-ink-muted">{t("noBank")}</p>
-        ) : (
-          <ul className="grid gap-1">
-            {bank.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 rounded-sm border border-hairline px-2 py-1.5 text-small">
-                <span className="min-w-0">
-                  <span className="block truncate" dir="auto">{item.prompt || tq("pictureAlt")}</span>
-                  <span className="text-label text-ink-muted">
-                    {item.lesson ? pick(ar, item.lesson.titleAr, item.lesson.titleEn) : tq("courseOnly")} · {item.kind} · <span className="num">{item.marks}</span>
-                  </span>
-                </span>
-                <form action={toggleAssignmentItem}>
-                  <input type="hidden" name="assignmentId" value={assignment.id} />
-                  <input type="hidden" name="itemId" value={item.id} />
-                  <button className={`shrink-0 rounded-full border px-3 py-1 text-label ${chosen.has(item.id) ? "border-pen text-pen" : "border-hairline text-ink-muted"}`}>
-                    {chosen.has(item.id) ? "✓" : "+"}
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Block>
-
-      <Block title={t("submissions")}>
-        {assignment.submissions.length === 0 ? (
-          <p className="text-small text-ink-muted">{t("noSubmissions")}</p>
-        ) : (
-          <ul className="grid gap-4">
-            {assignment.submissions.map((s) => (
-              <li key={s.id} className="grid gap-2 rounded-md border border-hairline p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">{s.student.name}</span>
-                  <span className="flex items-center gap-2">
-                    {s.status === "GRADED" && <StatusChip tone="active">{`${s.score} / ${assignment.maxScore}`}</StatusChip>}
-                    {s.status === "SUBMITTED" && <StatusChip tone="neutral">{t("waiting")}</StatusChip>}
-                    {s.status === "RETURNED" && <StatusChip tone="expiring">{t("returned")}</StatusChip>}
-                    <span className="num text-label text-ink-muted">
-                      {t("revision", { n: s.revision })} · {formatDate(s.submittedAt, courseZone(assignment.course), locale)}
-                    </span>
-                  </span>
-                </div>
-                {s.text && (
-                  <p dir="auto" className="rounded-sm bg-raised p-3 text-small whitespace-pre-line break-words">
-                    {s.text}
-                  </p>
-                )}
-                <AttachmentList kind="submission" files={s.files} empty={t("noFiles")} />
-                {s.answers.length > 0 && (
-                  <ul className="grid gap-2">
-                    {s.answers.map((ans) => (
-                      <li key={ans.id} className="grid gap-1 rounded-sm bg-raised p-2 text-small">
-                        <span className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="font-medium" dir="auto">{ans.item.prompt || tq("pictureAlt")}</span>
-                          <StatusChip tone={ans.correct === null ? "neutral" : ans.correct ? "active" : "expired"}>
-                            {ans.correct === null ? t("waitingMark") : `${ans.marks ?? 0} / ${ans.item.marks}`}
-                          </StatusChip>
-                        </span>
-                        <QuestionPages itemId={ans.item.id} count={ans.item.media.length} label={tq("pictureAlt")} />
-                        {ans.text && <p className="whitespace-pre-line break-words" dir="auto">{ans.text}</p>}
-                        {ans.choiceIds.length > 0 && (
-                          <p className="text-ink-muted" dir="auto">{ans.item.choices.filter((c) => ans.choiceIds.includes(c.id)).map((c) => c.label).join(" · ")}</p>
-                        )}
-                        {(ans.aiMarks !== null || ans.aiFeedback) && (
-                          <div className="rounded-sm border border-hairline bg-surface p-2 text-label text-ink-muted">
-                            <span className="font-semibold">{tq("aiSuggests")}{ans.aiMarks !== null && <span className="num"> {ans.aiMarks} / {ans.item.marks}</span>}</span>
-                            {ans.aiFeedback && <p className="whitespace-pre-line" dir="auto">{ans.aiFeedback}</p>}
-                            <span>{tq("aiNote")}</span>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {s.aiFeedback !== null && (
-                  <p className="text-small text-pen" dir="auto">
-                    {t("aiSuggestion", { score: s.aiScore ?? "—", max: assignment.maxScore })}
-                    {s.aiFeedback ? ` · ${s.aiFeedback}` : ""}
-                  </p>
-                )}
-                {(s.text || s.files.length > 0) && (
-                  <AiGradeForm
-                    id={s.id}
-                    labels={{ aiGrade: t("aiGrade"), unavailable: t("aiUnavailable"), limited: t("aiLimited"), off: t("aiOff"), consent: t("aiConsent"), ok: t("aiOk"), invalid: t("invalid") }}
-                  />
-                )}
-                <GradeForm
-                  id={s.id}
-                  maxScore={assignment.maxScore}
-                  score={s.score ?? s.aiScore ?? (s.answers.length > 0 ? scaleScore(s.answers.reduce((sum, a) => sum + (a.marks ?? a.aiMarks ?? 0), 0), totalMarks, assignment.maxScore) : null)}
-                  feedback={s.feedback}
-                  labels={{
-                    invalid: t("invalid"),
-                    invalid_score: t("invalidScore", { max: assignment.maxScore }),
-                    feedback_required: t("feedbackRequired"),
-                    ok: t("gradedOk"),
-                    score: t("score"),
-                    feedback: t("feedback"),
-                    saveGrade: t("saveGrade"),
-                    returnToStudent: t("returnToStudent"),
-                  }}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Block>
+      {isForm && scoresBlock}
+      {isSiteQuiz && questionsBlock}
+      {!isForm && submissionsBlock}
+      {editBlock}
     </main>
   );
 }

@@ -5,7 +5,9 @@ import { readFileSync } from "node:fs";
 import { test, expect, signInAs } from "./fixtures";
 import { courseIdOf, freshStudent, grantExpired, sql } from "./db";
 import { PERSONAS } from "./personas";
-import { studentCode } from "../src/lib/external-link"; // the e2e run and the server share one AUTH_SECRET
+import { checkKey, studentCode } from "../src/lib/external-link"; // the e2e run and the server share one AUTH_SECRET
+
+const homeworkWords = (loc: string) => JSON.parse(readFileSync(`messages/${loc}.json`, "utf8")).homework;
 
 const COURSE = "ae-12-math-e2e";
 const FORM = "https://docs.google.com/forms/d/e/e2e-form/viewform?usp=pp_url&entry.111={student}";
@@ -48,8 +50,8 @@ test("someone without a running plan, or a signed-out visitor, gets nothing", as
 test("a teacher cannot save a quiz link that is not Google Forms", async ({ page, loc }) => {
   await signInAs(page, loc, PERSONAS.teacherAe.phone);
   await page.goto(`/${loc}/teacher/assignments/new`);
-  const form = page.locator("main form:has(select[name=kind])").first();
-  await form.locator("select[name=kind]").selectOption("QUIZ");
+  const form = page.locator("main form:has(input[name=title])").first();
+  await form.getByText(homeworkWords(loc).typeForm, { exact: true }).click();
   await form.locator("input[name=title]").fill(`Bad link ${loc}-${test.info().project.name}`);
   await form.locator("input[name=linkUrl]").fill("https://example.com/quiz");
   await form.locator("button").last().click();
@@ -64,12 +66,8 @@ test("the form script's check marks a subscriber ok, a lapsed plan not subscribe
   const lapsed = await freshStudent(`lapsed-check-${tag}`);
   await grantExpired(lapsed.id, courseId);
 
-  // The key is in the script the teacher copies from the assignment page.
-  await signInAs(page, loc, PERSONAS.teacherAe.phone);
-  await page.goto(`/${loc}/teacher/assignments/${id}`);
-  const script = await page.locator("textarea[readonly]").inputValue();
-  const key = /const KEY = "([0-9a-f]{32})"/.exec(script)?.[1];
-  expect(key).toBeTruthy();
+  // The key is only in the generated script (no longer on the page), so it is derived the same way the server does.
+  const key = checkKey(id);
 
   const ask = (body: object) => page.request.post("/api/quiz-check", { data: { assignment: id, key, code: studentCode(student.id, id), ...body } });
   expect(await (await ask({})).json()).toMatchObject({ status: "ok" });
@@ -99,8 +97,8 @@ test("a quiz whose form has a Student code question gets the code in its own fie
   await signInAs(page, loc, PERSONAS.teacherAe.phone);
   await page.goto(`/${loc}/teacher/assignments/${id}`);
   await page.locator("input[type=file][name=file]").setInputFiles({ name: "responses.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
-  await page.locator("form:has(input[type=file][name=file]) button").click();
-  const words = JSON.parse(readFileSync(`messages/${loc}.json`, "utf8")).homework;
+  await page.locator("form:has(input[type=file][name=file]) button").first().click();
+  const words = homeworkWords(loc);
   const rows = page.locator("table tbody tr");
   await expect(rows).toHaveCount(5);
   await expect(rows.nth(0)).toContainText(PERSONAS.studentAe.name);
@@ -109,6 +107,40 @@ test("a quiz whose form has a Student code question gets the code in its own fie
   await expect(rows.nth(2)).toContainText(words.vBad);
   await expect(rows.nth(3)).toContainText(words.vDup);
   await expect(rows.nth(4)).toContainText(words.vNone);
+
+  // Save scores: only a good code used once is kept; a repeat upload updates the same row instead of adding one.
+  const upload = async (text: string) => {
+    await page.locator("input[type=file][name=file]").setInputFiles({ name: "responses.csv", mimeType: "text/csv", buffer: Buffer.from(text) });
+    await page.locator("form:has(input[type=file][name=file]) button").last().click();
+  };
+  const scoreOf = async () => (await sql<{ score: number | null; status: string }>(`SELECT score, status::text FROM "Submission" WHERE "assignmentId" = $1 AND "studentId" = $2`, [id, student.id]));
+  await upload(["Timestamp,Score,Student code", `1,8 / 10,${ok}`, `2,4 / 10,${studentCode(lapsed.id, id)}`, "3,2 / 10,0000000000"].join("\n"));
+  await expect(page.locator("main p[role=status]")).toBeVisible();
+  await expect.poll(async () => (await scoreOf())[0]?.score).toBe(80);
+  expect((await sql<{ n: number }>(`SELECT count(*)::int AS n FROM "Submission" WHERE "assignmentId" = $1`, [id]))[0].n).toBe(1);
+  await upload(["Timestamp,Score,Student code", `1,9 / 10,${ok}`].join("\n"));
+  await expect.poll(async () => (await scoreOf())[0]?.score).toBe(90);
+  expect(await scoreOf()).toHaveLength(1);
+  expect((await scoreOf())[0].status).toBe("GRADED");
+
+  // The student sees the score, and nothing to type or upload.
+  await signInAs(page, loc, PERSONAS.studentAe.phone);
+  await page.goto(`/${loc}/courses/${COURSE}/assignments/${id}`);
+  await expect(page.locator("main")).toContainText("90 / 100");
+  await expect(page.locator("textarea[name=text]")).toHaveCount(0);
+  await expect(page.locator(`a[href="/api/out/${id}"]`)).toBeVisible();
+});
+
+test("a teacher making a Google quiz is asked only for a title, the link and a due date", async ({ page, loc }) => {
+  await signInAs(page, loc, PERSONAS.teacherAe.phone);
+  await page.goto(`/${loc}/teacher/assignments/new`);
+  const form = page.locator("main form:has(input[name=title])").first();
+  await form.getByText(homeworkWords(loc).typeForm, { exact: true }).click();
+  await expect(form.locator("input[name=title]")).toBeVisible();
+  await expect(form.locator("input[name=linkUrl]")).toBeVisible();
+  await expect(form.locator("input[name=dueAt]")).toBeVisible();
+  await expect(form.locator("textarea[name=instructions], textarea[name=rubric], input[type=file]")).toHaveCount(0);
+  await expect(form.locator("input[name=maxScore]")).toBeHidden(); // inside the closed More options
 });
 
 test("the teacher guide for Google Form quizzes opens for a teacher and links the template", async ({ page, loc }) => {
@@ -116,6 +148,6 @@ test("the teacher guide for Google Form quizzes opens for a teacher and links th
   await page.goto(`/${loc}/teacher/guide/google-forms`);
   const words = JSON.parse(readFileSync(`messages/${loc}.json`, "utf8")).quizGuide;
   await expect(page.locator("h1")).toHaveText(words.title);
-  await expect(page.locator("ol > li")).toHaveCount(6);
+  await expect(page.locator("ol > li")).toHaveCount(4);
   await expect(page.getByRole("link", { name: words.template })).toHaveAttribute("href", /docs\.google\.com\/forms\/d\/.+\/copy$/);
 });

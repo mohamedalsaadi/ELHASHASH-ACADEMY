@@ -9,7 +9,8 @@ import { opensAssignment } from "@/lib/assignments";
 import { grantsFor } from "@/lib/catalog";
 import { hasStudentToken, isAllowedQuizLink, studentCode } from "@/lib/external-link";
 import { fetchCodeEntry } from "@/lib/google-form";
-import { buildReport, codeColumn, parseTable, type Report } from "@/lib/quiz-report";
+import { buildReport, codeColumn, parseTable, scoreColumn, scoreFromCell, type Report } from "@/lib/quiz-report";
+import { scaleScore } from "@/lib/exams";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { hasGuardianConsent } from "@/lib/live";
@@ -130,8 +131,8 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
       data: holders.map((h) => ({
         userId: h.userId,
         kind: "ASSIGNMENT_NEW" as const,
-        titleAr: `واجب جديد: ${d.title}`,
-        titleEn: `New homework: ${d.title}`,
+        titleAr: `${d.kind === "QUIZ" ? "اختبار جديد" : "واجب جديد"}: ${d.title}`,
+        titleEn: `${d.kind === "QUIZ" ? "New quiz" : "New homework"}: ${d.title}`,
         href: `/courses/${course.slug}/assignments/${created.id}`,
         dedupeKey: `assign:${created.id}:${h.userId}`,
       })),
@@ -210,11 +211,11 @@ const notifyGraded = async (submissionId: string, revision: number) => {
     select: {
       id: true,
       studentId: true,
-      assignment: { select: { title: true, course: { select: { slug: true } } } },
+      assignment: { select: { id: true, title: true, course: { select: { slug: true } } } },
     },
   });
   const parents = await db.parentLink.findMany({ where: { studentId: sub.studentId }, select: { parentId: true } });
-  const href = `/courses/${sub.assignment.course.slug}/assignments/${sub.id}`;
+  const href = `/courses/${sub.assignment.course.slug}/assignments/${sub.assignment.id}`;
   const titleAr = `تم تصحيح: ${sub.assignment.title}`;
   const titleEn = `Graded: ${sub.assignment.title}`;
   for (const userId of [sub.studentId, ...parents.map((p) => p.parentId)]) {
@@ -309,20 +310,22 @@ export async function toggleAssignmentItem(form: FormData) {
   revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
 }
 
-export type CheckState = { error: "file" | "empty" | "column" | "big" } | { report: Report } | null;
+export type CheckState = { error: "file" | "empty" | "column" | "big" | "score" } | { report: Report; saved?: { saved: number; skipped: number } } | null;
 
 const MAX_ROWS = 1500;
 
 /**
  * Turns a Google Form's downloaded responses into a report: each row's student code becomes a student of this course, with
- * a verdict (subscribed, plan ended, not recognised, used twice, no code). Nothing is stored.
+ * a verdict (subscribed, plan ended, not recognised, used twice, no code). With `save` the scores of the good rows are also
+ * kept as graded submissions, so the student, the parent and the analytics see them. A code that appears twice is never saved.
  */
 export async function checkResponses(_prev: CheckState, form: FormData): Promise<CheckState> {
   const me = await requireStaff();
   const id = z.string().min(1).parse(form.get("id"));
+  const save = form.get("save") === "1";
   const a = await db.assignment.findUniqueOrThrow({
     where: { id },
-    select: { id: true, courseId: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
+    select: { id: true, courseId: true, maxScore: true, course: { select: { slug: true } }, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
   });
   await assertCourse(me, a.courseId);
 
@@ -333,6 +336,8 @@ export async function checkResponses(_prev: CheckState, form: FormData): Promise
   if (table.length > MAX_ROWS + 1) return { error: "big" };
   const col = codeColumn(table);
   if (col < 0) return { error: "column" };
+  const scoreCol = scoreColumn(table[0]);
+  if (save && scoreCol < 0) return { error: "score" };
 
   const holders = await db.entitlement.findMany({ where: { courseId: a.courseId }, distinct: ["userId"], select: { userId: true, user: { select: { name: true } } }, take: 3000 });
   const byCode = new Map(holders.map((h) => [studentCode(h.userId, a.id), h]));
@@ -349,5 +354,30 @@ export async function checkResponses(_prev: CheckState, form: FormData): Promise
     const h = byCode.get(code);
     return h ? { name: h.user.name ?? "", subscribed: open.get(h.userId) ?? false } : null;
   });
-  return report ? { report } : { error: "column" };
+  if (!report) return { error: "column" };
+  if (!save) return { report };
+
+  const times = new Map<string, number>();
+  for (const r of report.rows) if (r.code) times.set(r.code, (times.get(r.code) ?? 0) + 1);
+  let saved = 0;
+  for (const r of report.rows) {
+    const h = byCode.get(r.code);
+    const s = scoreFromCell(r.cells[scoreCol] ?? "");
+    if (r.verdict !== "ok" || times.get(r.code) !== 1 || !h || !s) continue;
+    const score = s.max ? scaleScore(s.marks, s.max, a.maxScore) : Math.min(a.maxScore, Math.max(0, Math.round(s.marks)));
+    const sub = await db.submission.upsert({
+      where: { assignmentId_studentId: { assignmentId: a.id, studentId: h.userId } },
+      create: { assignmentId: a.id, studentId: h.userId, status: "GRADED", score, gradedAt: now, gradedById: null },
+      update: { status: "GRADED", score, gradedAt: now, gradedById: null },
+      select: { id: true, revision: true },
+    });
+    await notifyGraded(sub.id, sub.revision);
+    saved++;
+  }
+  revalidatePath("/[locale]/teacher/assignments/[id]", "page");
+  revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
+  revalidatePath("/[locale]/courses/[slug]/assignments", "page");
+  revalidatePath("/[locale]/dashboard", "page");
+  revalidatePath("/[locale]/parent", "page");
+  return { report, saved: { saved, skipped: report.rows.length - saved } };
 }

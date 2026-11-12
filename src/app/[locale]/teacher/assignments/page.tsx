@@ -31,6 +31,8 @@ export default async function TeacherAssignmentsPage({ params }: { params: Promi
       id: true,
       title: true,
       dueAt: true,
+      kind: true,
+      linkUrl: true,
       maxScore: true,
       course: {
         select: { slug: true, titleAr: true, titleEn: true, grade: { select: { country: { select: { timeZone: true } } } } },
@@ -60,6 +62,7 @@ export default async function TeacherAssignmentsPage({ params }: { params: Promi
             const graded = a.submissions.filter((s) => s.status === "GRADED").length;
             const late = a.dueAt ? a.submissions.filter((s) => s.submittedAt > a.dueAt!).length : 0;
             const waiting = a.submissions.filter((s) => s.status === "SUBMITTED").length;
+            const isForm = a.kind === "QUIZ" && !!a.linkUrl;
             return (
               <li key={a.id}>
                 <Link
@@ -68,7 +71,9 @@ export default async function TeacherAssignmentsPage({ params }: { params: Promi
                 >
                   <span className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-display font-semibold" dir="auto">{a.title}</span>
-                    {a.dueAt && a.dueAt < now && waiting > 0 ? (
+                    {isForm ? (
+                      <StatusChip tone={graded > 0 ? "active" : "neutral"}>{`${t("graded")}: ${graded}`}</StatusChip>
+                    ) : a.dueAt && a.dueAt < now && waiting > 0 ? (
                       <StatusChip tone="expiring">{t("overdue")}</StatusChip>
                     ) : waiting > 0 ? (
                       <StatusChip tone="neutral">{`${t("waiting")}: ${waiting}`}</StatusChip>
@@ -77,7 +82,7 @@ export default async function TeacherAssignmentsPage({ params }: { params: Promi
                     )}
                   </span>
                   <span className="text-small text-ink-muted">
-                    {pick(ar, a.course.titleAr, a.course.titleEn)}
+                    {a.kind === "QUIZ" ? t("kindQuizChip") : t("kindHomework")} · {pick(ar, a.course.titleAr, a.course.titleEn)}
                     {a.lesson && ` · ${pick(ar, a.lesson.titleAr, a.lesson.titleEn)}`}
                   </span>
                   <span className="num text-label text-ink-muted">

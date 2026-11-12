@@ -436,11 +436,11 @@ export default async function CoursePage({
 
       {homeworkCount > 0 && (
         <section className="card flex flex-wrap items-center justify-between gap-3 p-4">
-          <span className="font-display text-h3 font-bold">{th("title")}</span>
+          <span className="font-display text-h3 font-bold">{th("sectionTitle")}</span>
           <span className="flex items-center gap-3 text-small">
             <span className="num text-ink-muted">{homeworkCount}</span>
             <Link href={`/courses/${slug}/assignments`} className="font-semibold text-pen underline underline-offset-4">
-              {th("title")}
+              {th("open")}
             </Link>
           </span>
         </section>

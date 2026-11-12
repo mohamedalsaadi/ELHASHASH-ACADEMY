@@ -38,6 +38,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
       title: true,
       instructions: true,
       linkUrl: true,
+      kind: true,
       dueAt: true,
       maxScore: true,
       allowResubmit: true,
@@ -78,7 +79,9 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
   // Nothing earned and nothing open: this is a sales page, not a homework page.
   if (!open && !sub) redirect(`/${locale}/courses/${slug}#packages`);
 
-  const canSubmit = open && (!sub || (assignment.allowResubmit && (sub.status === "GRADED" || sub.status === "RETURNED")));
+  // A quiz on Google Forms is taken there: nothing to type or upload here, the result arrives when the teacher saves it.
+  const isForm = assignment.kind === "QUIZ" && !!assignment.linkUrl;
+  const canSubmit = !isForm && open && (!sub || (assignment.allowResubmit && (sub.status === "GRADED" || sub.status === "RETURNED")));
   const zone = courseZone(assignment.course);
   const tp = await getTranslations("practice");
   const questions = assignment.items.map((i) => ({ ...i.item, mediaCount: i.item.media.length }));
@@ -107,17 +110,22 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
 
       {/* Only while the assignment is open to this student, and through the gate: the raw address is never in the page. */}
       {assignment.linkUrl && open && (
-        <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-fit">
-          {t("openLink")}
-        </a>
+        <div className="grid gap-2">
+          <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className={`btn w-fit ${isForm ? "btn-primary" : "btn-outline"}`}>
+            {isForm ? t("openQuiz") : t("openLink")}
+          </a>
+          {isForm && <p className="text-small text-ink-muted">{sub ? t("quizCodeNote") : t("quizHowTo")}</p>}
+        </div>
       )}
 
-      <Block title={t("files")}>
-        <AttachmentList kind="assignment" files={assignment.files} empty={t("noFiles")} />
-      </Block>
+      {assignment.files.length > 0 && (
+        <Block title={t("files")}>
+          <AttachmentList kind="assignment" files={assignment.files} empty={t("noFiles")} />
+        </Block>
+      )}
 
       {sub && (
-        <Block title={t("yourAnswer")}>
+        <Block title={isForm ? t("yourResult") : t("yourAnswer")}>
           <div className="flex flex-wrap items-center gap-2">
             {sub.status === "GRADED" ? (
               <StatusChip tone="active">{`${sub.score} / ${assignment.maxScore}`}</StatusChip>

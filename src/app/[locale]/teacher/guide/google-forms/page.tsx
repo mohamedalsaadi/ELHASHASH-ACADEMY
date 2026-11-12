@@ -9,7 +9,7 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/teacher/guide/google-forms", "quizGuide", { noindex: true });
 }
 
-const STEPS = ["s1", "s2", "s3", "s4", "s5", "s6"] as const;
+const STEPS = ["s1", "s2", "s3", "s4"] as const;
 const RESULTS = ["rOk", "rNot", "rBad", "rDup", "rNone"] as const;
 const TIPS = ["t1", "t2", "t3"] as const;
 

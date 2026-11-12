@@ -91,3 +91,26 @@ export function reportCsv(r: Report, verdictLabel: (v: Verdict) => string, stude
   const lines = [[...r.header, studentHeader, resultHeader], ...r.rows.map((x) => [...x.cells, x.student, verdictLabel(x.verdict)])];
   return "\uFEFF" + lines.map((l) => l.map(q).join(",")).join("\r\n");
 }
+
+const SCORE_TITLES = ["score", "total score", "النتيجة", "الدرجة", "الدرجات", "النتيجة الإجمالية"];
+
+/** The column Google adds to a quiz form's responses with each student's score; -1 when the form is not a quiz. */
+export function scoreColumn(header: string[]): number {
+  return header.findIndex((h) => SCORE_TITLES.includes(h.trim().replace(/\s+/g, " ").toLowerCase()));
+}
+
+const num = (s: string): number | null => {
+  const t = s.trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[٫,،]/g, ".");
+  return /^\d+(\.\d+)?$/.test(t) ? Number(t) : null;
+};
+
+/** A score cell: "8 / 10" gives marks and total, a plain "8" gives marks with no total, anything else is null. */
+export function scoreFromCell(cell: string): { marks: number; max: number | null } | null {
+  const parts = cell.split("/");
+  if (parts.length > 2) return null;
+  const marks = num(parts[0]);
+  if (marks === null) return null;
+  if (parts.length === 1) return { marks, max: null };
+  const max = num(parts[1]);
+  return max && max > 0 ? { marks, max } : null;
+}

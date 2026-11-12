@@ -50,6 +50,8 @@ export default async function CourseAssignmentsPage({
           id: true,
           title: true,
           dueAt: true,
+          kind: true,
+          linkUrl: true,
           maxScore: true,
           lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } },
           submissions: { where: { studentId: session.user.id }, select: { id: true, status: true, score: true, submittedAt: true } },
@@ -91,7 +93,9 @@ export default async function CourseAssignmentsPage({
           {shown.map((a) => {
             const sub = a.submissions[0];
             const late = sub ? isLate(sub.submittedAt, a.dueAt) : false;
-            const overdue = isOverdue(!!sub, a.dueAt, now);
+            // A quiz on Google Forms is taken elsewhere: until a result is saved we cannot say it was missed.
+            const isForm = a.kind === "QUIZ" && !!a.linkUrl;
+            const overdue = !isForm && isOverdue(!!sub, a.dueAt, now);
             return (
               <li key={a.id}>
                 <Link
@@ -109,7 +113,7 @@ export default async function CourseAssignmentsPage({
                     ) : overdue ? (
                       <StatusChip tone="expired">{t("overdue")}</StatusChip>
                     ) : (
-                      <StatusChip tone="neutral">{t("notSubmitted")}</StatusChip>
+                      <StatusChip tone="neutral">{isForm ? t("kindQuizChip") : t("notSubmitted")}</StatusChip>
                     )}
                   </span>
                   <span className="num text-label text-ink-muted">

@@ -314,6 +314,7 @@ model Course {
   assignments     Assignment[]
   specialRequests SpecialRequest[]
   examPapers      ExamPaper[]
+  questionItems   QuestionItem[]
 
   @@index([gradeId, subjectId])
 }
@@ -1118,7 +1119,10 @@ enum QuestionKind {
 /// One practice question, attached to a lesson and optionally a concept. SHORT accepts one canonical answer.
 model QuestionItem {
   id          String       @id @default(cuid())
-  lessonId    String
+  /// The course it belongs to: quizzes, homework and exams draw from it. Always set.
+  courseId    String
+  /// Optional: a question linked to a lesson also appears in that lesson's practice; a course-only question does not.
+  lessonId    String?
   conceptId   String?
   createdById String
   kind        QuestionKind
@@ -1133,7 +1137,8 @@ model QuestionItem {
   active      Boolean      @default(true)
   createdAt   DateTime     @default(now())
 
-  lesson      Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   concept     Concept?         @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   createdBy   User             @relation("QuestionAuthor", fields: [createdById], references: [id], onDelete: Restrict)
   choices     QuestionChoice[]
@@ -1144,6 +1149,7 @@ model QuestionItem {
   submissionAnswers SubmissionAnswer[]
 
   @@index([lessonId, order])
+  @@index([courseId, order])
   @@index([conceptId])
 }
 

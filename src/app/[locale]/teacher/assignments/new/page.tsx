@@ -69,6 +69,8 @@ export default async function NewAssignmentPage({ params }: { params: Promise<{ 
             kindQuiz: t("kindQuiz"),
             save: t("create"),
             invalid: t("invalid"),
+            link: t("linkNotAllowed"),
+            linkHint: t("linkHint"),
           }}
         />
       )}

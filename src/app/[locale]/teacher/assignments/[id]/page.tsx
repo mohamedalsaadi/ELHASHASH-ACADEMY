@@ -15,6 +15,7 @@ import { GradeForm } from "./GradeForm";
 import { deleteAssignment, deleteAssignmentFile, toggleAssignmentItem, updateAssignment } from "../actions";
 import { QuestionPages } from "@/components/QuestionPages";
 import { scaleScore } from "@/lib/exams";
+import { STUDENT_TOKEN, studentForCode } from "@/lib/external-link";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,9 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/teacher/assignments", "homework", { key: "edit", noindex: true });
 }
 
-export default async function AssignmentDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+export default async function AssignmentDetailPage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ code?: string }> }) {
   const { locale, id } = await params;
+  const { code } = await searchParams;
   setRequestLocale(locale);
   const me = await requireStaff();
   const t = await getTranslations("homework");
@@ -88,12 +90,21 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
 
   const tq = await getTranslations("practice");
   const bank = await db.questionItem.findMany({
-    where: { lesson: { unit: { courseId: assignment.courseId } }, active: true },
+    where: { courseId: assignment.courseId, active: true },
     orderBy: [{ lessonId: "asc" }, { order: "asc" }],
     select: { id: true, prompt: true, kind: true, marks: true, lesson: { select: { titleAr: true, titleEn: true } } },
   });
   const chosen = new Set(assignment.items.map((i) => i.itemId));
   const totalMarks = assignment.items.reduce((sum, i) => sum + i.item.marks, 0);
+
+  // An outside quiz with a {student} placeholder: turn a code from the form's responses back into a student of this course.
+  let codeOwner: string | null = null;
+  const usesCodes = !!assignment.linkUrl?.includes(STUDENT_TOKEN);
+  if (usesCodes && code) {
+    const holders = await db.entitlement.findMany({ where: { courseId: assignment.courseId }, distinct: ["userId"], select: { userId: true, user: { select: { name: true } } }, take: 3000 });
+    const found = studentForCode(code, assignment.id, holders.map((h) => h.userId));
+    codeOwner = holders.find((h) => h.userId === found)?.user.name ?? "";
+  }
 
   const waiting = assignment.submissions.filter((s) => s.status === "SUBMITTED").length;
 
@@ -147,6 +158,8 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
             uploadFailed: t("uploadFailed"),
             save: t("save"),
             invalid: t("invalid"),
+            link: t("linkNotAllowed"),
+            linkHint: t("linkHint"),
           }}
         />
         <div className="grid gap-2 border-t border-hairline pt-3">
@@ -166,6 +179,22 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
         </form>
       </Block>
 
+      {assignment.linkUrl && (
+        <Block title={t("outsideQuiz")}>
+          <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-fit px-4 py-2 text-small">{t("previewLink")}</a>
+          {usesCodes && (
+            <form method="get" className="flex flex-wrap items-end gap-2">
+              <label className="grid gap-1 text-label text-ink-muted">
+                {t("codeLookup")}
+                <input name="code" defaultValue={code ?? ""} maxLength={20} dir="ltr" className="num min-h-11 w-44 rounded-sm border border-field bg-surface px-3 text-body text-ink" />
+              </label>
+              <button className="btn btn-outline px-4 py-2 text-small">{t("codeFind")}</button>
+              {codeOwner !== null && <span className="text-small font-semibold" dir="auto">{codeOwner || t("codeNone")}</span>}
+            </form>
+          )}
+        </Block>
+      )}
+
       <Block title={`${t("questionsBlock")} (${assignment.items.length})`}>
         <p className="text-small text-ink-muted">{t("questionsHint")}</p>
         {bank.length === 0 ? (
@@ -177,7 +206,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
                 <span className="min-w-0">
                   <span className="block truncate" dir="auto">{item.prompt || tq("pictureAlt")}</span>
                   <span className="text-label text-ink-muted">
-                    {pick(ar, item.lesson.titleAr, item.lesson.titleEn)} · {item.kind} · <span className="num">{item.marks}</span>
+                    {item.lesson ? pick(ar, item.lesson.titleAr, item.lesson.titleEn) : tq("courseOnly")} · {item.kind} · <span className="num">{item.marks}</span>
                   </span>
                 </span>
                 <form action={toggleAssignmentItem}>

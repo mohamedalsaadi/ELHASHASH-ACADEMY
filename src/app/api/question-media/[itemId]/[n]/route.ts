@@ -17,19 +17,20 @@ export async function GET(_: Request, { params }: { params: Promise<{ itemId: st
   if (!session?.user) return new Response(null, { status: 404 });
   const item = await db.questionItem.findUnique({
     where: { id: itemId },
-    include: { lesson: { include: { unit: true } }, examItems: { where: { paper: { published: true } }, select: { id: true }, take: 1 } },
+    include: { lesson: { include: { unit: true } }, examItems: { where: { paper: { published: true } }, select: { id: true }, take: 1 }, assignmentItems: { select: { id: true }, take: 1 } },
   });
   const path = item?.media[Number(n)];
   if (!item || !path) return new Response(null, { status: 404 });
 
-  const courseId = item.lesson.unit.courseId;
+  const courseId = item.courseId;
   const now = new Date();
-  let allowed = item.lesson.unit.isFree || (await isCourseStaffDb(session.user.id, courseId));
+  let allowed = !!item.lesson?.unit.isFree || (await isCourseStaffDb(session.user.id, courseId));
   if (!allowed) {
     const learnerId = await learnerFor(session.user, courseId, now);
     const grants = await grantsFor(learnerId, courseId, now);
-    const scope = lessonScope(item.lesson);
-    allowed = grants.some((g) => opensLesson(g, scope, now)) || (item.examItems.length > 0 && grants.length > 0);
+    // A lesson-linked question opens with its lesson; any question on a published exam or a quiz of the course opens for a subscriber.
+    const lessonOpen = item.lesson ? grants.some((g) => opensLesson(g, lessonScope(item.lesson!), now)) : false;
+    allowed = lessonOpen || ((item.examItems.length > 0 || item.assignmentItems.length > 0) && grants.length > 0);
   }
   if (!allowed) return new Response(null, { status: 404 });
   return streamBlob(path, "image/jpeg", "private, no-store");

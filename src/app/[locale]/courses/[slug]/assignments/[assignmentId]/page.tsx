@@ -105,8 +105,9 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
         </p>
       )}
 
-      {assignment.linkUrl && (
-        <a href={assignment.linkUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-fit">
+      {/* Only while the assignment is open to this student, and through the gate: the raw address is never in the page. */}
+      {assignment.linkUrl && open && (
+        <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-fit">
           {t("openLink")}
         </a>
       )}

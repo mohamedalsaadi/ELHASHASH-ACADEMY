@@ -131,6 +131,7 @@ async function main() {
   });
   const examItem = await db.questionItem.create({
     data: {
+      courseId: aeCourse.id,
       lessonId: examLesson.id,
       createdById: teacherAe.id,
       kind: "MCQ",

@@ -6,10 +6,12 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { QuestionMedia } from "@/components/teacher/QuestionMedia";
 import { createItem, updateItem, type BankError } from "./actions";
 
-type Kind = "MCQ" | "MULTI" | "SHORT" | "WRITTEN";
+type Kind = "MCQ" | "MULTI" | "TRUE_FALSE" | "SHORT" | "WRITTEN";
 export type EditableItem = {
   id: string;
-  kind: Kind;
+  /** Stored kinds only: a true/false question is saved (and edited) as a one-answer multiple-choice one. */
+  kind: "MCQ" | "MULTI" | "SHORT" | "WRITTEN";
+  lessonId?: string | null;
   prompt: string;
   answer: string | null;
   explanation: string | null;
@@ -19,7 +21,8 @@ export type EditableItem = {
 };
 type Labels = Record<
   | "addQuestion" | "prompt" | "kind" | "mcq" | "multi" | "short" | "written" | "answer" | "explanation" | "marks" | "save" | "invalid" | "saved"
-  | "optionLetter" | "tickCorrect" | "mediaPick" | "mediaSending" | "mediaFailed" | "mediaRemove" | "mediaPages",
+  | "optionLetter" | "tickCorrect" | "mediaPick" | "mediaSending" | "mediaFailed" | "mediaRemove" | "mediaPages"
+  | "trueFalse" | "isTrue" | "isFalse" | "linkedLesson" | "noLesson",
   string
 >;
 
@@ -27,9 +30,10 @@ const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 /**
  * A question: typed, a picture or a PDF, or both. Options are lettered rows; one tick for a single answer, several for a
- * multiple-answer question. With `item` it edits that question instead of adding one.
+ * multiple-answer question; true/false has its own two buttons. With `item` it edits that question instead of adding one.
+ * `lessonId` fixes the lesson (the lesson's own bank page); `lessons` lets the teacher choose one or none (the course workspace).
  */
-export function ItemForm({ lessonId, courseId, labels, item }: { lessonId: string; courseId: string; labels: Labels; item?: EditableItem }) {
+export function ItemForm({ lessonId, lessons, courseId, labels, item }: { lessonId?: string; lessons?: { id: string; title: string }[]; courseId: string; labels: Labels; item?: EditableItem }) {
   const blank = () => {
     const given = item?.choices ?? [];
     return Array.from({ length: Math.max(4, given.length) }, (_, i) => ({ label: given[i]?.label ?? "", correct: given[i]?.correct ?? (!item && i === 0) }));
@@ -47,8 +51,20 @@ export function ItemForm({ lessonId, courseId, labels, item }: { lessonId: strin
   const set = (i: number, patch: Partial<(typeof rows)[number]>) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   return (
     <form action={action} className="grid gap-3">
-      <input type="hidden" name="lessonId" value={lessonId} />
+      <input type="hidden" name="courseId" value={courseId} />
+      {lessonId && <input type="hidden" name="lessonId" value={lessonId} />}
       {item && <input type="hidden" name="id" value={item.id} />}
+      {!lessonId && lessons && (
+        <label className={label}>
+          {labels.linkedLesson}
+          <select name="lessonId" defaultValue={item?.lessonId ?? ""} className={field}>
+            <option value="">{labels.noLesson}</option>
+            {lessons.map((l) => (
+              <option key={l.id} value={l.id}>{l.title}</option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <label className={label}>
         {labels.prompt}
@@ -68,6 +84,7 @@ export function ItemForm({ lessonId, courseId, labels, item }: { lessonId: strin
           <select name="kind" value={kind} onChange={(e) => setKind(e.target.value as Kind)} className={field}>
             <option value="MCQ">{labels.mcq}</option>
             <option value="MULTI">{labels.multi}</option>
+            {!item && <option value="TRUE_FALSE">{labels.trueFalse}</option>}
             <option value="SHORT">{labels.short}</option>
             <option value="WRITTEN">{labels.written}</option>
           </select>
@@ -104,7 +121,19 @@ export function ItemForm({ lessonId, courseId, labels, item }: { lessonId: strin
         </fieldset>
       )}
 
-      {!choiceKind && (
+      {kind === "TRUE_FALSE" && (
+        <fieldset className="flex flex-wrap gap-4">
+          <legend className="text-label text-ink-muted">{labels.tickCorrect}</legend>
+          {(["true", "false"] as const).map((v) => (
+            <label key={v} className="flex items-center gap-2 text-small">
+              <input type="radio" name="tf" value={v} defaultChecked={v === "true"} className="size-5" />
+              {v === "true" ? labels.isTrue : labels.isFalse}
+            </label>
+          ))}
+        </fieldset>
+      )}
+
+      {kind !== "TRUE_FALSE" && !choiceKind && (
         <label className={label}>
           {labels.answer}
           <input name="answer" maxLength={1000} dir="auto" defaultValue={item?.answer ?? ""} className={field} />

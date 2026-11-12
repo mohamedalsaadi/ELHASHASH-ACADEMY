@@ -56,7 +56,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
   await assertCourse(me, paper.courseId);
 
   const bank = await db.questionItem.findMany({
-    where: { lesson: { unit: { courseId: paper.courseId } }, active: true },
+    where: { courseId: paper.courseId, active: true },
     orderBy: [{ lessonId: "asc" }, { order: "asc" }],
     select: { id: true, prompt: true, kind: true, marks: true, lesson: { select: { titleAr: true, titleEn: true } } },
   });
@@ -118,7 +118,7 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
                 <span className="min-w-0">
                   <span className="block truncate" dir="auto">{item.prompt || tq("pictureAlt")}</span>
                   <span className="text-label text-ink-muted">
-                    {pick(ar, item.lesson.titleAr, item.lesson.titleEn)} · {item.kind} · <span className="num">{item.marks}</span>
+                    {item.lesson ? pick(ar, item.lesson.titleAr, item.lesson.titleEn) : tq("courseOnly")} · {item.kind} · <span className="num">{item.marks}</span>
                     {stat.get(item.id) && (
                       <span className="num"> · {Math.round((stat.get(item.id)!.ok / stat.get(item.id)!.n) * 100)}% ({stat.get(item.id)!.n})</span>
                     )}

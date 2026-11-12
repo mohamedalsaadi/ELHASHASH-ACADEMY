@@ -32,7 +32,7 @@ export function AssignmentForm({
   action: (prev: AssignmentError, form: FormData) => Promise<AssignmentError>;
   courses: CourseOption[];
   values?: AssignmentValues;
-  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; rubric: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string; kind?: string; kindHomework?: string; kindQuiz?: string };
+  labels: { course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; rubric: string; due: string; maxScore: string; allowResubmit: string; files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string; kind?: string; kindHomework?: string; kindQuiz?: string; link?: string; linkHint?: string };
 }) {
   const [state, formAction] = useActionState(action, null);
   const [courseId, setCourseId] = useState(values.courseId ?? courses[0]?.id ?? "");
@@ -102,6 +102,7 @@ export function AssignmentForm({
       <label className={label}>
         {labels.linkUrl}
         <input name="linkUrl" type="url" pattern="https://.*" defaultValue={values.linkUrl ?? ""} maxLength={500} dir="ltr" placeholder="https://" className={field} />
+        {labels.linkHint && <span className="text-label font-normal text-ink-muted">{labels.linkHint}</span>}
       </label>
 
       <div className="flex flex-wrap items-end gap-4">
@@ -128,7 +129,7 @@ export function AssignmentForm({
         removeLabel={labels.removeFile}
       />
 
-      {state && <p role="alert" className="text-small text-down">{labels[state] ?? labels.invalid}</p>}
+      {state && <p role="alert" className="text-small text-down">{(labels as Record<string, string | undefined>)[state] ?? labels.invalid}</p>}
 
       <SubmitButton className="btn btn-primary w-fit">{labels.save}</SubmitButton>
     </form>

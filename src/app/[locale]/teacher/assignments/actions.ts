@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, homeworkPrefix } from "@/lib/blob";
 import { suggestGrade } from "@/lib/ai-grading";
+import { isAllowedQuizLink } from "@/lib/external-link";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { hasGuardianConsent } from "@/lib/live";
@@ -50,7 +51,7 @@ const refocus = (slug?: string | null) => {
 };
 
 /** Form state for the authoring screens: null means "fine", anything else is a message key. */
-export type AssignmentError = "invalid" | "lesson" | null;
+export type AssignmentError = "invalid" | "lesson" | "link" | null;
 
 export async function createAssignment(_prev: AssignmentError, form: FormData): Promise<AssignmentError> {
   const me = await requireStaff();
@@ -70,6 +71,9 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
     .safeParse(Object.fromEntries(form));
   if (!parsed.success) return "invalid";
   const d = parsed.data;
+
+  // A quiz that lives elsewhere may only point at Google Forms; homework may link to any https page.
+  if (d.kind === "QUIZ" && d.linkUrl && !isAllowedQuizLink(d.linkUrl)) return "link";
 
   const course = await db.course.findUniqueOrThrow({ where: { id: d.courseId }, select: { slug: true, instructorId: true } });
   await assertCourse(me, d.courseId);
@@ -141,8 +145,9 @@ export async function updateAssignment(_prev: AssignmentError, form: FormData): 
   if (!parsed.success) return "invalid";
   const d = parsed.data;
 
-  const a = await db.assignment.findUniqueOrThrow({ where: { id: d.id }, select: { courseId: true, course: { select: { slug: true } } } });
+  const a = await db.assignment.findUniqueOrThrow({ where: { id: d.id }, select: { courseId: true, kind: true, course: { select: { slug: true } } } });
   await assertCourse(me, a.courseId);
+  if (a.kind === "QUIZ" && d.linkUrl && !isAllowedQuizLink(d.linkUrl)) return "link";
 
   await db.assignment.update({
     where: { id: d.id },
@@ -278,7 +283,7 @@ export async function toggleAssignmentItem(form: FormData) {
   const a = await db.assignment.findUniqueOrThrow({ where: { id: d.assignmentId }, select: { courseId: true } });
   await assertCourse(me, a.courseId);
   // Only a question of this course's own lessons.
-  const item = await db.questionItem.findFirst({ where: { id: d.itemId, lesson: { unit: { courseId: a.courseId } } }, select: { id: true } });
+  const item = await db.questionItem.findFirst({ where: { id: d.itemId, courseId: a.courseId }, select: { id: true } });
   if (!item) return;
   const key = { assignmentId_itemId: { assignmentId: d.assignmentId, itemId: d.itemId } };
   if (await db.assignmentItem.findUnique({ where: key })) await db.assignmentItem.delete({ where: key });

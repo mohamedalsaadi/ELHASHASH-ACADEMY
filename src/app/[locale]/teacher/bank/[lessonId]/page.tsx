@@ -48,6 +48,7 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
     answer: t("answer"), explanation: t("explanation"), marks: t("marks"), save: t("save"), invalid: t("invalid"), saved: t("saved"),
     optionLetter: t("optionLetter"), tickCorrect: t("tickCorrect"), mediaPick: t("mediaPick"), mediaSending: t("mediaSending"),
     mediaFailed: t("mediaFailed"), mediaRemove: t("mediaRemove"), mediaPages: t("mediaPages"),
+    trueFalse: t("trueFalse"), isTrue: t("isTrue"), isFalse: t("isFalse"), linkedLesson: t("linkedLesson"), noLesson: t("noLesson"),
   };
 
   return (
@@ -124,7 +125,7 @@ export default async function LessonBankPage({ params }: { params: Promise<{ loc
       </Block>
 
       <Block title={t("importBtn")}>
-        <ImportForm lessonId={lesson.id} labels={{ importHint: t("importHint"), importBtn: t("importBtn"), invalid: t("importInvalid"), saved: t("saved") }} />
+        <ImportForm courseId={lesson.unit.course.id} lessonId={lesson.id} labels={{ importHint: t("importHint"), importBtn: t("importBtn"), invalid: t("importInvalid"), saved: t("saved") }} />
       </Block>
     </main>
   );

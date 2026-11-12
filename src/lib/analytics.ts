@@ -17,7 +17,8 @@ export type EventName =
   | "live_joined"
   | "course_created"
   | "course_published"
-  | "invite_accepted";
+  | "invite_accepted"
+  | "external_quiz_open";
 
 export type EventInput = {
   name: EventName;

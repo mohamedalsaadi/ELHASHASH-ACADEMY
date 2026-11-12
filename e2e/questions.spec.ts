@@ -80,3 +80,36 @@ test("a quiz set on an assignment is marked on the spot and scaled to its score"
   const row = (await sql<{ score: number }>(`SELECT score FROM "Submission" WHERE "assignmentId" = $1`, [id]))[0];
   expect(row.score).toBe(50); // the one question is right: full marks, scaled to the assignment's 50
 });
+
+test("a teacher adds a true/false question to the course itself, and a student answers it in a quiz", async ({ page, loc }) => {
+  const tag = `${loc}-${test.info().project.name}`;
+  const prompt = `The sky is blue ${tag}`;
+  const { courseId } = await seededLesson();
+
+  await signInAs(page, loc, PERSONAS.teacherAe.phone);
+  await page.goto(`/${loc}/admin/courses/${courseId}/questions`);
+  const form = page.locator("main form:has(select[name=kind])").first();
+  await form.locator("select[name=kind]").selectOption("TRUE_FALSE");
+  await form.locator("textarea[name=prompt]").fill(prompt);
+  await form.locator("button").last().click();
+  await expect(page.locator("main")).toContainText(prompt);
+
+  // It belongs to the course, not to a lesson, and is stored as a one-answer question with two fixed options.
+  const q = (await sql<{ id: string; lessonId: string | null; kind: string }>(`SELECT id, "lessonId", kind FROM "QuestionItem" WHERE prompt = $1`, [prompt]))[0];
+  expect(q).toMatchObject({ lessonId: null, kind: "MCQ" });
+  const choices = await sql<{ label: string; correct: boolean }>(`SELECT label, correct FROM "QuestionChoice" WHERE "itemId" = $1 ORDER BY "order"`, [q.id]);
+  expect(choices.map((c) => c.correct)).toEqual([true, false]);
+
+  // A quiz made from it: the student ticks "True" and is graded on the spot.
+  const teacher = (await sql<{ id: string }>(`SELECT id FROM "User" WHERE phone = $1`, [PERSONAS.teacherAe.phone]))[0];
+  const id = randomUUID();
+  await sql(`INSERT INTO "Assignment" (id, "courseId", "createdById", kind, title, "maxScore", "updatedAt") VALUES ($1,$2,$3,'QUIZ',$4,10, now())`, [id, courseId, teacher.id, `E2E tf quiz ${tag}`]);
+  await sql(`INSERT INTO "AssignmentItem" (id, "assignmentId", "itemId", "order") VALUES ($1,$2,$3,0)`, [randomUUID(), id, q.id]);
+  await page.context().clearCookies();
+  await signInAs(page, loc, PERSONAS.studentAe.phone);
+  await page.goto(`/${loc}/courses/${COURSE}/assignments/${id}`);
+  await page.locator("fieldset", { hasText: prompt }).locator("label", { hasText: "True" }).locator("input").check();
+  await page.locator("main form button:not([type=button])").last().click();
+  await expect.poll(async () => (await sql<{ status: string }>(`SELECT status FROM "Submission" WHERE "assignmentId" = $1`, [id]))[0]?.status).toBe("GRADED");
+  expect((await sql<{ score: number }>(`SELECT score FROM "Submission" WHERE "assignmentId" = $1`, [id]))[0].score).toBe(10);
+});

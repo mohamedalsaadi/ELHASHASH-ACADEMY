@@ -29,10 +29,13 @@ export async function submitReview(_prev: PracticeError, form: FormData): Promis
   ];
   if (ids.length === 0) return "invalid";
 
-  const items = await db.questionItem.findMany({
-    where: { id: { in: ids }, active: true, kind: { in: ["MCQ", "MULTI", "SHORT"] } },
-    select: { id: true, lessonId: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } },
-  });
+  // Review is per lesson, so a course-only question (no lesson) never takes part.
+  const items = (
+    await db.questionItem.findMany({
+      where: { id: { in: ids }, active: true, lessonId: { not: null }, kind: { in: ["MCQ", "MULTI", "SHORT"] } },
+      select: { id: true, lessonId: true, kind: true, marks: true, answer: true, choices: { select: { id: true, correct: true } } },
+    })
+  ).flatMap((i) => (i.lessonId ? [{ ...i, lessonId: i.lessonId }] : []));
   if (items.length === 0) return "invalid";
 
   const lessonIds = [...new Set(items.map((i) => i.lessonId))];

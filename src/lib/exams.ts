@@ -89,3 +89,6 @@ export function parseQuestionCsv(text: string) {
 export function scaleScore(marks: number, maxMarks: number, maxScore: number): number {
   return maxMarks > 0 ? Math.min(maxScore, Math.max(0, Math.round((marks / maxMarks) * maxScore))) : 0;
 }
+
+/** The two fixed options of a true/false question (saved as a one-answer multiple-choice question). */
+export const TRUE_FALSE_LABELS = ["صح (True)", "خطأ (False)"] as const;

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ImageUpload } from "@/components/ImageUpload";
 import { PdfUpload } from "@/components/admin/PdfUpload";
+import { KindOnly } from "@/components/admin/KindOnly";
 import { VdoUpload } from "@/components/admin/VdoUpload";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
@@ -54,6 +55,12 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
   const teachers = isAdmin
     ? await db.user.findMany({ where: { role: { in: ["INSTRUCTOR", "ADMIN"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } })
     : [];
+  const [questions, quizzes, exams] = await Promise.all([
+    db.questionItem.count({ where: { courseId: id } }),
+    db.assignment.count({ where: { courseId: id } }),
+    db.examPaper.count({ where: { courseId: id } }),
+  ]);
+  const counts = { questions, quizzes, exams };
   const packages = course.skus.filter((s) => !s.lessonId && !s.liveSessionId);
   const rentalOf = new Map(course.skus.filter((s) => s.lessonId).map((s) => [s.lessonId!, s]));
   // Skill courses sell for a number of days; school subjects by term or year.
@@ -75,6 +82,15 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           {t("viewPage")}
         </Link>
       </div>
+
+      <section className={`${card} sm:grid-cols-[1fr_auto] sm:items-center`}>
+        <div className="grid gap-1">
+          <h2 className="font-display text-h3 font-semibold">{t("questionsCardTitle")}</h2>
+          <p className="text-small text-ink-muted">{t("questionsCardHint")}</p>
+          <p className="num text-label text-ink-muted">{t("questionsCardCounts", { questions: counts.questions, quizzes: counts.quizzes, exams: counts.exams })}</p>
+        </div>
+        <Link href={`/admin/courses/${course.id}/questions`} className="btn btn-primary px-4 py-2 text-small">{t("openQuestions")}</Link>
+      </section>
 
       <form action={updateCourse} className={card}>
         <h1 className="font-display text-h2 font-semibold">{t("course")}</h1>
@@ -241,6 +257,7 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     </select>
                   </label>
                 </div>
+                <KindOnly kinds={["VIDEO"]} savedKind={l.kind}>
                 <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
                   <label className={label}>
                     {t("videoSource")}
@@ -255,6 +272,14 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                     <input name="externalId" defaultValue={l.video?.externalId ?? ""} dir="ltr" className={field} />
                   </label>
                 </div>
+                <VdoUpload title={`${course.titleEn} · ${l.titleEn}`} labels={{ pick: t("uploadPick"), sending: t("uploading"), done: t("uploadDone"), failed: t("uploadFailed") }} />
+                </KindOnly>
+                <KindOnly kinds={["EXAM_STRUCTURE", "PAST_QUESTIONS"]} savedKind={l.kind}>
+                  <p className="text-small text-ink-muted">
+                    {t("questionsKindHint")}{" "}
+                    <Link href={`/admin/courses/${course.id}/questions`} className="text-pen underline underline-offset-4">{t("openQuestions")}</Link>
+                  </p>
+                </KindOnly>
                 <PdfUpload
                     courseId={course.id}
                     savedKind={l.kind}
@@ -269,7 +294,6 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
                 <Link href={`/courses/${course.slug}/lessons/${l.id}`} className="w-fit text-small text-pen underline underline-offset-4">
                   {t("viewLesson")}
                 </Link>
-                <VdoUpload title={`${course.titleEn} · ${l.titleEn}`} labels={{ pick: t("uploadPick"), sending: t("uploading"), done: t("uploadDone"), failed: t("uploadFailed") }} />
                 <label className={label}>
                   {t("lessonMonth")}
                   <select name="month" defaultValue={l.month ?? ""} className={field}>

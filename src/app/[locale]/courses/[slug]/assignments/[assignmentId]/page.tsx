@@ -11,6 +11,7 @@ import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatDate } from "@/lib/format";
 import { isLate } from "@/lib/grades";
+import { FinishForm } from "../FinishForm";
 import { SubmitForm } from "../SubmitForm";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
       instructions: true,
       linkUrl: true,
       kind: true,
+      required: true,
       dueAt: true,
       maxScore: true,
       allowResubmit: true,
@@ -116,6 +118,17 @@ export default async function AssignmentPage({ params }: { params: Promise<{ loc
           </a>
           {isForm && <p className="text-small text-ink-muted">{sub ? t("quizCodeNote") : t("quizHowTo")}</p>}
         </div>
+      )}
+
+      {assignment.required && (
+        <p className="w-fit rounded-full border border-pen px-3 py-1 text-small font-semibold text-pen">{t("requiredNote")}</p>
+      )}
+
+      {isForm && open && !sub && (
+        <Block title={t("finishedTitle")}>
+          <p className="text-small text-ink-muted">{t("finishedHint")}</p>
+          <FinishForm assignmentId={assignment.id} labels={{ finish: t("finishedButton"), closed: t("noAccess"), notOpened: t("openFirst") }} />
+        </Block>
       )}
 
       {assignment.files.length > 0 && (

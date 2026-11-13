@@ -1747,7 +1747,20 @@
     "quizHowTo": "Open the quiz. Your code is filled in for you: leave it as it is. Your result appears here after your teacher checks the answers.",
     "quizCodeNote": "Your result is below. To open the quiz again, use the button; your code is filled in for you.",
     "yourResult": "Your result",
-    "sectionTitle": "Homework and quizzes"
+    "sectionTitle": "Homework and quizzes",
+    "required": "Required: the lessons after this one stay closed until the student hands it in",
+    "requiredHint": "Needs a lesson above. Students see a note and cannot open the next lessons until they have finished. Existing work stays optional until you tick this.",
+    "needLesson": "Choose the lesson this belongs to, because required work needs one.",
+    "requiredChip": "Required",
+    "requiredNote": "Required: the next lessons open after you finish this.",
+    "finishedTitle": "Done with the quiz?",
+    "finishedHint": "Open the quiz, answer it on Google Forms, then come back and press the button. This is what opens the next lesson.",
+    "finishedButton": "I finished the quiz",
+    "openFirst": "Open the quiz first, answer it, then press the button.",
+    "behindTitle": "Not handed in yet",
+    "behindHint": "Subscribers whose next lessons are held back by this. Let one through only when there is a good reason, such as a broken link.",
+    "letThrough": "Let through",
+    "reportMissing": "Pressed I finished but no answer was found"
   },
   "practice": {
     "questionsShort": "questions",
@@ -1945,9 +1958,9 @@
     "s2t": "Protect it and publish",
     "s2": "In Settings, Responses, turn on Limit to 1 response (students then sign in to Google). Press Publish, then copy the normal link with the Send button.",
     "s3t": "Paste the link on Dhirwa",
-    "s3": "In Homework press New, choose Quiz on Google Forms, give it a title and paste the link. Dhirwa checks that the Student code question is there and tells you if it is not.",
+    "s3": "In Homework press New, choose Quiz on Google Forms, give it a title and paste the link. To make it mandatory choose its lesson and tick Required: the lessons after it then open only once the student presses I finished. Dhirwa checks that the Student code question is there and tells you if it is not.",
     "s4t": "After the quiz: save the scores",
-    "s4": "In the form open Responses, the three-dot menu, then Download responses (.csv). On the quiz page upload the file and press Save scores. Every student, and their parent, sees the score.",
+    "s4": "In the form open Responses, the three-dot menu, then Download responses (.csv). On the quiz page upload the file and press Save scores. Every student, and their parent, sees the score, and you see who pressed I finished without answering.",
     "resultsTitle": "What the results mean",
     "rOk": "Subscribed: the code belongs to a student who may open the quiz.",
     "rNot": "Plan ended: the code is a real student's, but their plan has ended.",
@@ -1960,5 +1973,17 @@
     "t1": "The site says it cannot find the Student code question: check the title is exactly Student code, that the form is published, and that it is not restricted to one organisation. Then save the link again.",
     "t2": "The file will not upload or has no scores: download the responses as .csv (not Excel), keep it under 2 MB, and turn on Make this a quiz in the form's Settings.",
     "t3": "Do not post the form link anywhere else, and do not rename the Student code question."
+  },
+  "gate": {
+    "closedTitle": "This lesson is not open yet",
+    "finishHomework": "Finish the homework “{title}” first. Then this lesson opens.",
+    "finishExam": "Finish the exam “{title}” first. Then this lesson opens.",
+    "go": "Go to it",
+    "courseBannerTitle": "Finish this to open the next lessons",
+    "lockedRow": "Finish the required work first",
+    "afterLesson": "Follows lesson",
+    "noLesson": "No lesson",
+    "requiredExam": "Required: the lessons after it stay closed until the student has submitted it",
+    "requiredExamHint": "Needs a lesson, and only counts once the exam is published."
   }
 }

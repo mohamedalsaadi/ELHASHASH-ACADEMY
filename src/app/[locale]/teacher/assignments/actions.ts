@@ -67,7 +67,7 @@ async function prepareLink(kind: "HOMEWORK" | "QUIZ", linkUrl: string | undefine
 }
 
 /** Form state for the authoring screens: null means "fine", anything else is a message key. */
-export type AssignmentError = "invalid" | "lesson" | "link" | null;
+export type AssignmentError = "invalid" | "lesson" | "link" | "needLesson" | null;
 
 export async function createAssignment(_prev: AssignmentError, form: FormData): Promise<AssignmentError> {
   const me = await requireStaff();
@@ -83,10 +83,13 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
       dueAt: z.string().optional(),
       maxScore: z.coerce.number().int().min(1).max(1000).default(100),
       allowResubmit: z.string().optional(),
+      required: z.string().optional(),
     })
     .safeParse(Object.fromEntries(form));
   if (!parsed.success) return "invalid";
   const d = parsed.data;
+  // Mandatory work holds back the lessons after its lesson, so it must have one.
+  if (d.required === "on" && !d.lessonId) return "needLesson";
 
   // A quiz that lives elsewhere may only point at Google Forms; homework may link to any https page.
   if (d.kind === "QUIZ" && d.linkUrl && !isAllowedQuizLink(d.linkUrl)) return "link";
@@ -115,6 +118,7 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
       dueAt: dueAt(form.get("dueAt")),
       maxScore: d.maxScore,
       allowResubmit: d.allowResubmit === "on",
+      required: d.required === "on",
     },
   });
   await saveFiles(created.id, d.courseId, form.get("files"));
@@ -157,13 +161,22 @@ export async function updateAssignment(_prev: AssignmentError, form: FormData): 
       dueAt: z.string().optional(),
       maxScore: z.coerce.number().int().min(1).max(1000),
       allowResubmit: z.string().optional(),
+      lessonId: z.string().optional(),
+      required: z.string().optional(),
     })
     .safeParse(Object.fromEntries(form));
   if (!parsed.success) return "invalid";
   const d = parsed.data;
+  if (d.required === "on" && !d.lessonId) return "needLesson";
 
   const a = await db.assignment.findUniqueOrThrow({ where: { id: d.id }, select: { courseId: true, kind: true, course: { select: { slug: true } } } });
   await assertCourse(me, a.courseId);
+  let lessonId: string | null = null;
+  if (d.lessonId) {
+    const lesson = await db.lesson.findUnique({ where: { id: d.lessonId }, select: { unit: { select: { courseId: true } } } });
+    if (!lesson || lesson.unit.courseId !== a.courseId) return "lesson";
+    lessonId = d.lessonId;
+  }
   if (a.kind === "QUIZ" && d.linkUrl && !isAllowedQuizLink(d.linkUrl)) return "link";
 
   const link = await prepareLink(a.kind, d.linkUrl);
@@ -171,18 +184,21 @@ export async function updateAssignment(_prev: AssignmentError, form: FormData): 
     where: { id: d.id },
     data: {
       title: d.title,
+      lessonId,
       instructions: d.instructions || null,
       ...link,
       rubric: d.rubric || null,
       dueAt: dueAt(form.get("dueAt")),
       maxScore: d.maxScore,
       allowResubmit: d.allowResubmit === "on",
+      required: d.required === "on",
     },
   });
   await saveFiles(d.id, a.courseId, form.get("files"));
 
   refocus(a.course.slug);
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
+  revalidatePath("/[locale]/courses/[slug]", "page");
   return null;
 }
 
@@ -310,7 +326,7 @@ export async function toggleAssignmentItem(form: FormData) {
   revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
 }
 
-export type CheckState = { error: "file" | "empty" | "column" | "big" | "score" } | { report: Report; saved?: { saved: number; skipped: number } } | null;
+export type CheckState = { error: "file" | "empty" | "column" | "big" | "score" } | { report: Report; saved?: { saved: number; skipped: number }; missing: string[] } | null;
 
 const MAX_ROWS = 1500;
 
@@ -355,7 +371,12 @@ export async function checkResponses(_prev: CheckState, form: FormData): Promise
     return h ? { name: h.user.name ?? "", subscribed: open.get(h.userId) ?? false } : null;
   });
   if (!report) return { error: "column" };
-  if (!save) return { report };
+
+  // Students who pressed "I finished" but whose answer is not in the file (no row, or a code that is not theirs).
+  const seen = new Set(report.rows.map((r) => r.code));
+  const claimed = await db.submission.findMany({ where: { assignmentId: a.id, status: "SUBMITTED", score: null, text: null }, select: { studentId: true, student: { select: { name: true } } } });
+  const missing = claimed.filter((c) => !seen.has(studentCode(c.studentId, a.id))).map((c) => c.student.name ?? "");
+  if (!save) return { report, missing };
 
   const times = new Map<string, number>();
   for (const r of report.rows) if (r.code) times.set(r.code, (times.get(r.code) ?? 0) + 1);
@@ -379,5 +400,25 @@ export async function checkResponses(_prev: CheckState, form: FormData): Promise
   revalidatePath("/[locale]/courses/[slug]/assignments", "page");
   revalidatePath("/[locale]/dashboard", "page");
   revalidatePath("/[locale]/parent", "page");
-  return { report, saved: { saved, skipped: report.rows.length - saved } };
+  return { report, saved: { saved, skipped: report.rows.length - saved }, missing };
+}
+
+/**
+ * A teacher lets one student past mandatory work (a broken link, a school excuse). It records a hand-in with no content, which is
+ * what the lesson gate looks for; a returned piece of work is counted as handed in again.
+ */
+export async function letThrough(form: FormData) {
+  const me = await requireStaff();
+  const d = z.object({ assignmentId: z.string().min(1), studentId: z.string().min(1) }).parse(Object.fromEntries(form));
+  const a = await db.assignment.findUniqueOrThrow({ where: { id: d.assignmentId }, select: { courseId: true } });
+  await assertCourse(me, a.courseId);
+  if (!(await db.entitlement.findFirst({ where: { userId: d.studentId, courseId: a.courseId }, select: { id: true } }))) return;
+  await db.submission.upsert({
+    where: { assignmentId_studentId: { assignmentId: d.assignmentId, studentId: d.studentId } },
+    create: { assignmentId: d.assignmentId, studentId: d.studentId, status: "SUBMITTED" },
+    update: {},
+  });
+  await db.submission.updateMany({ where: { assignmentId: d.assignmentId, studentId: d.studentId, status: "RETURNED" }, data: { status: "SUBMITTED" } });
+  revalidatePath("/[locale]/teacher/assignments/[id]", "page");
+  revalidatePath("/[locale]/courses/[slug]", "page");
 }

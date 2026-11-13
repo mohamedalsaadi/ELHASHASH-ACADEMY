@@ -1276,3 +1276,24 @@ Committed; not deployed.
 - **Fixed on the way:** the "graded" notice linked to the submission id instead of the assignment id, so it opened a
   404; a new quiz notice said "New homework".
 - **Open:** confirm the exact `Score` format a real Google quiz writes (e2e covers `8 / 10` and plain numbers).
+
+## 2026-11-13: mandatory homework and exams close the next lessons (local, unpushed)
+
+- **Rule (owner's answers, all recommended):** a teacher ticks **Required** on a homework, a quiz on Google Forms, or an
+  in-site exam, and picks the lesson it follows. A student cannot open the lessons *after* that lesson until they have handed
+  it in (homework: a submission, status SUBMITTED or GRADED, a RETURNED one does not count; exam: an attempt submitted).
+  Finishing is enough (no minimum mark). Lessons the student's plan does not open never block. Staff are never gated.
+  Existing work stays optional (`required` defaults false), so no current student is locked out.
+- **Where it is enforced:** the pure rule is `src/lib/gate.ts` (tests in `gate.test.ts`), the loader `src/lib/gate-data.ts`.
+  Closed lesson: the lesson page shows what to finish first (no video, no PDF), the practice page and its action, the review
+  action, the PDF pages route and lesson question pictures. The course page shows a banner and a lock on the closed rows.
+- **Google Forms:** the student opens the quiz through the site, comes back and presses **I finished** (`confirmFinished`;
+  refused until the site recorded the open). That creates a SUBMITTED submission. Responses upload (Check) lists who pressed
+  it but has no answer in the file; Save scores puts the real score on the same row.
+  "Exam on Google Forms" is the same Quiz on Google Forms (name it as an exam): there is no separate Google exam type.
+- **Teacher:** lesson select and a Required switch are on the assignment form; the exam page has the same two (an exam only
+  counts once published); a required assignment lists subscribers who have not handed in, with a **Let through** button
+  (`letThrough`). Exams have no let-through button.
+- **Migration:** `20261121100000_required_lesson_gate` is additive (`Assignment.required`, `ExamPaper.lessonId`, `ExamPaper.required`).
+- **Open:** a self-confirmed "I finished" is not proof; the teacher sees the missing answers only after uploading the file.
+  The student dashboard's "continue" may point at a closed lesson, which then shows the notice.

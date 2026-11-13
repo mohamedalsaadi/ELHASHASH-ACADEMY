@@ -3,6 +3,7 @@ import { grantsFor, learnerFor, lessonScope } from "@/lib/catalog";
 import { streamBlob } from "@/lib/blob";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
+import { blockerFor } from "@/lib/gate-data";
 import { isCourseStaffDb } from "@/lib/staff";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ itemId: st
     const learnerId = await learnerFor(session.user, courseId, now);
     const grants = await grantsFor(learnerId, courseId, now);
     // A lesson-linked question opens with its lesson; any question on a published exam or a quiz of the course opens for a subscriber.
-    const lessonOpen = item.lesson ? grants.some((g) => opensLesson(g, lessonScope(item.lesson!), now)) : false;
+    const lessonOpen = item.lesson ? grants.some((g) => opensLesson(g, lessonScope(item.lesson!), now)) && !(learnerId && (await blockerFor(learnerId, courseId, item.lesson.id, now))) : false;
     allowed = lessonOpen || ((item.examItems.length > 0 || item.assignmentItems.length > 0) && grants.length > 0);
   }
   if (!allowed) return new Response(null, { status: 404 });

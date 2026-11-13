@@ -32,6 +32,7 @@ export default async function TeacherAssignmentsPage({ params }: { params: Promi
       title: true,
       dueAt: true,
       kind: true,
+      required: true,
       linkUrl: true,
       maxScore: true,
       course: {
@@ -82,7 +83,7 @@ export default async function TeacherAssignmentsPage({ params }: { params: Promi
                     )}
                   </span>
                   <span className="text-small text-ink-muted">
-                    {a.kind === "QUIZ" ? t("kindQuizChip") : t("kindHomework")} · {pick(ar, a.course.titleAr, a.course.titleEn)}
+                    {a.kind === "QUIZ" ? t("kindQuizChip") : t("kindHomework")}{a.required ? ` · ${t("requiredChip")}` : ""} · {pick(ar, a.course.titleAr, a.course.titleEn)}
                     {a.lesson && ` · ${pick(ar, a.lesson.titleAr, a.lesson.titleEn)}`}
                   </span>
                   <span className="num text-label text-ink-muted">

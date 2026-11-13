@@ -131,7 +131,7 @@ test("a quiz whose form has a Student code question gets the code in its own fie
   await expect(page.locator(`a[href="/api/out/${id}"]`)).toBeVisible();
 });
 
-test("a teacher making a Google quiz is asked only for a title, the link and a due date", async ({ page, loc }) => {
+test("a teacher making a Google quiz is asked only for a title, the link, a due date, and the lesson with its required switch", async ({ page, loc }) => {
   await signInAs(page, loc, PERSONAS.teacherAe.phone);
   await page.goto(`/${loc}/teacher/assignments/new`);
   const form = page.locator("main form:has(input[name=title])").first();

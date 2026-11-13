@@ -16,6 +16,7 @@ import { courseZone, formatDate } from "@/lib/format";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
 import { neighbours, nextOpenLesson, orderedLessons } from "@/lib/learning";
 import { opensLesson } from "@/lib/plans";
+import { blockerFor, itemHref } from "@/lib/gate-data";
 import { DEVICE_WINDOW_MS, IP_WINDOW_MS, judgePlay, REPLAY_WINDOW_MS } from "@/lib/play-limits";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -168,6 +169,22 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const openable = (l: { id: string; month: number | null }, term: number, free: boolean) =>
     staff || free || active.some((g) => opensLesson(g, { id: l.id, month: l.month, term }, now));
   if (!openable(lesson, unit.term, unit.isFree)) redirect(`/${locale}/courses/${slug}#packages`);
+
+  // Mandatory homework and exams: this lesson stays closed until the work on an earlier lesson is handed in. Staff are never gated.
+  const blocked = learnerId && !staff ? await blockerFor(learnerId, course.id, lesson.id, now) : null;
+  if (blocked) {
+    const tg = await getTranslations("gate");
+    return (
+      <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
+        <PageHeader back={{ href: `/courses/${slug}`, label: pick(ar, outline.titleAr, outline.titleEn) }} title={pick(ar, lesson.titleAr, lesson.titleEn)} />
+        <div className="card grid gap-3 p-6">
+          <h2 className="font-display text-h3 font-semibold">{tg("closedTitle")}</h2>
+          <p className="text-body text-ink-muted" dir="auto">{tg(blocked.kind === "exam" ? "finishExam" : "finishHomework", { title: blocked.title })}</p>
+          <Link href={itemHref(slug, blocked)} className="btn btn-primary w-fit">{tg("go")}</Link>
+        </div>
+      </main>
+    );
+  }
 
   if (userId && learnerId) {
     await db.lessonView.upsert({

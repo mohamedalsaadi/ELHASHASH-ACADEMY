@@ -9,6 +9,7 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
+import { blockerFor } from "@/lib/gate-data";
 import { QuestionPages } from "@/components/QuestionPages";
 import { PracticeForm } from "./PracticeForm";
 import { submitPractice } from "./actions";
@@ -65,6 +66,8 @@ export default async function PracticePage({
   const grants = await grantsFor(session.user.id, lesson.unit.courseId, now);
   const open = lesson.unit.isFree || grants.some((g) => opensLesson(g, { id: lesson.id, month: lesson.month, term: lesson.unit.term }, now));
   if (!open) redirect(`/${locale}/courses/${slug}#packages`);
+  // A lesson closed by mandatory work shows its notice, not its practice.
+  if (await blockerFor(session.user.id, lesson.unit.courseId, lesson.id, now)) redirect(`/${locale}/courses/${slug}/lessons/${lesson.id}`);
 
   const attempt = attemptId
     ? await db.practiceAttempt.findFirst({

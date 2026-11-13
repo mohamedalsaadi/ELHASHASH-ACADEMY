@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
+import { blockerFor } from "@/lib/gate-data";
 import { replyFrom, scoreAttempt, type PracticeError, type PracticeReply } from "@/lib/practice";
 import { awardPractice } from "@/lib/progress-db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -43,7 +44,7 @@ export async function submitPractice(_prev: PracticeError, form: FormData): Prom
   const grants = await grantsFor(userId, lesson.unit.courseId, now);
   const open =
     lesson.unit.isFree || grants.some((g) => opensLesson(g, { id: lesson.id, month: lesson.month, term: lesson.unit.term }, now));
-  if (!open) return "closed";
+  if (!open || (await blockerFor(userId, lesson.unit.courseId, lesson.id, now))) return "closed";
   if (lesson.questionItems.length === 0) return "invalid";
   if (await isLimited(`practice:${userId}`, 50, 86_400_000)) return "limited";
 

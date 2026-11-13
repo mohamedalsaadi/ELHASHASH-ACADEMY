@@ -19,6 +19,8 @@ import { canCharge } from "@/lib/gateway";
 import { formatRate } from "@/lib/fx";
 import { liveApprovedOn } from "@/lib/live";
 import { readiness } from "@/lib/readiness";
+import { isLocked } from "@/lib/gate";
+import { itemHref, loadGate } from "@/lib/gate-data";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { aedPriceOf, cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
@@ -136,6 +138,7 @@ export default async function CoursePage({
   const th = await getTranslations("homework");
   const te = await getTranslations("exam");
   const tt = await getTranslations("teacher");
+  const tg = await getTranslations("gate");
   const ar = locale === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
   const now = new Date();
@@ -179,6 +182,9 @@ export default async function CoursePage({
     : [[], null, []];
   const completed = new Set(completedRows.map((v) => v.lessonId));
 
+  // Mandatory homework and exams: the lessons after unfinished required work are closed. Staff see everything.
+  const gate = session?.user && !staff ? await loadGate(session.user.id, course.id, now) : null;
+  const closedByWork = (lessonId: string) => !!gate && isLocked(gate.entries, gate.blocker, lessonId);
 
   const entries = lessonEntries(course.units);
   const scopeOf = (e: (typeof entries)[number]) => ({ id: e.lesson.id, month: e.lesson.month, term: e.term });
@@ -222,7 +228,8 @@ export default async function CoursePage({
   const plans = active.filter((g) => !g.lessonId && !g.liveSessionId);
   const bestPlan = plans.sort((a, b) => (b.endsAt?.getTime() ?? Number.POSITIVE_INFINITY) - (a.endsAt?.getTime() ?? Number.POSITIVE_INFINITY))[0];
   const progress = courseProgress(entries, active, completed, now);
-  const next = nextOpenLesson(entries, active, completed, now);
+  const nextRaw = nextOpenLesson(entries, active, completed, now);
+  const next = nextRaw && !closedByWork(nextRaw.lesson.id) ? nextRaw : undefined;
 
   const single = cheapestSku(course.units.flatMap((u) => u.lessons.flatMap((l) => l.skus)), now);
   const singlePrice = single ? effectivePrice(single, now) : null;
@@ -434,6 +441,16 @@ export default async function CoursePage({
         </section>
       )}
 
+      {gate?.blocker && (
+        <section className="card flex flex-wrap items-center justify-between gap-3 border-pen p-4">
+          <span className="grid gap-0.5">
+            <span className="font-display text-h3 font-bold">{tg("courseBannerTitle")}</span>
+            <span className="text-small text-ink-muted" dir="auto">{tg(gate.blocker.item.kind === "exam" ? "finishExam" : "finishHomework", { title: gate.blocker.item.title })}</span>
+          </span>
+          <Link href={itemHref(slug, gate.blocker.item)} className="btn btn-primary">{tg("go")}</Link>
+        </section>
+      )}
+
       {homeworkCount > 0 && (
         <section className="card flex flex-wrap items-center justify-between gap-3 p-4">
           <span className="font-display text-h3 font-bold">{th("sectionTitle")}</span>
@@ -507,17 +524,20 @@ export default async function CoursePage({
                       const done = completed.has(l.id);
                       const rent = cheapestSku(l.skus, now);
                       const rentAed = rent ? aedPriceOf(rent, now) : null;
-                      const state = done ? "done" : currentView?.lessonId === l.id ? "current" : open ? "open" : level !== "none" ? "lockedPlan" : "locked";
+                      const closed = open && closedByWork(l.id);
+                      const state = closed ? "locked" : done ? "done" : currentView?.lessonId === l.id ? "current" : open ? "open" : level !== "none" ? "lockedPlan" : "locked";
                       return (
                         <li key={l.id}>
                           <LessonRow
-                            href={open ? lessonHref(l.id) : undefined}
+                            href={open && !closed ? lessonHref(l.id) : undefined}
                             title={pick(ar, l.titleAr, l.titleEn)}
                             subtitle={u.isFree ? `${t(`kind.${l.kind}`)} · ${t("freeLesson")}` : t(`kind.${l.kind}`)}
                             state={state}
                             stateLabel={state === "done" ? t("lessonState.done") : state === "current" ? t("lessonState.current") : state === "open" ? t("lessonState.ahead") : undefined}
                             trailing={
-                              open ? null : level !== "none" ? (
+                              closed ? (
+                                <span className="text-label text-ink-muted">{tg("lockedRow")}</span>
+                              ) : open ? null : level !== "none" ? (
                                 <span className="text-label text-ink-muted">{t("outsidePlan")}</span>
                               ) : rent ? (
                                 <span className="grid justify-items-end gap-0.5">

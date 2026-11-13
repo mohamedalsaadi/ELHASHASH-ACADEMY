@@ -181,6 +181,7 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
   revalidatePath("/[locale]/dashboard", "page");
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
+  revalidatePath("/[locale]/courses/[slug]", "page");
   // The work is in, but a file that could not be stored must not look like it arrived.
   if (kept < files.length) return "filesLost";
   return masked ? "masked" : "ok";
@@ -200,4 +201,40 @@ async function saveFiles(submissionId: string, assignmentId: string, studentId: 
     });
   }
   return kept;
+}
+
+export type FinishState = "closed" | "notOpened" | "ok" | null;
+
+/**
+ * "I finished": a student says they did a quiz that lives on Google Forms. It is only accepted after they opened the form through
+ * the site, and it hands the work in (a submission with no text), which is what opens the lessons after it. The teacher's upload of
+ * the form's responses later shows who said so without answering, and saves the real scores onto the same row.
+ */
+export async function confirmFinished(_prev: FinishState, form: FormData): Promise<FinishState> {
+  const session = await auth();
+  if (!session?.user) notFound();
+  const studentId = session.user.id;
+  const id = z.string().min(1).parse(form.get("assignmentId"));
+
+  const a = await db.assignment.findUnique({
+    where: { id },
+    select: { id: true, courseId: true, linkUrl: true, kind: true, lesson: { select: { id: true, month: true, unit: { select: { term: true, isFree: true } } } } },
+  });
+  if (!a || a.kind !== "QUIZ" || !a.linkUrl) notFound();
+
+  const now = new Date();
+  if (!opensAssignment(a, await grantsFor(studentId, a.courseId, now), now)) return "closed";
+  const opened = await db.analyticsEvent.findFirst({ where: { name: "external_quiz_open", userId: studentId, props: { path: ["assignmentId"], equals: a.id } }, select: { id: true } });
+  if (!opened) return "notOpened";
+
+  await db.submission.upsert({
+    where: { assignmentId_studentId: { assignmentId: a.id, studentId } },
+    create: { assignmentId: a.id, studentId, status: "SUBMITTED" },
+    update: {},
+  });
+  revalidatePath("/[locale]/courses/[slug]/assignments/[assignmentId]", "page");
+  revalidatePath("/[locale]/courses/[slug]/assignments", "page");
+  revalidatePath("/[locale]/courses/[slug]", "page");
+  revalidatePath("/[locale]/teacher/assignments/[id]", "page");
+  return "ok";
 }

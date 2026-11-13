@@ -35,6 +35,8 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
       durationMin: true,
       maxAttempts: true,
       published: true,
+      lessonId: true,
+      required: true,
       courseId: true,
       course: { select: { slug: true, instructorId: true, titleAr: true, titleEn: true } },
       items: { orderBy: { order: "asc" }, select: { id: true, itemId: true } },
@@ -55,6 +57,12 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
   if (!paper) notFound();
   await assertCourse(me, paper.courseId);
 
+  const lessons = await db.lesson.findMany({
+    where: { unit: { courseId: paper.courseId } },
+    orderBy: [{ unit: { order: "asc" } }, { order: "asc" }],
+    select: { id: true, titleAr: true, titleEn: true },
+  });
+  const tg = await getTranslations("gate");
   const bank = await db.questionItem.findMany({
     where: { courseId: paper.courseId, active: true },
     orderBy: [{ lessonId: "asc" }, { order: "asc" }],
@@ -100,6 +108,22 @@ export default async function ExamManagePage({ params }: { params: Promise<{ loc
             <input type="checkbox" name="published" defaultChecked={paper.published} className="size-4" />
             {t("publish")}
           </label>
+          <label className="grid gap-1 text-label text-ink-muted">
+            {tg("afterLesson")}
+            <select name="lessonId" defaultValue={paper.lessonId ?? ""} className="min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink">
+              <option value="">{tg("noLesson")}</option>
+              {lessons.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {pick(ar, l.titleAr, l.titleEn)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex min-h-11 items-center gap-2 text-label text-ink-muted">
+            <input type="checkbox" name="required" defaultChecked={paper.required} className="size-4" />
+            {tg("requiredExam")}
+          </label>
+          <p className="basis-full text-label text-ink-muted">{tg("requiredExamHint")}</p>
           <button className="btn btn-outline px-4 py-2 text-small">{t("save")}</button>
         </form>
         <form action={deleteExam} className="border-t border-hairline pt-3">

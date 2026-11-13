@@ -39,14 +39,19 @@ export async function updateExam(form: FormData) {
       durationMin: z.coerce.number().int().min(5).max(300),
       maxAttempts: z.coerce.number().int().min(1).max(10).default(1),
       published: z.string().optional(),
+      lessonId: z.string().optional(),
+      required: z.string().optional(),
     })
     .parse(Object.fromEntries(form));
   const exam = await db.examPaper.findUniqueOrThrow({ where: { id: d.id }, select: { courseId: true } });
   await assertCourse(me, exam.courseId);
+  // The lesson the paper follows (it must be one of this course's). Mandatory needs a lesson, and only counts once published.
+  const lesson = d.lessonId ? await db.lesson.findFirst({ where: { id: d.lessonId, unit: { courseId: exam.courseId } }, select: { id: true } }) : null;
   await db.examPaper.update({
     where: { id: d.id },
-    data: { title: d.title, durationMin: d.durationMin, maxAttempts: d.maxAttempts, published: d.published === "on" },
+    data: { title: d.title, durationMin: d.durationMin, maxAttempts: d.maxAttempts, published: d.published === "on", lessonId: lesson?.id ?? null, required: !!lesson && d.required === "on" },
   });
+  revalidatePath("/[locale]/courses/[slug]", "page");
   revalidatePath("/[locale]/teacher/exams/[id]", "page");
   revalidatePath("/[locale]/courses/[slug]/exams", "page");
 }

@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { opensLesson } from "@/lib/plans";
+import { blockerFor } from "@/lib/gate-data";
 import { replyFrom, scoreAttempt, type PracticeError, type PracticeReply } from "@/lib/practice";
 import { awardPractice } from "@/lib/progress-db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
@@ -47,6 +48,7 @@ export async function submitReview(_prev: PracticeError, form: FormData): Promis
   const now = new Date();
   const grantsByCourse = new Map<string, Awaited<ReturnType<typeof grantsFor>>>();
   for (const lesson of lessons) {
+    if (await blockerFor(userId, lesson.unit.courseId, lesson.id, now)) return "closed";
     if (lesson.unit.isFree) continue;
     let grants = grantsByCourse.get(lesson.unit.courseId);
     if (!grants) {

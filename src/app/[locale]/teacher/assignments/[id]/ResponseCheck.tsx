@@ -11,6 +11,7 @@ type Labels = {
   file: string;
   run: string;
   save: string;
+  missingTitle: string;
   /** With {saved} and {skipped}. */
   savedText: string;
   download: string;
@@ -56,6 +57,11 @@ export function ResponseCheck({ assignmentId, labels }: { assignmentId: string; 
         <SubmitButton onClick={press("0")} className="btn btn-outline px-4 py-2 text-small" showSaved={false}>{labels.run}</SubmitButton>
         <SubmitButton onClick={press("1")} className="btn btn-primary px-4 py-2 text-small" showSaved={false}>{labels.save}</SubmitButton>
       </form>
+      {state && "missing" in state && state.missing.length > 0 && (
+        <p role="status" className="text-small text-down" dir="auto">
+          {labels.missingTitle}: {state.missing.join("، ")}
+        </p>
+      )}
       {state && "saved" in state && state.saved && (
         <p role="status" className="text-small font-semibold text-up">{labels.savedText.replace("{saved}", String(state.saved.saved)).replace("{skipped}", String(state.saved.skipped))}</p>
       )}

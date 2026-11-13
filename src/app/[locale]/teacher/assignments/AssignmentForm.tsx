@@ -22,6 +22,7 @@ export type AssignmentValues = {
   dueAt?: string;
   maxScore?: number;
   allowResubmit?: boolean;
+  required?: boolean;
 };
 
 /** What the teacher is making. A quiz on Google Forms and a quiz of the site's own questions are both saved as kind QUIZ. */
@@ -30,6 +31,7 @@ type Type = "HOMEWORK" | "QUIZ" | "FORM";
 type Labels = {
   course: string; lesson: string; lessonNone: string; title: string; instructions: string; linkUrl: string; rubric: string; due: string; maxScore: string; allowResubmit: string;
   files: string; attach: string; removeFile: string; uploadFailed: string; save: string; invalid: string;
+  required?: string; requiredHint?: string; needLesson?: string;
   type?: string; typeHomework?: string; typeQuiz?: string; typeForm?: string; more?: string; template?: string; guide?: string;
   link?: string; linkHint?: string;
 };
@@ -117,6 +119,27 @@ export function AssignmentForm({
         <input name="dueAt" type="datetime-local" defaultValue={values.dueAt ?? ""} className={`${field} w-fit`} />
       </label>
 
+      <label className={label}>
+        {labels.lesson}
+        <select name="lessonId" defaultValue={values.lessonId ?? ""} className={field}>
+          <option value="">{labels.lessonNone}</option>
+          {lessons.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      {labels.required && (
+        <label className="grid gap-1 text-small">
+          <span className="flex min-h-11 items-center gap-2 font-semibold">
+            <input type="checkbox" name="required" defaultChecked={values.required ?? false} className="size-4" />
+            {labels.required}
+          </span>
+          {labels.requiredHint && <span className="text-label font-normal text-ink-muted">{labels.requiredHint}</span>}
+        </label>
+      )}
+
       {homework && (
         <UploadField
           pathPrefix={`homework/${courseId}/`}
@@ -131,19 +154,6 @@ export function AssignmentForm({
       <details className="grid gap-4 rounded-md border border-hairline p-3">
         <summary className="cursor-pointer text-small font-semibold text-ink-muted">{labels.more ?? labels.maxScore}</summary>
         <div className="mt-3 grid gap-4">
-          {mode === "new" && (
-            <label className={label}>
-              {labels.lesson}
-              <select name="lessonId" defaultValue={values.lessonId ?? ""} className={field}>
-                <option value="">{labels.lessonNone}</option>
-                {lessons.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
           {!homework && type !== "FORM" && (
             <label className={label}>
               {labels.instructions}

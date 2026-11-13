@@ -14,7 +14,7 @@ import { AiGradeForm } from "./AiGradeForm";
 import { GradeForm } from "./GradeForm";
 import { ResponseCheck } from "./ResponseCheck";
 import { Link } from "@/i18n/navigation";
-import { deleteAssignment, deleteAssignmentFile, toggleAssignmentItem, updateAssignment } from "../actions";
+import { deleteAssignment, deleteAssignmentFile, letThrough, toggleAssignmentItem, updateAssignment } from "../actions";
 import { QuestionPages } from "@/components/QuestionPages";
 import { scaleScore } from "@/lib/exams";
 import { hasStudentToken } from "@/lib/external-link";
@@ -42,6 +42,8 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
       linkUrl: true,
       linkEntry: true,
       kind: true,
+      lessonId: true,
+      required: true,
       rubric: true,
       dueAt: true,
       maxScore: true,
@@ -108,6 +110,18 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
 
   const waiting = assignment.submissions.filter((s) => s.status === "SUBMITTED").length;
 
+  // Mandatory work: subscribers with a running plan who have not handed it in. The teacher can let one past (see letThrough).
+  const behind = assignment.required
+    ? await db.entitlement
+        .findMany({
+          where: { courseId: assignment.courseId, startsAt: { lte: new Date() }, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }], user: { role: "STUDENT" } },
+          distinct: ["userId"],
+          select: { userId: true, user: { select: { name: true } } },
+          take: 300,
+        })
+        .then((rows) => rows.filter((r) => !assignment.submissions.some((s) => s.student.id === r.userId && (s.status === "SUBMITTED" || s.status === "GRADED"))))
+    : [];
+
   const editBlock = (
     <details className="card p-4">
       <summary className="cursor-pointer font-display text-h3 font-semibold">{t("edit")}</summary>
@@ -119,6 +133,8 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
           values={{
             id: assignment.id,
             courseId: assignment.courseId,
+            lessonId: assignment.lessonId,
+            required: assignment.required,
             kind: assignment.kind,
             title: assignment.title,
             instructions: assignment.instructions,
@@ -146,6 +162,9 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
             save: t("save"),
             invalid: t("invalid"),
             more: t("more"),
+            required: t("required"),
+            requiredHint: t("requiredHint"),
+            needLesson: t("needLesson"),
             template: t("templateButton"),
             guide: t("guideLink"),
             link: t("linkNotAllowed"),
@@ -312,6 +331,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
           <span className="num">
             {assignment.dueAt ? t("dueLabel", { date: formatDate(assignment.dueAt, courseZone(assignment.course), locale) }) : t("noDue")}
             {!isForm && ` · ${t("maxScore")}: ${assignment.maxScore}`}
+            {assignment.required && ` · ${t("requiredChip")}`}
             {waiting > 0 && ` · ${t("waiting")}: ${waiting}`}
           </span>
         }
@@ -334,6 +354,7 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
               file: t("reportFile"),
               run: t("reportRun"),
               save: t("reportSave"),
+              missingTitle: t("reportMissing"),
               savedText: t("reportSaved", { saved: "{saved}", skipped: "{skipped}" }),
               download: t("reportDownload"),
               student: t("reportStudent"),
@@ -347,6 +368,24 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
             <a href={`/api/out/${assignment.id}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">{t("previewLink")}</a>
             <Link href="/teacher/guide/google-forms" className="underline underline-offset-4">{t("guideLink")}</Link>
           </div>
+        </Block>
+      )}
+
+      {assignment.required && behind.length > 0 && (
+        <Block title={`${t("behindTitle")} (${behind.length})`}>
+          <p className="text-small text-ink-muted">{t("behindHint")}</p>
+          <ul className="grid gap-1">
+            {behind.map((r) => (
+              <li key={r.userId} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-hairline px-3 py-2 text-small">
+                <span dir="auto">{r.user.name}</span>
+                <form action={letThrough}>
+                  <input type="hidden" name="assignmentId" value={assignment.id} />
+                  <input type="hidden" name="studentId" value={r.userId} />
+                  <button className="rounded-full border border-hairline px-3 py-1 text-label text-ink-muted">{t("letThrough")}</button>
+                </form>
+              </li>
+            ))}
+          </ul>
         </Block>
       )}
 

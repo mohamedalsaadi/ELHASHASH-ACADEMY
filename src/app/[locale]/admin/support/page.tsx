@@ -23,7 +23,7 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
   await requireAdmin();
   const t = await getTranslations("office.support");
 
-  const tickets = await db.supportTicket.findMany({ orderBy: [{ status: "asc" }, { createdAt: "desc" }], take: 100 });
+  const tickets = await db.supportTicket.findMany({ orderBy: [{ status: "asc" }, { aiFlag: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }], take: 100 });
   const date = new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -54,10 +54,14 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
                     {date.format(k.createdAt)} · {t(`topic.${k.topic}` as never)}
                   </span>
                 </div>
-                <StatusChip tone={k.status === "CLOSED" ? "neutral" : k.status === "ANSWERED" ? "active" : "expiring"}>
-                  {t(`status.${k.status}` as never)}
-                </StatusChip>
+                <span className="flex flex-wrap items-center gap-2">
+                  {k.status === "OPEN" && k.aiFlag && <StatusChip tone="expired">{t(`flag.${k.aiFlag}` as never)}</StatusChip>}
+                  <StatusChip tone={k.status === "CLOSED" ? "neutral" : k.status === "ANSWERED" ? "active" : "expiring"}>
+                    {t(`status.${k.status}` as never)}
+                  </StatusChip>
+                </span>
               </div>
+              {k.status === "OPEN" && k.aiReason && <p dir="auto" className="rounded-sm bg-raised p-2 text-small">{t("whyFlag")}: {k.aiReason}</p>}
               <p dir="auto" className="whitespace-pre-line break-words text-small">{k.message}</p>
 
               {k.reply ? (

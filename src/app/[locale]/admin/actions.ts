@@ -4,6 +4,7 @@ import { del } from "@vercel/blob";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { randomUUID } from "node:crypto";
@@ -97,7 +98,8 @@ export async function updateCourse(form: FormData) {
   await db.course.update({ where: { id }, data: { ...data, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, maxDevices: data.maxDevices ?? null, ...cover } });
   if (data.published && wasHidden) {
     await logEvent({ name: "course_published", userId: me.id, courseId: id });
-    await notifyNewCourse(id);
+    // The whole grade gets a notice, so it runs after the response instead of holding the save.
+    after(() => notifyNewCourse(id));
   }
   done();
 }

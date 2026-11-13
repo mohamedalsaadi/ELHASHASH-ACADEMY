@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import { gradeGroups } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { formatMoney, formatWhen } from "@/lib/format";
+import { courseRatings } from "@/lib/reviews";
 import { getStudentHome } from "@/lib/student-home-server";
 import { resolveCountry, RIDE_COUNTRY } from "@/lib/student-home";
 import PublicHome from "../page";
@@ -97,6 +98,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
   const code = grade.country.code.toLowerCase();
   const line = `var(--color-line-${code}, var(--color-primary))`;
   const ownedIds = new Set(owned.map((c) => c.id));
+  const ratings = await courseRatings([...new Set([...owned.map((c) => c.id), ...subjects.flatMap((s) => s.courses.map((c) => c.id))])]);
   const name = (s: { nameAr: string; nameEn: string }) => (pickText(ar, s.nameAr, s.nameEn));
 
   // What the student already has comes first, then what they can still join; empty subjects only get a "coming soon" line.
@@ -155,7 +157,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
             <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {owned.map((c) => (
                 <li key={c.id}>
-                  <CourseCard course={c} locale={locale} />
+                  <CourseCard course={c} locale={locale} owned rating={ratings.get(c.id)} />
                 </li>
               ))}
             </ul>
@@ -192,7 +194,7 @@ export default async function StudentHome({ params }: { params: Promise<{ locale
               <ul className="-mx-4 flex snap-x gap-5 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
                 {s.courses.filter((c) => !ownedIds.has(c.id)).map((c) => (
                   <li key={c.id} className="relative w-[82%] shrink-0 snap-start sm:w-auto">
-                    <CourseCard course={c} locale={locale} />
+                    <CourseCard course={c} locale={locale} owned={false} rating={ratings.get(c.id)} />
                   </li>
                 ))}
               </ul>

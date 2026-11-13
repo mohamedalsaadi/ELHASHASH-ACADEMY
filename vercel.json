@@ -2,6 +2,9 @@
   "crons": [
     { "path": "/api/cron/retention", "schedule": "17 3 * * *" },
     { "path": "/api/cron/statements", "schedule": "17 4 1 * *" },
-    { "path": "/api/cron/progress", "schedule": "17 5 1 * *" }
+    { "path": "/api/cron/progress", "schedule": "17 5 1 * *" },
+    { "path": "/api/cron/live-day", "schedule": "30 4 * * *" },
+    { "path": "/api/cron/promote", "schedule": "30 5 1 8 *" },
+    { "path": "/api/cron/briefing", "schedule": "0 2 * * *" }
   ]
 }

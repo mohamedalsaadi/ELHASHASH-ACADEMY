@@ -42,6 +42,7 @@ export async function eraseAccount(userId: string): Promise<ErasureCounts> {
     await count(trx.quizAttempt.deleteMany({ where: { userId } }));
     await count(trx.lessonView.deleteMany({ where: { userId } }));
     await count(trx.reviewSchedule.deleteMany({ where: { userId } }));
+    await count(trx.courseReview.deleteMany({ where: { studentId: userId } }));
     await count(trx.studentProgress.deleteMany({ where: { userId } }));
     await count(trx.liveAttendance.deleteMany({ where: { userId } }));
     await count(trx.notification.deleteMany({ where: { userId } }));

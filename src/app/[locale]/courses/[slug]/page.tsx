@@ -21,6 +21,8 @@ import { liveApprovedOn } from "@/lib/live";
 import { readiness } from "@/lib/readiness";
 import { isLocked } from "@/lib/gate";
 import { itemHref, loadGate } from "@/lib/gate-data";
+import { courseRatings, rateState } from "@/lib/reviews";
+import { ReviewForm } from "./reviews/ReviewForm";
 import { courseProgress, lessonEntries, livePhase, nextOpenLesson, roomOpensAt, LIVE_LEAD_MIN } from "@/lib/learning";
 import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { aedPriceOf, cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
@@ -139,6 +141,7 @@ export default async function CoursePage({
   const te = await getTranslations("exam");
   const tt = await getTranslations("teacher");
   const tg = await getTranslations("gate");
+  const tr = await getTranslations("reviews");
   const ar = locale === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
   const now = new Date();
@@ -228,6 +231,8 @@ export default async function CoursePage({
   const plans = active.filter((g) => !g.lessonId && !g.liveSessionId);
   const bestPlan = plans.sort((a, b) => (b.endsAt?.getTime() ?? Number.POSITIVE_INFINITY) - (a.endsAt?.getTime() ?? Number.POSITIVE_INFINITY))[0];
   const progress = courseProgress(entries, active, completed, now);
+  const rating = (await courseRatings([course.id])).get(course.id);
+  const rate = session?.user && !staff && session.user.role === "STUDENT" ? await rateState(session.user.id, course.id, now) : null;
   const nextRaw = nextOpenLesson(entries, active, completed, now);
   const next = nextRaw && !closedByWork(nextRaw.lesson.id) ? nextRaw : undefined;
 
@@ -448,6 +453,29 @@ export default async function CoursePage({
             <span className="text-small text-ink-muted" dir="auto">{tg(gate.blocker.item.kind === "exam" ? "finishExam" : "finishHomework", { title: gate.blocker.item.title })}</span>
           </span>
           <Link href={itemHref(slug, gate.blocker.item)} className="btn btn-primary">{tg("go")}</Link>
+        </section>
+      )}
+
+      {(rating || rate?.eligible || rate?.mine) && (
+        <section id="rate" className="card grid gap-3 p-4">
+          <span className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="font-display text-h3 font-bold">{rate?.eligible ? tr("title") : tr("ratingTitle")}</span>
+            {rating && <span className="num text-small text-ink-muted">{tr("ratingLine", { avg: String(rating.avg), count: String(rating.count) })}</span>}
+          </span>
+          {rate?.eligible && (!rate.mine || rate.mine.status === "HELD") && (
+            <>
+              <p className="text-small text-ink-muted">{tr("hint")}</p>
+              <ReviewForm
+                courseId={course.id}
+                initial={rate.mine}
+                labels={{ stars: tr("stars"), text: tr("text"), send: tr("send"), ok: tr("ok"), held: tr("held"), closed: tr("closed"), masked: tr("masked"), invalid: tr("invalid"), already: tr("already") }}
+              />
+            </>
+          )}
+          {rate?.mine && rate.mine.status !== "HELD" && (
+            <p className="text-small text-ink-muted">{tr(rate.mine.status === "PUBLISHED" ? "yours" : "removed", { stars: String(rate.mine.stars) })}</p>
+          )}
+          {rate?.mine?.status === "HELD" && <p className="text-small text-ink-muted">{tr("waiting")}</p>}
         </section>
       )}
 

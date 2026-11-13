@@ -1,3 +1,4 @@
+import { RATE_AT_PCT } from "@/lib/review-eligibility";
 import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
@@ -36,7 +37,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   if (session.user.role === "INSTRUCTOR") redirect(`/${locale}/teacher`);
   if (session.user.role === "PARENT") redirect(`/${locale}/parent`);
 
-  const [t, tc, tq, tm, tl, th, tpr] = await Promise.all([
+  const [t, tc, tq, tm, tl, th, tpr, tr] = await Promise.all([
     getTranslations("dashboard"),
     getTranslations("catalog"),
     getTranslations("questions"),
@@ -44,6 +45,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     getTranslations("live"),
     getTranslations("homework"),
     getTranslations("practice"),
+    getTranslations("reviews"),
   ]);
   const ar = locale === "ar";
   const now = new Date();
@@ -469,11 +471,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           <ul className="grid gap-3">
             {courses.map(({ courseId, course, active, lapsed }) => {
               const progress = active ? progressOf(courseId) : null;
+              const rateable = !!progress && progress.total > 0 && progress.done / progress.total >= RATE_AT_PCT / 100;
               const expiring = !!active?.endsAt && active.endsAt.getTime() - now.getTime() <= 7 * 86_400_000;
               return (
                 <li key={courseId}>
                   <Link
-                    href={active ? `/courses/${course.slug}` : `/courses/${course.slug}#packages`}
+                    href={active ? `/courses/${course.slug}${rateable ? "#rate" : ""}` : `/courses/${course.slug}#packages`}
                     className="grid gap-2 card p-4 transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                   >
                     <span className="flex flex-wrap items-center justify-between gap-2">
@@ -500,6 +503,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                           ? ` · ${t("plan.expired")}`
                           : ""}
                     </span>
+                    {rateable && <span className="text-small font-semibold text-pen">{tr("rateHint")}</span>}
                     {progress && progress.total > 0 && (
                       <ProgressBar done={progress.done} total={progress.total} label={t("progressLabel")} />
                     )}

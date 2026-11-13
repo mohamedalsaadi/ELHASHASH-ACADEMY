@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
  * that outlives the data they describe. Failures here must never break the feature they measure.
  */
 export async function logAiRun(run: {
-  kind: "grade" | "support_draft" | "assistant" | "suggestion_digest";
+  kind: "grade" | "support_draft" | "assistant" | "suggestion_digest" | "briefing";
   model: string;
   tokensIn?: number;
   tokensOut?: number;

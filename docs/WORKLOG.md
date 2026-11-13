@@ -1277,6 +1277,54 @@ Committed; not deployed.
   404; a new quiz notice said "New homework".
 - **Open:** confirm the exact `Score` format a real Google quiz writes (e2e covers `8 / 10` and plain numbers).
 
+## 2026-11-13: AI coworkers, foundation: owner desk and morning briefing (local, unpushed)
+
+Owner wants AI coworkers instead of staff, on whichever model is cheapest at the same quality (Gemini is fine). What already existed: `askJson` on Gemini
+(`src/lib/ai.ts`), the privacy-first `AiRun` log (counts only, never prompts or replies), AI homework suggestions, AI ticket drafts (`SupportTicket.aiDraft`),
+the suggestion-box digest. Each already has its own approval spot (the teacher releases a grade, the owner sends a ticket reply), so no generic queue was built yet.
+
+- **Chief of staff.** `src/lib/briefing.ts`: `gatherBriefing` (SQL counts only: revenue and new students in 24 h, failed payments, open tickets and requests, held
+  reviews, pending teacher applications, unanswered questions, homework ungraded over 48 h, live sessions today), `briefingLines` (works without AI),
+  `summarise` (Gemini writes 2-3 bilingual sentences from the numbers; no names or message text leave the building), `sendBriefing` (in-app notice per admin plus an
+  email to admins with an address, else `CONTACT_EMAIL`; once a day by dedupe key). Cron `/api/cron/briefing` at 02:00 UTC = 06:00 Gulf.
+- **Owner desk** `/admin/ai` (new tab): AI on/off and model, today's briefing, "Send it to me now", and 30-day usage per kind from `AiRun` (calls, errors, tokens).
+  `AiRun.kind` gained `briefing`.
+- **Support agent (triage upgrade).** `src/lib/support.ts`: the drafting model now also reads the sender's account (`accountContext`, `loadAccountFacts`: plans with
+  state and the last three orders for the account that uses the ticket's email; no name or contact detail) and raises a flag (`refund`, `payment`, `account`, `bug`,
+  `complaint`) with a one-line reason. Stored on `SupportTicket.aiFlag` and `aiReason` (migration `20261123100000_support_ai_flag`, additive). The admin support page
+  shows the flag chip and reason and sorts flagged tickets first; the new-ticket notice says "needs your decision"; the morning briefing counts them. Privacy topics
+  still never reach the model, and nothing is sent without the owner pressing Send.
+- **Researched, not adopted:** GitHub and plugin directory. Useful later: promptfoo (MIT) for Arabic marking and support evals, dbhub (MIT, read-only DB MCP) for a
+  Claude Code coworker on a read-only Neon role, Anthropic directory plugins "Customer Support" and "Answering Agent". Not needed: Cossistant (AGPL), Langfuse
+  (we already log runs), external support inboxes (our own `SupportTicket` covers it).
+- **Open / owner needs:** see the closing message of this session (Gemini key and model price check, `CONTACT_EMAIL`/admin email, `CRON_SECRET`, Resend plan).
+
+## 2026-11-13: live sessions in the course editor, grade notices, August promotion, course ratings, locked cards (local, unpushed)
+
+Owner request, four parts. Owner answers: live stays on Meet/Zoom/Teams links with the recording kept as a VdoCipher lesson (VdoCipher is
+recorded-video only to our knowledge; not confirmed with them), in-app notices for everyone and email only for key moments, rating allowed at 70% of
+lessons (or 30% once the plan ended), unsubscribed courses grey with a colour reveal.
+
+- **Live in the course editor.** `admin/courses/[id]` has a "Live sessions" block: schedule form (reuses `scheduleLive`, now with `back=course`), upcoming list
+  linking to `/teacher/live` for edits and pricing, and per past session an "Add recording" form (`addRecording`, VdoUpload then a VIDEO lesson at the end of the
+  course's last topic). Teachers still need `liveApproved`.
+- **Notices.** `src/lib/live-alerts.ts`: `notifyLiveScheduled` (in-app `LIVE_SOON` to every student of the grade, batches of 500, runs in `after()`) and
+  `remindLiveToday` used by the new daily cron `/api/cron/live-day` (04:30 UTC; sessions in the next 24 h; in-app and email to anyone whose plan opens live;
+  dedupe keys). `notifyNewCourse` now reaches every student of the grade (was: same-subject holders, cap 500), also in `after()`.
+- **August promotion.** `User.gradePromotedYear`; `src/lib/grades-next.ts` (`nextGrade`: same country, curriculum and track, level+1, none for terminal years);
+  cron `/api/cron/promote` (`30 5 1 8 *`) moves each student once a year, notifies them (email for this one) and their parents (in-app). `?dry=1` reports and
+  changes nothing: **run it first**. Entitlements are never touched.
+- **Ratings.** `CourseReview` + `ReviewStatus` (migration `20261122100000_grade_promotion_and_reviews`, additive). `src/lib/review-eligibility.ts`
+  (`canRate`, constants), `src/lib/reviews.ts` (`courseRatings`, `teacherRating`, `rateState`). Student form on the course page (`#rate`), numbered 1 to 5 pills,
+  contact details refused. 1 or 2 out of 5 is HELD and notifies admins; `/admin/reviews` (new tab and overview tile) publishes it or removes it with a written
+  reason; every decision keeps who and when. Shown only from 3 published reviews: chip on `CourseCard`, teacher header and a "Student reviews" list (grade only,
+  no names). Erasure and `/api/health` know the new table and column.
+- **Student home.** `CourseCard` takes `owned`: subscribed shows a "Subscribed" chip; not subscribed has a dashed edge, a lock chip and a grey cover that fades to colour on hover, focus or tap
+  (two stacked images, opacity only, so it stays inside the motion rules). Used on `/me` for the Continue and per-subject lists.
+- Also fixed: `admin.copyUnit` and `admin.copyUnitTo` were missing from the admin namespace (they lived under `office`), so the course editor logged MISSING_MESSAGE.
+- **Open:** VdoCipher live not confirmed with them; the August email goes one at a time (move to a queue past a few thousand students); Resend free tier is about
+  100 emails a day, so the same-day live reminder and the August mail need a paid plan once volume grows; the cron only sees sessions in the 24 h after 04:30 UTC.
+
 ## 2026-11-13: mandatory homework and exams close the next lessons (local, unpushed)
 
 - **Rule (owner's answers, all recommended):** a teacher ticks **Required** on a homework, a quiz on Google Forms, or an

@@ -38,11 +38,12 @@ export async function sendSupportMessage(_: unknown, form: FormData): Promise<"o
   if (ticket) {
     after(async () => {
       // Privacy requests go to a human unread: a model must never see "delete my child's data".
-      if (mayDraft(d.data.topic)) await draftTicket(ticket.id);
+      const flag = mayDraft(d.data.topic) ? await draftTicket(ticket.id) : null;
+      const needsYou = !!flag && flag !== "none";
       await notifyAdmins({
         kind: "SYSTEM",
-        titleAr: `رسالة دعم جديدة: ${d.data.name}`,
-        titleEn: `New support message: ${d.data.name}`,
+        titleAr: `${needsYou ? "رسالة دعم تحتاج قرارك" : "رسالة دعم جديدة"}: ${d.data.name}`,
+        titleEn: `${needsYou ? "Support message that needs your decision" : "New support message"}: ${d.data.name}`,
         href: "/admin/support",
         dedupeKey: `ticket:${ticket.id}`,
         email: false,

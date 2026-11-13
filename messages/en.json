@@ -470,7 +470,9 @@
     "liveAvailable": "Live sessions",
     "lessonsRecorded": "{count, plural, =0 {No recorded lessons yet} one {# recorded lesson} other {# recorded lessons}}",
     "openCourse": "Open the course",
-    "viewProfile": "View profile"
+    "viewProfile": "View profile",
+    "ownedChip": "Subscribed",
+    "lockedChip": "Not subscribed"
   },
   "assistant": {
     "title": "Ask about this lesson",
@@ -773,7 +775,9 @@
     "maxPlays": "Plays per lesson per student (empty = unlimited)",
     "maxIps": "Different IP addresses per student per day (empty = no check)",
     "maxDevices": "Browsers (devices) per student in 30 days (empty = no check)",
-    "limitsHint": "Limits video sharing. A refresh within 5 minutes is not a new play. You and the owner are never limited."
+    "limitsHint": "Limits video sharing. A refresh within 5 minutes is not a new play. You and the owner are never limited.",
+    "copyUnitTo": "Copy this unit to another course (videos are reused)",
+    "copyUnit": "Copy"
   },
   "signup": {
     "title": "Create an account",
@@ -1123,7 +1127,14 @@
     "noLinkYet": "The teacher has not added the meeting link yet. It appears here before the start.",
     "consentTitle": "Guardian consent",
     "consentBody": "Live sessions open an external meeting link outside Dhirwa. We need the guardian's consent once per student, before the first live session.",
-    "consentParent": "Your guardian is linked to your account. Ask them to approve from the parent page, then come back here."
+    "consentParent": "Your guardian is linked to your account. Ask them to approve from the parent page, then come back here.",
+    "courseSection": "Live sessions",
+    "courseSectionHint": "Schedule a live session for this course. Every student of the grade is told, and subscribers get a reminder the same day. After it ends, upload the recording here and it becomes a protected lesson.",
+    "manageLive": "Edit and set the seat price",
+    "recordingHint": "Upload the recording to keep it as a lesson",
+    "addRecording": "Add as a lesson",
+    "noUnitError": "Add a topic to the course first, then the recording has somewhere to go.",
+    "noVideoError": "Pick the recording file and wait for the upload to finish, then press the button."
   },
   "questions": {
     "title": "Questions",
@@ -1165,7 +1176,9 @@
       "analytics": "Behaviour",
       "funnel": "Funnel",
       "finance": "Tax",
-      "settings": "Settings"
+      "settings": "Settings",
+      "reviews": "Reviews",
+      "ai": "AI"
     },
     "analyticsHint": "Last {days} days. Each step counts only people who also completed the earlier steps.",
     "step": "Step",
@@ -1377,7 +1390,7 @@
       }
     },
     "support": {
-      "hint": "Messages from the contact form. The AI writes a first draft; read it, edit it and send. Nothing is sent without you.",
+      "hint": "Messages from the contact form. The AI reads the sender's plans and orders, writes a first draft and flags what needs your decision (refund, payment, account). Read it, edit it and send. Nothing is sent without you.",
       "empty": "No support messages yet.",
       "draft": "AI draft (edit before sending)",
       "write": "Your reply",
@@ -1394,7 +1407,15 @@
         "OPEN": "Open",
         "ANSWERED": "Answered",
         "CLOSED": "Closed"
-      }
+      },
+      "flag": {
+        "refund": "Refund",
+        "payment": "Payment",
+        "account": "Account",
+        "bug": "Bug",
+        "complaint": "Upset"
+      },
+      "whyFlag": "Needs your decision"
     },
     "funnelTitle": "Last 30 days",
     "funnelHint": "Each person is counted once per day per step, so these are people, not page views.",
@@ -1408,6 +1429,31 @@
       "checkout_started": "Started checkout",
       "order_paid": "Paid",
       "signup_completed": "Created an account"
+    },
+    "ai": {
+      "hint": "Your AI coworkers report here. Nothing they draft is sent to a student, a parent or a customer without you or a teacher approving it.",
+      "status": "AI status",
+      "on": "AI is on, model {model}.",
+      "off": "AI is off: no key is set, or it was switched off. The briefing below still works with plain numbers.",
+      "briefing": "Morning briefing",
+      "sendNow": "Send it to me now",
+      "sending": "Sending",
+      "schedule": "It is also sent every day at 06:00 Gulf time, in the app and by email.",
+      "usage": "What the AI used in the last 30 days",
+      "noRuns": "No AI runs yet.",
+      "kind": "Coworker",
+      "calls": "Calls",
+      "errors": "Errors",
+      "tokensIn": "Tokens in",
+      "tokensOut": "Tokens out",
+      "usageNote": "Prompts and replies are never stored here, only counts. Multiply tokens by your model price for the cost.",
+      "kinds": {
+        "grade": "Homework marking",
+        "support_draft": "Support drafts",
+        "assistant": "Lesson assistant",
+        "suggestion_digest": "Suggestion digest",
+        "briefing": "Morning briefing"
+      }
     }
   },
   "account": {
@@ -1985,5 +2031,39 @@
     "noLesson": "No lesson",
     "requiredExam": "Required: the lessons after it stay closed until the student has submitted it",
     "requiredExamHint": "Needs a lesson, and only counts once the exam is published."
+  },
+  "reviews": {
+    "title": "Rate this course",
+    "ratingTitle": "What students say",
+    "ratingLine": "{avg} / 5 · {count} reviews",
+    "hint": "You have taken this course, so your opinion counts. It helps other students and tells the teacher what worked. Your name is never shown.",
+    "stars": "Your rating, 1 to 5",
+    "text": "Your review (optional)",
+    "send": "Send my rating",
+    "ok": "Thank you. Your rating is published.",
+    "held": "Thank you. A low rating is read by the academy first, then it appears.",
+    "closed": "You can rate once you have finished most of the course.",
+    "masked": "Please remove phone numbers, links or contact details from your review.",
+    "invalid": "Choose a rating from 1 to 5.",
+    "already": "Your rating was already checked and can no longer be changed.",
+    "yours": "Your rating: {stars} / 5. Thank you.",
+    "removed": "Your rating of {stars} / 5 was reviewed and not published.",
+    "waiting": "Waiting for the academy to read it before it is shown. You can still change it.",
+    "teacherTitle": "Student reviews",
+    "teacherRating": "{avg} / 5 from {count} reviews",
+    "studentOf": "Student · {grade}",
+    "navTitle": "Reviews",
+    "adminHint": "Ratings of one or two out of five wait here. A review is counted and shown only after you publish it. Removing one needs a written reason, and every decision is kept.",
+    "adminEmpty": "No review is waiting.",
+    "progress": "Finished {pct}% of the lessons",
+    "publish": "Publish",
+    "remove": "Remove",
+    "reason": "Reason for removing",
+    "reasonNeeded": "Write the reason first.",
+    "waitingSince": "Waiting since {date}",
+    "by": "Student in {grade}",
+    "pending": "Reviews waiting",
+    "decided": "Decided",
+    "rateHint": "You have finished most of this course. Rate it."
   }
 }

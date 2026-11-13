@@ -111,6 +111,8 @@ model User {
   /// Set when the person used an unsubscribe link. Receipts, security and consent mail still go out.
   emailOptOutAt   DateTime?
   gradeId         String?
+  /// The year the August job last moved this student up a grade (it never moves one twice in a year).
+  gradePromotedYear Int?
   /// Teacher profile, shown on the public teacher page. photoUrl is a private Blob pathname.
   photoUrl        String?
   photoType       String?
@@ -133,6 +135,7 @@ model User {
   /// Orders a linked parent paid for this student.
   ordersReceived      Order[]                 @relation("OrderBeneficiary")
   entitlements        Entitlement[]
+  reviewsWritten      CourseReview[]
   device              DeviceSession?
   playEvents          PlayEvent[]
   progress            StudentProgress?
@@ -313,6 +316,7 @@ model Course {
   units           Unit[]
   skus            Sku[]
   entitlements    Entitlement[]
+  reviews         CourseReview[]
   liveSessions    LiveSession[]
   assignments     Assignment[]
   specialRequests SpecialRequest[]
@@ -657,7 +661,7 @@ model Entitlement {
   @@index([userId, courseId])
 }
 
-/// A scheduled live lecture on Daily. The Daily room is created on the first join (roomUrl) and expires after the end.
+/// A scheduled live lecture. The teacher pastes a Meet, Zoom or Teams link (roomUrl); the join page shows it to students whose plan opens it.
 /// Cancelling keeps the row, so seats already sold stay on record for refunds.
 model LiveSession {
   id          String    @id @default(cuid())
@@ -1774,6 +1778,9 @@ model SupportTicket {
   message     String        @db.VarChar(2000)
   status      RequestStatus @default(OPEN)
   aiDraft     String?       @db.VarChar(4000)
+  /// Set when the drafting model thinks the owner must decide: refund, payment, account, bug or complaint.
+  aiFlag      String?       @db.VarChar(20)
+  aiReason    String?       @db.VarChar(300)
   reply       String?       @db.VarChar(4000)
   repliedById String?
   repliedAt   DateTime?
@@ -1820,4 +1827,35 @@ model OtpCode {
   createdAt  DateTime  @default(now())
 
   @@index([phone, createdAt])
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  /// Low ratings wait here until an admin decides; they count nowhere until then.
+  HELD
+  REMOVED
+}
+
+/// A subscriber's rating of a course and its teacher, allowed once the student has finished enough of it.
+/// The teacher is the course's instructor at read time. Shown without the student's name.
+model CourseReview {
+  id          String       @id @default(cuid())
+  courseId    String
+  studentId   String
+  stars       Int
+  text        String?
+  status      ReviewStatus
+  /// Why an admin removed it (required then).
+  adminNote   String?
+  decidedById String?
+  decidedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([courseId, status])
+  @@index([status, createdAt])
 }

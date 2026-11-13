@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/brand/Mark";
 import { CourseCard } from "@/components/CourseCard";
 import { InstructorBlock } from "@/components/teachers/InstructorBlock";
 import { Link } from "@/i18n/navigation";
+import { courseRatings } from "@/lib/reviews";
 import { cardInclude } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { alternates } from "@/lib/seo";
@@ -60,6 +61,7 @@ export default async function SubjectPage({ params }: { params: Promise<Params> 
     include: cardInclude(new Date()),
   });
   const line = `var(--color-line-${slug.toLowerCase()}, var(--color-ink))`;
+  const ratings = await courseRatings(courses.map((c) => c.id));
   const crumb = "inline-flex min-h-11 items-center text-pen underline-offset-4 hover:underline";
 
   // One card per teacher, not per course: a teacher with two courses for this subject gets one card
@@ -103,7 +105,7 @@ export default async function SubjectPage({ params }: { params: Promise<Params> 
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map((c) => (
               <li key={c.id}>
-                <CourseCard course={c} locale={locale} />
+                <CourseCard course={c} locale={locale} rating={ratings.get(c.id)} />
               </li>
             ))}
           </ul>

@@ -9,10 +9,12 @@ import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
 import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
-import { minorPerUnit } from "@/lib/format";
+import { formatWhen, minorPerUnit } from "@/lib/format";
+import { canPublishLive } from "@/lib/live";
 import { lecturesIn } from "@/lib/plans";
 import { assertCourse, requireStaff } from "@/lib/staff";
 import { addLesson, addRental, addSku, addUnit, copyUnit, deleteCourse, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
+import { addRecording, scheduleLive } from "../../../teacher/live/actions";
 import { field, label } from "../../styles";
 import { DeleteButton, PlanPrice, SaveButton } from "../../ui";
 
@@ -26,14 +28,16 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/admin/courses", "office", { key: "nav.courses", noindex: true });
 }
 
-export default async function AdminCoursePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+export default async function AdminCoursePage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ error?: string }> }) {
   const { locale, id } = await params;
+  const { error: liveError } = await searchParams;
   setRequestLocale(locale);
   const me = await requireStaff();
   await assertCourse(me, id);
   const isAdmin = me.role === "ADMIN";
   const t = await getTranslations("admin");
   const tc = await getTranslations("catalog");
+  const tl = await getTranslations("live");
 
   const course = await db.course.findUnique({
     where: { id },
@@ -61,6 +65,12 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
     db.examPaper.count({ where: { courseId: id } }),
   ]);
   const counts = { questions, quizzes, exams };
+  const canLive = await canPublishLive(me);
+  const liveNow = new Date();
+  const sessions = await db.liveSession.findMany({ where: { courseId: id }, orderBy: { startsAt: "desc" }, take: 30 });
+  const sessionEnd = (x: (typeof sessions)[number]) => new Date(x.startsAt.getTime() + x.durationMin * 60_000);
+  const upcomingLive = sessions.filter((x) => !x.cancelledAt && sessionEnd(x) > liveNow).reverse();
+  const pastLive = sessions.filter((x) => !x.cancelledAt && sessionEnd(x) <= liveNow).slice(0, 10);
   const packages = course.skus.filter((s) => !s.lessonId && !s.liveSessionId);
   const rentalOf = new Map(course.skus.filter((s) => s.lessonId).map((s) => [s.lessonId!, s]));
   // Skill courses sell for a number of days; school subjects by term or year.
@@ -337,6 +347,76 @@ export default async function AdminCoursePage({ params }: { params: Promise<{ lo
           <input type="hidden" name="courseId" value={course.id} />
           <SaveButton>{t("addUnit")}</SaveButton>
         </form>
+      </section>
+
+      <section className="grid gap-4" id="live">
+        <h2 className="font-display text-h2 font-semibold">{tl("courseSection")}</h2>
+        <p className="text-small text-ink-muted">{tl("courseSectionHint")}</p>
+        {liveError && (
+          <p role="alert" className="text-small text-down">
+            {liveError === "past" ? tl("pastError") : liveError === "link" ? tl("linkError") : liveError === "notApproved" ? tl("notApproved") : liveError === "noVideo" ? tl("noVideoError") : tl("noUnitError")}
+          </p>
+        )}
+        {canLive ? (
+          <form action={scheduleLive} className={card}>
+            <input type="hidden" name="locale" value={locale} />
+            <input type="hidden" name="courseId" value={course.id} />
+            <input type="hidden" name="back" value="course" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={label}>
+                {tl("titleAr")}
+                <input name="titleAr" required maxLength={200} dir="rtl" className={field} />
+              </label>
+              <label className={label}>
+                {tl("titleEn")}
+                <input name="titleEn" required maxLength={200} dir="ltr" className={field} />
+              </label>
+              <label className={label}>
+                {tl("startsAtIn", { zone: tl(`zone.${zone.split("/")[1]}`) })}
+                <input name="startsAt" type="datetime-local" required dir="ltr" className={`${field} num`} />
+              </label>
+              <label className={label}>
+                {tl("durationMin")}
+                <input name="durationMin" type="number" min="15" max="300" step="5" defaultValue={60} required dir="ltr" className={`${field} num w-28`} />
+              </label>
+            </div>
+            <label className={label}>
+              {tl("meetingUrl")}
+              <input name="meetingUrl" type="url" placeholder="https://…" dir="ltr" className={`${field} text-small`} />
+              <span className="text-small text-ink-muted">{tl("meetingUrlHint")}</span>
+            </label>
+            <div>
+              <SaveButton>{tl("scheduleCta")}</SaveButton>
+            </div>
+          </form>
+        ) : (
+          <p role="status" className="rounded-lg border border-hairline bg-raised p-4 text-small text-ink-muted">{tl("notApproved")}</p>
+        )}
+        {upcomingLive.map((x) => (
+          <div key={x.id} className="flex flex-wrap items-center justify-between gap-3 rounded-sm bg-raised p-3 text-small">
+            <span className="grid gap-1">
+              <span className="font-semibold">{pick(locale === "ar", x.titleAr, x.titleEn)}</span>
+              <span className="text-ink-muted">{formatWhen(x.startsAt, zone, locale)}</span>
+            </span>
+            <Link href="/teacher/live" className="font-semibold text-pen underline underline-offset-4">{tl("manageLive")}</Link>
+          </div>
+        ))}
+        {pastLive.map((x) => (
+          <form key={x.id} action={addRecording} className={tile}>
+            <input type="hidden" name="id" value={x.id} />
+            <input type="hidden" name="locale" value={locale} />
+            <input type="hidden" name="provider" value="VDOCIPHER" />
+            <input type="hidden" name="externalId" value="" />
+            <span className="grid gap-1 text-small">
+              <span className="font-semibold">{pick(locale === "ar", x.titleAr, x.titleEn)}</span>
+              <span className="text-ink-muted">{formatWhen(x.startsAt, zone, locale)} · {tl("recordingHint")}</span>
+            </span>
+            <VdoUpload title={`${course.titleEn} · ${x.titleEn}`} labels={{ pick: t("uploadPick"), sending: t("uploading"), done: t("uploadDone"), failed: t("uploadFailed") }} />
+            <div>
+              <SaveButton>{tl("addRecording")}</SaveButton>
+            </div>
+          </form>
+        ))}
       </section>
 
       <section className="grid gap-4">

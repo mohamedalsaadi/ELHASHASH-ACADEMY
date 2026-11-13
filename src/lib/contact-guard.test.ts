@@ -33,9 +33,9 @@ describe("maskContacts", () => {
   });
 
   it("keeps the academy's own email and allowed numbers", () => {
-    const s = maskContacts("راسلونا على chemical.mohammed@gmail.com أو 01012345678", ["01012345678"]);
+    const s = maskContacts("راسلونا على support@dhirwa.ae أو 01012345678", ["01012345678"]);
     expect(s.masked).toBe(false);
-    expect(s.text).toContain("chemical.mohammed@gmail.com");
+    expect(s.text).toContain("support@dhirwa.ae");
     expect(s.text).toContain("01012345678");
   });
 

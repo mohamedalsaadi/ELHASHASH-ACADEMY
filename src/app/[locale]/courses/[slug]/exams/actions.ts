@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { hasPlan } from "@/lib/assignments";
@@ -14,6 +14,7 @@ import { isExpired, markExam } from "@/lib/exams";
 import { opensLesson } from "@/lib/plans";
 import { replyFrom, type PracticeError, type PracticeReply } from "@/lib/practice";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
+import { redirectLocal } from "@/lib/redirect-locale";
 
 /** Starts a paper, or resumes the one already open. The clock lives in the database, not the browser. */
 export async function startExam(form: FormData) {
@@ -36,7 +37,7 @@ export async function startExam(form: FormData) {
   ]);
   if (!existing && !isCourseStaff(session.user, paper.course)) {
     const grants = await grantsFor(session.user.id, paper.courseId);
-    if (!hasPlan(grants, new Date())) redirect(`/courses/${paper.course.slug}#packages`);
+    if (!hasPlan(grants, new Date())) return redirectLocal(`/courses/${paper.course.slug}#packages`);
   }
   // A fresh attempt only while the student has one left, and never while one is already open.
   if (!existing && used < paper.maxAttempts) {
@@ -50,7 +51,7 @@ export async function startExam(form: FormData) {
       },
     });
   }
-  redirect(`/courses/${paper.course.slug}/exams/${paper.id}`);
+  return redirectLocal(`/courses/${paper.course.slug}/exams/${paper.id}`);
 }
 
 /** Marks the objective items now and leaves any written answers for the teacher. */
@@ -83,7 +84,7 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
   if (isExpired(attempt.expiresAt, now)) {
     await db.examAttempt.update({ where: { id: attempt.id }, data: { status: "GRADED", submittedAt: now, gradedAt: now, marks: 0 } });
     revalidatePath("/[locale]/courses/[slug]/exams/[examId]", "page");
-    redirect(`/courses/${attempt.paper.course.slug}/exams/${attempt.paperId}`);
+    return redirectLocal(`/courses/${attempt.paper.course.slug}/exams/${attempt.paperId}`);
   }
 
   const items = attempt.paper.items.map((i) => i.item);
@@ -132,5 +133,5 @@ export async function submitExam(_prev: PracticeError, form: FormData): Promise<
   }
   revalidatePath("/[locale]/teacher/exams/[id]", "page");
   revalidatePath("/[locale]/courses/[slug]/exams/[examId]", "page");
-  redirect(`/courses/${attempt.paper.course.slug}/exams/${attempt.paperId}`);
+  return redirectLocal(`/courses/${attempt.paper.course.slug}/exams/${attempt.paperId}`);
 }

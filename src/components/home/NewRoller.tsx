@@ -6,10 +6,26 @@ import { CourseCard, type CardCourse } from "@/components/CourseCard";
  */
 export function NewRoller({ courses, locale, label, badge }: { courses: CardCourse[]; locale: string; label: string; badge: string }) {
   if (courses.length === 0) return null;
+  // One or two cards do not make a strip: show them still, instead of a looping row of copies.
+  if (courses.length <= 2) {
+    return (
+      <section aria-label={label} className="grid min-w-0 gap-4">
+        <h2 className="font-display text-h1 font-bold">{label}</h2>
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {courses.map((c) => (
+            <li key={c.id}>
+              <span className="mb-2 inline-block rounded-full bg-marker px-2.5 py-0.5 text-label font-bold text-on-summit">{badge}</span>
+              <CourseCard course={c} locale={locale} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
   // Each half of the loop must be wider than the screen, or the strip shows a gap: repeat a short list until it has 6 cards.
   const half = Array.from({ length: Math.ceil(6 / courses.length) }, () => courses).flat();
   return (
-    <section aria-label={label} className="grid gap-4">
+    <section aria-label={label} className="grid min-w-0 gap-4">
       <h2 className="font-display text-h1 font-bold">{label}</h2>
       <div className="roller" tabIndex={0} role="region" aria-label={label}>
         <ul className="roller-track">

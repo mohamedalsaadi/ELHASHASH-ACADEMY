@@ -1277,6 +1277,12 @@ Committed; not deployed.
   404; a new quiz notice said "New homework".
 - **Open:** confirm the exact `Score` format a real Google quiz writes (e2e covers `8 / 10` and plain numbers).
 
+## 2026-11-14: UX audit by three AI auditors; two bugs fixed (local, unpushed)
+
+- Three `ux-auditor` agents (Sonnet; definition in `~/.claude/agents/`, outside the repo) walked a seeded throwaway copy: student on a phone in Arabic, parent plus English student in dark mode, owner and teacher on desktop. The ranked report is kept outside the repo (the repo is public): the owner has it.
+- **Fixed:** the new-courses strip made the student home 3,680 px wide on a phone (`.roller` and its grid parent had no `min-width: 0`; one or two cards now render still); English users were sent to the Arabic site by bare `redirect("/courses/...")` in server actions (exam start and finish, practice, review, teacher homework create); new `src/lib/redirect-locale.ts` (`redirectLocal`). Guards: `e2e/locale-redirect.spec.ts` and a no-sideways-scroll check in `e2e/alerts-reviews.spec.ts`.
+- **Open, top of the list:** teacher deletes of homework, exams and questions have no confirmation; the public contact is a personal Gmail; the phone number is put in the sign-in error URL; the live guardian-consent wall has no "remind my parent"; the admin overview does not show what needs the owner. Full list in the report.
+
 ## 2026-11-14: support email inbound, Turnstile, Redis rate limits, restore drill, Sentry check (local, unpushed)
 
 - **Admin email (production data, done).** Admin `0556926246` now has `chemical.mohammed@gmail.com`. The student "Mohammed MAS" (plans and orders kept) moved to

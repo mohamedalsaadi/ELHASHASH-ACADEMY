@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_FILE_BYTES, MAX_FILES, blobInfo, homeworkPrefix } from "@/lib/blob";
 import { suggestGrade } from "@/lib/ai-grading";
@@ -16,6 +15,7 @@ import { db } from "@/lib/db";
 import { hasGuardianConsent } from "@/lib/live";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { assertCourse, requireStaff } from "@/lib/staff";
+import { redirectLocal } from "@/lib/redirect-locale";
 
 type Uploaded = { pathname: string; downloadName: string };
 
@@ -146,7 +146,7 @@ export async function createAssignment(_prev: AssignmentError, form: FormData): 
 
   refocus(course.slug);
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
-  redirect(`/teacher/assignments/${created.id}`);
+  return redirectLocal(`/teacher/assignments/${created.id}`);
 }
 
 export async function updateAssignment(_prev: AssignmentError, form: FormData): Promise<AssignmentError> {

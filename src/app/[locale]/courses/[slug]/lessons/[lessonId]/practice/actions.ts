@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
@@ -12,6 +12,7 @@ import { replyFrom, scoreAttempt, type PracticeError, type PracticeReply } from 
 import { awardPractice } from "@/lib/progress-db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { recordReview } from "@/lib/review-db";
+import { redirectLocal } from "@/lib/redirect-locale";
 
 /**
  * Marks one practice run. Answers are marked here from the database, never from the client,
@@ -76,5 +77,5 @@ export async function submitPractice(_prev: PracticeError, form: FormData): Prom
 
   await recordAttempt(`practice:${userId}`);
   revalidatePath("/[locale]/dashboard", "page");
-  redirect(`/courses/${lesson.unit.course.slug}/lessons/${lesson.id}/practice?attempt=${attempt.id}`);
+  return redirectLocal(`/courses/${lesson.unit.course.slug}/lessons/${lesson.id}/practice?attempt=${attempt.id}`);
 }

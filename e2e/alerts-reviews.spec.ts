@@ -210,6 +210,8 @@ test("the student home marks a course the student has as subscribed and one they
     await signInAs(page, loc, none.phone);
     await page.goto(`/${loc}/me`);
     await expect(page.getByText(w.lockedChip).first()).toBeVisible();
+    // The new-courses strip must never make the page wider than the screen (it once did, on a phone).
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   } finally {
     await sql(`DELETE FROM "User" WHERE id = $1`, [none.id]);
   }

@@ -62,7 +62,8 @@ html[data-intro="skip"] .as-hero-copy > * { animation: as-rise var(--dur-base) v
 }
 
 /* New-course strip: a looping row of cards. Native, calm: it pauses on hover or focus and holds still for reduced motion. */
-.roller { overflow-x: clip; }
+/* min-width 0: without it the grid parents grow to the track's full width and the whole page scrolls sideways on a phone. */
+.roller { overflow-x: clip; min-width: 0; max-width: 100%; }
 .roller-track { display: flex; width: max-content; animation: as-roll 60s linear infinite; }
 .roller-item { width: 18rem; flex: none; margin-inline-end: 1rem; }
 .roller:is(:hover, :focus-within) .roller-track { animation-play-state: paused; }

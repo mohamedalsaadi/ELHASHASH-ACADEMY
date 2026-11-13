@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { grantsFor } from "@/lib/catalog";
 import { db } from "@/lib/db";
@@ -11,6 +11,7 @@ import { replyFrom, scoreAttempt, type PracticeError, type PracticeReply } from 
 import { awardPractice } from "@/lib/progress-db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { recordReview } from "@/lib/review-db";
+import { redirectLocal } from "@/lib/redirect-locale";
 
 /**
  * A mixed review set: items drawn from several due lessons in one form. Each lesson is marked and
@@ -104,5 +105,5 @@ export async function submitReview(_prev: PracticeError, form: FormData): Promis
 
   await recordAttempt(`practice:${userId}`);
   revalidatePath("/[locale]/dashboard", "page");
-  redirect(`/review?attempts=${created.join(",")}`);
+  return redirectLocal(`/review?attempts=${created.join(",")}`);
 }

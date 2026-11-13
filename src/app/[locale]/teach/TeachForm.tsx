@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
+import { Turnstile } from "@/components/Turnstile";
 import { Link } from "@/i18n/navigation";
 import { applyToTeach } from "./actions";
 
@@ -40,6 +41,7 @@ export function TeachForm({ countries, locale }: { countries: { id: string; name
 
   return (
     <form action={action} className="grid gap-4">
+      <Turnstile />
       <input type="hidden" name="locale" value={locale} />
       <p className="text-label text-ink-muted">{tc("requiredNote")}</p>
       <label className={label}>

@@ -17,6 +17,7 @@ import { hashToken, newToken } from "@/lib/token-utils";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
 import { safeNext } from "@/lib/safe-redirect";
 import { BCRYPT_COST, signUpSchema } from "@/lib/schemas/auth";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 export type SignUpState = {
   error?:
@@ -107,6 +108,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
 
   // 5 new accounts per hour per network address.
   const ip = clientIp(await headers());
+  if (!(await verifyTurnstile(String(form.get("cf-turnstile-response") ?? ""), ip))) return { error: "too_many", values };
   const key = `signup:${ip}`;
   if (await isLimited(key, 5, 60 * 60_000)) return { error: "too_many", values };
 

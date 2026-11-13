@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { CONTACT_EMAIL } from "@/lib/site";
 import { sendSupportMessage } from "./actions";
+import { Turnstile } from "@/components/Turnstile";
 
 const field = "min-h-11 rounded-sm border border-field bg-surface px-3 text-body text-ink";
 const label = "grid gap-1 text-label text-ink-muted";
@@ -15,6 +16,7 @@ export function ContactForm() {
     <form action={action} className="grid gap-3 card bg-surface p-5">
       <h2 className="font-display text-h3 font-bold">{t("title")}</h2>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
+      <Turnstile />
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={label}>
           {t("name")}

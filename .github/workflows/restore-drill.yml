@@ -1,0 +1,27 @@
+name: Restore drill
+
+# Weekly proof that a point-in-time restore of production works (audit #43). It branches the database as it was 30 minutes ago,
+# runs smoke queries and deletes the branch. A failure turns the run red, and GitHub emails the owner.
+# Needs repository secrets NEON_API_KEY and NEON_PROJECT_ID. Reads and branches only.
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: node scripts/restore-drill.mjs
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}

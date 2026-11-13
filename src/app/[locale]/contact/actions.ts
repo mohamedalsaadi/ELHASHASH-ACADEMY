@@ -10,6 +10,7 @@ import { notifyAdmins } from "@/lib/notify";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { CONTACT_EMAIL } from "@/lib/site";
 import { draftTicket, mayDraft } from "@/lib/support";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 export async function sendSupportMessage(_: unknown, form: FormData): Promise<"ok" | "invalid" | "limited" | "unavailable"> {
   // A bot fills the hidden field; answer as if it worked so it does not retry.
@@ -27,6 +28,7 @@ export async function sendSupportMessage(_: unknown, form: FormData): Promise<"o
   if (!d.success) return "invalid";
 
   const ip = clientIp(await headers());
+  if (!(await verifyTurnstile(String(form.get("cf-turnstile-response") ?? ""), ip))) return "limited";
   const key = `support:${ip}`;
   if (await isLimited(key, 5, 3_600_000)) return "limited";
   await recordAttempt(key);

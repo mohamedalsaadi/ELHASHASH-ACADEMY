@@ -1453,7 +1453,10 @@
         "assistant": "مساعد الدرس",
         "suggestion_digest": "ملخص الاقتراحات",
         "briefing": "ملخص الصباح"
-      }
+      },
+      "sentryOn": "مراقبة الأخطاء (Sentry) تعمل.",
+      "sentryOff": "مراقبة الأخطاء متوقفة: ضع SENTRY_DSN في Vercel لتشغيلها.",
+      "sentryTest": "أرسل خطأ تجريبيًا"
     }
   },
   "account": {

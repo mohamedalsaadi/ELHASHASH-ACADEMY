@@ -1277,6 +1277,21 @@ Committed; not deployed.
   404; a new quiz notice said "New homework".
 - **Open:** confirm the exact `Score` format a real Google quiz writes (e2e covers `8 / 10` and plain numbers).
 
+## 2026-11-14: support email inbound, Turnstile, Redis rate limits, restore drill, Sentry check (local, unpushed)
+
+- **Admin email (production data, done).** Admin `0556926246` now has `chemical.mohammed@gmail.com`. The student "Mohammed MAS" (plans and orders kept) moved to
+  `malsaadi2013@icloud.com`; the other student account that held that address now has no email. One transaction, targeted by id, before-values saved outside the repo.
+- **Support inbound.** `/api/webhooks/resend-inbound` (Svix signature check, `RESEND_INBOUND_SECRET`) turns mail to the support address into a `SupportTicket`
+  (id `inb_<resend id>`, so retries are harmless), then the AI draft and the owner notice. `src/lib/inbound-mail.ts` ignores our own address, bounces, auto replies, the
+  contact-form copy (`[Support: ...]`) and dmarc reports. `replyTicket` now sets Reply-To to `CONTACT_EMAIL`. Needs the Resend inbound webhook set to that URL.
+- **Turnstile.** `src/lib/turnstile.ts`, `src/components/Turnstile.tsx`, CSP allows `challenges.cloudflare.com`; checked on signup, contact and `/teach`. Off until both keys are set.
+  A failed check answers with the same "too many attempts" message. Cloudflare being down leaves the forms open.
+- **Rate limits** (`src/lib/rate-limit.ts`): Upstash Redis over REST when configured, the `AuthAttempt` table otherwise or on any Redis failure. Still check-then-record, so the
+  overshoot note stays.
+- **Restore drill** `scripts/restore-drill.mjs` + weekly `.github/workflows/restore-drill.yml`: a Neon branch of production as of 30 minutes ago, smoke counts, always deleted.
+  Never run against Neon yet (needs the key).
+- **Sentry:** `/admin/ai` shows whether `SENTRY_DSN` is set and can send a test error.
+
 ## 2026-11-13: AI coworkers, foundation: owner desk and morning briefing (local, unpushed)
 
 Owner wants AI coworkers instead of staff, on whichever model is cheapest at the same quality (Gemini is fine). What already existed: `askJson` on Gemini

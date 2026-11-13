@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
+import { Turnstile } from "@/components/Turnstile";
 import { Link } from "@/i18n/navigation";
 import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { signUp } from "./actions";
@@ -39,6 +40,7 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
   return (
     // React resets the form after each submit; the key remounts it with what the student typed.
     <form key={JSON.stringify(state)} action={action} className="grid gap-4">
+      <Turnstile />
       <p className="text-label text-ink-muted">{tc("requiredNote")}</p>
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="next" value={next} />

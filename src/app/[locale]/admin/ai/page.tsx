@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { pageMetadata } from "@/lib/seo";
 import { requireAdmin } from "@/lib/staff";
 import { AdminNav, panel, table } from "../AdminNav";
-import { sendBriefingNow } from "./actions";
+import { sendBriefingNow, sendSentryTest } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +39,12 @@ export default async function AdminAiPage({ params }: { params: Promise<{ locale
       <section className={panel}>
         <h2 className="font-display text-h3 font-semibold">{t("status")}</h2>
         <p className="text-small">{aiEnabled() ? t("on", { model: AI_MODEL }) : t("off")}</p>
+        <p className="text-small">{process.env.SENTRY_DSN ? t("sentryOn") : t("sentryOff")}</p>
+        {process.env.SENTRY_DSN && (
+          <form action={sendSentryTest}>
+            <SubmitButton pendingLabel={t("sending")} className="btn btn-outline w-fit text-small">{t("sentryTest")}</SubmitButton>
+          </form>
+        )}
       </section>
 
       <section className={panel}>

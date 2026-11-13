@@ -110,6 +110,10 @@ Complete set the app reads, for Vercel **Production and Preview**:
 | `STRICT_CURRENCY` | after audit | `1` refuses a SKU whose currency differs from its course country |
 | `SUPPORT_EMAIL`, `SUPPORT_PHONE`, `SUPPORT_WHATSAPP`, `OFFICIAL_CONTACTS` | recommended | support identity and masking allow-list |
 | `GEMINI_API_KEY` | optional | AI grading (~0.5 fils a submission) |
+| `RESEND_INBOUND_SECRET` | for support email | signing secret (`whsec_...`) of the Resend inbound webhook to `/api/webhooks/resend-inbound`; without it the webhook answers 503 |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | recommended | Cloudflare Turnstile bot check on signup, contact and `/teach`; off until both are set |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (or the integration's `KV_REST_API_URL`, `KV_REST_API_TOKEN`) | optional | rate limits in Redis instead of the database; the table is the fallback |
+| `NEON_API_KEY`, `NEON_PROJECT_ID` (GitHub secrets) | for the restore drill | `.github/workflows/restore-drill.yml`, weekly |
 | `SENTRY_DSN` | recommended | server errors go to Sentry (`src/instrumentation.ts`); unset sends nothing |
 | `MIGRATE_DATABASE_URL` | with the limited DB role | owner-role URL used only by the build's `prisma migrate deploy` (`docs/db-least-privilege.sql`) |
 | `VDOCIPHER_WHITELIST_HREF` | recommended | `dhirwa.ae`: a copied player link refuses to play on another site |

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { emailLayout, sendMail } from "@/lib/mail";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { requireAdmin } from "@/lib/staff";
 
 /** The owner sends their (possibly edited) reply; this is the only path a ticket answer leaves by. */
@@ -16,7 +17,7 @@ export async function replyTicket(form: FormData) {
 
   const ar = /[\u0600-\u06FF]/.test(ticket.message);
   const subject = ar ? "رد من ذروة" : "Reply from Dhirwa";
-  const sent = await sendMail({ to: ticket.email, subject, html: emailLayout(subject, d.data.reply.split(/\n{2,}/), undefined, ar ? "ar" : "en") });
+  const sent = await sendMail({ to: ticket.email, subject, html: emailLayout(subject, d.data.reply.split(/\n{2,}/), undefined, ar ? "ar" : "en"), replyTo: CONTACT_EMAIL });
   if (!sent) return;
 
   await db.supportTicket.update({

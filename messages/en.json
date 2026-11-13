@@ -1453,7 +1453,10 @@
         "assistant": "Lesson assistant",
         "suggestion_digest": "Suggestion digest",
         "briefing": "Morning briefing"
-      }
+      },
+      "sentryOn": "Error monitoring (Sentry) is on.",
+      "sentryOff": "Error monitoring is off: set SENTRY_DSN in Vercel to turn it on.",
+      "sentryTest": "Send a test error"
     }
   },
   "account": {

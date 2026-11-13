@@ -10,6 +10,7 @@ import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { notifyAdmins } from "@/lib/notify";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { teacherApplicationInput } from "@/lib/schemas/teacher-application";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 export type TeachState = { status: "sent" | "invalid" | "taken" | "limited" } | null;
 
@@ -20,6 +21,7 @@ export async function applyToTeach(_: TeachState, form: FormData): Promise<Teach
   const a = d.data;
 
   const ip = clientIp(await headers());
+  if (!(await verifyTurnstile(String(form.get("cf-turnstile-response") ?? ""), ip))) return { status: "limited" };
   const key = `teach:${ip}`;
   if (await isLimited(key, 3, 60 * 60_000)) return { status: "limited" };
 

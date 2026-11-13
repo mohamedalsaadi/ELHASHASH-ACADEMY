@@ -19,14 +19,14 @@ function policy(nonce: string) {
     "default-src 'self'",
     // 'self' covers our own files (including /intro-guard.js); the nonce covers the App Router's
     // inline payload scripts. Deliberately not 'strict-dynamic': it would block our non-nonced file.
-    `script-src 'self' 'nonce-${nonce}' https://player.vdocipher.com${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ""}`,
+    `script-src 'self' 'nonce-${nonce}' https://player.vdocipher.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ""}`,
     // Inline style attributes carry the country trail colours and the meter widths.
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     // VdoCipher uploads go straight from the teacher's browser to its storage (src/components/admin/VdoUpload.tsx).
-    `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com https://*.amazonaws.com${isDev ? " ws: wss:" : ""}`,
-    "frame-src https://www.youtube-nocookie.com https://player.vdocipher.com",
+    `connect-src 'self' https://vercel.com https://*.blob.vercel-storage.com https://*.amazonaws.com https://challenges.cloudflare.com${isDev ? " ws: wss:" : ""}`,
+    "frame-src https://www.youtube-nocookie.com https://player.vdocipher.com https://challenges.cloudflare.com",
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",

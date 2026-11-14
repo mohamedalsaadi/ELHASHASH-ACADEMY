@@ -80,3 +80,29 @@ test("a code cannot open a teacher or admin account", async ({ page, loc, isMobi
   await expect(page.locator("#otp-error")).toBeVisible();
   await expect(page).toHaveURL(/signin/);
 });
+
+test("a number someone only typed at signup is reset when its real holder proves it with a code", async ({ page, loc, isMobile }) => {
+  test.skip(!process.env.WHATSAPP_PHONE_NUMBER_ID, "needs the WhatsApp stand-in");
+  test.skip(isMobile, "rate limited; covered by the desktop projects");
+  const national = `5${String(Date.now()).slice(-8)}`;
+  const phone = `+971${national}`;
+  // A password signup typed this number without proving it, so phoneVerifiedAt stays empty.
+  await sql(
+    `INSERT INTO "User"(id, name, phone, "passwordHash", role, locale) VALUES (gen_random_uuid()::text, 'E2E Squatted', $1, 'squatter-hash', 'STUDENT', 'en')`,
+    [phone],
+  );
+  await page.goto(`/${loc}/signin`);
+  await page.fill('input[type="tel"]', national);
+  await page.locator('form button').last().click();
+  await expect(page.locator('input[name="code"]')).toBeVisible();
+  await plantCode(phone, "222222");
+  await page.fill('input[name="code"]', "222222");
+  await page.locator('form button[name="step"][value="code"]').click();
+  await page.waitForURL((u) => !u.pathname.endsWith("/signin"), { timeout: 30_000 });
+
+  const [row] = await sql<{ verified: boolean; changed: boolean; pwd: boolean }>(
+    `SELECT "phoneVerifiedAt" IS NOT NULL AS verified, "passwordHash" <> 'squatter-hash' AS changed, "passwordChangedAt" IS NOT NULL AS pwd FROM "User" WHERE phone = $1`,
+    [phone],
+  );
+  expect(row).toEqual({ verified: true, changed: true, pwd: true });
+});

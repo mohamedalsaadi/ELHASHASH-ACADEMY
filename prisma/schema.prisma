@@ -93,6 +93,8 @@ model User {
   id              String    @id @default(cuid())
   name            String
   phone           String?   @unique
+  /// Set when a WhatsApp code or link sent to this number was used. Null for a number that was only typed (password signup, profile).
+  phoneVerifiedAt DateTime?
   email           String?   @unique
   /// Null until the address is confirmed through a verification token.
   emailVerifiedAt DateTime?

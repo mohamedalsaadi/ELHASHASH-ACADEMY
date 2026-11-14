@@ -52,7 +52,7 @@ export async function completeProfile(form: FormData) {
   const tokenHash = token ? hashToken(token) : null;
   try {
     await db.$transaction(async (trx) => {
-      await trx.user.update({ where: { id: user.id }, data: { phone: d.phone, gradeId: d.gradeId, dateOfBirth: dob, termsAcceptedAt: new Date() } });
+      await trx.user.update({ where: { id: user.id }, data: { phone: d.phone, phoneVerifiedAt: null, gradeId: d.gradeId, dateOfBirth: dob, termsAcceptedAt: new Date() } });
       if (minor) {
         await trx.guardianConsent.upsert({
           where: { studentId: user.id },

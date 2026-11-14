@@ -18,6 +18,7 @@ import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { safeNext } from "@/lib/safe-redirect";
 import { BCRYPT_COST, otpFinishSchema, phoneSchema } from "@/lib/schemas/auth";
 import { hashToken, newToken } from "@/lib/token-utils";
+import { claimProvenPhone } from "@/lib/phone-proof";
 import { findUserByPhone } from "@/lib/user-phone";
 import { sendWhatsAppCode, whatsappEnabled } from "@/lib/whatsapp";
 
@@ -94,6 +95,8 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
     const user = await findUserByPhone(phone.data);
     if (user) {
       if (user.deletedAt) return { step: "phone", error: "invalid_phone" };
+      // The code proves this person holds the number; a row that only had it typed in loses its old password and sessions.
+      if (user.role === "STUDENT" || user.role === "PARENT") await claimProvenPhone(user);
       const failed = await openSession(phone.data, user.role, locale, next);
       return { step: "code", phone: phone.data, error: failed ?? "staff" };
     }
@@ -149,6 +152,7 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
           gradeId: parent ? null : d.gradeId,
           role: parent ? "PARENT" : "STUDENT",
           locale,
+          phoneVerifiedAt: new Date(),
           dateOfBirth: dob,
           termsAcceptedAt: new Date(),
           // No password: the phone is the sign-in. A random one keeps password sign-in closed until the person sets one.

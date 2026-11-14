@@ -10,6 +10,7 @@ import { db } from "@/lib/db";
 import { signProof } from "@/lib/otp";
 import { BCRYPT_COST } from "@/lib/schemas/auth";
 import { hashToken } from "@/lib/token-utils";
+import { claimProvenPhone } from "@/lib/phone-proof";
 import { findUserByPhone } from "@/lib/user-phone";
 
 /**
@@ -39,6 +40,7 @@ export async function approveGuardian(form: FormData) {
           data: {
             name: consent.guardianName,
             phone: consent.guardianPhone,
+            phoneVerifiedAt: new Date(),
             role: "PARENT",
             locale,
             termsAcceptedAt: new Date(),
@@ -52,6 +54,8 @@ export async function approveGuardian(form: FormData) {
         if (!parent || parent.role !== "PARENT") return redirect(back);
       }
     }
+    // The WhatsApp link proves the guardian holds this number; an older row that never had that proof is reset.
+    await claimProvenPhone(parent);
     const parentId = parent.id;
     await db.$transaction([
       db.guardianConsent.update({

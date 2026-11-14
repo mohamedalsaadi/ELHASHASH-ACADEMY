@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { notifyTeacherOfReview } from "@/lib/review-alerts";
 import { requireAdmin } from "@/lib/staff";
 
 /**
@@ -15,10 +16,15 @@ export async function decideReview(form: FormData) {
     .object({ id: z.string().min(1), decision: z.enum(["publish", "remove"]), reason: z.string().trim().max(1000).optional() })
     .refine((v) => v.decision === "publish" || (v.reason?.length ?? 0) >= 3)
     .parse(Object.fromEntries(form));
-  await db.courseReview.updateMany({
+  const decided = await db.courseReview.updateMany({
     where: { id: d.id, status: "HELD" },
     data: { status: d.decision === "publish" ? "PUBLISHED" : "REMOVED", adminNote: d.decision === "remove" ? d.reason : null, decidedById: me.id, decidedAt: new Date() },
   });
+  // A held review reaches the teacher only when the owner lets it show; a removed one never does.
+  if (decided.count && d.decision === "publish") {
+    const r = await db.courseReview.findUnique({ where: { id: d.id }, select: { id: true, stars: true, updatedAt: true, course: { select: { instructorId: true, titleAr: true, titleEn: true } } } });
+    if (r) await notifyTeacherOfReview({ reviewId: r.id, stamp: r.updatedAt.getTime(), teacherId: r.course.instructorId, stars: r.stars, titleAr: r.course.titleAr, titleEn: r.course.titleEn });
+  }
   revalidatePath("/[locale]/admin/reviews", "page");
   revalidatePath("/[locale]/courses/[slug]", "page");
   revalidatePath("/[locale]/teachers/[id]", "page");

@@ -165,7 +165,7 @@ export default async function TeacherLivePage({
                   </span>
                   <span className="flex items-center gap-4 text-label">
                     <span className="num text-ink-muted">{t("seats", { count: s._count.entitlements })}</span>
-                    <Link href={`/live/${s.id}`} className="font-semibold text-pen underline underline-offset-4">
+                    <Link href={`/live/${s.id}`} className="link-tap font-semibold text-pen underline underline-offset-4">
                       {t("openRoom")}
                     </Link>
                   </span>

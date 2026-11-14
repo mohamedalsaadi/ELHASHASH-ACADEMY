@@ -7,7 +7,8 @@ import { avatarPrefix } from "@/lib/blob";
 import { SaveButton, PasswordForm } from "../../admin/ui";
 import { field, label } from "@/components/ui/form";
 import { TeacherNav } from "../TeacherNav";
-import { updateTeacherProfile } from "./actions";
+import { maskIban } from "@/lib/iban";
+import { savePayoutDetails, updateTeacherProfile } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,9 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/teacher/profile", "teacher", { key: "navProfile", noindex: true });
 }
 
-export default async function TeacherProfilePage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function TeacherProfilePage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ payout?: string }> }) {
   const { locale } = await params;
+  const { payout } = await searchParams;
   setRequestLocale(locale);
   const me = await requireStaff();
   const t = await getTranslations("teacher");
@@ -24,7 +26,7 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
 
   const user = await db.user.findUniqueOrThrow({
     where: { id: me.id },
-    select: { name: true, bioAr: true, bioEn: true, photoUrl: true, yearsTeaching: true, qualification: true },
+    select: { name: true, bioAr: true, bioEn: true, photoUrl: true, yearsTeaching: true, qualification: true, payoutHolder: true, payoutBank: true, payoutIban: true },
   });
 
   return (
@@ -67,6 +69,37 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
           failedLabel={ta("coverFailed")}
           removeLabel={ta("coverRemove")}
         />
+        <div>
+          <SaveButton />
+        </div>
+      </form>
+
+      <form action={savePayoutDetails} id="payout" className="grid gap-3">
+        <h2 className="font-display text-h2 font-semibold">{t("payoutTitle")}</h2>
+        <p className="text-small text-ink-muted">{t("payoutHint")}</p>
+        {user.payoutIban && <p className="num text-small" dir="ltr">{t("payoutOnFile", { iban: maskIban(user.payoutIban) })}</p>}
+        {payout === "invalid" && (
+          <p role="alert" className="text-small text-down">
+            {t("payoutInvalid")}
+          </p>
+        )}
+        {payout === "saved" && (
+          <p role="status" className="text-small text-up">
+            {t("payoutSaved")}
+          </p>
+        )}
+        <label className={label}>
+          {t("payoutHolder")}
+          <input name="holder" defaultValue={user.payoutHolder ?? ""} required minLength={2} maxLength={120} autoComplete="off" dir="auto" className={field} />
+        </label>
+        <label className={label}>
+          {t("payoutBank")}
+          <input name="bank" defaultValue={user.payoutBank ?? ""} required minLength={2} maxLength={120} autoComplete="off" dir="auto" className={field} />
+        </label>
+        <label className={label}>
+          {t("payoutIban")}
+          <input name="iban" required maxLength={60} autoComplete="off" dir="ltr" placeholder="AE07 0331 2345 6789 0123 456" className={`${field} num`} />
+        </label>
         <div>
           <SaveButton />
         </div>

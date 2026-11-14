@@ -47,6 +47,14 @@ body {
 }
 
 @layer components {
+  /* A text link on its own line or in a flex row: the tap area is a full control tall, the text stays small. */
+  .link-tap {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-h);
+    min-width: var(--control-h);
+  }
+
   /* The one action shape: a pill. Padding, font and press state live here so call sites cannot drift. */
   .btn {
     display: inline-flex;

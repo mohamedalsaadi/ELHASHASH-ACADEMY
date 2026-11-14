@@ -5,6 +5,8 @@ import { z } from "zod";
 import { avatarPrefix, blobInfo } from "@/lib/blob";
 import { db } from "@/lib/db";
 import { maskContacts } from "@/lib/contact-guard";
+import { isValidIban, normalizeIban } from "@/lib/iban";
+import { redirectLocal } from "@/lib/redirect-locale";
 import { requireStaff } from "@/lib/staff";
 
 /** A bio is public, so it follows the same contact rule as questions and support messages. */
@@ -46,4 +48,16 @@ export async function updateTeacherProfile(form: FormData) {
   });
   revalidatePath("/[locale]/teacher", "layout");
   revalidatePath("/[locale]/teachers", "layout");
+}
+
+/** Where the owner sends this teacher's money. Private: shown masked, read in full only by the admin payouts page. */
+export async function savePayoutDetails(form: FormData) {
+  const me = await requireStaff();
+  const d = z
+    .object({ holder: z.string().trim().min(2).max(120), bank: z.string().trim().min(2).max(120), iban: z.string().trim().max(60) })
+    .safeParse(Object.fromEntries(form));
+  if (!d.success || !isValidIban(d.data.iban)) return redirectLocal("/teacher/profile?payout=invalid#payout");
+  await db.user.update({ where: { id: me.id }, data: { payoutHolder: d.data.holder, payoutBank: d.data.bank, payoutIban: normalizeIban(d.data.iban) } });
+  revalidatePath("/[locale]/teacher", "layout");
+  return redirectLocal("/teacher/profile?payout=saved#payout");
 }

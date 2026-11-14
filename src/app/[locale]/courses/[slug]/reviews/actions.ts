@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { maskContacts } from "@/lib/contact-guard";
 import { db } from "@/lib/db";
 import { notifyAdmins } from "@/lib/notify";
+import { notifyTeacherOfReview } from "@/lib/review-alerts";
 import { HELD_AT_STARS } from "@/lib/review-eligibility";
 import { rateState } from "@/lib/reviews";
 
@@ -22,7 +23,7 @@ export async function submitReview(_prev: ReviewState, form: FormData): Promise<
   const studentId = session.user.id;
   const d = z.object({ courseId: z.string().min(1), stars: z.coerce.number().int().min(1).max(5), text: z.string().trim().max(1500).optional() }).safeParse(Object.fromEntries(form));
   if (!d.success) return "invalid";
-  const course = await db.course.findUnique({ where: { id: d.data.courseId }, select: { id: true, slug: true, titleAr: true, titleEn: true, published: true } });
+  const course = await db.course.findUnique({ where: { id: d.data.courseId }, select: { id: true, slug: true, titleAr: true, titleEn: true, published: true, instructorId: true } });
   if (!course?.published) notFound();
 
   const state = await rateState(studentId, course.id);
@@ -49,6 +50,7 @@ export async function submitReview(_prev: ReviewState, form: FormData): Promise<
       dedupeKey: `review-held:${review.id}:${review.updatedAt.getTime()}`,
     });
   }
+  if (!held) await notifyTeacherOfReview({ reviewId: review.id, stamp: review.updatedAt.getTime(), teacherId: course.instructorId, stars: d.data.stars, titleAr: course.titleAr, titleEn: course.titleEn });
   revalidatePath("/[locale]/courses/[slug]", "page");
   revalidatePath("/[locale]/teachers/[id]", "page");
   return held ? "held" : "ok";

@@ -41,7 +41,7 @@ export function Motion() {
         show(0);
         gsap.utils.toArray<HTMLElement>("[data-step]", stage).forEach((step, i) => {
           ScrollTrigger.create({ trigger: step, start: "top center", end: "bottom center", onToggle: (s) => s.isActive && show(i) });
-          if (!calm) gsap.fromTo(step, { opacity: 0.25 }, { opacity: 1, ease: "none", scrollTrigger: { trigger: step, start: "top 75%", end: "top 50%", scrub: true } });
+          if (!calm) gsap.fromTo(step, { opacity: 0.55 }, { opacity: 1, ease: "none", scrollTrigger: { trigger: step, start: "top 75%", end: "top 50%", scrub: true } });
         });
       });
     });

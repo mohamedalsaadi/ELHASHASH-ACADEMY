@@ -4,7 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { NotificationKind } from "@/generated/prisma/client";
 
 /** Kinds that always reach the person: money records and system messages. Everything else can be switched off. */
-const ESSENTIAL: readonly NotificationKind[] = ["ORDER_PAID", "SYSTEM"];
+const ESSENTIAL: readonly NotificationKind[] = ["ORDER_PAID", "SYSTEM", "PAYOUT_PAID"];
 export const isOptionalKind = (kind: NotificationKind) => !ESSENTIAL.includes(kind);
 
 function secret(): string {

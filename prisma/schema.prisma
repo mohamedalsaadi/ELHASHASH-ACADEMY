@@ -118,6 +118,10 @@ model User {
   photoType       String?
   bioAr           String?
   bioEn           String?
+  /// Where the owner pays this teacher by bank transfer. Shown masked; the full IBAN is read only on the admin payouts page.
+  payoutHolder    String?
+  payoutIban      String?
+  payoutBank      String?
   /// Live streaming is off for every teacher by default; an admin turns it on per teacher.
   liveApproved    Boolean   @default(false)
   /// The biggest discount (percent) this teacher may put on their own packages. The owner raises it per teacher.
@@ -764,6 +768,9 @@ enum NotificationKind {
   REQUEST_NEW
   REQUEST_REPLY
   NEW_COURSE
+  QUESTION_NEW
+  REVIEW_NEW
+  PAYOUT_PAID
 }
 
 /// In-app notice; `dedupeKey` stops a reminder from firing twice, and `emailedAt` records the email.
@@ -1667,6 +1674,15 @@ model TeacherStatement {
   acknowledgedAt   DateTime?
   ackIp            String?
   ackUserAgent     String?
+  /// The ledger window this statement covers: it ends 14 days before the issue day (the refund hold), and starts where the teacher's previous statement ended.
+  coversFrom       DateTime?
+  coversTo         DateTime?
+  /// The 10th of the month after `period`: the day the owner pays, once the statement is acknowledged.
+  payableAt        DateTime?
+  /// Set by the owner when the bank transfer was made. The platform never moves money.
+  paidAt           DateTime?
+  paidReference    String?
+  paidById         String?
 
   instructor User @relation(fields: [instructorId], references: [id], onDelete: Cascade)
 

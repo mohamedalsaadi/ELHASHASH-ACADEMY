@@ -22,7 +22,7 @@ export function PendingPoll({ seconds = 120 }: { seconds?: number }) {
     <button
       type="button"
       onClick={() => router.refresh()}
-      className="w-fit rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+      className="inline-flex min-h-(--control-h) w-fit items-center rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
     >
       {t("refresh")}
     </button>

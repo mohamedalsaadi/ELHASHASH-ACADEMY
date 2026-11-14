@@ -11,6 +11,7 @@ import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { formatWhen, minorPerUnit } from "@/lib/format";
 import { canPublishLive } from "@/lib/live";
+import { courseReadiness } from "@/lib/publish-check";
 import { lecturesIn } from "@/lib/plans";
 import { assertCourse, requireStaff } from "@/lib/staff";
 import { addLesson, addRental, addSku, addUnit, copyUnit, deleteCourse, deleteLesson, setTeacher, updateCourse, updateLesson, updateSku, updateUnit } from "../../actions";
@@ -28,9 +29,9 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/admin/courses", "office", { key: "nav.courses", noindex: true });
 }
 
-export default async function AdminCoursePage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ error?: string }> }) {
+export default async function AdminCoursePage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ error?: string; publishError?: string }> }) {
   const { locale, id } = await params;
-  const { error: liveError } = await searchParams;
+  const { error: liveError, publishError } = await searchParams;
   setRequestLocale(locale);
   const me = await requireStaff();
   await assertCourse(me, id);
@@ -48,6 +49,7 @@ export default async function AdminCoursePage({ params, searchParams }: { params
     },
   });
   if (!course) notFound();
+  const readiness = await courseReadiness(id);
   const zone = course.grade?.country.timeZone ?? "Asia/Dubai";
   // Where a topic can be copied to: the other courses this person may edit.
   const otherCourses = await db.course.findMany({
@@ -85,10 +87,10 @@ export default async function AdminCoursePage({ params, searchParams }: { params
   return (
     <main className="mx-auto grid max-w-4xl gap-10 px-4 py-12">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={isAdmin ? "/admin/courses" : "/teacher"} className="text-small text-ink-muted hover:text-ink">
+        <Link href={isAdmin ? "/admin/courses" : "/teacher"} className="link-tap text-small text-ink-muted hover:text-ink">
           {t("back")}
         </Link>
-        <Link href={`/courses/${course.slug}`} className="text-small text-ink-muted hover:text-ink">
+        <Link href={`/courses/${course.slug}`} className="link-tap text-small text-ink-muted hover:text-ink">
           {t("viewPage")}
         </Link>
       </div>
@@ -100,6 +102,29 @@ export default async function AdminCoursePage({ params, searchParams }: { params
           <p className="num text-label text-ink-muted">{t("questionsCardCounts", { questions: counts.questions, quizzes: counts.quizzes, exams: counts.exams })}</p>
         </div>
         <Link href={`/admin/courses/${course.id}/questions`} className="btn btn-primary px-4 py-2 text-small">{t("openQuestions")}</Link>
+      </section>
+
+      <section className={card} aria-labelledby="ready">
+        <h2 id="ready" className="font-display text-h3 font-semibold">{t("ready.heading")}</h2>
+        {publishError && (
+          <p role="alert" className="text-small text-down">
+            {t("ready.blocked")}
+          </p>
+        )}
+        <ul className="grid gap-1 text-small">
+          {(["title", "description", "content", "package"] as const).map((k) => (
+            <li key={k} className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full border border-hairline px-2 text-label ${readiness.blocking.includes(k) ? "text-down" : "text-up"}`}>{readiness.blocking.includes(k) ? `▼ ${t("ready.missing")}` : `▲ ${t("ready.ok")}`}</span>
+              {t(`ready.${k}`)}
+            </li>
+          ))}
+          {(["cover", "teacher"] as const).map((k) => (
+            <li key={k} className="flex flex-wrap items-center gap-2 text-ink-muted">
+              <span className="rounded-full border border-hairline px-2 text-label">{readiness.warnings.includes(k) ? t("ready.missing") : t("ready.ok")}</span>
+              {t(`ready.${k}`)}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <form action={updateCourse} className={card}>
@@ -301,7 +326,7 @@ export default async function AdminCoursePage({ params, searchParams }: { params
                   <textarea name="notes" defaultValue={l.notes ?? ""} rows={4} maxLength={20000} dir="auto" className={`${field} py-2`} />
                   <span className="text-label font-normal text-ink-muted">{t("lessonNotesHint")}</span>
                 </label>
-                <Link href={`/courses/${course.slug}/lessons/${l.id}`} className="w-fit text-small text-pen underline underline-offset-4">
+                <Link href={`/courses/${course.slug}/lessons/${l.id}`} className="link-tap w-fit text-small text-pen underline underline-offset-4">
                   {t("viewLesson")}
                 </Link>
                 <label className={label}>
@@ -398,7 +423,7 @@ export default async function AdminCoursePage({ params, searchParams }: { params
               <span className="font-semibold">{pick(locale === "ar", x.titleAr, x.titleEn)}</span>
               <span className="text-ink-muted">{formatWhen(x.startsAt, zone, locale)}</span>
             </span>
-            <Link href="/teacher/live" className="font-semibold text-pen underline underline-offset-4">{tl("manageLive")}</Link>
+            <Link href="/teacher/live" className="link-tap font-semibold text-pen underline underline-offset-4">{tl("manageLive")}</Link>
           </div>
         ))}
         {pastLive.map((x) => (

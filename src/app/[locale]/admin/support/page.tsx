@@ -11,7 +11,7 @@ import { closeTicket, replyTicket } from "./actions";
 export const dynamic = "force-dynamic";
 
 const button =
-  "rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+  "inline-flex min-h-(--control-h) items-center rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/admin/support", "office", { key: "nav.support", noindex: true });

@@ -13,7 +13,7 @@ import { addTeacher, changePassword, createCourse, inviteTeacher, resetPassword 
 import { field, label } from "./styles";
 
 const button =
-  "rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised disabled:cursor-not-allowed disabled:opacity-45";
+  "inline-flex min-h-(--control-h) items-center rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised disabled:cursor-not-allowed disabled:opacity-45";
 
 /** `showSaved={false}` when the form renders its own result, so the button never claims success for a failure. */
 export function SaveButton({ children, danger, showSaved = true }: { children?: React.ReactNode; danger?: boolean; showSaved?: boolean }) {

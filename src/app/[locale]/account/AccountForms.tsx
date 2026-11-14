@@ -137,7 +137,7 @@ export function DeleteAccountForm() {
       )}
       <button
         disabled={pending}
-        className="w-fit rounded-full border border-down px-4 py-2 font-display text-small font-semibold text-down"
+        className="inline-flex min-h-(--control-h) w-fit items-center rounded-full border border-down px-4 py-2 font-display text-small font-semibold text-down"
       >
         {t("dangerDelete")}
       </button>

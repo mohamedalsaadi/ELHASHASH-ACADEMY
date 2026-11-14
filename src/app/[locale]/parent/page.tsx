@@ -132,7 +132,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
                   <ConfirmButton
                     action={unlinkParent}
                     confirmText={t("confirmUnlink")}
-                    className="text-small text-down underline-offset-4 hover:underline"
+                    className="link-tap text-small text-down underline-offset-4 hover:underline"
                   >
                     {t("unlink")}
                   </ConfirmButton>
@@ -169,14 +169,14 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
                 </form>
               )}
               <div className="flex flex-wrap gap-4 text-small">
-                <Link href={`/parent/children/${link.student.id}`} className="text-pen underline underline-offset-4">
+                <Link href={`/parent/children/${link.student.id}`} className="link-tap text-pen underline underline-offset-4">
                   {th("viewChild")}
                 </Link>
-                <Link href="/parent/requests" className="text-pen underline underline-offset-4">
+                <Link href="/parent/requests" className="link-tap text-pen underline underline-offset-4">
                   {th("requests")}
                 </Link>
                 {/* Checkout asks which linked child the course is for. */}
-                <Link href="/courses" className="text-pen underline underline-offset-4">
+                <Link href="/courses" className="link-tap text-pen underline underline-offset-4">
                   {t("buyFor", { name: link.student.name })}
                 </Link>
               </div>

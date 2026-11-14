@@ -86,6 +86,49 @@ export default async function EarningsPage({ params }: { params: Promise<{ local
   }
   const receiptList = [...receiptMap.values()].slice(0, 20);
 
+  // Statements and what was paid stay visible even when there are no ledger rows to chart.
+  const statementsSection = (
+      <section className="card grid gap-3 p-6">
+        <h2 className="font-display text-h2 font-semibold">{t("statementsTitle")}</h2>
+        {statements.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("noStatements")}</p>
+        ) : (
+          <ul className="grid gap-2">
+            {statements.map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-2 text-small">
+                <span className="grid gap-0.5">
+                  <span className="font-semibold">{s.period} · {s.currency}</span>
+                  <a href={`/api/documents/statement/${s.id}/pdf`} className="text-pen underline underline-offset-4">
+                    PDF
+                  </a>
+                  <span className="text-ink-muted">{t("salesRefunds", { sales: s.salesCount, refunds: s.refundCount })}</span>
+                  {s.coversTo && (
+                    <span className="text-label text-ink-muted">{t("covers", { from: day.format(s.coversFrom ?? new Date(0)), to: day.format(new Date(s.coversTo.getTime() - 1)) })}</span>
+                  )}
+                  <span className="text-label">
+                    {s.paidAt
+                      ? t("paidOn", { date: day.format(s.paidAt), ref: s.paidReference ?? "" })
+                      : s.status === "ACKNOWLEDGED"
+                        ? t("dueOn", { date: s.payableAt ? day.format(s.payableAt) : "" })
+                        : t("payWaitsAck")}
+                  </span>
+                </span>
+                <span className="num font-semibold">{money(s.instructorPayout, s.currency)}</span>
+                {s.status === "ACKNOWLEDGED" ? (
+                  <span className="text-up">{t("acknowledged")}</span>
+                ) : (
+                  <form action={acknowledgeStatement}>
+                    <input type="hidden" name="id" value={s.id} />
+                    <button className="text-pen underline underline-offset-4">{t("acknowledge")}</button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+  );
+
   return (
     <main className="mx-auto grid max-w-4xl gap-10 px-4 py-12">
       <div className="grid gap-4">
@@ -95,9 +138,12 @@ export default async function EarningsPage({ params }: { params: Promise<{ local
       <p className="max-w-[60ch] text-ink-muted">{t("earningsLede")}</p>
 
       {rows.length === 0 ? (
-        <EmptyState>
-          <p className="text-ink-muted">{t("noSales")}</p>
-        </EmptyState>
+        <>
+          <EmptyState>
+            <p className="text-ink-muted">{t("noSales")}</p>
+          </EmptyState>
+          {statements.length > 0 && statementsSection}
+        </>
       ) : (
         <>
           <section className="card grid gap-3 p-6">
@@ -182,35 +228,7 @@ export default async function EarningsPage({ params }: { params: Promise<{ local
             )}
           </section>
 
-          <section className="card grid gap-3 p-6">
-            <h2 className="font-display text-h2 font-semibold">{t("statementsTitle")}</h2>
-            {statements.length === 0 ? (
-              <p className="text-small text-ink-muted">{t("noStatements")}</p>
-            ) : (
-              <ul className="grid gap-2">
-                {statements.map((s) => (
-                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-2 text-small">
-                    <span className="grid gap-0.5">
-                      <span className="font-semibold">{s.period} · {s.currency}</span>
-                      <a href={`/api/documents/statement/${s.id}/pdf`} className="text-pen underline underline-offset-4">
-                        PDF
-                      </a>
-                      <span className="text-ink-muted">{t("salesRefunds", { sales: s.salesCount, refunds: s.refundCount })}</span>
-                    </span>
-                    <span className="num font-semibold">{money(s.instructorPayout, s.currency)}</span>
-                    {s.status === "ACKNOWLEDGED" ? (
-                      <span className="text-up">{t("acknowledged")}</span>
-                    ) : (
-                      <form action={acknowledgeStatement}>
-                        <input type="hidden" name="id" value={s.id} />
-                        <button className="text-pen underline underline-offset-4">{t("acknowledge")}</button>
-                      </form>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {statementsSection}
         </>
       )}
     </main>

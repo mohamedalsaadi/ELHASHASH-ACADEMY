@@ -8,6 +8,7 @@ import { db } from "./db";
 import { formatMoney } from "./format";
 import { appUrl, emailLayout, sendMail } from "./mail";
 import { createNotification } from "./notify";
+import { readyPayoutCount } from "./payouts";
 import { CONTACT_EMAIL } from "./site";
 
 const DAY = 24 * 3600_000;
@@ -24,13 +25,15 @@ export type Briefing = {
   unansweredQuestions: number;
   oldestQuestionHours: number | null;
   ungradedHomework: number;
+  coursesPublished: number;
+  payoutsReady: number;
   liveToday: { title: string; startsAt: Date }[];
 };
 
 /** What needs the owner, as of `now`. Counts only; cheap enough to run on every page view. */
 export async function gatherBriefing(now = new Date()): Promise<Briefing> {
   const since = new Date(now.getTime() - DAY);
-  const [revenue, failedPayments, newStudents, openTickets, ticketsNeedYou, openRequests, heldReviews, pendingTeachers, unanswered, oldest, ungradedHomework, live] = await Promise.all([
+  const [revenue, failedPayments, newStudents, openTickets, ticketsNeedYou, openRequests, heldReviews, pendingTeachers, unanswered, oldest, ungradedHomework, coursesPublished, payoutsReady, live] = await Promise.all([
     db.ledgerEntry.groupBy({ by: ["currency"], where: { createdAt: { gte: since } }, _sum: { gross: true }, _count: true }),
     db.order.count({ where: { status: "FAILED", createdAt: { gte: since } } }),
     db.user.count({ where: { role: "STUDENT", createdAt: { gte: since } } }),
@@ -42,6 +45,8 @@ export async function gatherBriefing(now = new Date()): Promise<Briefing> {
     db.question.count({ where: { answeredAt: null } }),
     db.question.findFirst({ where: { answeredAt: null }, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
     db.submission.count({ where: { status: "SUBMITTED", submittedAt: { lt: new Date(now.getTime() - 2 * DAY) } } }),
+    db.analyticsEvent.count({ where: { name: "course_published", createdAt: { gte: since } } }),
+    readyPayoutCount(),
     db.liveSession.findMany({ where: { cancelledAt: null, startsAt: { gte: now, lt: new Date(now.getTime() + DAY) } }, orderBy: { startsAt: "asc" }, select: { titleEn: true, startsAt: true } }),
   ]);
   return {
@@ -56,6 +61,8 @@ export async function gatherBriefing(now = new Date()): Promise<Briefing> {
     unansweredQuestions: unanswered,
     oldestQuestionHours: oldest ? Math.round((now.getTime() - oldest.createdAt.getTime()) / 3600_000) : null,
     ungradedHomework,
+    coursesPublished,
+    payoutsReady,
     liveToday: live.map((l) => ({ title: l.titleEn, startsAt: l.startsAt })),
   };
 }
@@ -74,6 +81,8 @@ export function briefingLines(b: Briefing, locale: "ar" | "en"): string[] {
     [b.pendingTeachers, "طلبات مدرّسين تنتظر", "teacher applications waiting"],
     [b.unansweredQuestions, "أسئلة طلاب بلا إجابة", "student questions unanswered"],
     [b.ungradedHomework, "واجبات لم تُصحَّح منذ أكثر من 48 ساعة", "homework ungraded for over 48 hours"],
+    [b.coursesPublished, "دورات نُشرت خلال 24 ساعة", "courses published in the last 24 hours"],
+    [b.payoutsReady, "كشوف معلمين جاهزة للدفع", "teacher statements ready to pay"],
   ];
   for (const [n, a, e] of todo) if (n > 0) lines.push(`${n} ${ar ? a : e}`);
   if (b.oldestQuestionHours && b.oldestQuestionHours >= 24) lines.push(ar ? `أقدم سؤال ينتظر منذ ${b.oldestQuestionHours} ساعة.` : `The oldest question has waited ${b.oldestQuestionHours} hours.`);

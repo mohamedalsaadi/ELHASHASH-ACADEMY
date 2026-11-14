@@ -70,3 +70,27 @@ export function summarizeStatements(rows: StatementRow[], period: string): State
   }
   return [...map.values()];
 }
+
+/** Sales younger than this at issue time wait for the next statement, so a refund never lands after the teacher was paid. */
+export const REFUND_HOLD_DAYS = 14;
+
+/** The cut-off of the statement issued on `issuedAt` (the 1st of a month): the 1st at 00:00 UTC, minus the refund hold. */
+export function statementCutoff(issuedAt: Date): Date {
+  return new Date(Date.UTC(issuedAt.getUTCFullYear(), issuedAt.getUTCMonth(), 1) - REFUND_HOLD_DAYS * 86_400_000);
+}
+
+/** The 10th of the issue month: the day the owner pays a statement. */
+export function payableOn(issuedAt: Date): Date {
+  return new Date(Date.UTC(issuedAt.getUTCFullYear(), issuedAt.getUTCMonth(), 10));
+}
+
+/**
+ * Where a teacher's next statement starts: where the previous one ended. Statements issued before the hold existed have
+ * no end stored and covered their whole calendar month; a teacher with none starts from the beginning.
+ */
+export function statementStart(prev: { period: string; coversTo: Date | null } | null): Date {
+  if (!prev) return new Date(0);
+  if (prev.coversTo) return prev.coversTo;
+  const [y, m] = prev.period.split("-").map(Number);
+  return new Date(Date.UTC(y, m, 1));
+}

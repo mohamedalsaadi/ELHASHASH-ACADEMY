@@ -62,7 +62,7 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
       <Reviews locale={locale} />
 
       <div className="flex justify-end">
-        <Link href="/admin/teachers/export" prefetch={false} className="text-small text-pen underline underline-offset-4">
+        <Link href="/admin/teachers/export" prefetch={false} className="link-tap text-small text-pen underline underline-offset-4">
           {t("exportTeachers")}
         </Link>
       </div>

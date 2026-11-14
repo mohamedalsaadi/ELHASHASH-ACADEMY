@@ -79,6 +79,10 @@ test("the morning job reminds subscribers of a live session today once, and non-
 
 test("publishing a course tells every student of its grade", async ({ page, loc }) => {
   const c = await course(`new-${loc}-${test.info().project.name}`, false);
+  // A course needs a description, a lesson with something in it and a package that can be bought before it may be published.
+  await sql(`UPDATE "Course" SET "descEn" = 'A real course' WHERE id = $1`, [c.courseId]);
+  await sql(`UPDATE "Lesson" SET kind = 'PDF', "pdfKey" = 'lessons/e2e.pdf' WHERE id = $1`, [c.lessons[0]]);
+  await sql(`INSERT INTO "Sku" (id, "courseId", "accessType", price, currency, "aedPrice", active) VALUES ($1,$2,'SEMESTER',40000,'AED',40000,true)`, [randomUUID(), c.courseId]);
   try {
     await signInAs(page, loc, PERSONAS.admin.phone);
     await page.goto(`/${loc}/admin/courses/${c.courseId}`);

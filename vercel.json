@@ -5,6 +5,7 @@
     { "path": "/api/cron/progress", "schedule": "17 5 1 * *" },
     { "path": "/api/cron/live-day", "schedule": "30 4 * * *" },
     { "path": "/api/cron/promote", "schedule": "30 5 1 8 *" },
-    { "path": "/api/cron/briefing", "schedule": "0 2 * * *" }
+    { "path": "/api/cron/briefing", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/teacher-digest", "schedule": "30 3 * * *" }
   ]
 }

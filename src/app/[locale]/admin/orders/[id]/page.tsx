@@ -123,7 +123,7 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
                   action={markOrderPaid}
                   confirmText={t("confirmMarkPaid")}
                   tone="primary"
-                  className="rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
+                  className="inline-flex min-h-(--control-h) items-center rounded-full border border-hairline bg-surface px-4 py-2 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised"
                 >
                   {t("markPaid")}
                 </ConfirmButton>

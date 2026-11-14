@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 
 const check = "flex min-h-11 items-center gap-2 text-small text-ink-muted";
 const smallButton =
-  "rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+  "inline-flex min-h-(--control-h) items-center rounded-full border border-hairline bg-surface px-4 py-2 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 const CURRENCIES = ["EGP", "SAR", "AED", "KWD", "QAR", "BHD", "OMR"] as const;
 const CURRICULA = ["NATIONAL_EG", "MOE", "BRITISH", "AMERICAN", "IB"] as const;
 

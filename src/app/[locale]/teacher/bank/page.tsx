@@ -59,8 +59,8 @@ export default async function BankPage({ params }: { params: Promise<{ locale: s
               <h2 className="font-display text-h3 font-semibold">{pick(ar, c.titleAr, c.titleEn)}</h2>
               <form action={toggleLeaderboard} className="flex items-center gap-2 text-label text-ink-muted">
                 <input type="hidden" name="courseId" value={c.id} />
-                <input type="checkbox" name="on" defaultChecked={c.leaderboard} className="size-4" />
-                <button className="underline underline-offset-4">{t("toggleLeaderboard")}</button>
+                <input type="checkbox" name="on" defaultChecked={c.leaderboard} aria-label={t("toggleLeaderboard")} className="size-4" />
+                <button className="link-tap underline underline-offset-4">{t("toggleLeaderboard")}</button>
               </form>
             </div>
             <ul className="grid gap-1 text-small">
@@ -69,7 +69,7 @@ export default async function BankPage({ params }: { params: Promise<{ locale: s
                   <li key={l.id}>
                     <Link
                       href={`/teacher/bank/${l.id}`}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-sm px-2 py-1.5 hover:bg-raised"
+                      className="flex min-h-(--control-h) flex-wrap items-center justify-between gap-2 rounded-sm px-2 py-1.5 hover:bg-raised"
                     >
                       <span className="min-w-0 truncate">
                         <span className="text-label text-ink-muted">{pick(ar, u.titleAr, u.titleEn)} · </span>

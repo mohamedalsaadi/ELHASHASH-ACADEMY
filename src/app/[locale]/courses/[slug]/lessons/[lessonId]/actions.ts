@@ -11,6 +11,7 @@ import { logAiRun } from "@/lib/ai-log";
 import { askLesson, hasLessonSource, MAX_QUESTION } from "@/lib/ai-lesson";
 import { db } from "@/lib/db";
 import { hasGuardianConsent } from "@/lib/live";
+import { createNotification } from "@/lib/notify";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 
 const DAY_MS = 86_400_000;
@@ -21,14 +22,26 @@ export async function askQuestion(_: unknown, form: FormData): Promise<"ok" | "m
   if (!session?.user) notFound();
   const d = z.object({ lessonId: z.string(), body: z.string().trim().min(3).max(1500) }).safeParse(Object.fromEntries(form));
   if (!d.success) return "invalid";
-  const lesson = await db.lesson.findUnique({ where: { id: d.data.lessonId }, include: { unit: true } });
+  const lesson = await db.lesson.findUnique({ where: { id: d.data.lessonId }, include: { unit: { include: { course: { select: { instructorId: true, titleAr: true, titleEn: true } } } } } });
   if (!lesson || !(await canAsk(session.user.id, lesson.unit.courseId, lessonScope(lesson)))) notFound();
 
   const key = `ask:${session.user.id}`;
   if (await isLimited(key, 5, DAY_MS)) return "limited";
   await recordAttempt(key);
   const scan = maskContacts(d.data.body);
-  await db.question.create({ data: { userId: session.user.id, lessonId: lesson.id, body: scan.text } });
+  const question = await db.question.create({ data: { userId: session.user.id, lessonId: lesson.id, body: scan.text } });
+  // The teacher hears about it at once (bell only; the daily digest carries the email).
+  await createNotification({
+    userId: lesson.unit.course.instructorId,
+    kind: "QUESTION_NEW",
+    titleAr: "سؤال جديد من طالب",
+    titleEn: "A student asked a question",
+    bodyAr: `${lesson.unit.course.titleAr}: ${lesson.titleAr}`,
+    bodyEn: `${lesson.unit.course.titleEn}: ${lesson.titleEn}`,
+    href: "/teacher/questions",
+    email: false,
+    dedupeKey: `question:${question.id}`,
+  });
   revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
   revalidatePath("/[locale]/teacher/questions", "page");
   return scan.masked ? "masked" : "ok";

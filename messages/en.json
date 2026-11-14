@@ -777,7 +777,19 @@
     "maxDevices": "Browsers (devices) per student in 30 days (empty = no check)",
     "limitsHint": "Limits video sharing. A refresh within 5 minutes is not a new play. You and the owner are never limited.",
     "copyUnitTo": "Copy this unit to another course (videos are reused)",
-    "copyUnit": "Copy"
+    "copyUnit": "Copy",
+    "ready": {
+      "heading": "Before you publish",
+      "ok": "Done",
+      "missing": "Missing",
+      "title": "Titles in Arabic and English",
+      "description": "A description",
+      "content": "At least one lesson with a video, a PDF or questions",
+      "package": "An active package with a price and an AED price",
+      "cover": "A cover picture (recommended)",
+      "teacher": "A photo and bio on your account (recommended)",
+      "blocked": "The course was saved but not published. Fix what is marked Missing, then tick Published again."
+    }
   },
   "signup": {
     "title": "Create an account",
@@ -1063,7 +1075,19 @@
     "setupCourse": "Create your first course",
     "setupPrice": "Set a price on a course",
     "setupPublish": "Publish a course",
-    "setupDone": "Done"
+    "setupDone": "Done",
+    "payoutTitle": "Payout details",
+    "payoutHint": "Where Dhirwa sends your earnings by bank transfer. Only you and the owner can see them. Statements are paid on the 10th of the month, after you acknowledge them.",
+    "payoutOnFile": "On file: {iban}",
+    "payoutHolder": "Account holder name",
+    "payoutBank": "Bank name",
+    "payoutIban": "IBAN",
+    "payoutInvalid": "That IBAN does not look right. Check the digits and the country letters.",
+    "payoutSaved": "Saved.",
+    "covers": "Covers {from} to {to}",
+    "paidOn": "Paid on {date}. Reference: {ref}",
+    "dueOn": "To be paid on {date}",
+    "payWaitsAck": "Acknowledge it to be paid"
   },
   "live": {
     "title": "Live sessions",
@@ -1178,7 +1202,8 @@
       "finance": "Tax",
       "settings": "Settings",
       "reviews": "Reviews",
-      "ai": "AI"
+      "ai": "AI",
+      "payouts": "Payouts"
     },
     "analyticsHint": "Last {days} days. Each step counts only people who also completed the earlier steps.",
     "step": "Step",
@@ -2068,5 +2093,20 @@
     "pending": "Reviews waiting",
     "decided": "Decided",
     "rateHint": "You have finished most of this course. Rate it."
+  },
+  "payouts": {
+    "hint": "Teachers are paid by bank transfer from your bank. A statement appears here once the teacher acknowledges it and has saved bank details. Make the transfer, then record the reference. Dhirwa never moves the money.",
+    "ready": "Ready to pay",
+    "noneReady": "Nothing is ready to pay.",
+    "csv": "Download bank file (CSV)",
+    "total": "Total to transfer: {total}",
+    "payableOn": "due {date}",
+    "overdue": "overdue",
+    "reference": "Bank reference",
+    "markPaid": "Mark paid",
+    "waiting": "Waiting on the teacher",
+    "needsAck": "Not acknowledged yet",
+    "needsDetails": "No bank details saved",
+    "paid": "Paid recently"
   }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { briefingLines, type Briefing } from "./briefing";
 
-const empty: Briefing = { revenue: [], failedPayments: 0, newStudents: 0, openTickets: 0, ticketsNeedYou: 0, openRequests: 0, heldReviews: 0, pendingTeachers: 0, unansweredQuestions: 0, oldestQuestionHours: null, ungradedHomework: 0, liveToday: [] };
+const empty: Briefing = { revenue: [], failedPayments: 0, newStudents: 0, openTickets: 0, ticketsNeedYou: 0, openRequests: 0, heldReviews: 0, pendingTeachers: 0, unansweredQuestions: 0, oldestQuestionHours: null, ungradedHomework: 0, coursesPublished: 0, payoutsReady: 0, liveToday: [] };
 
 describe("briefingLines", () => {
   it("says nothing is waiting when every queue is empty", () => {

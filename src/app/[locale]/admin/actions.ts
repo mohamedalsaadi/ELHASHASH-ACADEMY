@@ -31,6 +31,9 @@ import { assertCourse, assertSlot, requireAdmin, requireStaff } from "@/lib/staf
 import { stripe } from "@/lib/stripe";
 import { notifyNewCourse } from "@/lib/new-course-alerts";
 import { discountAllowed } from "@/lib/discount-cap";
+import { notifyCoursePublished } from "@/lib/course-published-alert";
+import { courseReadiness } from "@/lib/publish-check";
+import { redirectLocal } from "@/lib/redirect-locale";
 
 // Every action re-checks the role: server actions are public endpoints, whatever page renders them.
 
@@ -94,12 +97,23 @@ export async function updateCourse(form: FormData) {
     cover = { coverKey, coverType: info.contentType };
   }
 
+  // A course going live is saved hidden first, then checked against what is now stored: an empty course never appears.
+  const publishing = data.published && wasHidden;
   // An empty box clears the limit (maxPlays: unlimited, maxIps: IP check off).
-  await db.course.update({ where: { id }, data: { ...data, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, maxDevices: data.maxDevices ?? null, ...cover } });
-  if (data.published && wasHidden) {
+  await db.course.update({ where: { id }, data: { ...data, published: publishing ? false : data.published, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, maxDevices: data.maxDevices ?? null, ...cover } });
+  if (publishing) {
+    const ready = await courseReadiness(id);
+    if (ready.blocking.length) {
+      done();
+      await redirectLocal(`/admin/courses/${id}?publishError=${ready.blocking.join(",")}`);
+    }
+    await db.course.update({ where: { id }, data: { published: true } });
     await logEvent({ name: "course_published", userId: me.id, courseId: id });
-    // The whole grade gets a notice, so it runs after the response instead of holding the save.
-    after(() => notifyNewCourse(id));
+    // The whole grade gets a notice and the owner is told, so it runs after the response instead of holding the save.
+    after(async () => {
+      await notifyNewCourse(id);
+      await notifyCoursePublished(id);
+    });
   }
   done();
 }

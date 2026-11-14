@@ -18,7 +18,7 @@ import { sendVerification, setEmailOptOut, unlinkParent } from "./actions";
 export const dynamic = "force-dynamic";
 
 const panel = "grid gap-3 card p-5";
-const smallButton = "w-fit rounded-full border border-hairline bg-surface px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+const smallButton = "inline-flex min-h-(--control-h) w-fit items-center rounded-full border border-hairline bg-surface px-3 py-1.5 font-display text-small font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/account", "account", { key: "title", noindex: true });
@@ -146,7 +146,7 @@ export default async function AccountPage({
                     <ConfirmButton
                       action={unlinkParent}
                       confirmText={t("confirmUnlink")}
-                      className="text-small text-down underline-offset-4 hover:underline"
+                      className="link-tap text-small text-down underline-offset-4 hover:underline"
                     >
                       {t("unlink")}
                     </ConfirmButton>
@@ -173,7 +173,7 @@ export default async function AccountPage({
                     <ConfirmButton
                       action={unlinkParent}
                       confirmText={t("confirmUnlink")}
-                      className="text-small text-down underline-offset-4 hover:underline"
+                      className="link-tap text-small text-down underline-offset-4 hover:underline"
                     >
                       {t("unlink")}
                     </ConfirmButton>
@@ -184,7 +184,7 @@ export default async function AccountPage({
           ) : (
             <p className="text-small text-ink-muted">{t("noChildren")}</p>
           )}
-          <Link href="/parent" className="text-small text-pen underline-offset-4 hover:underline">
+          <Link href="/parent" className="link-tap text-small text-pen underline-offset-4 hover:underline">
             {t("openParent")}
           </Link>
         </section>
@@ -244,7 +244,7 @@ export default async function AccountPage({
       )}
 
       {u.role === "INSTRUCTOR" || u.role === "ADMIN" ? (
-        <Link href={u.role === "ADMIN" ? "/admin" : "/teacher"} className="text-small text-pen underline-offset-4 hover:underline">
+        <Link href={u.role === "ADMIN" ? "/admin" : "/teacher"} className="link-tap text-small text-pen underline-offset-4 hover:underline">
           {t("openStaff")}
         </Link>
       ) : null}

@@ -6,6 +6,8 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Covers are private blobs behind /api/covers; the optimizer resizes them to the card or page and caches the result.
+  images: { localPatterns: [{ pathname: "/api/covers/**" }, { pathname: "/flags/**" }] },
   async headers() {
     return [
       {

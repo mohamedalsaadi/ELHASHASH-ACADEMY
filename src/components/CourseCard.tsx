@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { StatusChip } from "@/components/ui/StatusChip";
 import type { Rating } from "@/lib/reviews";
@@ -38,14 +39,13 @@ export function CourseCard({ course: c, locale, owned, rating }: { course: CardC
       {c.coverKey && locked ? (
         <span className="relative block aspect-[16/9] w-full">
           {/* Two layers: the colour picture underneath, a grey copy on top that fades away on hover, focus or tap. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" width={640} height={360} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" width={640} height={360} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover grayscale transition-opacity duration-(--dur-fast) ease-(--ease-out) group-hover:opacity-0 group-focus-visible:opacity-0 group-active:opacity-0" />
+          <Image src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+          <Image src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover grayscale transition-opacity duration-(--dur-fast) ease-(--ease-out) group-hover:opacity-0 group-focus-visible:opacity-0 group-active:opacity-0" />
         </span>
       ) : c.coverKey ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" width={640} height={360} loading="lazy" decoding="async" className="aspect-[16/9] w-full object-cover" />
+        <span className="relative block aspect-[16/9] w-full">
+          <Image src={`/api/covers/${c.id}?v=${c.coverKey.split("/").pop()}`} alt="" fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+        </span>
       ) : (
         <span aria-hidden="true" className="grid aspect-[16/9] w-full place-items-center bg-raised">
           <SubjectIcon icon={c.subject?.icon ?? "book"} size={56} muted />

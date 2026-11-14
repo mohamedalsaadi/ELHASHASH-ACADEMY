@@ -124,7 +124,7 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 - **Containers:** `--container-page` 76rem, `--container-reading` 46rem.
 - **Layout:** logical properties only (`ms-`, `me-`, `inset-inline`, `start`, `end`). Icons that point (arrows, chevrons) mirror in RTL with `rtl:-scale-x-100`; the mark, play and check never mirror.
 - **Phones:** 375 is the primary width. Signed-in users get a bottom tab bar (`TabBar`) with the same destinations as the header. Tabs only move; actions stay in the page. Section tabs (`.subnav`) scroll on phones and wrap from 40rem. Dashboards are one column, never a horizontal page scroll.
-- **Controls:** at least 44px (`--control-h`), guarded by `e2e/tap-targets.spec.ts`.
+- **Controls:** at least 44px (`--control-h`), guarded by `e2e/tap-targets.spec.ts` (public pages) and `e2e/signed-in-ui.spec.ts` (student, teacher, admin and parent pages). A text link that stands on its own line or in a flex row takes `.link-tap` (44px tall and wide, text stays small); a small pill button takes `min-h-(--control-h)`. Links inside a sentence are exempt.
 - **Icons:** Lucide, stroke 1.75. No emoji as icons.
 
 ## 6. Motion
@@ -140,7 +140,7 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 | `--stagger` | 60ms | hero copy, lists |
 
 - **Library.** GSAP with ScrollTrigger, marketing client components only (`components/motion/Motion.tsx`, `components/brand/Intro.tsx`). `gsap.matchMedia` handles reduced motion and phone layouts. App pages never import it.
-- **Scroll.** Native always. Pinning is CSS `position: sticky`, and scroll position drives what changes inside. No wheel hijacking, no scroll snapping forced on the page. Markup hooks: `data-reveal`, `data-scale-in`, `data-steps` / `data-step` / `data-panel`.
+- **Scroll.** Native always. Pinning is CSS `position: sticky`, and scroll position drives what changes inside. No wheel hijacking, no scroll snapping forced on the page. Markup hooks: `data-reveal`, `data-scale-in`, `data-steps` / `data-step` / `data-panel`. A pinned step starts at 55% opacity and reaches 1 as it scrolls in, so resting text stays near 3:1 for large headings.
 - **Intro.** About 2.6 s, once per tab session, home only. Ridges draw on a clean full-screen ground, the gold point climbs to the peak, the mark shrinks into its exact header position, the headline rises. States on `html[data-intro]`: `play`, `run`, `skip`, set by `public/intro-guard.js`. Any input skips. A 6 s failsafe clears it. `?intro=` previews it. Reduced motion and no JavaScript get the final frame.
 - **Backdrop.** `components/motion/Backdrop.tsx`, mounted by `MarketingBackdrop` on the home, the catalogue and `/teach` only, as its own lazy chunk. Fixed behind the page: three ridgelines (drawn like the logo's, each three contour lines) that drift slowly and move at different speeds with the scroll, two soft lights (gold, and the UAE blue at low strength) in slow orbits, and one gold summit point that leans toward a fine pointer. Transform and opacity only, no click, hidden in print, still under reduced motion.
 - **Student home.** The subject trail (`components/three/Ride.tsx`) moves only when the student moves it.
@@ -154,7 +154,7 @@ Arabic runs one body step larger than Latin because its x-height reads smaller. 
 - **Button secondary (`.btn-outline`):** pill, transparent, 1px `--color-field`. Hover: `--color-raised`.
 - **Input:** `--color-surface`, 1px `--color-field`, `--radius-sm`, 44px min height. Focus: primary border and soft ring. Error: `--color-down` border and a message saying what to fix.
 - **Card (`.card`):** surface, hairline, `--radius-lg`, `--shadow-paper`. Never a card inside a card; inner groups use `--color-raised`.
-- **Course card (`CourseCard`):** grade, title, free badge, price, country accent. **Country tile (`CountryTile`):** line badge, name, grade count, currency.
+- **Course card (`CourseCard`):** cover (or the subject icon), grade, title, free badge, price, country accent. Covers are private blobs served by `/api/covers/<id>`; they render through `next/image` (`images.localPatterns` in `next.config.ts`), so each screen gets a resized WebP or AVIF with a `sizes` hint, cached for a year by the versioned URL. **Country tile (`CountryTile`):** line badge, name, grade count, currency.
 - **Grade tile (country page):** open link, or dashed "coming soon". A gold dot marks the student's own grade, next to a text label.
 - **News banner (`NewsBanner`):** up to five items, newest first, from stored courses and discounts. Cached five minutes. Hidden when empty. Never auto-scrolls.
 - **Tab bar and section tabs:** the current tab is ink and bold, with `aria-current`.

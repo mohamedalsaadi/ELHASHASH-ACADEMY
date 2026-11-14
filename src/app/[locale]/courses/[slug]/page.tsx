@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
@@ -313,8 +314,9 @@ export default async function CoursePage({
 
       <header className="grid gap-6">
         {course.coverKey && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`} alt="" className="aspect-[16/9] w-full rounded-lg object-cover" />
+          <span className="relative block aspect-[16/9] w-full overflow-hidden rounded-lg">
+            <Image src={`/api/covers/${course.id}?v=${course.coverKey.split("/").pop()}`} alt="" fill priority sizes="(min-width: 896px) 896px, 100vw" className="object-cover" />
+          </span>
         )}
         <div className="grid gap-4">
           <Link href="/courses" className="inline-flex min-h-11 w-fit items-center gap-2 text-small text-ink-muted underline-offset-4 hover:underline">

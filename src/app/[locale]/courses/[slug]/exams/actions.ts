@@ -42,13 +42,19 @@ export async function startExam(form: FormData) {
   // A fresh attempt only while the student has one left, and never while one is already open.
   if (!existing && used < paper.maxAttempts) {
     const maxMarks = paper.items.reduce((sum, i) => sum + i.item.marks, 0);
-    await db.examAttempt.create({
-      data: {
-        paperId: paper.id,
-        userId: session.user.id,
-        expiresAt: new Date(Date.now() + paper.durationMin * 60_000),
-        maxMarks,
-      },
+    const userId = session.user.id;
+    // Two tabs or a scripted double POST must not both pass the checks above: a per-student, per-paper
+    // advisory lock serialises them, and the checks run again under it.
+    await db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`exam-start:${userId}:${paper.id}`}::text))`;
+      const [open, taken] = await Promise.all([
+        tx.examAttempt.findFirst({ where: { paperId: paper.id, userId, status: "IN_PROGRESS" }, select: { id: true } }),
+        tx.examAttempt.count({ where: { paperId: paper.id, userId } }),
+      ]);
+      if (open || taken >= paper.maxAttempts) return;
+      await tx.examAttempt.create({
+        data: { paperId: paper.id, userId, expiresAt: new Date(Date.now() + paper.durationMin * 60_000), maxMarks },
+      });
     });
   }
   return redirectLocal(`/courses/${paper.course.slug}/exams/${paper.id}`);

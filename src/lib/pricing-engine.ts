@@ -141,7 +141,11 @@ export function effectivePrice(s: Priceable, now: Date): number {
  * price. Null means the package has no AED price yet and cannot be sold online.
  */
 export function aedPriceOf(s: Priceable & { currency: Currency; aedPrice?: number | null }, now: Date): number | null {
-  if (s.aedPrice != null) return s.aedPrice;
+  if (s.aedPrice != null) {
+    // The temporary discount is set on the local price; scale the AED price by the same ratio.
+    const eff = effectivePrice(s, now);
+    return eff < s.price && s.price > 0 ? Math.round((s.aedPrice * eff) / s.price) : s.aedPrice;
+  }
   return s.currency === "AED" ? effectivePrice(s, now) : null;
 }
 

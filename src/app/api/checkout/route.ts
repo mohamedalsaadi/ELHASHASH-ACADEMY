@@ -15,7 +15,7 @@ import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { applyCoupon, applyPlatformDiscount, effectivePrice, PricingError } from "@/lib/pricing-engine";
 import { TERMS_VERSION } from "@/lib/legal";
-import { isLimited } from "@/lib/rate-limit";
+import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/schemas/checkout";
 import { stripe } from "@/lib/stripe";
 import { createIntent, ziinaCapReached } from "@/lib/ziina";
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
 
   const parsed = checkoutSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  await recordAttempt(`checkout:${session.user.id}`);
   const { skuIds, method, locale, coupon, forStudentId, forStudentPhone, guardianAttestation } = parsed.data;
 
   // A parent learns nothing themselves: they buy for a student and only for one. A linked child is the
@@ -78,7 +79,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "guardian_required" }, { status: 400 });
     }
   }
-  if (session.user.role === "PARENT" && beneficiaryId) {
+  // Only a ParentLink (declaredAt null) proves the guardian; a phone gift is just a typed number.
+  if (session.user.role === "PARENT" && beneficiaryId && beneficiaryDeclaredAt === null) {
     const parent = await db.user.findUnique({ where: { id: session.user.id }, select: { name: true } });
     await db.guardianConsent.upsert({
       where: { studentId: beneficiaryId },

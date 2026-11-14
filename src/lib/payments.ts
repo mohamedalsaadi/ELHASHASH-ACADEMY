@@ -132,7 +132,8 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
             if (rewarded === 1 && rewardPercent > 0) {
               const coupon = await trx.coupon.create({
                 data: {
-                  code: `RW-${order.referral.id}`,
+                  // Coupon codes are stored and looked up uppercase; a cuid is lowercase.
+                  code: `RW-${order.referral.id}`.toUpperCase(),
                   percentOff: rewardPercent,
                   funding: "PLATFORM",
                   ownerId: order.referral.referrerId,

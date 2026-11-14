@@ -12,6 +12,7 @@ export async function saveDateOfBirth(form: FormData) {
   if (!session?.user || session.user.role !== "STUDENT") notFound();
   const dob = parseBirthDate(String(form.get("dateOfBirth") ?? ""));
   if (!dob) return;
-  await db.user.update({ where: { id: session.user.id }, data: { dateOfBirth: dob } });
+  // Only fills an empty value: changing a recorded birth date would bypass the guardian-consent gate.
+  await db.user.updateMany({ where: { id: session.user.id, dateOfBirth: null }, data: { dateOfBirth: dob } });
   revalidatePath("/[locale]/dashboard", "page");
 }

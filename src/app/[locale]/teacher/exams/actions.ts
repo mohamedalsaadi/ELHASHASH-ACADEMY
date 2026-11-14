@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { suggestAnswer } from "@/lib/ai-grading";
 import { db } from "@/lib/db";
+import { hasGuardianConsent } from "@/lib/live";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
@@ -150,8 +151,13 @@ export async function gradeWrittenForm(form: FormData) {
 export async function askAiAboutAnswer(form: FormData) {
   const me = await requireStaff();
   const d = z.object({ answerId: z.string().min(1) }).parse(Object.fromEntries(form));
-  const answer = await db.examAnswer.findUniqueOrThrow({ where: { id: d.answerId }, select: { attempt: { select: { paper: { select: { courseId: true } } } } } });
+  const answer = await db.examAnswer.findUniqueOrThrow({
+    where: { id: d.answerId },
+    select: { attempt: { select: { userId: true, paper: { select: { courseId: true, course: { select: { aiGrading: true } } } } } } },
+  });
   await assertCourse(me, answer.attempt.paper.courseId);
+  // Same two gates as the automatic path: the course opted in, and a guardian consented for this student.
+  if (!answer.attempt.paper.course.aiGrading || !(await hasGuardianConsent(answer.attempt.userId))) return;
   if (await isLimited(`ai-grade:${me.id}`, 100, 86_400_000)) return;
   if (await suggestAnswer(d.answerId).catch(() => false)) await recordAttempt(`ai-grade:${me.id}`);
   revalidatePath("/[locale]/teacher/exams/[id]", "page");

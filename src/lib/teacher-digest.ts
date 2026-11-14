@@ -4,6 +4,7 @@ import { appUrl, emailLayout, sendMail } from "./mail";
 import { unsubscribeUrl } from "./unsubscribe";
 
 const DAY = 24 * 3600_000;
+const BUDGET_MS = 50_000;
 
 export type Digest = { questions: number; reviews: number; homework: number; requests: number };
 
@@ -39,20 +40,35 @@ export async function sendTeacherDigests(now = new Date()) {
     where: { role: "INSTRUCTOR", deletedAt: null, email: { not: null }, emailOptOutAt: null },
     select: { id: true, email: true, locale: true },
   });
+  const day = now.toISOString().slice(0, 10);
+  const started = Date.now();
   let sent = 0;
   for (const t of teachers) {
-    const d = await gatherDigest(t.id, now);
-    if (digestTotal(d) === 0 || !t.email) continue;
-    const locale = t.locale === "en" ? "en" : "ar";
-    const title = locale === "ar" ? "ما ينتظرك اليوم في ذروة" : "What is waiting for you on Dhirwa";
-    const unsubscribe = unsubscribeUrl(appUrl(), t.id);
-    const ok = await sendMail({
-      to: t.email,
-      subject: title,
-      html: emailLayout(title, digestLines(d, locale), { href: `${appUrl()}/${locale}/teacher`, label: locale === "ar" ? "افتح لوحتك" : "Open your dashboard" }, locale, unsubscribe),
-      unsubscribe,
-    });
-    if (ok) sent += 1;
+    // Stay inside the route's 60 s budget; the next run picks up whoever is left.
+    if (Date.now() - started > BUDGET_MS) break;
+    try {
+      const dedupeKey = `teacher-digest:${t.id}:${day}`;
+      // One email per teacher per day, even if the cron is run twice by hand.
+      if (await db.analyticsEvent.findUnique({ where: { dedupeKey }, select: { id: true } })) continue;
+      const d = await gatherDigest(t.id, now);
+      if (digestTotal(d) === 0 || !t.email) continue;
+      const locale = t.locale === "en" ? "en" : "ar";
+      const title = locale === "ar" ? "ما ينتظرك اليوم في ذروة" : "What is waiting for you on Dhirwa";
+      const unsubscribe = unsubscribeUrl(appUrl(), t.id);
+      const ok = await sendMail({
+        to: t.email,
+        subject: title,
+        html: emailLayout(title, digestLines(d, locale), { href: `${appUrl()}/${locale}/teacher`, label: locale === "ar" ? "افتح لوحتك" : "Open your dashboard" }, locale, unsubscribe),
+        unsubscribe,
+      });
+      if (ok) {
+        sent += 1;
+        await db.analyticsEvent.create({ data: { name: "teacher_digest_sent", userId: t.id, dedupeKey } }).catch(() => null);
+      }
+    } catch (e) {
+      // One teacher's failure (a slow query) must not stop the rest.
+      console.error("[teacher-digest]", t.id, e);
+    }
   }
   return { teachers: teachers.length, sent };
 }

@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { appUrl } from "@/lib/mail";
 import { getOrCreateReferralCode } from "@/lib/referral";
+import { whatsappEnabled } from "@/lib/whatsapp";
 import { DeleteAccountForm, ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
 import { sendVerification, setEmailOptOut, unlinkParent } from "./actions";
 
@@ -49,6 +50,8 @@ export default async function AccountPage({
   if (!u) notFound();
 
   const verified = Boolean(u.emailVerifiedAt);
+  // Phone and Google accounts have no password of their own; a WhatsApp code to their number proves who is asking.
+  const canCode = (u.role === "STUDENT" || u.role === "PARENT") && Boolean(u.phone?.startsWith("+")) && whatsappEnabled();
   const ar = locale === "ar";
   const receipts = await db.order.findMany({
     where: {
@@ -103,7 +106,7 @@ export default async function AccountPage({
 
       <section className={panel}>
         <h2 className="font-display text-h3 font-semibold">{t("passwordTitle")}</h2>
-        <PasswordForm />
+        <PasswordForm canCode={canCode} />
       </section>
 
       {u.email && (
@@ -239,7 +242,7 @@ export default async function AccountPage({
       {(u.role === "STUDENT" || u.role === "PARENT") && (
         <section className={`${panel} border-down/40`}>
           <h2 className="font-display text-h3 font-semibold text-down">{t("dangerTitle")}</h2>
-          <DeleteAccountForm />
+          <DeleteAccountForm canCode={canCode} />
         </section>
       )}
 

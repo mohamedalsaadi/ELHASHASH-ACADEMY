@@ -2,13 +2,40 @@
 
 import { useTranslations } from "next-intl";
 import { field, label } from "@/components/ui/form";
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { PasswordField } from "@/components/ui/PasswordField";
-import { changeOwnPassword, deleteAccount, generateParentCode, updateProfile } from "./actions";
+import { changeOwnPassword, deleteAccount, generateParentCode, sendAccountCode, updateProfile } from "./actions";
 
 const button =
   "btn btn-primary w-fit text-small";
+
+/**
+ * An optional WhatsApp code that stands in for the password. Accounts made by phone or Google never chose
+ * a password, so without this they could neither change it nor erase themselves.
+ */
+function CodeField({ canCode }: { canCode: boolean }) {
+  const t = useTranslations("otp");
+  const [sent, setSent] = useState<Awaited<ReturnType<typeof sendAccountCode>> | null>(null);
+  const [pending, start] = useTransition();
+  if (!canCode) return null;
+  return (
+    <div className="grid gap-2">
+      <label className={label}>
+        {t("code")}
+        <input name="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} dir="ltr" className={field} />
+      </label>
+      <button type="button" disabled={pending} onClick={() => start(async () => setSent(await sendAccountCode()))} className={button}>
+        {pending ? t("sending") : sent?.ok ? t("resend") : t("send")}
+      </button>
+      {sent && (
+        <p role={sent.ok ? "status" : "alert"} className={`text-small ${sent.ok ? "text-up" : "text-down"}`}>
+          {sent.ok ? t("codeHint", { phone: sent.phone }) : t(`errors.${sent.error}`)}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function ProfileForm({ name, email }: { name: string; email: string }) {
   const t = useTranslations("account");
@@ -55,7 +82,7 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
   );
 }
 
-export function PasswordForm() {
+export function PasswordForm({ canCode = false }: { canCode?: boolean }) {
   const t = useTranslations("account");
   const [state, action, pending] = useActionState(changeOwnPassword, null);
   return (
@@ -65,12 +92,13 @@ export function PasswordForm() {
         <PasswordField
           name="current"
           autoComplete="current-password"
-          required
+          required={!canCode}
           aria-invalid={state === "wrong"}
           aria-describedby="account-password-error"
           className={field}
         />
       </label>
+      <CodeField canCode={canCode} />
       <label className={label}>
         {t("newPassword")}
         <PasswordField
@@ -116,7 +144,7 @@ export function ParentCodeForm() {
   );
 }
 
-export function DeleteAccountForm() {
+export function DeleteAccountForm({ canCode = false }: { canCode?: boolean }) {
   const t = useTranslations("account");
   const [state, action, pending] = useActionState(deleteAccount, null);
   return (
@@ -124,8 +152,9 @@ export function DeleteAccountForm() {
       <p className="text-small text-ink-muted">{t("dangerHint")}</p>
       <label className={label}>
         {t("passwordTitle")}
-        <PasswordField name="password" autoComplete="current-password" required className={field} />
+        <PasswordField name="password" autoComplete="current-password" required={!canCode} className={field} />
       </label>
+      <CodeField canCode={canCode} />
       <label className="flex min-h-11 items-center gap-3 text-small">
         <input type="checkbox" name="confirm" required className="size-5 shrink-0" />
         <span>{t("dangerConfirm")}</span>

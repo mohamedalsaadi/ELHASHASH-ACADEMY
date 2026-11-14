@@ -3,23 +3,56 @@
 import bcrypt from "bcryptjs";
 import { BCRYPT_COST, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/schemas/auth";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { z } from "zod";
 import { auth, signOut } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { maskContacts } from "@/lib/contact-guard";
+import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
 import { eraseAccount } from "@/lib/erasure";
+import { checkOtp, issueOtp } from "@/lib/otp";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
 import { newCode, hashToken } from "@/lib/token-utils";
 import { issueToken, VERIFY_TTL } from "@/lib/tokens";
+import { sendWhatsAppCode, whatsappEnabled } from "@/lib/whatsapp";
 
 async function me() {
   const session = await auth();
   if (!session?.user) notFound();
   return session.user;
+}
+
+const codeRoles = (role: string) => role === "STUDENT" || role === "PARENT";
+
+/**
+ * Re-authentication for a sensitive change: the current password, or a fresh WhatsApp code to the account's own number.
+ * Accounts made by phone or Google never chose a password (the stored hash is random), so the code is their only proof.
+ * Staff stay on passwords, as at sign-in.
+ */
+async function proves(user: { role: string }, row: { passwordHash: string; phone: string | null }, password: string, code: string) {
+  if (!code) return bcrypt.compare(password, row.passwordHash);
+  return codeRoles(user.role) && !!row.phone && checkOtp(row.phone, code);
+}
+
+/** Sends the account's own number a code that can stand in for the password in the two forms below. */
+export async function sendAccountCode(): Promise<{ ok: true; phone: string } | { ok: false; error: "too_many" | "send_failed" }> {
+  const user = await me();
+  const row = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { phone: true, locale: true } });
+  const phone = row.phone;
+  if (!codeRoles(user.role) || !phone?.startsWith("+") || !whatsappEnabled()) return { ok: false, error: "send_failed" };
+  // Same keys and limits as the sign-in code request, so the two routes share one budget per number and per host.
+  const ip = `otp-ip:${clientIp(await headers())}`;
+  const key = `otp-send:${phone}`;
+  if ((await isLimited(key, 3, 15 * 60_000)) || (await isLimited(ip, 10, 60 * 60_000))) return { ok: false, error: "too_many" };
+  await recordAttempt(key);
+  await recordAttempt(ip);
+  const code = await issueOtp(phone);
+  if (!(await sendWhatsAppCode(phone, code, row.locale === "en" ? "en" : "ar"))) return { ok: false, error: "send_failed" };
+  return { ok: true, phone: `${phone.slice(0, 4)}...${phone.slice(-3)}` };
 }
 
 async function sendVerify(userId: string, email: string, locale: string) {
@@ -67,10 +100,11 @@ export async function changeOwnPassword(_: unknown, form: FormData): Promise<"ok
   // A stolen session must not brute-force the current password at full speed.
   if (await isLimited(`chpw:${user.id}`, 5, 15 * 60_000)) return "wrong";
   const current = String(form.get("current") ?? "");
+  const code = String(form.get("code") ?? "").trim();
   const next = String(form.get("next") ?? "");
   if (next.length < PASSWORD_MIN || next.length > PASSWORD_MAX) return "short";
   const row = await db.user.findUniqueOrThrow({ where: { id: user.id } });
-  if (!(await bcrypt.compare(current, row.passwordHash))) {
+  if (!(await proves(user, row, current, code))) {
     await recordAttempt(`chpw:${user.id}`);
     return "wrong";
   }
@@ -142,8 +176,9 @@ export async function deleteAccount(_: unknown, form: FormData): Promise<"ok" | 
   if (await isLimited(key, 5, 15 * 60_000)) return "limited";
 
   const password = String(form.get("password") ?? "");
-  const row = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { passwordHash: true } });
-  if (!(await bcrypt.compare(password, row.passwordHash))) {
+  const code = String(form.get("code") ?? "").trim();
+  const row = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { passwordHash: true, phone: true } });
+  if (!(await proves(user, row, password, code))) {
     await recordAttempt(key);
     return "wrong";
   }

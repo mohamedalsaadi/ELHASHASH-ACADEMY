@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
-import { isLimited } from "@/lib/rate-limit";
+import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { syncPaymentIntent } from "@/lib/ziina";
 import { intentCandidates } from "@/lib/ziina-format";
 
@@ -35,6 +35,8 @@ export async function POST(req: Request) {
         mismatch: result?.mismatch ?? false,
       });
     }
+    // Only calls that match no pending order count: real Ziina callbacks share a few IPs and are never retried once ignored.
+    await recordAttempt(`ziina-hook:${ip}`);
     return NextResponse.json({ ok: true, ignored: true });
   } catch (e) {
     // Transient failure: 500 so Ziina retries. The result page remains the primary path anyway.

@@ -1,11 +1,11 @@
 /**
  * Quoted cell: inner quotes are doubled, so a name or title can contain anything.
- * A value starting with = + - @ or a control character is prefixed with an apostrophe: Excel and
+ * A value starting with = + - @ or a control character (except a plain negative number) is prefixed with an apostrophe: Excel and
  * Sheets would otherwise run a student-supplied name as a formula (CSV injection).
  */
 export const csvCell = (v: unknown) => {
   const s = String(v ?? "");
-  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  const safe = /^[=+\-@\t\r]/.test(s) && !/^-\d+(\.\d+)?$/.test(s) ? `'${s}` : s;
   return `"${safe.replaceAll('"', '""')}"`;
 };
 

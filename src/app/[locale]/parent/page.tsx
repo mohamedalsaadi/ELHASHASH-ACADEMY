@@ -47,7 +47,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
 
   const links = await db.parentLink.findMany({
     where: { parentId: session.user.id },
-    include: { student: { select: { id: true, name: true, phone: true, guardianConsent: { select: { consentedAt: true } } } } },
+    include: { student: { select: { id: true, name: true, phone: true, guardianConsent: { select: { consentedAt: true, verifiedAt: true } } } } },
     orderBy: { createdAt: "asc" },
   });
 
@@ -155,7 +155,7 @@ export default async function ParentPage({ params }: { params: Promise<{ locale:
                 <dd>{lastOrder?.paidAt ? `${formatMoney(lastOrder.total, lastOrder.currency, locale)} · ${date.format(lastOrder.paidAt)}` : t("noPayment")}</dd>
               </dl>
               {/* Live lectures open an external meeting, so a guardian consents once per child. */}
-              {link.student.guardianConsent ? (
+              {link.student.guardianConsent?.verifiedAt ? (
                 <p className="text-small text-ink-muted">
                   {t("consentDone", { date: date.format(link.student.guardianConsent.consentedAt) })}
                 </p>

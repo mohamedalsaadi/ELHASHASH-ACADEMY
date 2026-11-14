@@ -58,11 +58,12 @@ const line = {
  * Models the two columns the real database leans on: gatewayEventId is unique, and the PAID
  * transition only counts when the order was not already paid.
  */
-function fakeDatabase(seed: Partial<typeof order> = {}, opts: { throwOnEntitlement?: boolean } = {}) {
+function fakeDatabase(seed: Partial<typeof order> = {}, opts: { throwOnEntitlement?: boolean; rewardPercent?: number } = {}) {
   const state = { ...order, ...seed };
   const seenEvents = new Set<string>();
   const entitlements: Row[] = [];
   const ledger: Row[] = [];
+  const coupons: Row[] = [];
 
   const trx = {
     paymentEvent: {
@@ -97,15 +98,15 @@ function fakeDatabase(seed: Partial<typeof order> = {}, opts: { throwOnEntitleme
     ledgerEntry: { createMany: async ({ data }: { data: Row[] }) => (ledger.push(...data), { count: data.length }) },
     referral: {
       deleteMany: async () => ({ count: 0 }),
-      updateMany: async () => ({ count: 0 }),
+      updateMany: async () => ({ count: state.referral ? 1 : 0 }),
       update: async () => ({}),
     },
-    coupon: { create: async ({ data }: { data: Row }) => data },
-    platformSetting: { findUnique: async () => null },
+    coupon: { create: async ({ data }: { data: Row }) => (coupons.push(data), { id: "coupon-1", ...data }) },
+    platformSetting: { findUnique: async () => (opts.rewardPercent ? { referralRewardPercentOff: opts.rewardPercent } : null) },
   };
 
   h.db.$transaction = (fn) => fn(trx);
-  return { state, entitlements, ledger };
+  return { state, entitlements, ledger, coupons };
 }
 
 const paid = { kind: "paid" as const, amount: 30_000, currency: "AED" };
@@ -194,6 +195,14 @@ describe("applyPaymentOutcome", () => {
     await applyPaymentOutcome("order-1", "evt", { kind: "expired" }, {});
     expect(fake.state.status).toBe("EXPIRED");
     expect(fake.entitlements).toHaveLength(0);
+  });
+
+  it("mints the referrer's reward coupon in the uppercase form resolveCoupon looks up", async () => {
+    const fake = fakeDatabase({ referral: { id: "cmabc123xyz", status: "PENDING", referrerId: "parent-1" } }, { rewardPercent: 10 });
+    await applyPaymentOutcome("order-1", "evt", paid, {});
+    expect(fake.coupons).toHaveLength(1);
+    expect(fake.coupons[0].code).toBe("RW-CMABC123XYZ");
+    expect(fake.coupons[0].code).toMatch(/^[A-Z0-9_-]{3,32}$/);
   });
 
   it("gives the access to the child a parent paid for", async () => {

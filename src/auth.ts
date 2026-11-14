@@ -71,6 +71,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await recordAttempt(ipKey);
           return null;
         }
+        // Ten failures lock the account for the window even against the right password, so a many-host guesser cannot keep trying.
+        if (await isLimited(key, 10, 15 * 60_000)) return null;
         return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };
       },
     }),
@@ -114,9 +116,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         user.id = existing.id;
         user.role = existing.role;
         user.pwdAt = existing.passwordChangedAt?.getTime() ?? 0;
-        // Google proved the address, so an earlier unverified signup is now verified.
+        // Google proved the address, so an earlier unverified signup is now verified. Password signup never proved it, though,
+        // so whoever made that row may be a squatter: drop their password, phone and guardian link. The new passwordChangedAt
+        // ends their sessions at the next re-check and is this session's pwdAt too, or the owner's own token would die there.
         if (!existing.emailVerifiedAt) {
-          await db.user.update({ where: { id: existing.id }, data: { emailVerifiedAt: new Date() } });
+          const now = new Date();
+          await db.$transaction([
+            db.guardianConsent.deleteMany({ where: { studentId: existing.id } }),
+            db.user.update({
+              where: { id: existing.id },
+              data: { emailVerifiedAt: now, passwordHash: await bcrypt.hash(randomUUID(), BCRYPT_COST), passwordChangedAt: now, phone: null },
+            }),
+          ]);
+          user.pwdAt = now.getTime();
         }
         return true;
       }

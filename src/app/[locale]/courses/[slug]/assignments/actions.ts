@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { Prisma } from "@/generated/prisma/client";
 import { suggestGrade, suggestSubmissionAnswers } from "@/lib/ai-grading";
 import { markExam, scaleScore } from "@/lib/exams";
 import { replyFrom } from "@/lib/practice";
@@ -86,71 +87,81 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
     select: { id: true, status: true, revision: true },
   });
 
-  let submissionId: string;
-  let kept = 0;
   if (existing) {
     // Returning the work is the instructor asking for a redo, so it always reopens once. The switch only
     // covers the other case: resubmitting after a grade the teacher did not ask to see again.
     const canRedo = existing.status === "RETURNED" || (assignment.allowResubmit && existing.status === "GRADED");
     if (!canRedo) return "already";
-    await db.$transaction([
-      db.submissionFile.deleteMany({ where: { submissionId: existing.id } }),
-      db.submission.update({
-        where: { id: existing.id },
-        data: {
-          status: "SUBMITTED",
-          text,
-          submittedAt: now,
-          revision: existing.revision + 1,
-          score: null,
-          feedback: null,
-          gradedAt: null,
-          gradedById: null,
-          aiScore: null,
-          aiFeedback: null,
-        },
-      }),
-    ]);
-    kept = await saveFiles(existing.id, assignment.id, studentId, files);
-    submissionId = existing.id;
-  } else {
-    const created = await db.submission.create({
-      data: { assignmentId: assignment.id, studentId, text, submittedAt: now, status: "SUBMITTED" },
-    });
-    kept = await saveFiles(created.id, assignment.id, studentId, files);
-    submissionId = created.id;
   }
 
-  // Store the answers and mark what can be marked. A quiz with nothing for a teacher to read is graded on the spot;
-  // otherwise it waits, with the questions' marks as the suggested score.
-  if (items.length > 0) {
-    const marked = markExam(items, replies);
-    await db.$transaction([
-      db.submissionAnswer.deleteMany({ where: { submissionId } }),
-      db.submissionAnswer.createMany({
-        data: marked.results.map((r) => {
-          const reply = replies.find((x) => x.itemId === r.itemId);
-          const item = items.find((i) => i.id === r.itemId)!;
-          const choice = item.kind === "MCQ" || item.kind === "MULTI";
-          return {
-            submissionId,
-            itemId: r.itemId,
-            correct: r.correct,
-            marks: r.marks,
-            choiceId: item.kind === "MCQ" ? reply?.choiceId ?? null : null,
-            choiceIds: choice ? reply?.choiceIds ?? [] : [],
-            text: item.kind === "SHORT" || item.kind === "WRITTEN" ? reply?.text ?? null : null,
-          };
-        }),
-      }),
-    ]);
-    if (!marked.needsGrading && !text && files.length === 0) {
-      const maxScore = (await db.assignment.findUniqueOrThrow({ where: { id: assignment.id }, select: { maxScore: true } })).maxScore;
-      await db.submission.update({
-        where: { id: submissionId },
-        data: { status: "GRADED", score: scaleScore(marked.autoMarks, marked.maxMarks, maxScore), gradedAt: now, gradedById: null },
-      });
-    }
+  // Check every file against Blob before writing anything, so a failed head check leaves no half-saved row.
+  // React resets the form after the action, so the "filesLost" message asks the student to attach them again.
+  const stored = await verifiedFiles(assignment.id, studentId, files);
+  if (stored.length < files.length) return "filesLost";
+
+  // The submission, its files and its answers go in together: a failure part-way leaves the student able to retry.
+  // Questions set on this assignment are marked here from the database, never from the client. A quiz with nothing for
+  // a teacher to read is graded on the spot below; otherwise it waits, with the questions' marks as the suggested score.
+  const marked = items.length > 0 ? markExam(items, replies) : null;
+  let submissionId: string;
+  try {
+    submissionId = await db.$transaction(async (tx) => {
+      let id: string;
+      if (existing) {
+        await tx.submissionFile.deleteMany({ where: { submissionId: existing.id } });
+        await tx.submission.update({
+          where: { id: existing.id },
+          data: {
+            status: "SUBMITTED",
+            text,
+            submittedAt: now,
+            revision: existing.revision + 1,
+            score: null,
+            feedback: null,
+            gradedAt: null,
+            gradedById: null,
+            aiScore: null,
+            aiFeedback: null,
+          },
+        });
+        id = existing.id;
+      } else {
+        id = (await tx.submission.create({ data: { assignmentId: assignment.id, studentId, text, submittedAt: now, status: "SUBMITTED" } })).id;
+      }
+      if (stored.length > 0) await tx.submissionFile.createMany({ data: stored.map((f) => ({ submissionId: id, ...f })) });
+      if (marked) {
+        await tx.submissionAnswer.deleteMany({ where: { submissionId: id } });
+        await tx.submissionAnswer.createMany({
+          data: marked.results.map((r) => {
+            const reply = replies.find((x) => x.itemId === r.itemId);
+            const item = items.find((i) => i.id === r.itemId)!;
+            const choice = item.kind === "MCQ" || item.kind === "MULTI";
+            return {
+              submissionId: id,
+              itemId: r.itemId,
+              correct: r.correct,
+              marks: r.marks,
+              choiceId: item.kind === "MCQ" ? reply?.choiceId ?? null : null,
+              choiceIds: choice ? reply?.choiceIds ?? [] : [],
+              text: item.kind === "SHORT" || item.kind === "WRITTEN" ? reply?.text ?? null : null,
+            };
+          }),
+        });
+      }
+      return id;
+    });
+  } catch (e) {
+    // A double tap: the other request created the row first.
+    if (!existing && e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return "already";
+    throw e;
+  }
+
+  if (marked && !marked.needsGrading && !text && files.length === 0) {
+    const maxScore = (await db.assignment.findUniqueOrThrow({ where: { id: assignment.id }, select: { maxScore: true } })).maxScore;
+    await db.submission.update({
+      where: { id: submissionId },
+      data: { status: "GRADED", score: scaleScore(marked.autoMarks, marked.maxMarks, maxScore), gradedAt: now, gradedById: null },
+    });
   }
 
   await recordAttempt(`submit:${studentId}`);
@@ -182,25 +193,20 @@ export async function submitAssignment(_prev: SubmitError, form: FormData): Prom
   revalidatePath("/[locale]/dashboard", "page");
   revalidatePath("/[locale]/teacher/assignments/[id]", "page");
   revalidatePath("/[locale]/courses/[slug]", "page");
-  // The work is in, but a file that could not be stored must not look like it arrived.
-  if (kept < files.length) return "filesLost";
   return masked ? "masked" : "ok";
 }
 
-/** Only blobs under this student's prefix, with the size Blob reports rather than the client's. */
-async function saveFiles(submissionId: string, assignmentId: string, studentId: string, files: { pathname: string; downloadName: string }[]) {
+/** Only blobs under this student's prefix, with the size Blob reports rather than the client's. A file that fails the check is left out. */
+async function verifiedFiles(assignmentId: string, studentId: string, files: { pathname: string; downloadName: string }[]) {
   const prefix = submissionPrefix(assignmentId, studentId);
-  let kept = 0;
+  const out: { pathname: string; downloadName: string; contentType: string; size: number }[] = [];
   for (const f of files) {
     if (!f.pathname.startsWith(prefix)) continue;
     const info = await blobInfo(f.pathname);
     if (!info || info.size > MAX_FILE_BYTES) continue;
-    kept += 1;
-    await db.submissionFile.create({
-      data: { submissionId, pathname: f.pathname, downloadName: f.downloadName, contentType: info.contentType, size: info.size },
-    });
+    out.push({ pathname: f.pathname, downloadName: f.downloadName, contentType: info.contentType, size: info.size });
   }
-  return kept;
+  return out;
 }
 
 export type FinishState = "closed" | "notOpened" | "ok" | null;

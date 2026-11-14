@@ -22,6 +22,12 @@ describe("csvFile", () => {
     }
   });
 
+  it("keeps negative amounts numeric so refund and credit-note columns still sum", () => {
+    expect(csvFile([["-1250.00", -10500, "-3"]])).toBe('﻿"-1250.00","-10500","-3"');
+    // Still defused when it is not a bare number.
+    expect(csvFile([["-1250.00+A1", "--5", "-"]])).toBe(`﻿"'-1250.00+A1","'--5","'-"`);
+  });
+
   it("leaves an ordinary value alone", () => {
     expect(csvFile([["Omar Al-Sayed"]])).toContain(`"Omar Al-Sayed"`);
   });

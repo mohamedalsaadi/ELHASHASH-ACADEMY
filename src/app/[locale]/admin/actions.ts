@@ -470,10 +470,15 @@ export async function refundOrder(form: FormData) {
     const session = await stripe().checkout.sessions.retrieve(order.gatewayOrderId);
     const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
     // Same order, same key: a retry or double-click is one refund. (Ziina derives its key the same way.)
-    if (paymentIntent) await stripe().refunds.create({ payment_intent: paymentIntent }, { idempotencyKey: `refund:${order.id}` });
+    // Never record a refund that no gateway call backed.
+    if (!paymentIntent) throw new Error(`Stripe session for order ${order.id} has no payment_intent`);
+    await stripe().refunds.create({ payment_intent: paymentIntent }, { idempotencyKey: `refund:${order.id}` });
   } else if (order.gateway === "ZIINA" && order.gatewayOrderId) {
     // The refund id is derived from the order, so a retry or a double-click is one refund.
     await refundIntent({ orderId: order.id, paymentIntentId: order.gatewayOrderId, amount: order.total + order.vat });
+  } else if (order.gateway === "STRIPE" || order.gateway === "ZIINA") {
+    // No gateway reference: nothing could be refunded. Only Paymob and manual orders are record-only.
+    throw new Error(`Order ${order.id} has no ${order.gateway} reference to refund`);
   }
 
   await db.$transaction(async (trx) => {

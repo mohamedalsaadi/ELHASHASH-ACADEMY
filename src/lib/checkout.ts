@@ -44,6 +44,8 @@ export async function priceSkus(skuIds: string[], now = new Date()) {
       accessType: s.accessType,
       price: amount,
       currency: "AED" as const,
+      saleFrom: s.saleFrom,
+      saleTo: s.saleTo,
     };
   });
   const priced = price(

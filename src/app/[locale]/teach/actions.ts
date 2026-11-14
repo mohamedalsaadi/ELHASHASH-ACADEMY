@@ -24,6 +24,8 @@ export async function applyToTeach(_: TeachState, form: FormData): Promise<Teach
   if (!(await verifyTurnstile(String(form.get("cf-turnstile-response") ?? ""), ip))) return { status: "limited" };
   const key = `teach:${ip}`;
   if (await isLimited(key, 3, 60 * 60_000)) return { status: "limited" };
+  // Count every attempt, taken or not, so probing for registered addresses is rate limited too.
+  await recordAttempt(key);
 
   const countries = await db.country.findMany({ where: { id: { in: a.countryIds }, active: true }, select: { id: true } });
   if (countries.length !== a.countryIds.length) return { status: "invalid" };
@@ -32,6 +34,7 @@ export async function applyToTeach(_: TeachState, form: FormData): Promise<Teach
     (await db.user.count({ where: { OR: [{ email: a.email }, { phone: a.phone }] } })) +
     (await db.teacherApplication.count({ where: { status: "PENDING", OR: [{ email: a.email }, { phone: a.phone }] } }));
   // Never say whether the address already has an account: answer exactly as for a new application.
+  const passwordHash = await bcrypt.hash(a.password, BCRYPT_COST); // also run when taken, so timing does not give it away
   if (taken) return { status: "sent" };
 
   const name = maskContacts(a.name).text;
@@ -40,14 +43,13 @@ export async function applyToTeach(_: TeachState, form: FormData): Promise<Teach
       name,
       email: a.email,
       phone: a.phone,
-      passwordHash: await bcrypt.hash(a.password, BCRYPT_COST),
+      passwordHash,
       locale: a.locale,
       bio: a.bio ? maskContacts(a.bio).text : null,
       subjectsNote: a.subjectsNote,
       countries: { create: countries.map((c) => ({ countryId: c.id })) },
     },
   });
-  await recordAttempt(key);
 
   await notifyAdmins({
     kind: "SYSTEM",

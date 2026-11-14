@@ -54,15 +54,22 @@ function loadHome() {
 // Production only: in dev a five-minute cache hides edits you are trying to see.
 const getHome = process.env.NODE_ENV === "production" ? unstable_cache(loadHome, ["home-catalogue"], { revalidate: 300 }) : loadHome;
 
+// unstable_cache JSON-parses every hit, so the dates arrive as strings; pricing compares them with a Date.
+const revive = (d: Date | null) => (d ? new Date(d) : d);
+function reviveSkuDates<C extends Awaited<ReturnType<typeof loadHome>>[1][number]>(course: C): C {
+  return { ...course, skus: course.skus.map((s) => ({ ...s, discountFrom: revive(s.discountFrom), discountTo: revive(s.discountTo), saleFrom: revive(s.saleFrom), saleTo: revive(s.saleTo) })) };
+}
+
 type T = Awaited<ReturnType<typeof getTranslations<"home">>>;
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [t, [countries, latest, cards, [courseCount, lessonCount, subjectCount, teacherCount]]] = await Promise.all([
+  const [t, [countries, cachedLatest, cards, [courseCount, lessonCount, subjectCount, teacherCount]]] = await Promise.all([
     getTranslations("home"),
     getHome(),
   ]);
+  const latest = cachedLatest.map(reviveSkuDates);
   const ar = locale === "ar";
   const Arrow = ar ? ArrowLeft : ArrowRight;
 

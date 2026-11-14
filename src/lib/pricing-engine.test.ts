@@ -202,9 +202,24 @@ describe("sale prices", () => {
   });
 });
 
+describe("sale window through the cart", () => {
+  it("refuses a line whose sale window has closed or not opened", () => {
+    const line = { skuId: "s1", courseId: "c1", subjectId: null, accessType: "SEMESTER" as const, price: 10_000, currency: "AED" as const };
+    const t = new Date("2026-05-01T00:00:00Z");
+    expect(() => price([{ ...line, saleTo: new Date("2026-04-01T00:00:00Z") }], [], t)).toThrow("sku_not_on_sale");
+    expect(() => price([{ ...line, saleFrom: new Date("2026-06-01T00:00:00Z") }], [], t)).toThrow("sku_not_on_sale");
+  });
+});
+
 describe("aedPriceOf", () => {
   it("uses an explicit AED price for a local-currency package", () => {
     expect(aedPriceOf({ price: 50_000, currency: "SAR", aedPrice: 44_000 }, now)).toBe(44_000);
+  });
+
+  it("applies an active temporary discount to an explicit AED price, and drops it after the window", () => {
+    const sku = { price: 50_000, currency: "SAR" as const, aedPrice: 44_000, discountPrice: 40_000, discountFrom: null, discountTo: new Date("2026-06-01T00:00:00Z") };
+    expect(aedPriceOf(sku, new Date("2026-05-01T00:00:00Z"))).toBe(35_200);
+    expect(aedPriceOf(sku, new Date("2026-06-01T00:00:00Z"))).toBe(44_000);
   });
 
   it("falls back to the SKU price when the package is already in AED", () => {

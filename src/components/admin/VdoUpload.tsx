@@ -12,6 +12,7 @@ type Labels = { pick: string; sending: string; done: string; failed: string };
 export function VdoUpload({ title, labels }: { title: string; labels: Labels }) {
   const [state, setState] = useState<"idle" | "sending" | "done" | "failed">("idle");
   const [pct, setPct] = useState(0);
+  const [detail, setDetail] = useState("");
 
   async function send(input: HTMLInputElement) {
     const file = input.files?.[0];
@@ -21,7 +22,7 @@ export function VdoUpload({ title, labels }: { title: string; labels: Labels }) 
     setPct(0);
     try {
       const res = await fetch("/api/vdocipher/upload", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: title || file.name }) });
-      if (!res.ok) throw new Error("slot");
+      if (!res.ok) throw new Error(`slot ${res.status}`);
       const t = (await res.json()) as Ticket;
       const body = new FormData();
       for (const [k, v] of Object.entries(t.fields)) body.append(k, v);
@@ -32,14 +33,17 @@ export function VdoUpload({ title, labels }: { title: string; labels: Labels }) 
         const x = new XMLHttpRequest();
         x.open("POST", t.uploadLink);
         x.upload.onprogress = (e) => e.lengthComputable && setPct(Math.round((e.loaded / e.total) * 100));
-        x.onload = () => (x.status < 300 ? ok() : bad(new Error("upload")));
-        x.onerror = () => bad(new Error("upload"));
+        x.onload = () => (x.status < 300 ? ok() : bad(new Error(`upload ${x.status} ${x.responseText.slice(0, 200)}`)));
+        x.onerror = () => bad(new Error("upload network (CORS or CSP)"));
         x.send(body);
       });
       (form.elements.namedItem("provider") as HTMLSelectElement).value = "VDOCIPHER";
       (form.elements.namedItem("externalId") as HTMLInputElement).value = t.videoId;
       setState("done");
-    } catch {
+    } catch (e) {
+      // Teachers see the short message; the step and status go to the console so the owner can say what broke.
+      console.error("VdoCipher upload failed:", e);
+      setDetail(e instanceof Error ? e.message.split(" ").slice(0, 2).join(" ") : "");
       setState("failed");
     } finally {
       input.value = "";
@@ -52,7 +56,7 @@ export function VdoUpload({ title, labels }: { title: string; labels: Labels }) 
       <input type="file" accept="video/*" disabled={state === "sending"} onChange={(e) => void send(e.currentTarget)} className="text-small" />
       {state === "sending" && <progress value={pct} max={100} aria-label={labels.sending} className="w-full" />}
       {state === "done" && <span className="text-ink-muted">{labels.done}</span>}
-      {state === "failed" && <span role="alert" className="text-ink-muted">{labels.failed}</span>}
+      {state === "failed" && <span role="alert" className="text-ink-muted">{labels.failed} {detail && <bdi dir="ltr">({detail})</bdi>}</span>}
     </label>
   );
 }

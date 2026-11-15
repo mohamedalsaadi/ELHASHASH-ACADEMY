@@ -40,7 +40,8 @@ export async function createUpload(title: string): Promise<UploadTicket> {
     signal: AbortSignal.timeout(10_000),
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`VdoCipher upload slot failed: ${res.status}`);
+  // VdoCipher says why in the reply body (e.g. a key without upload permission); keep a short piece of it for the site log.
+  if (!res.ok) throw new Error(`VdoCipher upload slot failed: ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`.trim());
   const { clientPayload, videoId } = (await res.json()) as { clientPayload: Record<string, string>; videoId: string };
   const { uploadLink, ...fields } = clientPayload;
   return { videoId, uploadLink, fields };

@@ -29,6 +29,7 @@ import { countryInput, gradeInput, rangesOverlap, stageInput, subjectInput } fro
 import { BCRYPT_COST, PASSWORD_MIN, passwordSchema, phoneSchema } from "@/lib/schemas/auth";
 import { assertCourse, assertSlot, requireAdmin, requireStaff } from "@/lib/staff";
 import { stripe } from "@/lib/stripe";
+import { logEvent as siteLog } from "@/lib/site-log";
 import { notifyNewCourse } from "@/lib/new-course-alerts";
 import { discountAllowed } from "@/lib/discount-cap";
 import { notifyCoursePublished } from "@/lib/course-published-alert";
@@ -928,6 +929,21 @@ export async function deleteSubject(form: FormData) {
   if (courses > 0 || grades > 0 || concepts > 0 || bundles > 0) catalogError(form, "in_use");
   await db.subject.delete({ where: { id } });
   done();
+}
+
+/** The owner moves a student to another grade, and with it another country. What they bought is untouched. */
+export async function setSubscriberGrade(form: FormData) {
+  const me = await requireAdmin();
+  const d = z.object({ userId: z.string(), gradeId: z.string() }).parse(Object.fromEntries(form));
+  const [user, grade] = await Promise.all([
+    db.user.findUnique({ where: { id: d.userId }, select: { role: true, gradeId: true } }),
+    db.grade.findUnique({ where: { id: d.gradeId }, select: { id: true } }),
+  ]);
+  if (!user || user.role !== "STUDENT" || !grade) notFound();
+  await db.user.update({ where: { id: d.userId }, data: { gradeId: grade.id } });
+  await siteLog({ source: "admin.subscriber_grade", message: "Subscriber grade changed by the owner", userId: me.id, meta: { subscriber: d.userId, from: user.gradeId, to: grade.id } });
+  revalidatePath("/[locale]/admin/subscribers/[id]", "page");
+  revalidatePath("/[locale]/me", "page");
 }
 
 /**

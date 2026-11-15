@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { toDayInput } from "@/lib/admin-input";
+import { gradeGroups } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { courseZone, formatMoney } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { isCurrent } from "@/lib/subscribers";
-import { extendAccess, grantAccess } from "../../actions";
+import { extendAccess, grantAccess, setSubscriberGrade } from "../../actions";
 import { AdminNav, panel, table } from "../../AdminNav";
 import { field, label } from "../../styles";
 import { ResetPasswordForm, SaveButton } from "../../ui";
@@ -62,6 +63,7 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
   const access = u.entitlements.filter((e) => !e.liveSessionId);
   const seats = u.entitlements.filter((e) => e.liveSessionId);
   const byCourse = Map.groupBy(skus, (s) => name(s.course));
+  const groups = u.role === "STUDENT" ? await gradeGroups(locale) : [];
 
   return (
     <main className="mx-auto grid max-w-5xl gap-6 px-4 py-12">
@@ -86,6 +88,28 @@ export default async function SubscriberPage({ params }: { params: Promise<{ loc
           <dd>{u.device ? <span className="grid"><span dir="ltr" className="truncate">{u.device.userAgent ?? "—"}</span><span className="num text-label text-ink-muted">{date.format(u.device.lastSeenAt)}</span></span> : "—"}</dd>
         </dl>
       </section>
+
+      {u.role === "STUDENT" && (
+        <section className={panel}>
+          <form action={setSubscriberGrade} className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="userId" value={u.id} />
+            <label className={`${label} min-w-56 flex-1`}>
+              {t("grade")}
+              <select name="gradeId" required defaultValue={u.gradeId ?? ""} className={field}>
+                <option value="" disabled>{t("grade")}</option>
+                {groups.map((c) => (
+                  <optgroup key={c.label} label={c.label}>
+                    {c.grades.map((g) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+            <SaveButton />
+          </form>
+        </section>
+      )}
 
       <section className={panel}>
         <h2 className="font-display text-h3 font-semibold">{t("access")}</h2>

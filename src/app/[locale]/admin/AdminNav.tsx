@@ -21,6 +21,7 @@ const TABS = [
   ["marketing", "/admin/marketing"],
   ["analytics", "/admin/analytics"],
   ["funnel", "/admin/funnel"],
+  ["insights", "/admin/insights"],
   ["finance", "/admin/finance/tax"],
   ["settings", "/admin/settings"],
 ] as const;

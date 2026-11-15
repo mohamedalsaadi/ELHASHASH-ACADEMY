@@ -17,6 +17,7 @@ const TABS = [
   ["support", "/admin/support"],
   ["suggestions", "/admin/suggestions"],
   ["ai", "/admin/ai"],
+  ["logs", "/admin/logs"],
   ["marketing", "/admin/marketing"],
   ["analytics", "/admin/analytics"],
   ["funnel", "/admin/funnel"],

@@ -5,6 +5,16 @@ import { useState } from "react";
 type Ticket = { videoId: string; uploadLink: string; fields: Record<string, string> };
 type Labels = { pick: string; sending: string; done: string; failed: string };
 
+/** Tells the site log what happened in the browser; the log never blocks the upload. */
+function report(level: "INFO" | "ERROR", message: string, file: File) {
+  return fetch("/api/log", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ source: "client.vdo_upload", level, message, path: location.pathname, meta: { size: file.size, type: file.type } }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 /**
  * Uploads a video file to the academy's VdoCipher account and fills the lesson form's provider and id fields.
  * The teacher still presses Save. The browser sends the file straight to VdoCipher's storage, so size is not limited by our server.
@@ -37,12 +47,14 @@ export function VdoUpload({ title, labels }: { title: string; labels: Labels }) 
         x.onerror = () => bad(new Error("upload network (CORS or CSP)"));
         x.send(body);
       });
+      void report("INFO", "Upload finished", file);
       (form.elements.namedItem("provider") as HTMLSelectElement).value = "VDOCIPHER";
       (form.elements.namedItem("externalId") as HTMLInputElement).value = t.videoId;
       setState("done");
     } catch (e) {
       // Teachers see the short message; the step and status go to the console so the owner can say what broke.
       console.error("VdoCipher upload failed:", e);
+      void report("ERROR", e instanceof Error ? e.message : "Upload failed", file);
       setDetail(e instanceof Error ? e.message.split(" ").slice(0, 2).join(" ") : "");
       setState("failed");
     } finally {

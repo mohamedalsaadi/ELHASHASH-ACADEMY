@@ -1203,7 +1203,8 @@
       "settings": "Settings",
       "reviews": "Reviews",
       "ai": "AI",
-      "payouts": "Payouts"
+      "payouts": "Payouts",
+      "logs": "Log"
     },
     "analyticsHint": "Last {days} days. Each step counts only people who also completed the earlier steps.",
     "step": "Step",
@@ -1454,6 +1455,19 @@
       "checkout_started": "Started checkout",
       "order_paid": "Paid",
       "signup_completed": "Created an account"
+    },
+    "logs": {
+      "hint": "What happened on the site: server errors, failed uploads and other notable events. Entries older than 30 days are removed. No passwords, form contents or query strings are stored.",
+      "empty": "Nothing logged yet.",
+      "all": "All",
+      "errors": "Errors",
+      "warnings": "Warnings",
+      "time": "Time (Dubai)",
+      "level": "Level",
+      "source": "Source",
+      "message": "What happened",
+      "path": "Where",
+      "limit": "Showing the latest {n}."
     },
     "ai": {
       "hint": "Your AI coworkers report here. Nothing they draft is sent to a student, a parent or a customer without you or a teacher approving it.",

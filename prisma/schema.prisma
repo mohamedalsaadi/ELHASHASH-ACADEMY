@@ -1711,6 +1711,22 @@ model AiRun {
   @@index([studentId, createdAt])
 }
 
+/// What happened on the site, in plain words, so a failure can be traced without a user having to describe it.
+/// Never request bodies, never query strings, never anything a student typed. Pruned after 30 days by the writer.
+model SiteLog {
+  id        String   @id @default(cuid())
+  level     String   @default("INFO")
+  source    String
+  message   String   @db.VarChar(500)
+  path      String?  @db.VarChar(200)
+  userId    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([source, createdAt])
+}
+
 model AnalyticsEvent {
   id        String   @id @default(cuid())
   name      String

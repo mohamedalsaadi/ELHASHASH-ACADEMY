@@ -50,6 +50,10 @@ describe("summariseChecks", () => {
     expect(summariseChecks([run("success"), run("skipped")], [{ state: "success" }]).checks).toBe("success");
     expect(summariseChecks([], []).checks).toBe("pending");
   });
+  it("ignores a cancelled run (replaced by a newer push) instead of calling it a failure", () => {
+    expect(summariseChecks([run("success"), run("cancelled")], []).checks).toBe("success");
+    expect(summariseChecks([run("cancelled")], []).checks).toBe("pending");
+  });
   it("is failure when any check failed, pending while one is running", () => {
     expect(summariseChecks([run("success"), run("failure")], []).checks).toBe("failure");
     expect(summariseChecks([run("success"), run(null, "in_progress")], []).checks).toBe("pending");

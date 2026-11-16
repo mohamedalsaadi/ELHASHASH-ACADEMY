@@ -24,8 +24,10 @@ export const prUrl = (n: number) => `https://github.com/${repoName()}/pull/${n}`
 type CheckRun = { name: string; status: string; conclusion: string | null };
 
 /** Reduces check runs and commit statuses to one answer. Success needs at least one check and every one passing. */
-export function summariseChecks(runs: CheckRun[], statuses: { state: string }[]): { checks: Checks; hasChecks: boolean } {
-  const bad = new Set(["failure", "cancelled", "timed_out", "action_required", "startup_failure"]);
+export function summariseChecks(allRuns: CheckRun[], statuses: { state: string }[]): { checks: Checks; hasChecks: boolean } {
+  // A cancelled run was replaced by a newer push (the e2e job cancels itself that way); it says nothing about this commit.
+  const runs = allRuns.filter((r) => r.conclusion !== "cancelled");
+  const bad = new Set(["failure", "timed_out", "action_required", "startup_failure"]);
   const ok = new Set(["success", "neutral", "skipped"]);
   const all = runs.length + statuses.length;
   if (runs.some((r) => r.status === "completed" && r.conclusion && bad.has(r.conclusion)) || statuses.some((s) => s.state === "failure" || s.state === "error")) return { checks: "failure", hasChecks: all > 0 };

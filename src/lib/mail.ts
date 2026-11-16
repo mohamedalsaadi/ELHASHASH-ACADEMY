@@ -1,3 +1,4 @@
+import { logError, logWarn } from "@/lib/log-error";
 // Transactional email through Resend's HTTP API. No SDK: one POST. When RESEND_API_KEY is missing the
 // message is logged and skipped, so local dev and preview builds keep working.
 
@@ -59,6 +60,7 @@ export async function sendMailDetailed({ to, subject, html, replyTo, unsubscribe
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn(`[mail] skipped (no RESEND_API_KEY): ${subject}`);
+    await logWarn("mail.send", "email skipped: RESEND_API_KEY is not set", { level: "ERROR", sample: 3_600_000 });
     return { ok: false, detail: "RESEND_API_KEY is not set" };
   }
   try {
@@ -79,6 +81,7 @@ export async function sendMailDetailed({ to, subject, html, replyTo, unsubscribe
     const body = await res.text();
     if (!res.ok) {
       console.error("[mail] failed", res.status, body);
+      await logWarn("mail.send", `Resend answered ${res.status}: ${body.replace(/\s+/g, " ").slice(0, 160)}`, { level: "ERROR", sample: 600_000 });
       return { ok: false, detail: `${res.status} ${body}` };
     }
     const id = (JSON.parse(body) as { id?: string }).id ?? "?";
@@ -86,6 +89,7 @@ export async function sendMailDetailed({ to, subject, html, replyTo, unsubscribe
     return { ok: true, detail: id };
   } catch (e) {
     console.error("[mail] failed", e);
+    await logError("mail.send", e, { message: "Resend request failed", sample: 600_000 });
     return { ok: false, detail: String(e) };
   }
 }

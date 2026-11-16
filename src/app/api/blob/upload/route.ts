@@ -1,3 +1,4 @@
+import { logWarn } from "@/lib/log-error";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { z } from "zod";
 import { auth } from "@/auth";
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
   } catch (e) {
     // The client library hides this message, so it is logged here and /api/blob/check gives the browser the reason.
     console.error("blob upload refused:", e instanceof Error ? e.message : e);
+    await logWarn("blob.upload", `upload refused: ${(e instanceof Error ? e.message : String(e)).slice(0, 200)}`, { sample: 120_000 });
     return Response.json({ error: e instanceof Error ? e.message : "Upload refused" }, { status: 400 });
   }
 }

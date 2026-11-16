@@ -1468,7 +1468,19 @@
       "source": "Source",
       "message": "What happened",
       "path": "Where",
-      "limit": "Showing the latest {n}."
+      "limit": "Showing the latest {n}.",
+      "known": "What it means",
+      "knownTitle": "Known problems",
+      "knownHint": "Problems we already know. A log line that matches one shows its meaning and who has to act.",
+      "who": "Who acts",
+      "whoOwner": "You",
+      "whoCoworker": "A code fix may help",
+      "whoIgnore": "Nobody, it is expected",
+      "fix": "What to do",
+      "severity": "Severity",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
     },
     "insights": {
       "hint": "How people join, learn, buy and get stuck, with the numbers behind each chart. Counts of people are unique per day. Times are Dubai time.",

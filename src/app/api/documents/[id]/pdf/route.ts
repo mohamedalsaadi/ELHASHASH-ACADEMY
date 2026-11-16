@@ -1,3 +1,4 @@
+import { logWarn } from "@/lib/log-error";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { documentPrefix, putDocument, streamBlob } from "@/lib/blob";
@@ -49,6 +50,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const key = documentPrefix(doc.id);
   const stored = await putDocument(key, bytes).catch(() => false);
+  if (!stored) await logWarn("pdf.store", "a document PDF was generated but could not be stored", { meta: { documentId: id }, sample: 120_000 });
   await db.document
     .update({
       where: { id },

@@ -1,3 +1,4 @@
+import { logError } from "@/lib/log-error";
 import { pick } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
@@ -89,6 +90,7 @@ async function SecurePlayer({ videoId, title, path, limits, onward }: { videoId:
     src = playerUrl(await getPlayback(videoId, [user.name, user.phone, ip].filter(Boolean).join(" · ")));
   } catch (e) {
     console.error(e);
+    await logError("video.playback", e, { message: "playback token failed", path, userId, meta: { lessonId: limits?.lessonId ?? null } });
     return <Notice>{t("unavailable")}</Notice>;
   }
   // A student finishing the video completes the lesson; staff previews do not touch progress.

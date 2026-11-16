@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText, reportClient } from "@/lib/client-log";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { lookupStudent } from "./actions";
@@ -67,8 +68,10 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon, learners, ne
         window.location.assign(data.checkoutUrl);
         return;
       }
+      reportClient("client.checkout", `checkout refused: HTTP ${res.status} ${String(data.error ?? "no error code").slice(0, 60)}`);
       setError(data.error && t.has(`errors.${data.error}`) ? t(`errors.${data.error}`) : t("errors.generic"));
-    } catch {
+    } catch (e) {
+      reportClient("client.checkout", `checkout request failed in the browser: ${errorText(e)}`);
       setError(t("errors.network"));
       // Only on failure: on success the page navigates away, and re-enabling here would let a
       // second tap create a second order and a second gateway intent.

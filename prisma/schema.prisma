@@ -1725,6 +1725,7 @@ model SiteLog {
 
   @@index([createdAt])
   @@index([source, createdAt])
+  @@index([level, createdAt])
 }
 
 model AnalyticsEvent {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { stripe, syncCheckoutSession } from "@/lib/stripe";
+import { logWarn } from "@/lib/log-error";
 
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -12,6 +13,7 @@ export async function POST(req: Request) {
     // The signature covers the raw body, so read text, not JSON.
     event = stripe().webhooks.constructEvent(await req.text(), req.headers.get("stripe-signature") ?? "", secret);
   } catch {
+    await logWarn("payment.webhook", "Stripe webhook with a bad signature", { sample: 600_000 });
     return NextResponse.json({ error: "bad_signature" }, { status: 400 });
   }
 

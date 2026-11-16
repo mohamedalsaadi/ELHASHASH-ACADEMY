@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { accessEnd, learnerOf } from "@/lib/access";
 import { logEvent } from "@/lib/analytics";
+import { logError } from "@/lib/log-error";
 import { db } from "@/lib/db";
 import { allocate, issueDocument } from "@/lib/documents";
 import { DEFAULT_FINANCE, splitLine, type FinanceConfig } from "@/lib/finance";
@@ -178,6 +179,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
       await notifyOrderPaid(orderId);
     } catch (e) {
       console.error("[notify] order paid failed", orderId, e);
+      await logError("payment.receipt", e, { message: "payment settled but the receipt notification failed", meta: { orderId } });
     }
     if (paid.referrerId && paid.referralId) {
       try {
@@ -193,6 +195,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
         });
       } catch (e) {
         console.error("[notify] referral reward failed", paid.referralId, e);
+        await logError("payment.referral", e, { message: "payment settled but the referral reward failed", meta: { orderId, referralId: paid.referralId } });
       }
     }
     await logEvent({ name: "order_paid", userId: paid.userId, props: { ...paid } });
@@ -201,6 +204,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
       await issueDocument(orderId, "INVOICE");
     } catch (e) {
       console.error("[documents] invoice issue failed", orderId, e);
+      await logError("payment.invoice", e, { message: "payment settled but the invoice was not issued", meta: { orderId } });
     }
   }
   if (replay) return false;

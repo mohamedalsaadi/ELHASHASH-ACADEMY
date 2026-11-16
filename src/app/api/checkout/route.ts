@@ -19,6 +19,7 @@ import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/schemas/checkout";
 import { stripe } from "@/lib/stripe";
 import { createIntent, ziinaCapReached } from "@/lib/ziina";
+import { logError, logWarn } from "@/lib/log-error";
 
 // Kiosk orders wait for cash; after this window the reference is treated as expired.
 const PENDING_TTL_MS = 72 * 60 * 60 * 1000;
@@ -31,10 +32,16 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
   // Every request creates an order and a live gateway intent, and scans the month's paid orders.
-  if (await isLimited(`checkout:${session.user.id}`, 10, 3_600_000)) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  if (await isLimited(`checkout:${session.user.id}`, 10, 3_600_000)) {
+    await logWarn("ratelimit.checkout", "checkout limit hit (10 per hour)", { userId: session.user.id, sample: 600_000 });
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
 
   const parsed = checkoutSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  if (!parsed.success) {
+    await logWarn("payment.checkout_invalid", "checkout body failed validation", { userId: session.user.id, sample: 600_000 });
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
   await recordAttempt(`checkout:${session.user.id}`);
   const { skuIds, method, locale, coupon, forStudentId, forStudentPhone, guardianAttestation } = parsed.data;
 
@@ -297,6 +304,7 @@ export async function POST(req: Request) {
   } catch (e) {
     await db.order.update({ where: { id: order.id }, data: { status: "FAILED" } });
     console.error(e);
+    await logError("payment.gateway", e, { message: `${gateway} intent create failed`, userId: session.user.id, meta: { orderId: order.id, gateway } });
     return NextResponse.json({ error: "gateway_unavailable" }, { status: 502 });
   }
 
@@ -309,6 +317,8 @@ export async function POST(req: Request) {
       await db.order.update({ where: { id: order.id }, data: { gatewayOrderId } });
     } catch {
       console.error("[checkout] gatewayOrderId write failed", { orderId: order.id, gatewayOrderId });
+      // The customer may pay for an order we cannot match: the worst silent failure on the site.
+      await logWarn("payment.orphan", "gateway payment created but its id was not saved on the order", { level: "ERROR", userId: session.user.id, meta: { orderId: order.id, gatewayOrderId, gateway } });
     }
   }
   return NextResponse.json({ orderId: order.id, checkoutUrl });

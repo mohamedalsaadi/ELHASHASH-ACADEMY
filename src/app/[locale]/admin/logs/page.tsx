@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
+import { KNOWN_PROBLEMS, matchKnown } from "@/lib/log-catalog";
 import { pageMetadata } from "@/lib/seo";
 import { requireAdmin } from "@/lib/staff";
 import { AdminNav, panel, table } from "../AdminNav";
@@ -29,6 +30,8 @@ export default async function AdminLogsPage({ params, searchParams }: { params: 
     take: LIMIT,
   });
   const when = new Intl.DateTimeFormat("en-GB", { dateStyle: "short", timeStyle: "medium", timeZone: "Asia/Dubai" });
+  const ar = locale === "ar";
+  const whoLabel = { owner: t("whoOwner"), coworker: t("whoCoworker"), ignore: t("whoIgnore") };
   const chip = (active: boolean) => `rounded-full px-3 py-1 text-small ${active ? "bg-surface text-ink shadow-paper" : "text-ink-muted hover:text-ink"}`;
 
   return (
@@ -53,23 +56,62 @@ export default async function AdminLogsPage({ params, searchParams }: { params: 
                   <th>{t("source")}</th>
                   <th>{t("message")}</th>
                   <th>{t("path")}</th>
+                  <th>{t("known")}</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {rows.map((r) => {
+                  const known = r.level === "INFO" ? null : matchKnown(r.source, r.message);
+                  return (
                   <tr key={r.id}>
                     <td className="whitespace-nowrap">{when.format(r.createdAt)}</td>
                     <td className={r.level === "ERROR" ? "font-semibold" : ""}>{r.level}</td>
                     <td className="whitespace-nowrap">{r.source}</td>
                     <td className="break-words">{r.message}</td>
                     <td className="break-all">{r.path ?? ""}</td>
+                    <td dir={ar ? "rtl" : "ltr"} className="min-w-48">
+                      {known ? (
+                        <span className="grid gap-1">
+                          <span className="font-semibold">{ar ? known.titleAr : known.titleEn}</span>
+                          <span className="text-label text-ink-muted">{whoLabel[known.who]}</span>
+                        </span>
+                      ) : null}
+                    </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
         <p className="text-label text-ink-muted">{t("limit", { n: LIMIT })}</p>
+      </section>
+
+      <section className={panel}>
+        <h2 className="font-display text-h3 font-semibold">{t("knownTitle")}</h2>
+        <p className="text-small text-ink-muted">{t("knownHint")}</p>
+        <div className="overflow-x-auto">
+          <table className={table}>
+            <thead>
+              <tr>
+                <th>{t("known")}</th>
+                <th>{t("severity")}</th>
+                <th>{t("who")}</th>
+                <th>{t("fix")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {KNOWN_PROBLEMS.map((p) => (
+                <tr key={p.code}>
+                  <td dir="auto">{ar ? p.titleAr : p.titleEn}</td>
+                  <td>{t(p.severity)}</td>
+                  <td>{whoLabel[p.who]}</td>
+                  <td dir="auto">{ar ? p.fixAr : p.fixEn}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   );

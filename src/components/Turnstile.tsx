@@ -1,5 +1,5 @@
 import Script from "next/script";
-import { turnstileSiteKey } from "@/lib/turnstile";
+import { turnstileSiteKey } from "@/lib/turnstile-config";
 
 /** The Turnstile widget. It adds a hidden `cf-turnstile-response` field to the surrounding form and only shows itself when Cloudflare needs a click. Renders nothing until the site key is set. */
 export function Turnstile() {

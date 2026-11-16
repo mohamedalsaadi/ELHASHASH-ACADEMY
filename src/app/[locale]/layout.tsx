@@ -1,3 +1,4 @@
+import { ErrorReporter } from "@/components/ErrorReporter";
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic, Readex_Pro, Reem_Kufi } from "next/font/google";
 import { notFound } from "next/navigation";
@@ -87,6 +88,7 @@ export default async function LocaleLayout({
           {t("skipToContent")}
         </a>
         <PwaRegister />
+        <ErrorReporter />
         <ViewTransitions>
           <NextIntlClientProvider messages={pickMessages(messages, PUBLIC_CLIENT_NAMESPACES)}>
             <MarketingOnly>

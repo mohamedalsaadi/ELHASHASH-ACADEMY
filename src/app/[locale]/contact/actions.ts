@@ -1,5 +1,6 @@
 "use server";
 
+import { logError } from "@/lib/log-error";
 import { after } from "next/server";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -36,7 +37,10 @@ export async function sendSupportMessage(_: unknown, form: FormData): Promise<"o
   // Kept so the owner answers from the back office with an AI draft; the email below is the fallback copy.
   const ticket = await db.supportTicket
     .create({ data: { name: d.data.name, email: d.data.email, phone: d.data.phone || null, topic: d.data.topic, message: d.data.message } })
-    .catch(() => null);
+    .catch(async (e) => {
+      await logError("support.ticket", e, { message: "a support message could not be saved" });
+      return null;
+    });
   if (ticket) {
     after(async () => {
       // Privacy requests go to a human unread: a model must never see "delete my child's data".

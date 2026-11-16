@@ -1,3 +1,4 @@
+import { cronRoute } from "@/lib/cron-log";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { appUrl, emailLayout, sendMail } from "@/lib/mail";
@@ -13,11 +14,7 @@ export const dynamic = "force-dynamic";
  *
  * ponytail: per-parent queries, fine at the current scale; batch by student ids if the parent count grows.
  */
-export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+async function run() {
 
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
@@ -125,3 +122,5 @@ export async function GET(request: Request) {
 
   return NextResponse.json({ ok: true, period, parents: byParent.size, sent, skipped });
 }
+
+export const GET = cronRoute("progress", run);

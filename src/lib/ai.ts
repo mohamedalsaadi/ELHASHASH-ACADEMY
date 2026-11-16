@@ -1,5 +1,6 @@
 // The one Gemini call every AI feature goes through. Plain fetch, no SDK: one POST and a zod check.
 // AI_ENABLED=0 turns every feature off at once; the app then works by hand as before.
+import { logError, logWarn } from "@/lib/log-error";
 import type { z } from "zod";
 
 /**
@@ -57,8 +58,16 @@ export async function askJson<T>(input: {
         generationConfig: { temperature: 0, maxOutputTokens: input.maxTokens ?? 2048, responseMimeType: "application/json" },
       }),
     },
-  ).catch(() => null);
-  if (!response?.ok) return null;
+  ).catch(async (e) => {
+    await logError("ai.error", e, { message: "Gemini request failed (timeout or network)", sample: 300_000 });
+    return null;
+  });
+  if (!response) return null;
+  if (!response.ok) {
+    const body = (await response.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 140);
+    await logWarn("ai.error", `Gemini answered ${response.status}: ${body}`, { level: "ERROR", sample: 300_000 });
+    return null;
+  }
 
   const data = (await response.json()) as {
     candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[];
@@ -71,5 +80,6 @@ export async function askJson<T>(input: {
     .map((p) => p.text ?? "")
     .join("");
   const parsed = input.schema.safeParse(text ? extractJson(text) : null);
+  if (!parsed.success) await logWarn("ai.error", "Gemini answered with JSON that failed the schema check", { sample: 300_000 });
   return { data: parsed.success ? parsed.data : null, usage, model: AI_MODEL };
 }

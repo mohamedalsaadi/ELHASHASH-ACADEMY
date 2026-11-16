@@ -1,3 +1,5 @@
+import { logWarn } from "@/lib/log-error";
+
 // WhatsApp Business Cloud API (Meta). One call: a pre-approved authentication template carrying the code.
 // Off until WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN exist; the sign-in page then keeps its password form.
 
@@ -28,6 +30,7 @@ export async function sendWhatsAppCode(phone: string, code: string, locale: "ar"
       },
     }),
   }).catch(() => null);
+  if (!res?.ok) await reportFailure("code", res);
   return Boolean(res?.ok);
 }
 
@@ -55,5 +58,16 @@ export async function sendWhatsAppGuardianLink(phone: string, childName: string,
       },
     }),
   }).catch(() => null);
+  if (!res?.ok) await reportFailure("guardian", res);
   return Boolean(res?.ok);
+}
+
+/** Says why a send failed: Meta's error code and text (never the phone number or the code), or that the request itself failed. */
+async function reportFailure(kind: "code" | "guardian", res: Response | null) {
+  let detail = "no answer (timeout or network)";
+  if (res) {
+    const body = (await res.json().catch(() => null)) as { error?: { code?: number; message?: string } } | null;
+    detail = `HTTP ${res.status}${body?.error ? ` code ${body.error.code ?? "?"}: ${String(body.error.message ?? "").slice(0, 140)}` : ""}`;
+  }
+  await logWarn("whatsapp.send", `${kind} message not sent: ${detail}`, { level: "ERROR", sample: 300_000 });
 }

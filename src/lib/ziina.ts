@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { ziinaTestMode } from "@/lib/gateway";
 import { applyPaymentOutcome } from "@/lib/payments";
 import { refundIdFor } from "@/lib/ziina-format";
+import { logWarn } from "@/lib/log-error";
 
 const BASE = "https://api-v2.ziina.com/api";
 
@@ -87,6 +88,10 @@ export async function syncPaymentIntent(order: {
         intentAmount: intent.amount,
         payable,
         currency: intent.currency_code,
+      });
+      await logWarn("payment.mismatch", "completed Ziina payment does not match the order amount or currency, order not settled", {
+        level: "ERROR",
+        meta: { orderId: order.id, intentId: intent.id, intentAmount: intent.amount, payable, intentCurrency: intent.currency_code, orderCurrency: order.currency },
       });
       return { intent, mismatch: true as const };
     }

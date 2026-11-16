@@ -1,4 +1,5 @@
 // Vercel Blob helpers shared by the upload token route, the download route and the server actions.
+import { logWarn } from "@/lib/log-error";
 import { get, head, put } from "@vercel/blob";
 
 /** What a homework handout or a student's answer may be. Anything else is refused at token time. */
@@ -55,6 +56,7 @@ export async function blobInfo(pathname: string): Promise<{ size: number; conten
     const info = await head(pathname);
     return { size: info.size, contentType: info.contentType };
   } catch {
+    await logWarn("blob.head", "could not read a stored file's size and type (missing, or the Blob token is wrong)", { sample: 600_000 });
     return null;
   }
 }

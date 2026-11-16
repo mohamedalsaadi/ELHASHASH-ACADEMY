@@ -1,3 +1,4 @@
+import { logWarn } from "@/lib/log-error";
 import { db } from "@/lib/db";
 
 // Per-key attempt limits. With Upstash Redis configured (UPSTASH_REDIS_REST_URL / _TOKEN, or the KV_REST_API_* pair the Vercel
@@ -22,10 +23,14 @@ async function redis(commands: (string | number)[][]): Promise<{ result?: unknow
       body: JSON.stringify(commands),
       signal: AbortSignal.timeout(2_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      await logWarn("ratelimit.redis", `Redis answered ${res.status}; limits fall back to the database`, { sample: 900_000 });
+      return null;
+    }
     const out = (await res.json()) as { result?: unknown; error?: string }[];
     return out.some((o) => o.error) ? null : out;
   } catch {
+    await logWarn("ratelimit.redis", "Redis did not answer; limits fall back to the database", { sample: 900_000 });
     return null;
   }
 }

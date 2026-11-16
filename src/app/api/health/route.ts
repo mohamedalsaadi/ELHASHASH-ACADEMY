@@ -1,3 +1,4 @@
+import { logError, logWarn } from "@/lib/log-error";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -74,9 +75,13 @@ export async function GET() {
     await db.$queryRaw`SELECT 1`;
     const missing = await missingSchema();
     ok = missing.length === 0;
-    if (!ok) console.error("[health] database schema is behind the deployed code:", missing.join(", "));
+    if (!ok) {
+      console.error("[health] database schema is behind the deployed code:", missing.join(", "));
+      await logWarn("db.schema", `database schema is behind the deployed code: ${missing.join(", ").slice(0, 300)}`, { level: "ERROR", sample: 600_000 });
+    }
   } catch (e) {
     console.error("[health] database unreachable", e);
+    await logError("db.unreachable", e, { message: "health check could not reach the database", sample: 600_000 });
   }
 
   cached = { at: Date.now(), ok };

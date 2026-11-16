@@ -1,5 +1,6 @@
 "use server";
 
+import { logWarn } from "@/lib/log-error";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { randomUUID } from "node:crypto";
@@ -76,7 +77,10 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
     if (!phone.success || !phone.data.startsWith("+")) return { step: "phone", error: "invalid_phone" };
     const ip = `otp-ip:${clientIp(await headers())}`;
     const key = `otp-send:${phone.data}`;
-    if ((await isLimited(key, 3, 15 * 60_000)) || (await isLimited(ip, 10, 60 * 60_000))) return { step: "phone", error: "too_many", phone: phone.data };
+    if ((await isLimited(key, 3, 15 * 60_000)) || (await isLimited(ip, 10, 60 * 60_000))) {
+      await logWarn("otp.too_many", "sign-in code requests over the limit (3 per number per 15 min or 10 per address per hour)", { sample: 600_000 });
+      return { step: "phone", error: "too_many", phone: phone.data };
+    }
     await recordAttempt(key);
     await recordAttempt(ip);
     const code = await issueOtp(phone.data);
@@ -88,7 +92,10 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
     const phone = phoneSchema.safeParse(form.get("phone"));
     if (!phone.success) return { step: "phone", error: "invalid_phone" };
     const vkey = `otp-verify:${phone.data}`;
-    if (await isLimited(vkey, 10, 15 * 60_000)) return { step: "code", phone: phone.data, error: "too_many" };
+    if (await isLimited(vkey, 10, 15 * 60_000)) {
+      await logWarn("otp.too_many", "sign-in code checks over the limit (10 per number per 15 min)", { sample: 600_000 });
+      return { step: "code", phone: phone.data, error: "too_many" };
+    }
     await recordAttempt(vkey);
     if (!(await checkOtp(phone.data, String(form.get("code") ?? "").trim()))) return { step: "code", phone: phone.data, error: "bad_code" };
 

@@ -5,6 +5,7 @@ import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { cookies } from "next/headers";
 import { logEvent } from "@/lib/analytics";
 import { logEvent as siteLog } from "@/lib/site-log";
+import { logWarn } from "@/lib/log-error";
 import bcrypt from "bcryptjs";
 import { BCRYPT_COST, signInSchema } from "@/lib/schemas/auth";
 import { findUserByPhone } from "@/lib/user-phone";
@@ -67,7 +68,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { login } = parsed.data;
         // Two keys: one account cannot be hammered, and one host cannot spray many accounts.
         const ipKey = `login-ip:${clientIp(request.headers)}`;
-        if (await isLimited(ipKey, 30, 15 * 60_000)) return null;
+        if (await isLimited(ipKey, 30, 15 * 60_000)) {
+          await logWarn("auth.refused", "password sign-in refused: too many attempts from one address", { sample: 600_000 });
+          return null;
+        }
         // 10 wrong passwords per account per 15 minutes. The limit counts failures, not attempts:
         // refusing before the comparison let anyone lock a student out with ten guesses.
         const key = `login:${login}`;
@@ -84,7 +88,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
         // Ten failures lock the account for the window even against the right password, so a many-host guesser cannot keep trying.
-        if (await isLimited(key, 10, 15 * 60_000)) return null;
+        if (await isLimited(key, 10, 15 * 60_000)) {
+          await logWarn("auth.refused", "password sign-in refused: account locked after 10 wrong passwords", { sample: 600_000 });
+          return null;
+        }
         return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };
       },
     }),
@@ -97,6 +104,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const phone = typeof raw?.proof === "string" ? readProof(raw.proof) : null;
         if (!phone) return null;
         const user = await db.user.findUnique({ where: { phone } });
+        if (user && (user.deletedAt || (user.role !== "STUDENT" && user.role !== "PARENT"))) {
+          await logWarn("auth.refused", "phone sign-in refused: staff or erased account", { sample: 600_000 });
+        }
         if (!user || user.deletedAt || (user.role !== "STUDENT" && user.role !== "PARENT")) return null;
         return { id: user.id, name: user.name, role: user.role, pwdAt: user.passwordChangedAt?.getTime() ?? 0 };
       },
@@ -112,19 +122,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const google = account?.provider === "google";
       if (!google && account?.provider !== "microsoft-entra-id") return true;
       // Linking by email is only safe when Google vouches for the address.
-      if (google && profile?.email_verified !== true) return false;
+      if (google && profile?.email_verified !== true) {
+        await logWarn("auth.refused", "Google sign-in refused: Google did not verify the email address", { sample: 600_000 });
+        return false;
+      }
       const email = (user.email ?? (profile as { preferred_username?: string } | undefined)?.preferred_username)?.trim().toLowerCase();
-      if (!email?.includes("@")) return false;
+      if (!email?.includes("@")) {
+        await logWarn("auth.refused", "social sign-in refused: the provider gave no email address", { sample: 600_000 });
+        return false;
+      }
       const existing = await db.user.findUnique({
         where: { email },
         select: { id: true, role: true, deletedAt: true, emailVerifiedAt: true, passwordChangedAt: true },
       });
       if (existing) {
-        if (existing.deletedAt) return false;
+        if (existing.deletedAt) {
+          await logWarn("auth.refused", "social sign-in refused: erased account", { sample: 600_000 });
+          return false;
+        }
         // Microsoft does not vouch for the address the way Google does (a work tenant can claim any email), so it never opens an account that already exists.
-        if (!google) return false;
+        if (!google) {
+          await logWarn("auth.refused", "Microsoft sign-in refused: it never opens an existing account", { sample: 600_000 });
+          return false;
+        }
         // Staff keep password sign-in only: a Google account must never open an admin or teacher account.
-        if (existing.role !== "STUDENT" && existing.role !== "PARENT") return false;
+        if (existing.role !== "STUDENT" && existing.role !== "PARENT") {
+          await logWarn("auth.refused", "Google sign-in refused: staff accounts use a password", { sample: 600_000 });
+          return false;
+        }
         user.id = existing.id;
         user.role = existing.role;
         user.pwdAt = existing.passwordChangedAt?.getTime() ?? 0;

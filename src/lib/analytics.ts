@@ -1,6 +1,7 @@
 // Server-side behaviour events. A closed set of names keeps volume small and the funnel honest;
 // there is deliberately no generic page-view event and no client tag.
 
+import { logError } from "@/lib/log-error";
 import { cookies } from "next/headers";
 import { after } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
@@ -57,6 +58,7 @@ export async function logEvent(input: EventInput) {
     // A repeat of the same dedupe key is expected, not an error.
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return;
     console.error("[analytics]", input.name, e);
+    await logError("analytics.write", e, { message: `event ${input.name} not saved`, level: "WARN", sample: 600_000 });
   }
 }
 

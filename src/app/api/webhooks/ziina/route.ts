@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { syncPaymentIntent } from "@/lib/ziina";
 import { intentCandidates } from "@/lib/ziina-format";
+import { logError, logWarn } from "@/lib/log-error";
 
 /**
  * Ziina's webhook body and signature are undocumented, so this handler is a trigger only: it
@@ -12,7 +13,10 @@ import { intentCandidates } from "@/lib/ziina-format";
  * an order paid, because settlement needs a genuinely completed intent bound to that order.
  */
 export async function POST(req: Request) {
-  if (!process.env.ZIINA_API_KEY) return NextResponse.json({ error: "not_configured" }, { status: 500 });
+  if (!process.env.ZIINA_API_KEY) {
+    await logWarn("payment.webhook", "Ziina webhook called but ZIINA_API_KEY is not set", { level: "ERROR", sample: 600_000 });
+    return NextResponse.json({ error: "not_configured" }, { status: 500 });
+  }
   // No signature is available from Ziina, so cap the work an anonymous caller can cause:
   // each accepted call costs one lookup and one outbound request.
   const ip = clientIp(req.headers);
@@ -41,6 +45,7 @@ export async function POST(req: Request) {
   } catch (e) {
     // Transient failure: 500 so Ziina retries. The result page remains the primary path anyway.
     console.error("[ziina] webhook failed", e);
+    await logError("payment.webhook", e, { message: "Ziina webhook processing failed", sample: 60_000 });
     return NextResponse.json({ error: "processing_failed" }, { status: 500 });
   }
 }

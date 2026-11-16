@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyTransactionHmac, type PaymobTransaction } from "@/lib/paymob";
 import { applyPaymentOutcome } from "@/lib/payments";
+import { logWarn } from "@/lib/log-error";
 
 // Paymob posts { type: "TRANSACTION", obj } with ?hmac=... A kiosk payment sends a pending callback
 // first, then a success callback for the same transaction id once cash is paid.
@@ -13,11 +14,17 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { type?: string; obj?: PaymobTransaction } | null;
   const tx = body?.obj;
   if (body?.type !== "TRANSACTION" || !tx) return NextResponse.json({ ok: true, ignored: true });
-  if (!verifyTransactionHmac(tx, hmac, secret)) return NextResponse.json({ error: "bad_signature" }, { status: 401 });
+  if (!verifyTransactionHmac(tx, hmac, secret)) {
+    await logWarn("payment.webhook", "Paymob webhook with a bad signature", { sample: 600_000 });
+    return NextResponse.json({ error: "bad_signature" }, { status: 401 });
+  }
 
   const orderId = tx.order.merchant_order_id;
   const order = orderId ? await db.order.findUnique({ where: { id: orderId } }) : null;
-  if (!order) return NextResponse.json({ ok: true, ignored: "unknown_order" });
+  if (!order) {
+    await logWarn("payment.webhook", "Paymob webhook for an unknown order", { meta: { orderId: orderId ?? null }, sample: 600_000 });
+    return NextResponse.json({ ok: true, ignored: "unknown_order" });
+  }
 
   const ref = tx.data?.bill_reference;
   const applied = await applyPaymentOutcome(

@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText, reportClient } from "@/lib/client-log";
 import { upload } from "@vercel/blob/client";
 import { useState } from "react";
 
@@ -43,7 +44,8 @@ export function ImageUpload({
       });
       setPath(blob.pathname);
       setPreview(URL.createObjectURL(file));
-    } catch {
+    } catch (e) {
+      reportClient("client.upload", `image upload failed: ${errorText(e)}`);
       setFailed(true);
     } finally {
       setBusy(false);

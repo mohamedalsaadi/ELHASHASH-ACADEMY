@@ -1,10 +1,15 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useEffect } from "react";
 import { Link } from "@/i18n/navigation";
+import { errorText, reportClient } from "@/lib/client-log";
 
-export default function AdminError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function AdminError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const t = useTranslations("errors");
+  useEffect(() => {
+    reportClient("client.error", errorText(error), { digest: error.digest });
+  }, [error]);
   return (
     <main className="mx-auto grid max-w-xl justify-items-center gap-4 px-4 py-24 text-center">
       <h1 className="font-display text-h1 font-semibold">{t("errorTitle")}</h1>

@@ -1,12 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+import { errorText, reportClient } from "@/lib/client-log";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Replaces the root layout when it fails; no provider is available, so the copy is bilingual. No stylesheet loads
  * either, so the colours are written out here (the one place besides email where hex is allowed).
  */
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    reportClient("client.error", errorText(error), { digest: error.digest });
+  }, [error]);
   return (
     <html lang="ar" dir="rtl">
       <head>

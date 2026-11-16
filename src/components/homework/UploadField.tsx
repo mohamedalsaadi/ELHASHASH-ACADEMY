@@ -1,5 +1,6 @@
 "use client";
 
+import { errorText, reportClient } from "@/lib/client-log";
 import { upload } from "@vercel/blob/client";
 import { useState } from "react";
 import { refusalReason } from "@/components/upload-reason";
@@ -47,7 +48,8 @@ export function UploadField({
         });
         setFiles((prev) => (prev.length >= max ? prev : [...prev, { pathname: blob.pathname, downloadName: clean(file.name) }]));
       }
-    } catch {
+    } catch (e) {
+      reportClient("client.upload", `homework upload failed: ${errorText(e)}`);
       // The Blob library hides why; the server knows (not signed in, not your course, store not connected).
       let why: string | null = null;
       try {

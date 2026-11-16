@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { stripe, syncCheckoutSession } from "@/lib/stripe";
 import { syncPaymentIntent } from "@/lib/ziina";
+import { logError } from "@/lib/log-error";
 import { PendingPoll } from "./PendingPoll";
 
 // Paymob redirects here after the hosted checkout. The status shown comes from our database
@@ -51,7 +52,10 @@ export default async function ResultPage({
   // Ziina's webhook cannot be trusted for shape, so the return page is the primary settlement
   // path; the webhook is the backstop. Both settle through the same idempotent event id.
   if (order.status === "PENDING" && order.gateway === "ZIINA" && order.gatewayOrderId) {
-    await syncPaymentIntent(order).catch((e) => console.error("[ziina] result sync failed", order!.id, e));
+    await syncPaymentIntent(order).catch(async (e) => {
+      console.error("[ziina] result sync failed", order!.id, e);
+      await logError("payment.result_sync", e, { message: "Ziina lookup failed on the result page", meta: { orderId: order!.id } });
+    });
     order = await db.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: { select: { skuId: true } } } });
   }
 

@@ -1,3 +1,4 @@
+import { cronRoute } from "@/lib/cron-log";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { nextGrade } from "@/lib/grades-next";
@@ -13,11 +14,7 @@ export const maxDuration = 300;
  *
  * ponytail: one notification and email at a time; move to a queue past a few thousand students.
  */
-export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+async function run(request: Request) {
   const dry = new URL(request.url).searchParams.get("dry") === "1";
   const year = new Date().getUTCFullYear();
 
@@ -69,3 +66,5 @@ export async function GET(request: Request) {
   }
   return NextResponse.json({ ok: true, year, dry, moves, notified });
 }
+
+export const GET = cronRoute("promote", run);

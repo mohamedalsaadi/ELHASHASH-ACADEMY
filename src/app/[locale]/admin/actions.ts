@@ -82,11 +82,13 @@ export async function updateCourse(form: FormData) {
       maxPlays: z.coerce.number().int().min(1).max(1000).optional().catch(undefined),
       maxIps: z.coerce.number().int().min(1).max(50).optional().catch(undefined),
       maxDevices: z.coerce.number().int().min(1).max(20).optional().catch(undefined),
+      blockCountryChange: checkbox,
       coverKey: z.string().trim().max(500).default(""),
     })
     .parse(Object.fromEntries(form));
   await assertCourse(me, d.id);
-  const { id, coverKey, ...data } = d;
+  // Only the owner sees the country switch, so a teacher saving the form must not switch it off.
+  const { id, coverKey, blockCountryChange, ...data } = d;
   const wasHidden = (await db.course.count({ where: { id, published: false } })) === 1;
 
   // The cover must be this course's own object, and its type is read from Blob, not the form.
@@ -101,7 +103,7 @@ export async function updateCourse(form: FormData) {
   // A course going live is saved hidden first, then checked against what is now stored: an empty course never appears.
   const publishing = data.published && wasHidden;
   // An empty box clears the limit (maxPlays: unlimited, maxIps: IP check off).
-  await db.course.update({ where: { id }, data: { ...data, published: publishing ? false : data.published, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, maxDevices: data.maxDevices ?? null, ...cover } });
+  await db.course.update({ where: { id }, data: { ...data, published: publishing ? false : data.published, maxPlays: data.maxPlays ?? null, maxIps: data.maxIps ?? null, maxDevices: data.maxDevices ?? null, ...(me.role === "ADMIN" ? { blockCountryChange } : {}), ...cover } });
   if (publishing) {
     const ready = await courseReadiness(id);
     if (ready.blocking.length) {

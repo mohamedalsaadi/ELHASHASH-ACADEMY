@@ -33,7 +33,7 @@ import { completeFromPlayer, markLessonComplete, setConfidence } from "./actions
 export const dynamic = "force-dynamic";
 
 /** DRM player: signed-in only, one device per account, watermark with name · phone · IP. */
-type Limits = { lessonId: string; learnerId: string; maxPlays: number | null; maxIps: number | null; maxDevices: number | null };
+type Limits = { lessonId: string; learnerId: string; maxPlays: number | null; maxIps: number | null; maxDevices: number | null; blockCountryChange: boolean };
 
 type Onward = { href: string; label: string; doneLabel: string } | null;
 
@@ -76,7 +76,7 @@ async function SecurePlayer({ videoId, title, path, limits, onward }: { videoId:
           }),
     ]);
     const events = recent.map((e) => ({ ...e, at: e.at.getTime() }));
-    const verdict = judgePlay({ now, viewerId: userId, lessonId: limits.lessonId, ip, country, events, lessonPlays, maxPlays: limits.maxPlays, maxIps: limits.maxIps, deviceId, knownDevices: devices.map((d) => d.deviceId!), maxDevices: limits.maxDevices });
+    const verdict = judgePlay({ now, viewerId: userId, lessonId: limits.lessonId, ip, country, events, lessonPlays, maxPlays: limits.maxPlays, maxIps: limits.maxIps, deviceId, knownDevices: devices.map((d) => d.deviceId!), maxDevices: limits.maxDevices, blockCountryChange: limits.blockCountryChange });
     if (verdict === "plays") return <Notice>{t("playsUsed", { count: limits.maxPlays ?? 0 })}</Notice>;
     if (verdict !== "ok") return <Notice>{t(verdict)}</Notice>;
     // A refresh is the same play: only a play that is not a repeat is stored.
@@ -279,7 +279,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
               videoId={video.externalId}
               title={title}
               path={`/${locale}/courses/${slug}/lessons/${lesson.id}`}
-              limits={staff || !learnerId ? null : { lessonId: lesson.id, learnerId, maxPlays: course.maxPlays, maxIps: course.maxIps, maxDevices: course.maxDevices }}
+              limits={staff || !learnerId ? null : { lessonId: lesson.id, learnerId, maxPlays: course.maxPlays, maxIps: course.maxIps, maxDevices: course.maxDevices, blockCountryChange: course.blockCountryChange }}
               onward={onward ? { href: lessonHref(onward.lesson.id), label: tp("nextAfterComplete"), doneLabel: tp("completed") } : { href: "", label: "", doneLabel: tp("completed") }}
             />
           ) : (

@@ -775,6 +775,7 @@
     "maxPlays": "Plays per lesson per student (empty = unlimited)",
     "maxIps": "Different IP addresses per student per day (empty = no check)",
     "maxDevices": "Browsers (devices) per student in 30 days (empty = no check)",
+    "blockCountryChange": "Refuse lessons opened from a second country within 6 hours (off by default; a VPN can trigger it)",
     "limitsHint": "Limits video sharing. A refresh within 5 minutes is not a new play. You and the owner are never limited.",
     "copyUnitTo": "Copy this unit to another course (videos are reused)",
     "copyUnit": "Copy",

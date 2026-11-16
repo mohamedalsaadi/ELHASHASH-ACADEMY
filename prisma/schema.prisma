@@ -314,6 +314,8 @@ model Course {
   maxIps       Int?       @default(4)
   /// Distinct browsers (a cookie id) one account may watch from in 30 days; null turns the check off.
   maxDevices   Int?
+  /// When on, a play from a second country within 6 hours of an earlier play on the same account is refused. Off by default: a student on a VPN looked like a shared account.
+  blockCountryChange Boolean @default(false)
   createdAt    DateTime   @default(now())
 
   grade           Grade?           @relation(fields: [gradeId], references: [id], onDelete: Restrict)

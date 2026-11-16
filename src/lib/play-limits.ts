@@ -8,7 +8,7 @@ export const REPLAY_WINDOW_MS = 300_000;
 export const IP_WINDOW_MS = 86_400_000;
 /** Another person's play this recently counts as "still watching". ponytail: no heartbeat from the player, so this is a guess; use VdoCipher's playback events if it blocks too much. */
 export const TOGETHER_WINDOW_MS = 900_000;
-/** Two countries inside this window cannot be one family on one trip. */
+/** With the per-course country check on, two countries inside this window are refused. Off by default: a VPN looks like a trip. */
 export const COUNTRY_WINDOW_MS = 21_600_000;
 
 /** The look-back for the device cap. */
@@ -33,10 +33,12 @@ export function judgePlay(p: {
   deviceId?: string | null;
   knownDevices?: string[];
   maxDevices?: number | null;
+  /** Refuse a second country inside COUNTRY_WINDOW_MS. Off unless the course asks for it. */
+  blockCountryChange?: boolean;
 }): PlayVerdict {
   const since = (e: PlayEventLite) => p.now - e.at;
   if (p.events.some((e) => e.userId !== p.viewerId && since(e) < TOGETHER_WINDOW_MS)) return "together";
-  if (p.country && p.events.some((e) => e.country && e.country !== p.country && since(e) < COUNTRY_WINDOW_MS)) return "location";
+  if (p.blockCountryChange && p.country && p.events.some((e) => e.country && e.country !== p.country && since(e) < COUNTRY_WINDOW_MS)) return "location";
   const ips = new Set(p.events.map((e) => e.ip));
   if (p.maxIps != null && !ips.has(p.ip) && ips.size >= p.maxIps) return "ips";
   if (p.maxDevices != null && p.deviceId && !p.knownDevices?.includes(p.deviceId) && (p.knownDevices?.length ?? 0) >= p.maxDevices) return "devices";

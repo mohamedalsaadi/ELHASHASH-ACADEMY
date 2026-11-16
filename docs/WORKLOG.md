@@ -24,6 +24,11 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-16: the second-country play block is off by default
+
+- A student left a VPN on and the lesson player refused them ("opened from a different country"). The rule in `src/lib/play-limits.ts` (a play from a second country within 6 hours of another play on the same account) is now a per-course option, `Course.blockCountryChange`, default off for every course. Nothing is stored per student, so everyone who was refused can watch again as soon as this ships. The owner switches it on per course with a checkbox on `/admin/courses/[id]` (admin only; a teacher saving the form does not change it). Migration `20261128120000_course_country_check` is additive.
+- Unchanged: "one person at a time" (parent and child), the IP cap `maxIps` (default 4 distinct IPs per day, which a VPN can also trip; clear or raise it on the course) and the device cap.
+
 ## 2026-11-16: full logging and Sentinel, the log coworker
 
 - **Logging.** The site log now records what used to go to `console.*` or nowhere: payment failures (`payment.gateway`, `payment.orphan`, `payment.mismatch`, `payment.webhook`, post-commit steps), mail (`mail.send`), WhatsApp (`whatsapp.send`), video playback (`video.playback`), auth refusals (`auth.refused`), Gemini (`ai.error`), uploads and PDFs, database and schema health, rate-limit and OTP limits, Turnstile fail-open, support-ticket saves, cron heartbeats (`cron.<name>`), and browser errors (`client.*`, through the now public but rate-limited `/api/log` and the new `ErrorReporter`). Helpers: `src/lib/log-error.ts`, `src/lib/cron-log.ts`, `src/lib/client-log.ts`; `logEvent` gained a `sample` window to drop repeats. Every source is described in `docs/log-sources.md`.

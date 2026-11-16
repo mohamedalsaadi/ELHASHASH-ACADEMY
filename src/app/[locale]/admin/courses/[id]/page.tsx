@@ -192,6 +192,12 @@ export default async function AdminCoursePage({ params, searchParams }: { params
             <input name="maxDevices" type="number" min="1" max="20" step="1" defaultValue={course.maxDevices ?? ""} dir="ltr" className={`${field} num`} />
           </label>
         </div>
+        {isAdmin && (
+          <label className={check}>
+            <input type="checkbox" name="blockCountryChange" defaultChecked={course.blockCountryChange} className="size-4" />
+            {t("blockCountryChange")}
+          </label>
+        )}
         <p className="text-label text-ink-muted">{t("limitsHint")}</p>
         <div>
           <SaveButton />

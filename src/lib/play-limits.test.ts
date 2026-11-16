@@ -27,7 +27,9 @@ describe("judgePlay", () => {
   it("blocks the child while the parent is watching from elsewhere", () =>
     expect(judgePlay({ ...base, ip: "z", events: [ev({ userId: "mum", ip: "b", at: now - MIN })] })).toBe("together"));
   it("blocks a different country within hours", () =>
-    expect(judgePlay({ ...base, viewerId: "mum", country: "EG", events: [ev({ at: now - 60 * MIN })] })).toBe("location"));
+    expect(judgePlay({ ...base, viewerId: "mum", country: "EG", events: [ev({ at: now - 60 * MIN })], blockCountryChange: true })).toBe("location"));
+  it("lets a second country through by default (a VPN is not a shared account)", () =>
+    expect(judgePlay({ ...base, viewerId: "mum", country: "EG", events: [ev({ at: now - 60 * MIN })] })).toBe("ok"));
   it("ignores an unknown country", () =>
     expect(judgePlay({ ...base, viewerId: "mum", country: null, events: [ev({ at: now - 60 * MIN })] })).toBe("ok"));
 });

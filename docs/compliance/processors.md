@@ -18,7 +18,7 @@ and synthetic data are fine before that.
 | Stripe | Card payments (coded, test keys only) | Buyer email, amount | Ireland / United States | DPA available | File before any live key |
 | VdoCipher | Paid video playback | Account and video identifiers, playback logs | India / global | DPA available | Accept and file |
 | Daily | Live lecture rooms | Name, room token, join and leave times | United States | DPA available | Accept and file before live classes |
-| Google Gemini | AI-assisted grading and bank-alert reading | The student answer sent for grading; never the whole account | United States | Google Cloud terms / DPA | Confirm the paid tier. On a free tier, submitted content may be used to improve the model, which is not acceptable for a minor’s work |
+| Google Gemini | AI-assisted grading, bank-alert reading, and the log coworker (scrubbed site-log lines and public source code, no personal data) | The student answer sent for grading; never the whole account | United States | Google Cloud terms / DPA | Confirm the paid tier. On a free tier, submitted content may be used to improve the model, which is not acceptable for a minor’s work |
 | Anthropic | Possible future assistant | Only what a prompt contains | United States | Commercial terms / DPA | File before use |
 | WhatsApp / support inbox | Support conversations | Whatever the person writes | Owner-controlled | Not a processor if the owner answers personally | Keep support replies inside the ticket system where possible |
 

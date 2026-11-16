@@ -24,6 +24,14 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-16: full logging and Sentinel, the log coworker
+
+- **Logging.** The site log now records what used to go to `console.*` or nowhere: payment failures (`payment.gateway`, `payment.orphan`, `payment.mismatch`, `payment.webhook`, post-commit steps), mail (`mail.send`), WhatsApp (`whatsapp.send`), video playback (`video.playback`), auth refusals (`auth.refused`), Gemini (`ai.error`), uploads and PDFs, database and schema health, rate-limit and OTP limits, Turnstile fail-open, support-ticket saves, cron heartbeats (`cron.<name>`), and browser errors (`client.*`, through the now public but rate-limited `/api/log` and the new `ErrorReporter`). Helpers: `src/lib/log-error.ts`, `src/lib/cron-log.ts`, `src/lib/client-log.ts`; `logEvent` gained a `sample` window to drop repeats. Every source is described in `docs/log-sources.md`.
+- **Known problems.** `src/lib/log-catalog.ts` explains each known failure in both languages and says who acts (owner, coworker or nobody); `/admin/logs` shows it beside each line and lists the catalog.
+- **Retention.** `/api/cron/retention` now prunes SiteLog too; an additive migration adds `SiteLog(level, createdAt)`.
+- **Sentinel.** `src/lib/coworker/*`, `GET /api/cron/coworker`, `.github/workflows/coworker.yml`, tables `CoworkerCase` and `CoworkerControl`, a panel on `/admin/ai`. Contract and limits: `docs/coworker.md`. It ships in shadow mode (auto-merge off). `AGENTS.md` records the owner's one exception to the no-push rule.
+- **Open (owner):** create the GitHub token and save it as `GITHUB_COWORKER_TOKEN` in Vercel; add the repository secrets `APP_URL` and `CRON_SECRET`; read its first pull requests, then turn auto-merge on at `/admin/ai`. Check whether `main` has branch protection that blocks the token. Not yet seen live: an end-to-end run against the real GitHub API (the engine is tested against a fake client only).
+
 ## 2026-11-10: open-items sweep (CI, Sentry, VdoCipher lock, least-privilege migrations, e2e)
 
 - **CI was red on every push.** `npm ci` failed (lock written by npm 11, CI on Node 22 / npm 10), then the build failed prerendering `/sitemap.xml` with no database. Fixed: Node 24 in `.github/workflows/ci.yml`; `src/app/sitemap.ts` is `force-dynamic`. The check job passed in a clean worktree.

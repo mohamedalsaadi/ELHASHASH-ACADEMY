@@ -42,11 +42,13 @@ export async function askJson<T>(input: {
   maxTokens?: number;
   /** A long summary needs longer than the 10 s a short reply gets. */
   timeoutMs?: number;
+  /** Overrides AI_MODEL for one call (the log coworker may use a stronger model for code). */
+  model?: string;
 }): Promise<AiResult<T> | null> {
   if (!aiEnabled()) return null;
   const key = process.env.GEMINI_API_KEY!;
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${input.model ?? AI_MODEL}:generateContent`,
     {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
@@ -81,5 +83,5 @@ export async function askJson<T>(input: {
     .join("");
   const parsed = input.schema.safeParse(text ? extractJson(text) : null);
   if (!parsed.success) await logWarn("ai.error", "Gemini answered with JSON that failed the schema check", { sample: 300_000 });
-  return { data: parsed.success ? parsed.data : null, usage, model: AI_MODEL };
+  return { data: parsed.success ? parsed.data : null, usage, model: input.model ?? AI_MODEL };
 }

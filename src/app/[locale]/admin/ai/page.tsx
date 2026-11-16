@@ -3,10 +3,11 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { AI_MODEL, aiEnabled } from "@/lib/ai";
 import { briefingLines, gatherBriefing } from "@/lib/briefing";
 import { db } from "@/lib/db";
+import { githubConfigured, prUrl } from "@/lib/coworker/github";
 import { pageMetadata } from "@/lib/seo";
 import { requireAdmin } from "@/lib/staff";
 import { AdminNav, panel, table } from "../AdminNav";
-import { sendBriefingNow, sendSentryTest } from "./actions";
+import { runCoworkerNow, sendBriefingNow, sendSentryTest, setCoworkerAutoMerge, setCoworkerPaused } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +24,13 @@ export default async function AdminAiPage({ params }: { params: Promise<{ locale
   const loc = locale === "en" ? "en" : "ar";
   const since = new Date(Date.now() - 30 * 86_400_000);
 
-  const [briefing, usage] = await Promise.all([
+  const [briefing, usage, control, cases] = await Promise.all([
     gatherBriefing(),
     db.aiRun.groupBy({ by: ["kind", "status"], where: { createdAt: { gte: since } }, _count: true, _sum: { tokensIn: true, tokensOut: true } }),
+    db.coworkerControl.findUnique({ where: { id: "singleton" } }),
+    db.coworkerCase.findMany({ orderBy: { updatedAt: "desc" }, take: 25 }),
   ]);
+  const when = new Intl.DateTimeFormat("en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Dubai" });
   const kinds = [...new Set(usage.map((u) => u.kind))].sort();
   const sum = (kind: string, status?: string) => usage.filter((u) => u.kind === kind && (!status || u.status === status));
   const n = (v: number) => new Intl.NumberFormat("en-GB").format(v);
@@ -58,6 +62,64 @@ export default async function AdminAiPage({ params }: { params: Promise<{ locale
           <SubmitButton pendingLabel={t("sending")} className="btn btn-primary w-fit text-small">{t("sendNow")}</SubmitButton>
         </form>
         <p className="text-label text-ink-muted">{t("schedule")}</p>
+      </section>
+
+      <section className={panel}>
+        <h2 className="font-display text-h3 font-semibold">{t("coworker.title")}</h2>
+        <p className="text-small text-ink-muted">{t("coworker.hint")}</p>
+        <ul className="list-disc ps-5 text-small">
+          <li>{githubConfigured() ? t("coworker.tokenOn") : t("coworker.tokenOff")}</li>
+          <li>{control?.paused ? t("coworker.paused") : t("coworker.running")}</li>
+          <li>{control?.autoMerge ? t("coworker.autoOn") : t("coworker.autoOff")}</li>
+        </ul>
+        <div className="flex flex-wrap gap-3">
+          <form action={setCoworkerPaused}>
+            <input type="hidden" name="paused" value={control?.paused ? "0" : "1"} />
+            <SubmitButton pendingLabel={t("sending")} className="btn btn-outline w-fit text-small">{control?.paused ? t("coworker.resume") : t("coworker.pause")}</SubmitButton>
+          </form>
+          <form action={setCoworkerAutoMerge}>
+            <input type="hidden" name="autoMerge" value={control?.autoMerge ? "0" : "1"} />
+            <SubmitButton pendingLabel={t("sending")} className="btn btn-outline w-fit text-small">{control?.autoMerge ? t("coworker.autoDisable") : t("coworker.autoEnable")}</SubmitButton>
+          </form>
+          <form action={runCoworkerNow}>
+            <SubmitButton pendingLabel={t("sending")} className="btn btn-primary w-fit text-small">{t("coworker.runNow")}</SubmitButton>
+          </form>
+        </div>
+        <h3 className="font-display text-h4 font-semibold">{t("coworker.cases")}</h3>
+        {cases.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("coworker.noCases")}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className={table}>
+              <thead>
+                <tr>
+                  <th>{t("coworker.caseWhen")}</th>
+                  <th>{t("coworker.caseWhat")}</th>
+                  <th>{t("coworker.caseStatus")}</th>
+                  <th>{t("coworker.caseTimes")}</th>
+                  <th>{t("coworker.caseResult")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cases.map((c) => (
+                  <tr key={c.id}>
+                    <td className="whitespace-nowrap" dir="ltr">{when.format(c.lastSeenAt)}</td>
+                    <td dir="ltr" className="break-words">{c.kind === "REVERT" ? "↩ " : ""}{c.summary}</td>
+                    <td>{t(`coworker.status.${c.status}` as "coworker.status.OPEN")}</td>
+                    <td className="num">{n(c.count)}</td>
+                    <td dir="auto" className="break-words">
+                      {c.prNumber ? (
+                        <a href={prUrl(c.prNumber)} className="text-pen underline-offset-4 hover:underline" dir="ltr">#{c.prNumber}</a>
+                      ) : null}{" "}
+                      {c.note ?? ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="text-label text-ink-muted">{t("coworker.limits")}</p>
       </section>
 
       <section className={panel}>

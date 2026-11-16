@@ -1728,6 +1728,46 @@ model SiteLog {
   @@index([level, createdAt])
 }
 
+/// One problem the log coworker (Sentinel) has noticed in the site log and what it did about it.
+/// status: OPEN, PR_OPEN, MERGED, ESCALATED (needs the owner), IGNORED, CLOSED. kind: FIX or REVERT.
+/// Holds a short scrubbed summary and the edits it made (code, never log text beyond the summary).
+model CoworkerCase {
+  id          String    @id @default(cuid())
+  fingerprint String    @unique
+  kind        String    @default("FIX")
+  parentId    String?
+  source      String
+  summary     String    @db.VarChar(500)
+  knownCode   String?
+  /// The Next.js route a server error came from, so the right file can be shown to the model.
+  route       String?
+  routeKind   String?
+  status      String    @default("OPEN")
+  count       Int       @default(1)
+  attempts    Int       @default(0)
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  branch      String?
+  prNumber    Int?
+  mergedSha   String?
+  mergedAt    DateTime?
+  edits       Json?
+  note        String?   @db.VarChar(500)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+}
+
+/// The coworker's two switches, set by an admin on /admin/ai. One row.
+model CoworkerControl {
+  id          String   @id @default("singleton")
+  paused      Boolean  @default(false)
+  autoMerge   Boolean  @default(false)
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+}
+
 model AnalyticsEvent {
   id        String   @id @default(cuid())
   name      String

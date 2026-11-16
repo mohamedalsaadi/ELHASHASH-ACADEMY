@@ -14,7 +14,7 @@ Start with `docs/WORKLOG.md`: the running log of what changed, why, and what is 
 
 ## Hard rules
 - **Stripe stays on test keys.** Live payments are on hold. Never switch keys or webhooks to live.
-- **No push, deploy, merge, DNS change, or spending without the owner's approval** through the Manager.
+- **No push, deploy, merge, DNS change, or spending without the owner's approval** through the Manager. One standing exception, granted by the owner on 2026-11-16: the log coworker Sentinel may open pull requests, and merge them when auto-merge is on, within the limits in `docs/coworker.md`. No other agent may.
 - Never run destructive DB commands (`prisma migrate reset`, `DROP`, mass `delete`) against the real database.
 - Never commit secrets or `.env*` files.
 - Design follows `DESIGN.md`: show real numbers from stored data, never invented social proof. GSAP stays on marketing pages, on native scroll with no wheel hijacking; app pages stay calm; honour `prefers-reduced-motion`.

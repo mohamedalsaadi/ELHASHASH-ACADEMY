@@ -24,8 +24,9 @@ export async function cronRun<T>(name: string, job: () => Promise<T>): Promise<T
  */
 export function cronRoute(name: string, handler: (request: Request) => Promise<Response>) {
   return async (request: Request): Promise<Response> => {
-    const secret = process.env.CRON_SECRET;
-    if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+    // A value pasted into a dashboard often carries a trailing space or line break, which an HTTP header cannot.
+    const secret = process.env.CRON_SECRET?.trim();
+    if (!secret || request.headers.get("authorization")?.trim() !== `Bearer ${secret}`) {
       await logWarn(`cron.${name}`, secret ? "refused: wrong Authorization header" : "refused: CRON_SECRET is not set on the server", { sample: 3_600_000 });
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }

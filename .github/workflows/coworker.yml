@@ -25,5 +25,12 @@ jobs:
           APP_URL: ${{ secrets.APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          # A value pasted into a secret often carries a space or a line break; strip them.
+          APP_URL=$(printf %s "$APP_URL" | tr -d ' \r\n')
+          CRON_SECRET=$(printf %s "$CRON_SECRET" | tr -d ' \r\n')
           test -n "$APP_URL" && test -n "$CRON_SECRET"
-          curl --fail --silent --show-error --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/coworker"
+          code=$(curl --silent --show-error --max-time 90 -o body.json -w "%{http_code}" -H "Authorization: Bearer $CRON_SECRET" "${APP_URL%/}/api/cron/coworker")
+          echo "HTTP $code"
+          head -c 600 body.json
+          echo
+          test "$code" = "200"

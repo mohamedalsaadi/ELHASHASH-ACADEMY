@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { cookies } from "next/headers";
 import { logEvent } from "@/lib/analytics";
+import { logEvent as siteLog } from "@/lib/site-log";
 import bcrypt from "bcryptjs";
 import { BCRYPT_COST, signInSchema } from "@/lib/schemas/auth";
 import { findUserByPhone } from "@/lib/user-phone";
@@ -46,6 +47,17 @@ const NO_ACCOUNT_HASH = bcrypt.hashSync(randomUUID(), BCRYPT_COST);
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt", maxAge: SEVEN_DAYS },
   pages: { signIn: "/signin" },
+  // Auth.js sends any unexpected sign-in failure to its own "Server error" page and only prints the reason to the host log.
+  // Keep the reason in the site log (type, the underlying error's name and code), minus wrong-password noise.
+  logger: {
+    error(e) {
+      const type = (e as { type?: string }).type ?? e.name;
+      if (type === "CredentialsSignin") return;
+      const cause = (e as { cause?: { err?: Error } }).cause?.err ?? (e.cause as Error | undefined);
+      const code = (cause as { code?: string } | undefined)?.code;
+      void siteLog({ level: "ERROR", source: "auth.error", message: `${type}${cause ? ` / ${cause.name}${code ? ` ${code}` : ""}: ${cause.message.slice(0, 150)}` : ""}` });
+    },
+  },
   providers: [
     Credentials({
       credentials: { login: {}, password: {} },

@@ -7,18 +7,26 @@ import { db } from "@/lib/db";
 import { courseZone } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { findSubscribers, isCurrent, PAGE_SIZE, subscriberWhere, type SubscriberFilter } from "@/lib/subscribers";
+import { inviteCounts } from "@/lib/course-invite";
 import { AdminNav, panel, table } from "../AdminNav";
 import { field, label } from "../styles";
+import { SaveButton } from "../ui";
+import { sendCourseInvite } from "./invite-actions";
 
+// One batch of at most 150 emails, sent one at a time with a short pause: this page needs the longer function limit.
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 const button = "min-h-11 rounded-full border border-hairline bg-surface px-4 font-display font-semibold transition-colors duration-(--dur-fast) ease-(--ease-out) hover:bg-raised";
+const check = "flex min-h-11 items-center gap-2 text-small text-ink-muted";
 
 export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   return pageMetadata(params, "/admin/subscribers", "office", { key: "nav.subscribers", noindex: true });
 }
 
-export default async function SubscribersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<SubscriberFilter> }) {
+type InviteParams = SubscriberFilter & { inviteCourse?: string; sent?: string; failed?: string; left?: string };
+
+export default async function SubscribersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<InviteParams> }) {
   const { locale } = await params;
   const f = await searchParams;
   setRequestLocale(locale);
@@ -29,12 +37,15 @@ export default async function SubscribersPage({ params, searchParams }: { params
   const now = new Date();
   const page = Math.max(1, Number(f.page) || 1);
 
-  const [countries, courses, rows, total] = await Promise.all([
+  const [countries, courses, published, rows, total] = await Promise.all([
     db.country.findMany({ orderBy: { order: "asc" }, include: { grades: { orderBy: { level: "asc" } } } }),
     db.course.findMany({ orderBy: { slug: "asc" }, select: { id: true, titleAr: true, titleEn: true } }),
+    db.course.findMany({ where: { published: true }, orderBy: { slug: "asc" }, select: { id: true, titleAr: true, titleEn: true } }),
     findSubscribers(f),
     db.user.count({ where: subscriberWhere(f, now) }),
   ]);
+  const target = published.find((c) => c.id === f.inviteCourse);
+  const counts = target ? await inviteCounts(target.id) : null;
   // Access ends on a day boundary in the course country's zone, so a Kuwaiti student's end date is a Kuwaiti day.
   const dateIn = (timeZone: string) => new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone });
   const query = (extra: Record<string, string>) => new URLSearchParams({ ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)), ...extra }).toString();
@@ -153,6 +164,69 @@ export default async function SubscribersPage({ params, searchParams }: { params
           {page > 1 && <Link href={`/admin/subscribers?${query({ page: String(page - 1) })}`} className="text-pen">{t("prev")}</Link>}
           {page * PAGE_SIZE < total && <Link href={`/admin/subscribers?${query({ page: String(page + 1) })}`} className="text-pen">{t("next")}</Link>}
         </p>
+      </section>
+
+      <section className={`${panel} grid gap-4`}>
+        <div className="grid gap-1">
+          <h2 className="font-display text-h3 font-semibold">{t("inviteTitle")}</h2>
+          <p className="text-small text-ink-muted">{t("inviteHint")}</p>
+        </div>
+        {f.sent !== undefined && (
+          <p className="font-semibold text-up">{t("inviteResult", { sent: f.sent, failed: f.failed ?? "0", left: f.left ?? "0" })}</p>
+        )}
+        {published.length === 0 ? (
+          <p className="text-ink-muted">{t("inviteNone")}</p>
+        ) : (
+          <form className="flex flex-wrap items-end gap-3">
+            <label className={label}>
+              {t("inviteCourse")}
+              <select name="inviteCourse" defaultValue={f.inviteCourse ?? ""} className={`${field} max-w-60`}>
+                <option value="">—</option>
+                {published.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {pick(ar, c.titleAr, c.titleEn)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className={button}>{t("inviteCount")}</button>
+          </form>
+        )}
+        {target && counts && (
+          counts.students === 0 ? (
+            <p className="text-ink-muted">{t("inviteNoneLeft")}</p>
+          ) : (
+            <form action={sendCourseInvite} className="grid gap-3">
+              <input type="hidden" name="courseId" value={target.id} />
+              <p className="font-display font-semibold">{t("inviteRecipients", counts)}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className={label}>
+                  {t("inviteTitleAr")}
+                  <input name="titleAr" required maxLength={120} dir="rtl" defaultValue={`${target.titleAr} مفتوحة الآن`} className={field} />
+                </label>
+                <label className={label}>
+                  {t("inviteTitleEn")}
+                  <input name="titleEn" required maxLength={120} dir="ltr" defaultValue={`${target.titleEn} is open now`} className={field} />
+                </label>
+                <label className={label}>
+                  {t("inviteBodyAr")}
+                  <textarea name="bodyAr" required maxLength={400} rows={2} dir="rtl" defaultValue={t("inviteDefaultBodyAr")} className={`${field} py-2`} />
+                </label>
+                <label className={label}>
+                  {t("inviteBodyEn")}
+                  <textarea name="bodyEn" required maxLength={400} rows={2} dir="ltr" defaultValue={t("inviteDefaultBodyEn")} className={`${field} py-2`} />
+                </label>
+              </div>
+              <label className={check}>
+                <input type="checkbox" name="confirm" required className="size-4" />
+                {t("inviteConfirm")}
+              </label>
+              <div>
+                <SaveButton showSaved={false}>{t("inviteSend")}</SaveButton>
+              </div>
+            </form>
+          )
+        )}
       </section>
     </main>
   );

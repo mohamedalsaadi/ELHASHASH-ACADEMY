@@ -24,6 +24,12 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-17: invite unregistered students to a course (web notice and email)
+
+- `/admin/subscribers` has a panel: pick a published course, see how many students have never registered for it (no entitlement at all; a lapsed buyer is not counted) and how many can get email, edit the four short texts, tick the confirmation and send. Each send does at most 150 students: an in-app notice (kind `NEW_COURSE`, so it is optional mail with an unsubscribe link), then the email, one at a time with a 0.6 s pause. Press Send again until "still to reach" is 0; a student gets one notice per course (`dedupeKey invite:<courseId>:<userId>`) and a mailed notice is never mailed again. Failed emails are retried on the next press.
+- Code: `src/lib/course-invite.ts`, `src/app/[locale]/admin/subscribers/invite-actions.ts`, panel in `subscribers/page.tsx` (`maxDuration` 300). Strings in `messages/{ar,en}.json` under `office`.
+- Not yet run against live data or the real mail provider. Check on production with a small course first; the 300 s limit on a server action is unverified until it runs on Vercel.
+
 ## 2026-11-16: the second-country play block is off by default
 
 - A student left a VPN on and the lesson player refused them ("opened from a different country"). The rule in `src/lib/play-limits.ts` (a play from a second country within 6 hours of another play on the same account) is now a per-course option, `Course.blockCountryChange`, default off for every course. Nothing is stored per student, so everyone who was refused can watch again as soon as this ships. The owner switches it on per course with a checkbox on `/admin/courses/[id]` (admin only; a teacher saving the form does not change it). Migration `20261128120000_course_country_check` is additive.

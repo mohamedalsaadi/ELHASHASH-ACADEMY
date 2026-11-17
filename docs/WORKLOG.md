@@ -29,6 +29,7 @@ Git history has the rest (`git log --oneline`).
 - `/admin/subscribers` has a panel: pick a published course, see how many students have never registered for it (no entitlement at all; a lapsed buyer is not counted) and how many can get email, edit the four short texts, tick the confirmation and send. Each send does at most 150 students: an in-app notice (kind `NEW_COURSE`, so it is optional mail with an unsubscribe link), then the email, one at a time with a 0.6 s pause. Press Send again until "still to reach" is 0; a student gets one notice per course (`dedupeKey invite:<courseId>:<userId>`) and a mailed notice is never mailed again. Failed emails are retried on the next press.
 - Code: `src/lib/course-invite.ts`, `src/app/[locale]/admin/subscribers/invite-actions.ts`, panel in `subscribers/page.tsx` (`maxDuration` 300). Strings in `messages/{ar,en}.json` under `office`.
 - Not yet run against live data or the real mail provider. Check on production with a small course first; the 300 s limit on a server action is unverified until it runs on Vercel.
+- Follow-up the same day: the owner's first press showed 0 emails with no way to tell why. The panel now has "Email me a test copy" (the exact invite to the signed-in admin's address only, nothing stored), a status line (notified in the app, emailed, waiting for email) and the result line also shows the in-app notices created. Students without an address, or who opted out of optional mail, still get only the in-app notice.
 
 ## 2026-11-16: the second-country play block is off by default
 

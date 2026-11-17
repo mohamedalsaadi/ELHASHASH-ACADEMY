@@ -20,6 +20,48 @@ const GAP_MS = 600;
 export type InviteCopy = { titleAr: string; titleEn: string; bodyAr: string; bodyEn: string };
 export type InviteResult = { notices: number; sent: number; failed: number; left: number };
 
+/** One invite email in the reader's language, with the unsubscribe link optional mail must carry. */
+function deliver(
+  to: string,
+  ar: boolean,
+  userId: string,
+  n: { titleAr: string; titleEn: string; bodyAr: string | null; bodyEn: string | null; href: string | null },
+  subjectPrefix = "",
+) {
+  const title = pick(ar, n.titleAr, n.titleEn);
+  const body = pick(ar, n.bodyAr, n.bodyEn);
+  const unsubscribe = unsubscribeUrl(appUrl(), userId);
+  const cta = n.href ? { href: `${appUrl()}${n.href}`, label: ar ? "افتح ذروة" : "Open Dhirwa" } : undefined;
+  return sendMailDetailed({
+    to,
+    subject: subjectPrefix + title,
+    html: emailLayout(title, body ? [body] : [], cta, ar ? "ar" : "en", unsubscribe),
+    unsubscribe,
+  });
+}
+
+/** Mails the exact invite to the signed-in admin only, so they can see what a student receives. Nothing is stored. */
+export async function sendInviteTest(courseId: string, copy: InviteCopy, userId: string): Promise<boolean> {
+  const [course, me] = await Promise.all([
+    db.course.findUnique({ where: { id: courseId }, select: { slug: true } }),
+    db.user.findUnique({ where: { id: userId }, select: { email: true, locale: true } }),
+  ]);
+  if (!course || !me?.email) return false;
+  const r = await deliver(me.email, me.locale === "ar", userId, { ...copy, href: `/courses/${course.slug}` }, "[Test] ");
+  return r.ok;
+}
+
+/** What has happened so far for this course: notices created, emails delivered, emails still waiting. */
+export async function inviteStatus(courseId: string) {
+  const where = { dedupeKey: { startsWith: prefix(courseId) } };
+  const [notified, emailed, waiting] = await Promise.all([
+    db.notification.count({ where }),
+    db.notification.count({ where: { ...where, emailedAt: { not: null } } }),
+    db.notification.count({ where: { ...where, emailedAt: null, user: { email: { not: null }, emailOptOutAt: null, deletedAt: null } } }),
+  ]);
+  return { notified, emailed, waiting };
+}
+
 /** `students`: unregistered students; `mailable`: those with an address who have not opted out of optional mail. */
 export async function inviteCounts(courseId: string) {
   const [students, mailable] = await Promise.all([
@@ -79,17 +121,7 @@ export async function inviteStudents(courseId: string, copy: InviteCopy, limit =
   let sent = 0;
   let failed = 0;
   for (const n of pending) {
-    const ar = n.user.locale === "ar";
-    const title = pick(ar, n.titleAr, n.titleEn);
-    const body = pick(ar, n.bodyAr, n.bodyEn) ?? null;
-    const unsubscribe = unsubscribeUrl(appUrl(), n.userId);
-    const cta = n.href ? { href: `${appUrl()}${n.href}`, label: ar ? "افتح ذروة" : "Open Dhirwa" } : undefined;
-    const r = await sendMailDetailed({
-      to: n.user.email!,
-      subject: title,
-      html: emailLayout(title, body ? [body] : [], cta, ar ? "ar" : "en", unsubscribe),
-      unsubscribe,
-    });
+    const r = await deliver(n.user.email!, n.user.locale === "ar", n.userId, n);
     if (r.ok) {
       await db.notification.update({ where: { id: n.id }, data: { emailedAt: new Date() } });
       sent += 1;

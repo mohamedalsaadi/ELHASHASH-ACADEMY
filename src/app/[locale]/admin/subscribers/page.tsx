@@ -7,11 +7,11 @@ import { db } from "@/lib/db";
 import { courseZone } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { findSubscribers, isCurrent, PAGE_SIZE, subscriberWhere, type SubscriberFilter } from "@/lib/subscribers";
-import { inviteCounts } from "@/lib/course-invite";
+import { inviteCounts, inviteStatus } from "@/lib/course-invite";
 import { AdminNav, panel, table } from "../AdminNav";
 import { field, label } from "../styles";
 import { SaveButton } from "../ui";
-import { sendCourseInvite } from "./invite-actions";
+import { sendCourseInvite, sendInviteTestCopy } from "./invite-actions";
 
 // One batch of at most 150 emails, sent one at a time with a short pause: this page needs the longer function limit.
 export const maxDuration = 300;
@@ -24,7 +24,7 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/admin/subscribers", "office", { key: "nav.subscribers", noindex: true });
 }
 
-type InviteParams = SubscriberFilter & { inviteCourse?: string; sent?: string; failed?: string; left?: string };
+type InviteParams = SubscriberFilter & { inviteCourse?: string; notices?: string; sent?: string; failed?: string; left?: string; test?: string };
 
 export default async function SubscribersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<InviteParams> }) {
   const { locale } = await params;
@@ -45,7 +45,7 @@ export default async function SubscribersPage({ params, searchParams }: { params
     db.user.count({ where: subscriberWhere(f, now) }),
   ]);
   const target = published.find((c) => c.id === f.inviteCourse);
-  const counts = target ? await inviteCounts(target.id) : null;
+  const [counts, status] = target ? await Promise.all([inviteCounts(target.id), inviteStatus(target.id)]) : [null, null];
   // Access ends on a day boundary in the course country's zone, so a Kuwaiti student's end date is a Kuwaiti day.
   const dateIn = (timeZone: string) => new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone });
   const query = (extra: Record<string, string>) => new URLSearchParams({ ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)), ...extra }).toString();
@@ -172,8 +172,9 @@ export default async function SubscribersPage({ params, searchParams }: { params
           <p className="text-small text-ink-muted">{t("inviteHint")}</p>
         </div>
         {f.sent !== undefined && (
-          <p className="font-semibold text-up">{t("inviteResult", { sent: f.sent, failed: f.failed ?? "0", left: f.left ?? "0" })}</p>
+          <p className="font-semibold text-up">{t("inviteResult", { notices: f.notices ?? "0", sent: f.sent, failed: f.failed ?? "0", left: f.left ?? "0" })}</p>
         )}
+        {f.test && <p className={`font-semibold ${f.test === "ok" ? "text-up" : "text-down"}`}>{t(f.test === "ok" ? "inviteTestOk" : "inviteTestFail")}</p>}
         {published.length === 0 ? (
           <p className="text-ink-muted">{t("inviteNone")}</p>
         ) : (
@@ -199,6 +200,7 @@ export default async function SubscribersPage({ params, searchParams }: { params
             <form action={sendCourseInvite} className="grid gap-3">
               <input type="hidden" name="courseId" value={target.id} />
               <p className="font-display font-semibold">{t("inviteRecipients", counts)}</p>
+              {status && <p className="text-small text-ink-muted">{t("inviteStatus", status)}</p>}
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className={label}>
                   {t("inviteTitleAr")}
@@ -221,7 +223,10 @@ export default async function SubscribersPage({ params, searchParams }: { params
                 <input type="checkbox" name="confirm" required className="size-4" />
                 {t("inviteConfirm")}
               </label>
-              <div>
+              <div className="flex flex-wrap gap-3">
+                <button formAction={sendInviteTestCopy} formNoValidate className={button}>
+                  {t("inviteTest")}
+                </button>
                 <SaveButton showSaved={false}>{t("inviteSend")}</SaveButton>
               </div>
             </form>

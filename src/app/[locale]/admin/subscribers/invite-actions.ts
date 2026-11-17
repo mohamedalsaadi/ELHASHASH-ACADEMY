@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { inviteStudents } from "@/lib/course-invite";
+import { inviteStudents, sendInviteTest } from "@/lib/course-invite";
 import { redirectLocal } from "@/lib/redirect-locale";
 import { requireAdmin } from "@/lib/staff";
 
@@ -28,6 +28,16 @@ export async function sendCourseInvite(form: FormData) {
     bodyEn: d.data.bodyEn,
   });
   await redirectLocal(
-    `/admin/subscribers?${new URLSearchParams({ inviteCourse: d.data.courseId, sent: String(r.sent), failed: String(r.failed), left: String(r.left) })}`,
+    `/admin/subscribers?${new URLSearchParams({ inviteCourse: d.data.courseId, notices: String(r.notices), sent: String(r.sent), failed: String(r.failed), left: String(r.left) })}`,
   );
+}
+
+/** Mails the invite to the admin's own address only; no student is touched and nothing is stored. */
+export async function sendInviteTestCopy(form: FormData) {
+  const me = await requireAdmin();
+  const d = invite.omit({ confirm: true }).safeParse(Object.fromEntries(form));
+  if (!d.success) throw new Error("invalid invite");
+  const { courseId, ...copy } = d.data;
+  const ok = await sendInviteTest(courseId, copy, me.id);
+  await redirectLocal(`/admin/subscribers?${new URLSearchParams({ inviteCourse: courseId, test: ok ? "ok" : "fail" })}`);
 }

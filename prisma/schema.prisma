@@ -790,6 +790,8 @@ model Notification {
   dedupeKey String?          @unique
   readAt    DateTime?
   emailedAt DateTime?
+  /// When the WhatsApp copy of a course invite was accepted by WhatsApp; null if it was never sent.
+  whatsappAt DateTime?
   createdAt DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

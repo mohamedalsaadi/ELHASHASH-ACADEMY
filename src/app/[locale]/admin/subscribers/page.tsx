@@ -8,6 +8,7 @@ import { courseZone } from "@/lib/format";
 import { requireAdmin } from "@/lib/staff";
 import { findSubscribers, isCurrent, PAGE_SIZE, subscriberWhere, type SubscriberFilter } from "@/lib/subscribers";
 import { inviteCounts, inviteStatus } from "@/lib/course-invite";
+import { inviteWhatsAppEnabled } from "@/lib/whatsapp";
 import { AdminNav, panel, table } from "../AdminNav";
 import { field, label } from "../styles";
 import { SaveButton } from "../ui";
@@ -24,7 +25,7 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/admin/subscribers", "office", { key: "nav.subscribers", noindex: true });
 }
 
-type InviteParams = SubscriberFilter & { inviteCourse?: string; notices?: string; sent?: string; failed?: string; left?: string; test?: string };
+type InviteParams = SubscriberFilter & { inviteCourse?: string; notices?: string; sent?: string; failed?: string; left?: string; test?: string; testWa?: string; waSent?: string; waFailed?: string; waError?: string };
 
 export default async function SubscribersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<InviteParams> }) {
   const { locale } = await params;
@@ -174,7 +175,16 @@ export default async function SubscribersPage({ params, searchParams }: { params
         {f.sent !== undefined && (
           <p className="font-semibold text-up">{t("inviteResult", { notices: f.notices ?? "0", sent: f.sent, failed: f.failed ?? "0", left: f.left ?? "0" })}</p>
         )}
+        {f.waSent !== undefined && (
+          <p className={`font-semibold ${f.waFailed && f.waFailed !== "0" ? "text-down" : "text-up"}`}>
+            {t("inviteWaResult", { waSent: f.waSent, waFailed: f.waFailed ?? "0" })}
+            {f.waError ? ` ${t("inviteWaCode", { code: f.waError })}` : ""}
+          </p>
+        )}
         {f.test && <p className={`font-semibold ${f.test === "ok" ? "text-up" : "text-down"}`}>{t(f.test === "ok" ? "inviteTestOk" : "inviteTestFail")}</p>}
+        {f.testWa && f.testWa !== "off" && (
+          <p className={`font-semibold ${f.testWa === "ok" ? "text-up" : "text-down"}`}>{t(f.testWa === "ok" ? "inviteTestWaOk" : "inviteTestWaFail")}</p>
+        )}
         {published.length === 0 ? (
           <p className="text-ink-muted">{t("inviteNone")}</p>
         ) : (
@@ -219,6 +229,17 @@ export default async function SubscribersPage({ params, searchParams }: { params
                   <textarea name="bodyEn" required maxLength={400} rows={2} dir="ltr" defaultValue={t("inviteDefaultBodyEn")} className={`${field} py-2`} />
                 </label>
               </div>
+              {inviteWhatsAppEnabled() ? (
+                <div className="grid gap-1">
+                  <label className={check}>
+                    <input type="checkbox" name="whatsapp" className="size-4" />
+                    {t("inviteWa")}
+                  </label>
+                  <p className="text-label text-ink-muted">{t("inviteWaNote")}</p>
+                </div>
+              ) : (
+                <p className="text-label text-ink-muted">{t("inviteWaOff")}</p>
+              )}
               <label className={check}>
                 <input type="checkbox" name="confirm" required className="size-4" />
                 {t("inviteConfirm")}

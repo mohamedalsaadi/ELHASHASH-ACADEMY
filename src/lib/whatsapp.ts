@@ -71,3 +71,38 @@ async function reportFailure(kind: "code" | "guardian", res: Response | null) {
   }
   await logWarn("whatsapp.send", `${kind} message not sent: ${detail}`, { level: "ERROR", sample: 300_000 });
 }
+
+/** The course-invite template must be category "Marketing", approved in Arabic and English. Off until its name is set. */
+const INVITE_TEMPLATE = () => process.env.WHATSAPP_INVITE_TEMPLATE || "";
+export const inviteWhatsAppEnabled = () => whatsappEnabled() && Boolean(INVITE_TEMPLATE());
+
+/**
+ * One course invite. Template body {{1}} is the course title; the URL button is dynamic with {{1}} = the course slug and its
+ * base https://<site>/<lang>/courses/ (create the Arabic template with /ar/ and the English one with /en/).
+ */
+export async function sendWhatsAppInvite(phone: string, courseTitle: string, slug: string, locale: "ar" | "en"): Promise<{ ok: boolean; detail: string }> {
+  if (!inviteWhatsAppEnabled()) return { ok: false, detail: "WHATSAPP_INVITE_TEMPLATE is not set" };
+  const res = await fetch(`${process.env.WHATSAPP_API_BASE || "https://graph.facebook.com"}/${VERSION()}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
+    signal: AbortSignal.timeout(10_000),
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: phone.replace(/\D/g, ""),
+      type: "template",
+      template: {
+        name: INVITE_TEMPLATE(),
+        language: { code: locale },
+        components: [
+          { type: "body", parameters: [{ type: "text", text: courseTitle.replace(/\s+/g, " ").trim() }] },
+          { type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: slug }] },
+        ],
+      },
+    }),
+  }).catch((e: unknown) => String(e));
+  if (typeof res === "string") return { ok: false, detail: res };
+  if (res.ok) return { ok: true, detail: "sent" };
+  const detail = `${res.status} ${(await res.text().catch(() => "")).slice(0, 300)}`;
+  console.error("[whatsapp] invite refused", detail);
+  return { ok: false, detail };
+}

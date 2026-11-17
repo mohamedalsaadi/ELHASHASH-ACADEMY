@@ -65,3 +65,17 @@ Arabic and English:
 
 Until WhatsApp keys exist, the signup form's optional guardian email is used instead, and approving by email only
 records the consent (no parent account is created, because an email does not prove the phone number).
+
+## Third template: course invite (marketing)
+
+The invite panel on `/admin/subscribers` can also message students on WhatsApp. WhatsApp only allows this with an approved
+**Marketing** template, and Meta bills each message. Create it in Arabic and English:
+
+- Name: set it in Vercel as `WHATSAPP_INVITE_TEMPLATE` (nothing is sent while it is empty).
+- Category: **Marketing**.
+- Body: `{{1}}` is the course title, e.g. "{{1}} is open now on Dhirwa. Register from your account and start your lessons."
+- Button: URL, dynamic, base `https://dhirwa.ae/ar/courses/` (English template: `/en/`), suffix `{{1}}` (the course slug).
+
+Only numbers that already received a WhatsApp code or link (`phoneVerifiedAt`) get it, never an account under 13, and never
+someone who opted out. The login codes use the same WhatsApp number: a burst of unwanted marketing lowers its quality rating
+and can get it restricted, which would stop sign-in. Send in small batches to students who expect it.

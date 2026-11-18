@@ -132,7 +132,7 @@ export function renderCourseEmail(data: CourseEmailData, locale: "ar" | "en", op
           ? `${button(buy(rent.id), `${t("rent")} · ${money(effectivePrice(rent, now), rent.currency)}`, false)}`
           : `<span style="color:${C.muted}">${esc(t("liveSubscribers"))}</span>`;
       rows.push(
-        `<tr><td style="padding:8px 0;border-top:1px solid ${C.hair}">${u.isFree ? `<a href="${esc(`${courseUrl}/lessons/${l.id}`)}" style="color:${C.ink};text-decoration:none;font-weight:600">${name}</a>` : `<span style="font-weight:600">${name}</span>`}<br><span style="color:${C.muted};font-size:12px">${sub}</span></td><td style="padding:8px 0 8px 12px;border-top:1px solid ${C.hair};text-align:${isAr ? "left" : "right"};white-space:nowrap">${action}</td></tr>`,
+        `<tr><td style="padding:8px 0;border-top:1px solid ${C.hair}">${u.isFree ? `<a href="${esc(`${courseUrl}/lessons/${l.id}`)}" style="color:${C.ink};text-decoration:none;font-weight:600">${name}</a>` : `<span style="font-weight:600">${name}</span>`}<br><span style="color:${C.muted};font-size:12px">${sub}</span></td><td style="padding:8px 0;padding-${isAr ? "right" : "left"}:12px;border-top:1px solid ${C.hair};text-align:${isAr ? "left" : "right"};white-space:nowrap">${action}</td></tr>`,
       );
     }
     const hidden = u.lessons.length - rows.length;
@@ -150,7 +150,7 @@ export function renderCourseEmail(data: CourseEmailData, locale: "ar" | "en", op
   out.push(h2(t("aboutTeacher")));
   out.push(
     card(
-      `<table role="presentation" cellpadding="0" cellspacing="0"><tr>${course.instructor.photoUrl ? `<td style="padding:0 0 0 14px"><img src="${esc(`${appUrl()}/api/avatars/${course.instructor.id}`)}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;border-radius:50%;object-fit:cover"></td>` : ""}<td><a href="${esc(`${base}/teachers/${course.instructor.id}`)}" style="color:${C.ink};font-weight:700;font-size:17px;text-decoration:none">${esc(course.instructor.name)}</a></td></tr></table>`,
+      `<table role="presentation" cellpadding="0" cellspacing="0"><tr>${course.instructor.photoUrl ? `<td style="padding:0;padding-${isAr ? "left" : "right"}:14px"><img src="${esc(`${appUrl()}/api/avatars/${course.instructor.id}`)}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;border-radius:50%;object-fit:cover"></td>` : ""}<td><a href="${esc(`${base}/teachers/${course.instructor.id}`)}" style="color:${C.ink};font-weight:700;font-size:17px;text-decoration:none">${esc(course.instructor.name)}</a></td></tr></table>`,
     ),
   );
 
@@ -265,5 +265,9 @@ export function renderCourseEmail(data: CourseEmailData, locale: "ar" | "en", op
   // The one link optional mail must carry. The site header and footer banners are deliberately left out.
   out.push(`<p style="margin:28px 0 0;text-align:center;font-size:12px"><a href="${esc(opts.unsubscribe)}" style="color:${C.muted}">${isAr ? "إيقاف الرسائل الاختيارية" : "Turn off optional emails"}</a></p>`);
 
-  return `<!doctype html><html dir="${isAr ? "rtl" : "ltr"}" lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:${C.paper};font-family:Tahoma,Arial,sans-serif;color:${C.ink}"><div style="max-width:640px;margin:0 auto;padding:20px 16px">${out.join("")}</div></body></html>`;
+  // Gmail and Outlook drop attributes on <html> and <body>, so the direction is also set on the wrapper that holds every block,
+  // which every block and table inherits. Arabic reads right to left and English left to right, from the first line.
+  const dir = isAr ? "rtl" : "ltr";
+  const start = isAr ? "right" : "left";
+  return `<!doctype html><html dir="${dir}" lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body dir="${dir}" style="margin:0;background:${C.paper};font-family:Tahoma,Arial,sans-serif;color:${C.ink};direction:${dir};text-align:${start}"><div dir="${dir}" lang="${locale}" style="max-width:640px;margin:0 auto;padding:20px 16px;direction:${dir};text-align:${start}">${out.join("")}</div></body></html>`;
 }

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { CountryGrade, type GradeGroup } from "@/components/CountryGrade";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
 import { field, label } from "@/components/ui/form";
@@ -19,10 +20,9 @@ function Go({ children, pending, step }: { children: React.ReactNode; pending: s
   );
 }
 
-type Group = { label: string; grades: { id: string; name: string }[] };
 
 /** Phone, then the WhatsApp code, then (for a new number only) a short profile. One page, no password. */
-export function OtpFlow({ groups, locale, next, parent }: { groups: Group[]; locale: string; next: string; parent?: boolean }) {
+export function OtpFlow({ groups, locale, next, parent }: { groups: GradeGroup[]; locale: string; next: string; parent?: boolean }) {
   const t = useTranslations("otp");
   const ts = useTranslations("signup");
   const tc = useTranslations("common");
@@ -101,23 +101,7 @@ export function OtpFlow({ groups, locale, next, parent }: { groups: Group[]; loc
         </label>
         {type === "STUDENT" ? (
           <>
-            <label className={label}>
-              <Req>{ts("grade")}</Req>
-              <select name="gradeId" required defaultValue={String(v?.gradeId ?? "")} className={field}>
-                <option value="" disabled>
-                  {ts("gradePick")}
-                </option>
-                {groups.map((g) => (
-                  <optgroup key={g.label} label={g.label}>
-                    {g.grades.map((gr) => (
-                      <option key={gr.id} value={gr.id}>
-                        {gr.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
+            <CountryGrade groups={groups} defaultGradeId={String(v?.gradeId ?? "")} invalid={err === "invalid_grade"} describedBy="otp-error" />
             <label className={label}>
               <Req>{ts("dateOfBirth")}</Req>
               <input type="date" name="dateOfBirth" required max={new Date().toISOString().slice(0, 10)} value={dob} onChange={(e) => setDob(e.target.value)} dir="ltr" className={field} />

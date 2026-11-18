@@ -7,6 +7,7 @@ import { logEvent } from "@/lib/analytics";
 import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { maskContacts } from "@/lib/contact-guard";
+import { gradeInCountry } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { Prisma } from "@/generated/prisma/client";
@@ -38,6 +39,7 @@ export type SignUpState = {
     email: string;
     phone: string;
     gradeId: string;
+    countryId: string;
     guardianName: string;
     guardianPhone: string;
     guardianEmail: string;
@@ -54,6 +56,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     email: String(form.get("email") ?? ""),
     phone: String(form.get("phone") ?? ""),
     gradeId: String(form.get("gradeId") ?? ""),
+    countryId: String(form.get("countryId") ?? ""),
     guardianName: String(form.get("guardianName") ?? ""),
     guardianPhone: String(form.get("guardianPhone") ?? ""),
     guardianEmail: String(form.get("guardianEmail") ?? ""),
@@ -100,7 +103,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
   if (name.trim().length < 2) return { error: "invalid_name", values };
   // The guardian must be someone else, and the link must have a way to reach them.
   if (minor && (guardianPhone === phone || (!guardianViaWhatsApp() && !guardianEmail))) return { error: "guardian_required", values };
-  if (!isParent && !(await db.grade.findUnique({ where: { id: gradeId! } }))) return { error: "invalid_grade", values };
+  if (!isParent && !(await gradeInCountry(gradeId!, parsed.data.countryId!))) return { error: "invalid_grade", values };
 
   // The guardian token is generated before the transaction so the hash and the email share one value.
   const guardianToken = minor ? newToken() : null;

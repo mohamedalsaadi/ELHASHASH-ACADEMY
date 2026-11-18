@@ -25,7 +25,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
   await requireAdmin();
   const t = await getTranslations("admin");
 
-  const [promotions, coupons, referrals] = await Promise.all([
+  const [promotions, coupons, referrals, courses] = await Promise.all([
     db.promotion.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
     db.coupon.findMany({
       orderBy: { createdAt: "desc" },
@@ -47,6 +47,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
         rewardCoupon: { select: { code: true } },
       },
     }),
+    db.course.findMany({ where: { published: true }, orderBy: { titleEn: "asc" }, select: { id: true, titleAr: true, titleEn: true } }),
   ]);
   const date = new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "UTC" });
 
@@ -158,6 +159,30 @@ export default async function MarketingPage({ params }: { params: Promise<{ loca
           <input name="perUser" type="number" min="1" max="100" step="1" defaultValue={c?.perUser ?? 1} dir="ltr" className={`${field} num`} />
         </label>
       </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className={label}>
+          {t("couponFunding")}
+          <select name="funding" defaultValue={c?.funding ?? "STANDARD"} className={field}>
+            {(["STANDARD", "PLATFORM", "TEACHER"] as const).map((x) => (
+              <option key={x} value={x}>
+                {t(`couponFunding${x}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={label}>
+          {t("couponCourseScope")}
+          <select name="courseId" defaultValue={c?.courseId ?? ""} className={field}>
+            <option value="">{t("couponAllCourses")}</option>
+            {courses.map((x) => (
+              <option key={x.id} value={x.id}>
+                {locale === "ar" ? x.titleAr : x.titleEn}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="text-label text-ink-muted">{t("couponFundingHint")}</p>
       <label className={check}>
         <input type="checkbox" name="active" defaultChecked={c?.active ?? true} className="size-4" />
         {t("couponActive")}

@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { Coupon, ReferralCode } from "@/generated/prisma/client";
+import type { Coupon, CouponFunding, ReferralCode } from "@/generated/prisma/client";
 import { CODE_RE, normalizeCode, type CouponProblem } from "./coupons";
 import { db } from "./db";
 import { resolveCoupon } from "./coupon-resolve";
@@ -10,7 +10,7 @@ export type DiscountProblem = CouponProblem | "referral_self" | "referral_used" 
 export type ReferralResolution = { ok: true; kind: "referral"; code: ReferralCode; referrerId: string } | { ok: false; reason: DiscountProblem };
 
 export type DiscountResolution =
-  | { ok: true; kind: "coupon"; coupon: Coupon; funding: "STANDARD" | "PLATFORM" }
+  | { ok: true; kind: "coupon"; coupon: Coupon; funding: CouponFunding }
   | Extract<ReferralResolution, { ok: true }>
   | { ok: false; reason: DiscountProblem };
 

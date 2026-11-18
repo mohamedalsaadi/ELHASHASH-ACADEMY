@@ -94,8 +94,9 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
           const vatShares = allocate(order.vat, order.items.map((i) => i.price - i.platformDiscount));
           await trx.ledgerEntry.createMany({
             data: order.items.map((i, index) => {
-              // price is pre-platform-discount; splitLine caps the funded part at the platform share.
-              const split = splitLine(i.price, cfg, i.platformDiscount);
+              // price is pre-platform-discount and already net of a shared discount. A teacher-funded discount is added back
+              // so the platform share is taken before it; splitLine then charges it to the teacher alone.
+              const split = splitLine(i.price + i.teacherDiscount, cfg, i.platformDiscount, i.teacherDiscount);
               // The order-level VAT is the authority; allocate it so the ledger sums to the cent.
               const vat = vatShares[index] ?? 0;
               return {

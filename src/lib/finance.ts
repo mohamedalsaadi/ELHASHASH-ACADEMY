@@ -62,16 +62,21 @@ export type LineSplit = {
 };
 
 /**
- * `net` is the line price before a platform-funded discount. Teacher pay is calculated from it, the
- * platform funds the discount out of its own share, and VAT is charged on what the buyer actually pays.
+ * `net` is the line price before a platform-funded or teacher-funded discount. The platform share is taken from it, so:
+ * - a platform discount comes out of the platform's own share (teacher pay is untouched);
+ * - a teacher discount comes out of the teacher's share (the platform share is untouched);
+ * - a shared discount is already off `net` before this is called, so both sides lose their share of it.
+ * VAT is charged on what the buyer actually pays.
  */
-export function splitLine(net: number, cfg: FinanceConfig, platformDiscount = 0): LineSplit {
+export function splitLine(net: number, cfg: FinanceConfig, platformDiscount = 0, teacherDiscount = 0): LineSplit {
   const platformShare = Math.round((net * cfg.platformShareBp) / 10_000);
   const discount = Math.min(Math.max(0, platformDiscount), platformShare);
-  const paidNet = net - discount;
+  // The teacher cannot be charged more than their whole share.
+  const teacherBears = Math.min(Math.max(0, teacherDiscount), net - platformShare);
+  const paidNet = net - discount - teacherBears;
   const vatRateBp = cfg.vatEnabled ? cfg.vatRateBp : 0;
   const vat = Math.round((paidNet * vatRateBp) / 10_000);
-  const instructorNet = net - platformShare;
+  const instructorNet = net - platformShare - teacherBears;
   const corporateTaxBp = cfg.corporateTaxEnabled ? cfg.corporateTaxBp : 0;
   const corporateTax = Math.round((instructorNet * corporateTaxBp) / 10_000);
   return {

@@ -24,6 +24,21 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-19: who bears a discount code (platform, shared, or teacher)
+
+- **Rule (owner):** every discount that existed before this is shared by teacher and platform, and stays so. A code now says who bears it: `PLATFORM` (platform only), `STANDARD` (teacher and platform, shared at the platform-share rate, the old default) or `TEACHER` (teacher only). A code a teacher generates is `TEACHER`; older teacher codes stay shared, and editing a teacher code never changes its funding.
+- **Money:** `splitLine` takes a `teacherDiscount`: the platform share is taken from the price before it, so the teacher bears all of it (capped at the teacher's share, so pay never goes below zero). `OrderItem.teacherDiscount` stores the part of the line's discount that is the teacher's alone; `payments.ts` adds it back before splitting. Bundles and package sale prices are unchanged (shared).
+- **Where:** `applyFundedCoupon` (`pricing-engine.ts`) is now the one place both the checkout page and `/api/checkout` apply a code; a teacher code is capped at `10000 - platformShareBp`; a course-limited platform code discounts only that course. Migration `20261130120000_coupon_teacher_funding` (enum value and column, additive). Admin: coupon form has the funding select and an optional course; platform-only needs a percent, teacher-only needs a course.
+- **Open:** admin referral reward coupons stay platform-funded. Not pushed; the migration runs with the build after the owner approves.
+
+## 2026-11-19: students moved to the UAE, country required at sign-up, invite email direction
+
+- **Why:** students skipped the country or picked a grade under the wrong one (the grade list was one long select grouped by country). A student's country is the country of their grade; there is no separate field.
+- **Migration** `20261130110000_students_to_uae`: every STUDENT with a grade in another country gets the UAE MOE general grade of the same level. No grade, or no active UAE grade at that level, means untouched. Runs with the production build after the owner approves the push; not run locally.
+- **Sign-up, WhatsApp sign-up and Google "complete profile"** now use `src/components/CountryGrade.tsx`: country first (no default), then only that country's grades. The three server actions check the pair with `gradeInCountry` (`src/lib/catalog.ts`); the schemas require `countryId` for a student. The grade picker in the account page is unchanged.
+- **Invite email (`course-email.ts`) and `emailLayout` (`mail.ts`):** direction was only on `<html>`, which Gmail and Outlook drop, so Arabic mail opened left to right. `dir`, `direction` and `text-align` are now on `<body>` and the wrapper div, and the gaps beside the lesson action and teacher photo follow the direction.
+- **Students with no grade** get UAE grade 12 in the same migration (owner decision; "13" was a typo).
+
 ## 2026-11-17: invite unregistered students to a course (web notice and email)
 
 - `/admin/subscribers` has a panel: pick a published course, see how many students have never registered for it (no entitlement at all; a lapsed buyer is not counted) and how many can get email, edit the four short texts, tick the confirmation and send. Each send does at most 150 students: an in-app notice (kind `NEW_COURSE`, so it is optional mail with an unsubscribe link), then the email, one at a time with a 0.6 s pause. Press Send again until "still to reach" is 0; a student gets one notice per course (`dedupeKey invite:<courseId>:<userId>`) and a mailed notice is never mailed again. Failed emails are retried on the next press.

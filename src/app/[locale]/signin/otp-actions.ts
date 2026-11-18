@@ -12,6 +12,7 @@ import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { clientIp } from "@/lib/client-ip";
 import { maskContacts } from "@/lib/contact-guard";
+import { gradeInCountry } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { checkOtp, issueOtp, readProof, signProof } from "@/lib/otp";
@@ -125,6 +126,7 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
     name: String(form.get("name") ?? ""),
     email: String(form.get("email") ?? ""),
     gradeId: String(form.get("gradeId") ?? ""),
+    countryId: String(form.get("countryId") ?? ""),
     dateOfBirth: String(form.get("dateOfBirth") ?? ""),
     guardianName: String(form.get("guardianName") ?? ""),
     guardianPhone: String(form.get("guardianPhone") ?? ""),
@@ -143,7 +145,7 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
   const parent = d.type === "PARENT";
   const name = maskContacts(d.name).text;
   if (name.trim().length < 2) return { ...here, error: "invalid_name" };
-  if (!parent && !(await db.grade.findUnique({ where: { id: d.gradeId! }, select: { id: true } }))) return { ...here, error: "invalid_grade" };
+  if (!parent && !(await gradeInCountry(d.gradeId!, d.countryId!))) return { ...here, error: "invalid_grade" };
 
   const dob = !parent && d.dateOfBirth ? parseBirthDate(d.dateOfBirth) : null;
   const minor = dob !== null && ageOn(dob) < MINOR_AGE;

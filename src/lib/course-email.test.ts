@@ -69,6 +69,9 @@ describe("renderCourseEmail", () => {
   it("reads right to left in Arabic and links to the Arabic pages", () => {
     const arHtml = renderCourseEmail(data(), "ar", { unsubscribe: "https://x/u" });
     expect(arHtml).toContain('dir="rtl"');
+    // Mail clients drop attributes on <html> and <body>, so the wrapper holding every block carries the direction too.
+    expect(arHtml).toContain('<div dir="rtl" lang="ar" style="max-width:640px;margin:0 auto;padding:20px 16px;direction:rtl;text-align:right">');
+    expect(html).toContain('<div dir="ltr" lang="en" style="max-width:640px;margin:0 auto;padding:20px 16px;direction:ltr;text-align:left">');
     expect(arHtml).toContain("هيكل الرياضيات");
     expect(arHtml).toContain("https://dhirwa.ae/ar/checkout?sku=m1");
   });

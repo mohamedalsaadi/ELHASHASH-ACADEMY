@@ -27,6 +27,7 @@ describe("password policy", () => {
     name: "طالب",
     phone: "01012345678",
     gradeId: "g1",
+    countryId: "c1",
     email: "s@example.com",
     dateOfBirth: "2000-01-01",
     acceptTerms: true,
@@ -47,6 +48,7 @@ describe("signUpSchema", () => {
     phone: "01012345678",
     password: "password1234",
     gradeId: "g1",
+    countryId: "c1",
     dateOfBirth: "2000-01-01",
     acceptTerms: true,
   };
@@ -99,5 +101,14 @@ describe("signUpSchema", () => {
 
   it("lets a student of 13 or more sign up without a guardian", () => {
     expect(signUpSchema.safeParse({ ...base, email: "s@example.com", dateOfBirth: "2012-01-01" }).success).toBe(true);
+  });
+});
+
+describe("country is required for a student", () => {
+  it("refuses a student who skipped the country, and lets a parent sign up without one", () => {
+    const base = { email: "a@example.com", phone: "0501234567", password: "longenough1", name: "Mona Ali", dateOfBirth: "1990-01-01", acceptTerms: true };
+    expect(signUpSchema.safeParse({ ...base, gradeId: "g1" }).success).toBe(false);
+    expect(signUpSchema.safeParse({ ...base, gradeId: "g1", countryId: "c1" }).success).toBe(true);
+    expect(signUpSchema.safeParse({ ...base, type: "PARENT" }).success).toBe(true);
   });
 });

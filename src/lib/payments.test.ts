@@ -41,6 +41,7 @@ const line = {
   id: "item-1",
   price: 30_000,
   platformDiscount: 0,
+  teacherDiscount: 0,
   sku: {
     courseId: "course-1",
     lessonId: null,
@@ -144,6 +145,22 @@ describe("applyPaymentOutcome", () => {
       platformShareBp: 3_000,
       vatRateBp: 0,
     });
+  });
+
+  it("charges a teacher-funded discount to the teacher: the platform keeps 30% of the list price", async () => {
+    // List 30 000, a teacher-funded 6 000 off: the item is stored at 24 000 and the buyer pays 24 000.
+    const saved = { price: line.price, teacherDiscount: line.teacherDiscount };
+    order.total = 24_000;
+    line.price = 24_000;
+    line.teacherDiscount = 6_000;
+    const fake = fakeDatabase();
+    try {
+      expect(await applyPaymentOutcome("order-1", "ziina:pi_1:completed", { ...paid, amount: 24_000 }, {})).toBe(true);
+    } finally {
+      Object.assign(line, saved);
+      order.total = 30_000;
+    }
+    expect(fake.ledger[0]).toMatchObject({ net: 24_000, platformFee: 9_000, instructorNet: 15_000 });
   });
 
   it("drops a replayed event and grants nothing a second time", async () => {

@@ -412,6 +412,8 @@ const couponInput = z.object({
   endsAt: z.string().default(""),
   maxRedemptions: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().int().min(1).max(100_000).nullable()),
   perUser: z.coerce.number().int().min(1).max(100).default(1),
+  funding: z.enum(["STANDARD", "PLATFORM", "TEACHER"]).default("STANDARD"),
+  courseId: z.preprocess((v) => (v === "" || v == null ? null : v), z.string().nullable()),
   active: checkbox,
 });
 
@@ -420,6 +422,9 @@ export async function saveCoupon(form: FormData) {
   await requireAdmin();
   const d = couponInput.parse(Object.fromEntries(form));
   if ((d.percentOff === null) === (d.amountOff === null)) throw new Error("coupon_needs_one_discount");
+  // A platform-funded code is a percentage of the platform share; a teacher-funded one is one teacher's course.
+  if (d.funding === "PLATFORM" && d.percentOff === null) throw new Error("coupon_platform_needs_percent");
+  if (d.funding === "TEACHER" && !d.courseId) throw new Error("coupon_teacher_needs_course");
   const data = {
     code: d.code,
     percentOff: d.percentOff,
@@ -429,6 +434,8 @@ export async function saveCoupon(form: FormData) {
     endsAt: cairoDay(d.endsAt, "end"),
     maxRedemptions: d.maxRedemptions,
     perUser: d.perUser,
+    funding: d.funding,
+    courseId: d.courseId,
     active: d.active,
   };
   if (d.id) await db.coupon.update({ where: { id: d.id }, data });

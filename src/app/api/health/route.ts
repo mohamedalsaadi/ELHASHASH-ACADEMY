@@ -20,6 +20,7 @@ const REQUIRED_COLUMNS: [string, string][] = [
   ["Order", "beneficiaryDeclaredAt"],
   ["Order", "platformDiscount"],
   ["OrderItem", "platformDiscount"],
+  ["OrderItem", "teacherDiscount"],
   ["LedgerEntry", "platformDiscount"],
   ["PlatformSetting", "referralWelcomePercentOff"],
   ["Order", "taxCountryCode"],

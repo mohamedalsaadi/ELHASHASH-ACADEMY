@@ -48,8 +48,9 @@ export const signUpSchema = z
     phone: phoneSchema,
     password: passwordSchema,
     name: z.string().trim().min(2).max(80),
-    /// Required for a student, absent for a parent.
+    /// Required for a student, absent for a parent. The country is chosen first; the grade must belong to it.
     gradeId: z.string().optional(),
+    countryId: z.string().optional(),
     /// Required for a student. The action decides whether the account is a minor.
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate").optional(),
     /// Required for a minor: the consent link goes to this WhatsApp number.
@@ -62,7 +63,7 @@ export const signUpSchema = z
     /// The terms and privacy policy, ticked by the person creating the account. Kept as a timestamp on the user.
     acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
   })
-  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" })
+  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId && d.countryId), { path: ["gradeId"], message: "invalid_grade" })
   .superRefine((d, ctx) => {
     if (d.type === "PARENT") return;
     studentRules(d, ctx);
@@ -76,6 +77,7 @@ export const completeProfileSchema = z
   .object({
     phone: phoneSchema,
     gradeId: z.string().min(1),
+    countryId: z.string().min(1),
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate"),
     guardianName: z.string().trim().min(2).max(80).optional(),
     guardianPhone: blankToUndefined(phoneSchema.optional()),
@@ -93,6 +95,7 @@ export const otpFinishSchema = z
     /// Optional here: the phone is the sign-in. An address is kept for receipts and reminders.
     email: z.union([z.literal(""), z.email().trim().toLowerCase()]).optional(),
     gradeId: z.string().optional(),
+    countryId: z.string().optional(),
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate").optional(),
     guardianPhone: blankToUndefined(phoneSchema.optional()),
     guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
@@ -100,7 +103,7 @@ export const otpFinishSchema = z
     guardianConsent: z.coerce.boolean().default(false),
     acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
   })
-  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId), { path: ["gradeId"], message: "invalid_grade" })
+  .refine((d) => d.type === "PARENT" || Boolean(d.gradeId && d.countryId), { path: ["gradeId"], message: "invalid_grade" })
   .superRefine((d, ctx) => {
     if (d.type === "PARENT") return;
     studentRules(d, ctx);

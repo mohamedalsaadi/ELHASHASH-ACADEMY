@@ -29,8 +29,8 @@ export function emailLayout(
 ): string {
   const ar = locale === "ar";
   const dir = ar ? "rtl" : "ltr";
-  return `<!doctype html><html dir="${dir}" lang="${locale}"><body style="margin:0;background:#F6F3EC;font-family:Tahoma,Arial,sans-serif;color:#13202F">
-  <div style="max-width:560px;margin:0 auto;padding:32px 20px">
+  return `<!doctype html><html dir="${dir}" lang="${locale}"><body dir="${dir}" style="margin:0;background:#F6F3EC;font-family:Tahoma,Arial,sans-serif;color:#13202F;direction:${dir};text-align:${ar ? "right" : "left"}">
+  <div dir="${dir}" style="max-width:560px;margin:0 auto;padding:32px 20px;direction:${dir};text-align:${ar ? "right" : "left"}">
     <div style="background:#0F1B2D;color:#EEF0EA;border-radius:16px 16px 0 0;padding:20px 24px;font-size:20px;font-weight:700">${ar ? "ذروة" : "Dhirwa"}<span style="color:#E8B04B"> •</span></div>
     <div style="background:#FFFFFF;border:1px solid #E4DFD3;border-top:0;border-radius:0 0 16px 16px;padding:24px">
       <h1 style="margin:0 0 12px;font-size:20px">${esc(title)}</h1>

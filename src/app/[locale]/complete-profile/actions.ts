@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
+import { gradeInCountry } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { completeProfileSchema } from "@/lib/schemas/auth";
@@ -40,7 +41,7 @@ export async function completeProfile(form: FormData) {
   }
   const d = parsed.data;
   const dob = parseBirthDate(d.dateOfBirth)!;
-  if (!(await db.grade.findUnique({ where: { id: d.gradeId }, select: { id: true } }))) {
+  if (!(await gradeInCountry(d.gradeId, d.countryId))) {
     return redirect(`/${locale}/complete-profile?error=invalid_grade`);
   }
 

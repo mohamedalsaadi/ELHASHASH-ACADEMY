@@ -101,6 +101,11 @@ export function groupByStage<T extends { level: number }>(grades: T[], stages: r
 
 /** What a course card needs: the whole-course packages (the card picks the cheapest effective price), a free unit, the grade. */
 /** Active grades grouped by country, for every grade select (signup, account, the student home). */
+/** True when the grade exists and belongs to the country the person chose. */
+export async function gradeInCountry(gradeId: string, countryId: string) {
+  return Boolean(await db.grade.findFirst({ where: { id: gradeId, countryId }, select: { id: true } }));
+}
+
 export async function gradeGroups(locale: string) {
   const ar = locale === "ar";
   const countries = await db.country.findMany({

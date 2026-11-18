@@ -51,12 +51,12 @@ export async function saveTeacherCoupon(_prev: CouponFormState, form: FormData):
     maxRedemptions: d.maxRedemptions,
     perUser: d.perUser,
     active: d.active === "on",
-    funding: "STANDARD" as const,
     instructorId: me.id,
     courseId: d.courseId,
   };
+  // A code a teacher makes is the teacher's own cost. Editing an older code leaves it as it was settled (shared).
   if (d.id) await db.coupon.update({ where: { id: d.id }, data });
-  else await db.coupon.create({ data });
+  else await db.coupon.create({ data: { ...data, funding: "TEACHER" } });
   revalidatePath("/[locale]/teacher/coupons", "page");
   revalidatePath("/[locale]/admin/marketing", "page");
   return "ok";

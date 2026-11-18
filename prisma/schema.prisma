@@ -476,10 +476,13 @@ model Promotion {
 
 /// A checkout code. Redemptions are counted from paid orders, so no separate redemption table is needed.
 enum CouponFunding {
-  /// The discount reduces the amount teacher pay is calculated on, as before.
+  /// Shared: the discount comes off the price and the platform share is taken from what is left, so the teacher and the
+  /// platform each lose their share of it (70/30 at the default rate). Every discount that existed before this was shared.
   STANDARD
   /// The platform funds it: teacher pay is calculated before the discount.
   PLATFORM
+  /// The teacher funds it: the platform share is taken from the price before the discount, so the teacher bears all of it.
+  TEACHER
 }
 
 enum ReferralStatus {
@@ -502,11 +505,11 @@ model Coupon {
   maxRedemptions Int?
   perUser        Int       @default(1)
   active         Boolean   @default(true)
-  /// PLATFORM means the platform funds the discount and teacher pay is calculated before it.
+  /// Who bears the discount: STANDARD (shared by teacher and platform), PLATFORM, or TEACHER.
   funding        CouponFunding @default(STANDARD)
   /// Set on a reward coupon: only this user may redeem the code.
   ownerId        String?
-  /// A teacher's own code: set with courseId, funded by the teacher (STANDARD). Null on the admin's global codes.
+  /// A teacher's own code: set with courseId, funded by the teacher (TEACHER from 2026-11-19; older codes stay shared). Null on the admin's global codes.
   instructorId   String?
   /// When set, the code discounts only lines of this course.
   courseId       String?
@@ -623,6 +626,8 @@ model OrderItem {
   price   Int
   /// The platform-funded part of this line; the buyer pays price - platformDiscount.
   platformDiscount Int @default(0)
+  /// The part of the discount already taken off `price` that the teacher alone bears (a TEACHER-funded code). Zero on shared discounts.
+  teacherDiscount Int @default(0)
   /// The local list price shown to the buyer, copied for audit and the receipt reference. Null on AED sales.
   displayPrice    Int?
   displayCurrency Currency?

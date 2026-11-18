@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
+import { CountryGrade } from "@/components/CountryGrade";
 import { field } from "@/components/ui/form";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
@@ -57,23 +58,7 @@ export default async function CompleteProfilePage({
           <PhoneField />
           <span className="text-label">{t("phoneHint")}</span>
         </div>
-        <label className="grid gap-2 text-label text-ink-muted">
-          <Req>{t("grade")}</Req>
-          <select name="gradeId" required defaultValue="" className={field}>
-            <option value="" disabled>
-              {t("gradePick")}
-            </option>
-            {groups.map((g) => (
-              <optgroup key={g.label} label={g.label}>
-                {g.grades.map((grade) => (
-                  <option key={grade.id} value={grade.id}>
-                    {grade.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
+        <CountryGrade groups={groups} invalid={error === "invalid_grade"} />
         <label className="grid gap-2 text-label text-ink-muted">
           <Req>{t("dateOfBirth")}</Req>
           <input type="date" name="dateOfBirth" required max={new Date().toISOString().slice(0, 10)} dir="ltr" className={field} />

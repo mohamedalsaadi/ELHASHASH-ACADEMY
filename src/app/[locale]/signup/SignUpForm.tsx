@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { field, label } from "@/components/ui/form";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { CountryGrade, type GradeGroup } from "@/components/CountryGrade";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
@@ -26,7 +27,7 @@ function Submit({ disabled }: { disabled?: boolean }) {
   );
 }
 
-export function SignUpForm({ groups, locale, next, parent }: { groups: { label: string; grades: { id: string; name: string }[] }[]; locale: string; next: string; parent?: boolean }) {
+export function SignUpForm({ groups, locale, next, parent }: { groups: GradeGroup[]; locale: string; next: string; parent?: boolean }) {
   const t = useTranslations("signup");
   const tc = useTranslations("common");
   const [state, action] = useActionState(signUp, null);
@@ -87,24 +88,10 @@ export function SignUpForm({ groups, locale, next, parent }: { groups: { label: 
         <span className="text-label">{t("phoneHint")}</span>
       </div>
       {type === "STUDENT" ? (
-        <label className={label}>
-          <Req>{t("grade")}</Req>
-          <select name="gradeId" required defaultValue={v?.gradeId ?? ""} aria-invalid={state?.error === "invalid_grade"} aria-describedby="signup-error" className={field}>
-            <option value="" disabled>
-              {t("gradePick")}
-            </option>
-            {groups.map((c) => (
-              <optgroup key={c.label} label={c.label}>
-                {c.grades.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+        <>
+          <CountryGrade groups={groups} defaultGradeId={v?.gradeId} invalid={state?.error === "invalid_grade"} describedBy="signup-error" />
           {!hasGrades && <span className="text-label text-down">{t("noGrades")}</span>}
-        </label>
+        </>
       ) : (
         <p className="text-small text-ink-muted">{t("parentHint")}</p>
       )}

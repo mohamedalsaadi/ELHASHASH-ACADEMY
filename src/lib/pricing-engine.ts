@@ -195,7 +195,7 @@ function spreadAcross(available: number[], amount: number, step: number): number
  * Applies a coupon after bundles, to what is left to pay. The amount is spread across lines so every
  * per-line charge stays on the currency's step and the lines still add up to `total` (the gateways verify it).
  */
-export function applyCoupon(cart: PricedCart, coupon: CouponLike, courseOf?: (skuId: string) => string | null): PricedCart {
+export function applyCoupon(cart: PricedCart, coupon: CouponLike, courseOf?: (skuId: string) => string | null, maxShareBp = 10_000): PricedCart {
   if (cart.total <= 0) return cart;
   const step = minorPerUnit(cart.currency) / 100;
   const round = (n: number) => Math.round(n / step) * step;
@@ -215,7 +215,8 @@ export function applyCoupon(cart: PricedCart, coupon: CouponLike, courseOf?: (sk
     if (coupon.currency && coupon.currency !== cart.currency) throw new PricingError("coupon_currency");
     amount = coupon.amountOff;
   } else return cart;
-  amount = Math.min(Math.max(0, amount), base);
+  // `maxShareBp` caps a teacher-funded code at the teacher's share of the price, so teacher pay never goes below zero.
+  amount = Math.min(Math.max(0, amount), maxShareBp < 10_000 ? round((base * maxShareBp) / 10_000) : base);
   if (amount === 0) return cart;
 
   const shares = spreadAcross(available, amount, step);
@@ -227,6 +228,24 @@ export function applyCoupon(cart: PricedCart, coupon: CouponLike, courseOf?: (sk
     total: cart.total - amount,
     lines: cart.lines.map((l, i) => ({ ...l, couponDiscount: shares[i] })),
   };
+}
+
+/**
+ * Applies a resolved code by who bears it: PLATFORM out of the platform share, TEACHER out of the teacher share
+ * (capped at that share), anything else shared. A course-limited platform code discounts only that course's lines.
+ */
+export function applyFundedCoupon(
+  cart: PricedCart,
+  coupon: CouponLike & { funding: "STANDARD" | "PLATFORM" | "TEACHER" },
+  courseOf: (skuId: string) => string | null,
+  platformShareBp: number,
+): PricedCart {
+  if (coupon.funding === "PLATFORM") {
+    const only = coupon.courseId ? new Set(cart.lines.filter((l) => courseOf(l.skuId) === coupon.courseId).map((l) => l.skuId)) : undefined;
+    if (only && only.size === 0) throw new PricingError("coupon_course");
+    return applyPlatformDiscount(cart, coupon.percentOff ?? 0, platformShareBp, only);
+  }
+  return applyCoupon(cart, coupon, courseOf, coupon.funding === "TEACHER" ? 10_000 - platformShareBp : undefined);
 }
 
 /**

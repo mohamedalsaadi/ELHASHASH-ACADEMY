@@ -15,7 +15,7 @@ import { activeGateway, stripeTestKeyInProduction, stripeUnitAmount, type Method
 import { createIntention } from "@/lib/paymob";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { applyPaymentOutcome } from "@/lib/payments";
-import { applyCoupon, applyPlatformDiscount, effectivePrice, PricingError } from "@/lib/pricing-engine";
+import { applyFundedCoupon, effectivePrice, PricingError } from "@/lib/pricing-engine";
 import { TERMS_VERSION } from "@/lib/legal";
 import { isLimited, recordAttempt } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/schemas/checkout";
@@ -136,6 +136,8 @@ export async function POST(req: Request) {
   const cfg = await getFinanceConfig();
   let priced = result.priced;
   let couponId: string | null = null;
+  // A teacher-funded code: the part of each line it took off is the teacher's alone to bear (OrderItem.teacherDiscount).
+  let teacherFunded = false;
   let referral: ReferralDiscount | null = null;
   if (coupon) {
     const resolved = await resolveDiscount(coupon, session.user.id, beneficiaryId);
@@ -144,12 +146,10 @@ export async function POST(req: Request) {
       if (resolved.kind === "referral") {
         // The friend gets nothing off; the sender is rewarded once this order is paid.
         referral = resolved;
-      } else if (resolved.funding === "PLATFORM") {
-        priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, cfg.platformShareBp);
-        couponId = resolved.coupon.id;
       } else {
-        priced = applyCoupon(priced, resolved.coupon, (skuId) => skus.get(skuId)?.courseId ?? null);
+        priced = applyFundedCoupon(priced, resolved.coupon, (skuId) => skus.get(skuId)?.courseId ?? null, cfg.platformShareBp);
         couponId = resolved.coupon.id;
+        teacherFunded = resolved.coupon.funding === "TEACHER";
       }
     } catch (e) {
       if (e instanceof PricingError) return NextResponse.json({ error: e.message === "coupon_course" ? "coupon_course" : "coupon_currency" }, { status: 400 });
@@ -222,6 +222,7 @@ export async function POST(req: Request) {
             skuId: l.skuId,
             price: l.price - l.discount - l.couponDiscount,
             platformDiscount: l.platformDiscount,
+            teacherDiscount: teacherFunded ? l.couponDiscount : 0,
             ...displayOf(l.skuId),
           })),
         },

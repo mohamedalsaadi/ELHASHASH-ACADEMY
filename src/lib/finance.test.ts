@@ -56,6 +56,24 @@ describe("splitLine", () => {
   });
 });
 
+describe("who bears a discount", () => {
+  // A list price of 10 000 with 2 000 off: the three ways to settle it, at the default 30% platform share.
+  it("shared: the platform takes 30% of what is left, so both lose their share", () => {
+    expect(splitLine(8_000, cfg())).toMatchObject({ net: 8_000, platformFee: 2_400, instructorNet: 5_600 });
+  });
+  it("platform only: the teacher still gets 70% of the list price", () => {
+    expect(splitLine(10_000, cfg(), 2_000)).toMatchObject({ net: 8_000, platformFee: 1_000, instructorNet: 7_000 });
+  });
+  it("teacher only: the platform still gets 30% of the list price", () => {
+    const r = splitLine(10_000, cfg(), 0, 2_000);
+    expect(r).toMatchObject({ net: 8_000, platformFee: 3_000, instructorNet: 5_000, instructorPayout: 5_000 });
+    expect(r.platformFee + r.instructorNet).toBe(r.net);
+  });
+  it("never takes more than the teacher's whole share", () => {
+    expect(splitLine(10_000, cfg(), 0, 99_999)).toMatchObject({ net: 3_000, platformFee: 3_000, instructorNet: 0 });
+  });
+});
+
 describe("vatOn", () => {
   it("is zero while VAT is off, whatever the stored rate", () => {
     expect(vatOn(10_000, cfg({ vatRateBp: 1500 }))).toBe(0);

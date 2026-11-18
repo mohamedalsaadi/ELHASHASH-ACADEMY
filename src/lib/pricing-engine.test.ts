@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aedPriceOf, applyCoupon, applyPlatformDiscount, cheapestSku, discountPercent, effectivePrice, price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
+import { aedPriceOf, applyCoupon, applyFundedCoupon, applyPlatformDiscount, cheapestSku, discountPercent, effectivePrice, price, PricingError, type CartLine, type BundleRule } from "./pricing-engine";
 
 const now = new Date("2026-05-01T12:00:00Z");
 
@@ -344,5 +344,35 @@ describe("applyPlatformDiscount limited to one course", () => {
 
   it("without a limit it still discounts the whole cart", () => {
     expect(applyPlatformDiscount(two, 5, 3000).platformDiscount).toBe(1_500);
+  });
+});
+
+describe("applyFundedCoupon", () => {
+  const cart = price([line("math", 10_000)], [], now);
+  const code = { percentOff: 50, amountOff: null, currency: null, courseId: null };
+  const none = () => null;
+
+  it("shares by default: the discount comes off the price like any coupon", () => {
+    const r = applyFundedCoupon(cart, { ...code, funding: "STANDARD" }, none, 3000);
+    expect(r).toMatchObject({ couponDiscount: 5_000, platformDiscount: 0, total: 5_000 });
+  });
+
+  it("charges a platform code to the platform share, capped at that share", () => {
+    const r = applyFundedCoupon(cart, { ...code, funding: "PLATFORM" }, none, 3000);
+    expect(r).toMatchObject({ couponDiscount: 0, platformDiscount: 3_000, total: 7_000 });
+  });
+
+  it("caps a teacher code at the teacher's share so teacher pay never goes below zero", () => {
+    const r = applyFundedCoupon(cart, { ...code, percentOff: 90, funding: "TEACHER" }, none, 3000);
+    expect(r).toMatchObject({ couponDiscount: 7_000, total: 3_000 });
+    expect(applyFundedCoupon(cart, { ...code, funding: "TEACHER" }, none, 3000).couponDiscount).toBe(5_000);
+  });
+
+  it("limits a platform code to its course", () => {
+    const two = price([line("math", 10_000), line("physics", 10_000)], [], now);
+    const courseOf = (sku: string) => (sku.includes("-math-") ? "c-math" : "c-physics");
+    const r = applyFundedCoupon(two, { ...code, percentOff: 20, courseId: "c-math", funding: "PLATFORM" }, courseOf, 3000);
+    expect(r.lines.map((l) => l.platformDiscount)).toEqual([2_000, 0]);
+    expect(() => applyFundedCoupon(two, { ...code, courseId: "c-other", funding: "PLATFORM" }, courseOf, 3000)).toThrow(new PricingError("coupon_course"));
   });
 });

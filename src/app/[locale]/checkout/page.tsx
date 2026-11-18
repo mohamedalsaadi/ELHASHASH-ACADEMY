@@ -13,7 +13,7 @@ import { activeGateway } from "@/lib/gateway";
 import { formatMoney } from "@/lib/format";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { formatRate } from "@/lib/fx";
-import { applyCoupon, applyPlatformDiscount, effectivePrice, PricingError } from "@/lib/pricing-engine";
+import { applyFundedCoupon, effectivePrice, PricingError } from "@/lib/pricing-engine";
 import { taxConfigFor, vatFor } from "@/lib/tax";
 import { PayForm } from "./PayForm";
 
@@ -92,11 +92,8 @@ export default async function CheckoutPage({
         if (resolved.kind === "referral") {
           // A friend's code takes nothing off; the sender is rewarded once this order is paid.
           referralNoted = true;
-        } else if (resolved.funding === "PLATFORM") {
-          priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, finance.platformShareBp);
-          appliedCode = resolved.coupon.code;
         } else {
-          priced = applyCoupon(priced, resolved.coupon, (skuId) => result.skus.get(skuId)?.courseId ?? null);
+          priced = applyFundedCoupon(priced, resolved.coupon, (skuId) => result.skus.get(skuId)?.courseId ?? null, finance.platformShareBp);
           appliedCode = resolved.coupon.code;
         }
       } catch (e) {

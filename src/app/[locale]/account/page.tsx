@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { appUrl } from "@/lib/mail";
 import { getOrCreateReferralCode } from "@/lib/referral";
+import { findReward } from "@/lib/referral-reward";
 import { whatsappEnabled } from "@/lib/whatsapp";
 import { DeleteAccountForm, ParentCodeForm, PasswordForm, ProfileForm } from "./AccountForms";
 import { sendVerification, setEmailOptOut, unlinkParent } from "./actions";
@@ -72,11 +73,19 @@ export default async function AccountPage({
   });
   const day = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeZone: "Asia/Dubai" });
   const referral = u.role === "STUDENT" || u.role === "PARENT" ? await getOrCreateReferralCode(u.id) : null;
+  const inviteLink = referral ? `${appUrl()}/${locale}/r/${referral.code}` : "";
   const shareText = referral
     ? ar
-      ? `جرّب ذروة لابنك. استخدم كود الإحالة ${referral.code} عند الدفع: ${appUrl()}/${locale}/courses`
-      : `Try Dhirwa for your child. Use referral code ${referral.code} at checkout: ${appUrl()}/${locale}/courses`
+      ? `جرّب ذروة، دروس تقوية أونلاين لطلاب الثانوية مع مدرّسين: ${inviteLink}`
+      : `Try Dhirwa, online revision courses for secondary students with real teachers: ${inviteLink}`
     : "";
+  const [reward, friendsEnrolled, rewardPercent] = referral
+    ? await Promise.all([
+        findReward(u.id),
+        db.referral.count({ where: { referrerId: u.id, status: "REWARDED" } }),
+        db.platformSetting.findUnique({ where: { id: "singleton" }, select: { referralRewardPercentOff: true } }),
+      ]).then(([r, n, s]) => [r, n, s?.referralRewardPercentOff ?? 0] as const)
+    : ([null, 0, 0] as const);
 
   return (
     <main className="mx-auto grid max-w-2xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-12">
@@ -193,14 +202,25 @@ export default async function AccountPage({
         </section>
       )}
 
-      {referral && (
+      {referral && rewardPercent > 0 && (
         <section className={panel}>
           <h2 className="font-display text-h3 font-semibold">{t("referralTitle")}</h2>
-          <p className="text-small text-ink-muted">{t("referralHint")}</p>
+          <p className="text-small text-ink-muted">{t("referralHint", { pct: rewardPercent })}</p>
+          <p className="text-label text-ink-muted">{t("referralLink")}</p>
+          <p className="break-all text-small" dir="ltr">
+            {inviteLink}
+          </p>
+          <p className="text-label text-ink-muted">{t("referralCodeAlt")}</p>
           <p className="num font-display text-h2 font-bold tracking-wider" dir="ltr">
             {referral.code}
           </p>
           <p className="text-small text-ink-muted">{t("referralHow")}</p>
+          {reward && (
+            <p role="status" className="text-small font-semibold text-up">
+              {t("referralReady", { pct: reward.percentOff ?? 0 })}
+            </p>
+          )}
+          {friendsEnrolled > 0 && <p className="text-small text-ink-muted">{t("referralFriends", { n: friendsEnrolled })}</p>}
           <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer" className={smallButton}>
             {t("referralShare")}
           </a>

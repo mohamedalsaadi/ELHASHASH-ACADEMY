@@ -5,7 +5,9 @@ import { priceSkus } from "@/lib/checkout";
 import { isMinor } from "@/lib/age";
 import { resolveBeneficiary } from "@/lib/checkout-beneficiary";
 import { CONSENT_VERSION } from "@/lib/live-rules";
-import { resolveDiscount } from "@/lib/referral";
+import { cookies } from "next/headers";
+import { REFERRAL_COOKIE, resolveDiscount, resolveReferral } from "@/lib/referral";
+import { autoReward } from "@/lib/referral-reward";
 import { db } from "@/lib/db";
 import { findUserByPhone } from "@/lib/user-phone";
 import { taxConfigFor, vatFor } from "@/lib/tax";
@@ -129,8 +131,8 @@ export async function POST(req: Request) {
     return { displayPrice: null, displayCurrency: null };
   };
 
-  // The code is resolved again here, never trusted from the browser. A referral is a platform-funded
-  // discount: teacher pay stays calculated on the pre-discount line.
+  // The code is resolved again here, never trusted from the browser. A platform-funded discount (a coupon
+  // or the referral reward) leaves teacher pay calculated on the pre-discount line.
   const cfg = await getFinanceConfig();
   let priced = result.priced;
   let couponId: string | null = null;
@@ -140,7 +142,7 @@ export async function POST(req: Request) {
     if (!resolved.ok) return NextResponse.json({ error: `coupon_${resolved.reason}` }, { status: 400 });
     try {
       if (resolved.kind === "referral") {
-        priced = applyPlatformDiscount(priced, resolved.percentOff, cfg.platformShareBp);
+        // The friend gets nothing off; the sender is rewarded once this order is paid.
         referral = resolved;
       } else if (resolved.funding === "PLATFORM") {
         priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, cfg.platformShareBp);
@@ -152,6 +154,25 @@ export async function POST(req: Request) {
     } catch (e) {
       if (e instanceof PricingError) return NextResponse.json({ error: e.message === "coupon_course" ? "coupon_course" : "coupon_currency" }, { status: 400 });
       throw e;
+    }
+  }
+
+  // An invitation link remembers the sender for 30 days, so the friend needs no code. An ineligible friend
+  // (already a customer, or the sender's own family) is simply not credited.
+  if (!referral) {
+    const remembered = (await cookies()).get(REFERRAL_COOKIE)?.value;
+    if (remembered) {
+      const r = await resolveReferral(remembered, session.user.id, beneficiaryId);
+      if (r.ok) referral = r;
+    }
+  }
+
+  // The referral reward applies by itself: one course, and only when nothing else discounts the order.
+  if (!couponId) {
+    const reward = await autoReward(session.user.id, priced, skus, cfg.platformShareBp, now);
+    if (reward?.kind === "applied") {
+      priced = reward.priced;
+      couponId = reward.coupon.id;
     }
   }
 
@@ -216,14 +237,14 @@ export async function POST(req: Request) {
             referredUserId: user.id,
             referredOrderId: created.id,
             currency: priced.currency,
-            discount: priced.platformDiscount,
+            discount: 0,
           },
         });
       } else if (existing.status === "PENDING") {
         // An abandoned checkout reuses its pending attribution instead of blocking the family forever.
         await trx.referral.update({
           where: { id: existing.id },
-          data: { codeId: referral.code.id, referredOrderId: created.id, currency: priced.currency, discount: priced.platformDiscount },
+          data: { codeId: referral.code.id, referredOrderId: created.id, currency: priced.currency, discount: 0 },
         });
       }
     }

@@ -323,3 +323,26 @@ describe("applyCoupon limited to a course", () => {
     expect(applyCoupon(cart, { percentOff: 10, amountOff: null, currency: null, courseId: null }, courseOf).couponDiscount).toBe(9000);
   });
 });
+
+describe("applyPlatformDiscount limited to one course", () => {
+  const two = price(
+    [
+      { skuId: "a", courseId: "c1", subjectId: "s1", accessType: "SEMESTER", price: 20_000, currency: "AED" },
+      { skuId: "b", courseId: "c2", subjectId: "s2", accessType: "SEMESTER", price: 10_000, currency: "AED" },
+    ],
+    [],
+    new Date("2026-11-18"),
+  );
+
+  it("takes the percent off the chosen line only", () => {
+    const r = applyPlatformDiscount(two, 5, 3000, new Set(["a"]));
+    expect(r.platformDiscount).toBe(1_000);
+    expect(r.total).toBe(29_000);
+    expect(r.lines.find((l) => l.skuId === "a")?.platformDiscount).toBe(1_000);
+    expect(r.lines.find((l) => l.skuId === "b")?.platformDiscount).toBe(0);
+  });
+
+  it("without a limit it still discounts the whole cart", () => {
+    expect(applyPlatformDiscount(two, 5, 3000).platformDiscount).toBe(1_500);
+  });
+});

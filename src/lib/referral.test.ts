@@ -12,7 +12,7 @@ vi.mock("./db", () => ({ db }));
 vi.mock("./coupon-resolve", () => ({ resolveCoupon: vi.fn() }));
 
 import { resolveCoupon } from "./coupon-resolve";
-import { newReferralCode, resolveDiscount } from "./referral";
+import { newReferralCode, resolveDiscount, resolveReferral } from "./referral";
 
 const couponMiss = { ok: false as const, reason: "invalid" as const };
 const referralCode = { id: "code-1", userId: "referrer-1", code: "DHRABCD1234", active: true };
@@ -20,7 +20,7 @@ const referralCode = { id: "code-1", userId: "referrer-1", code: "DHRABCD1234", 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(resolveCoupon).mockResolvedValue(couponMiss);
-  vi.mocked(db.platformSetting.findUnique).mockResolvedValue({ referralWelcomePercentOff: 10 } as never);
+  vi.mocked(db.platformSetting.findUnique).mockResolvedValue({ referralRewardPercentOff: 5 } as never);
   vi.mocked(db.parentLink.findMany).mockResolvedValue([] as never);
   vi.mocked(db.referral.findFirst).mockResolvedValue(null);
   vi.mocked(db.order.findFirst).mockResolvedValue(null);
@@ -49,9 +49,16 @@ describe("resolveDiscount", () => {
     expect(r).toEqual({ ok: false, reason: "expired" });
   });
 
-  it("accepts a referral code for a first-purchase family", async () => {
+  it("accepts a referral code for a first-purchase family, with no discount for the friend", async () => {
     const r = await resolveDiscount("dhr-abcd-1234", "buyer-1");
-    expect(r).toMatchObject({ ok: true, kind: "referral", referrerId: "referrer-1", percentOff: 10 });
+    expect(r).toMatchObject({ ok: true, kind: "referral", referrerId: "referrer-1" });
+    expect(r).not.toHaveProperty("percentOff");
+  });
+
+  it("never lets a reward coupon be typed: it applies by itself, to one course", async () => {
+    const reward = { id: "rw1", code: "RW-CMABC", funding: "PLATFORM", ownerId: "buyer-1" };
+    vi.mocked(resolveCoupon).mockResolvedValue({ ok: true, coupon: reward } as never);
+    expect(await resolveDiscount("RW-CMABC", "buyer-1")).toEqual({ ok: false, reason: "invalid" });
   });
 
   it("refuses the referrer's own family", async () => {
@@ -75,7 +82,7 @@ describe("resolveDiscount", () => {
   });
 
   it("refuses referrals when the owner has switched them off", async () => {
-    vi.mocked(db.platformSetting.findUnique).mockResolvedValue({ referralWelcomePercentOff: 0 } as never);
+    vi.mocked(db.platformSetting.findUnique).mockResolvedValue({ referralRewardPercentOff: 0 } as never);
     const r = await resolveDiscount("DHRABCD1234", "buyer-1");
     expect(r).toEqual({ ok: false, reason: "referral_unavailable" });
   });
@@ -84,5 +91,18 @@ describe("resolveDiscount", () => {
     vi.mocked(db.referralCode.findUnique).mockResolvedValue(null);
     const r = await resolveDiscount("DHRZZZZZZZZ", "buyer-1");
     expect(r).toEqual({ ok: false, reason: "invalid" });
+  });
+});
+
+describe("resolveReferral (invitation link)", () => {
+  it("credits a friend who arrives by link without looking at any coupon", async () => {
+    const r = await resolveReferral("DHRABCD1234", "buyer-1");
+    expect(r).toMatchObject({ ok: true, referrerId: "referrer-1" });
+    expect(resolveCoupon).not.toHaveBeenCalled();
+  });
+
+  it("does not credit a family that already paid", async () => {
+    vi.mocked(db.order.findFirst).mockResolvedValue({ id: "o1" } as never);
+    expect(await resolveReferral("DHRABCD1234", "buyer-1")).toEqual({ ok: false, reason: "referral_not_first" });
   });
 });

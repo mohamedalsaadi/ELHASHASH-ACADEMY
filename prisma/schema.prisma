@@ -1551,10 +1551,11 @@ model PlatformSetting {
   vatTrn             String?
   /// Basis points: 3000 = 30.00%.
   platformShareBp    Int      @default(3000)
-  /// Welcome discount for a referred family, in percent. Zero disables referrals.
+  /// Retired: a referred friend no longer gets a discount. Kept so old rows and the finance config still line up.
   referralWelcomePercentOff Int @default(0)
-  /// One-time reward for the referrer, in percent, after the referred family pays.
-  referralRewardPercentOff  Int @default(0)
+  /// One-time reward for the referrer, in percent, after the referred friend pays: one course, never on top of another
+  /// discount. Zero turns referrals off.
+  referralRewardPercentOff  Int @default(5)
   /// Corporate-tax contribution deducted from teacher pay. A contractual split, not a VAT line.
   corporateTaxEnabled       Boolean @default(false)
   corporateTaxBp            Int     @default(900)

@@ -541,7 +541,6 @@ export async function saveFinanceSettings(form: FormData) {  const me = await re
       vatRate: z.coerce.number().min(0).max(50),
       vatTrn: z.string().trim().max(40).default(""),
       platformShare: z.coerce.number().min(0).max(100),
-      referralWelcome: z.coerce.number().min(0).max(100),
       referralReward: z.coerce.number().min(0).max(100),
       corporateTaxEnabled: checkbox,
       corporateTax: z.coerce.number().min(0).max(50),
@@ -557,7 +556,7 @@ export async function saveFinanceSettings(form: FormData) {  const me = await re
     vatTrn: d.vatTrn || null,
     platformShareBp: Math.round(d.platformShare * 100),
     // A reward larger than the platform share would make the platform's take negative.
-    referralWelcomePercentOff: Math.min(d.referralWelcome, d.platformShare),
+    referralWelcomePercentOff: 0,
     referralRewardPercentOff: Math.min(d.referralReward, d.platformShare),
     corporateTaxEnabled: d.corporateTaxEnabled,
     corporateTaxBp: Math.round(d.corporateTax * 100),

@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { priceSkus } from "@/lib/checkout";
 import { pick } from "@/lib/content";
 import { resolveDiscount } from "@/lib/referral";
+import { autoReward } from "@/lib/referral-reward";
 import { activeGateway } from "@/lib/gateway";
 import { formatMoney } from "@/lib/format";
 import { getFinanceConfig } from "@/lib/platform-settings";
@@ -81,6 +82,7 @@ export default async function CheckoutPage({
   const finance = await getFinanceConfig();
   let priced = result.priced;
   let appliedCode: string | null = null;
+  let referralNoted = false;
   let couponError: CouponError | null = null;
   if (coupon) {
     const resolved = await resolveDiscount(coupon, user.id);
@@ -88,8 +90,8 @@ export default async function CheckoutPage({
     else {
       try {
         if (resolved.kind === "referral") {
-          priced = applyPlatformDiscount(priced, resolved.percentOff, finance.platformShareBp);
-          appliedCode = resolved.code.code;
+          // A friend's code takes nothing off; the sender is rewarded once this order is paid.
+          referralNoted = true;
         } else if (resolved.funding === "PLATFORM") {
           priced = applyPlatformDiscount(priced, resolved.coupon.percentOff ?? 0, finance.platformShareBp);
           appliedCode = resolved.coupon.code;
@@ -104,6 +106,17 @@ export default async function CheckoutPage({
       }
     }
   }
+
+  // The referral reward applies by itself: one course, and only when nothing else discounts the order.
+  // The API runs the same function, so the page and the charge agree.
+  let reward: Awaited<ReturnType<typeof autoReward>> = null;
+  const priceBeforeReward = priced.total;
+  if (!appliedCode) {
+    reward = await autoReward(user.id, priced, result.skus, finance.platformShareBp, result.now);
+    if (reward?.kind === "applied") priced = reward.priced;
+  }
+  const rewardAmount = reward?.kind === "applied" ? priceBeforeReward - priced.total : 0;
+  const rewardCourse = reward?.kind === "applied" ? [...result.skus.values()].find((s) => s.courseId === reward.courseId)?.course : undefined;
 
   // The gateway charges total + VAT for the course's market, so the page must show the same amount.
   const tax = await taxConfigFor(result.countryCode);
@@ -177,6 +190,12 @@ export default async function CheckoutPage({
               <dd className="num text-up">−{money(priced.platformDiscount)}</dd>
             </>
           )}
+          {rewardAmount > 0 && reward?.kind === "applied" && (
+            <>
+              <dt className="text-up">{t("rewardRow", { pct: reward.coupon.percentOff ?? 0, course: pick(locale === "ar", rewardCourse?.titleAr ?? "", rewardCourse?.titleEn ?? "") })}</dt>
+              <dd className="num text-up">−{money(rewardAmount)}</dd>
+            </>
+          )}
           {vat > 0 && (
             <>
               <dt className="text-ink-muted">{t("vat", { pct: (tax.vatRateBp / 100).toFixed(0) })}</dt>
@@ -214,6 +233,16 @@ export default async function CheckoutPage({
         {appliedCode && (
           <p role="status" className="text-small text-up">
             {t("couponApplied", { code: appliedCode })}
+          </p>
+        )}
+        {referralNoted && (
+          <p role="status" className="text-small text-up">
+            {t("referralNoted")}
+          </p>
+        )}
+        {reward?.kind === "saved" && (
+          <p role="status" className="text-small text-ink-muted">
+            {t("rewardSaved", { pct: reward.coupon.percentOff ?? 0 })}
           </p>
         )}
       </section>

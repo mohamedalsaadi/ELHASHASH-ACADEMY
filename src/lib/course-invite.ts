@@ -1,7 +1,8 @@
 import { MINOR_AGE } from "@/lib/age";
 import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
-import { appUrl, emailLayout, sendMailDetailed } from "@/lib/mail";
+import { loadCourseEmailData, renderCourseEmail, type CourseEmailData } from "@/lib/course-email";
+import { appUrl, sendMailDetailed } from "@/lib/mail";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
 import { inviteWhatsAppEnabled, sendWhatsAppInvite } from "@/lib/whatsapp";
 
@@ -51,22 +52,23 @@ export type InviteResult = {
   left: number;
 };
 
-/** One invite email in the reader's language, with the unsubscribe link optional mail must carry. */
+/**
+ * One invite email in the reader's language: the subject is the invite title, the body is a short note above a copy of
+ * the course page (see course-email.ts), and the unsubscribe link optional mail must carry stays at the bottom.
+ */
 function deliver(
   to: string,
   ar: boolean,
   userId: string,
-  n: { titleAr: string; titleEn: string; bodyAr: string | null; bodyEn: string | null; href: string | null },
+  n: { titleAr: string; titleEn: string; bodyAr: string | null; bodyEn: string | null },
+  page: CourseEmailData,
   subjectPrefix = "",
 ) {
-  const title = pick(ar, n.titleAr, n.titleEn);
-  const body = pick(ar, n.bodyAr, n.bodyEn);
   const unsubscribe = unsubscribeUrl(appUrl(), userId);
-  const cta = n.href ? { href: `${appUrl()}${n.href}`, label: ar ? "افتح ذروة" : "Open Dhirwa" } : undefined;
   return sendMailDetailed({
     to,
-    subject: subjectPrefix + title,
-    html: emailLayout(title, body ? [body] : [], cta, ar ? "ar" : "en", unsubscribe),
+    subject: subjectPrefix + pick(ar, n.titleAr, n.titleEn),
+    html: renderCourseEmail(page, ar ? "ar" : "en", { intro: pick(ar, n.bodyAr, n.bodyEn) ?? undefined, unsubscribe }),
     unsubscribe,
   });
 }
@@ -82,9 +84,10 @@ export async function sendInviteTest(courseId: string, copy: InviteCopy, userId:
     db.course.findUnique({ where: { id: courseId }, select: { slug: true, titleAr: true, titleEn: true } }),
     db.user.findUnique({ where: { id: userId }, select: { email: true, phone: true, locale: true } }),
   ]);
-  if (!course || !me) return { email: false, whatsapp: "fail" };
+  const page = await loadCourseEmailData(courseId);
+  if (!course || !me || !page) return { email: false, whatsapp: "fail" };
   const ar = me.locale === "ar";
-  const email = me.email ? (await deliver(me.email, ar, userId, { ...copy, href: `/courses/${course.slug}` }, "[Test] ")).ok : false;
+  const email = me.email ? (await deliver(me.email, ar, userId, copy, page, "[Test] ")).ok : false;
   let whatsapp: "ok" | "fail" | "off" = "off";
   if (inviteWhatsAppEnabled()) {
     const r = me.phone?.startsWith("+") ? await sendWhatsAppInvite(me.phone, pick(ar, course.titleAr, course.titleEn), course.slug, ar ? "ar" : "en") : { ok: false };
@@ -145,6 +148,9 @@ export async function inviteStudents(courseId: string, copy: InviteCopy, opts: {
   }
 
   // Only people with an address who still take optional mail; a failed send stays unmailed and is retried next run.
+  // The course page copy is built once for the batch; each recipient only differs by language and unsubscribe link.
+  const page = await loadCourseEmailData(courseId);
+  if (!page) throw new Error("course is not published");
   const pending = await db.notification.findMany({
     where: { dedupeKey: { startsWith: prefix(courseId) }, emailedAt: null, user: mailable },
     select: {
@@ -153,7 +159,6 @@ export async function inviteStudents(courseId: string, copy: InviteCopy, opts: {
       titleEn: true,
       bodyAr: true,
       bodyEn: true,
-      href: true,
       userId: true,
       user: { select: { email: true, locale: true } },
     },
@@ -164,7 +169,7 @@ export async function inviteStudents(courseId: string, copy: InviteCopy, opts: {
   let sent = 0;
   let failed = 0;
   for (const n of pending) {
-    const r = await deliver(n.user.email!, n.user.locale === "ar", n.userId, n);
+    const r = await deliver(n.user.email!, n.user.locale === "ar", n.userId, n, page);
     if (r.ok) {
       await db.notification.update({ where: { id: n.id }, data: { emailedAt: new Date() } });
       sent += 1;

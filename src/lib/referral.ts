@@ -6,10 +6,17 @@ import { resolveCoupon } from "./coupon-resolve";
 
 export type DiscountProblem = CouponProblem | "referral_self" | "referral_used" | "referral_not_first" | "referral_unavailable";
 
+/** A referral code gives the friend no discount: it only records who sent them, so the sender is rewarded when they pay. */
+export type ReferralResolution = { ok: true; kind: "referral"; code: ReferralCode; referrerId: string } | { ok: false; reason: DiscountProblem };
+
 export type DiscountResolution =
   | { ok: true; kind: "coupon"; coupon: Coupon; funding: "STANDARD" | "PLATFORM" }
-  | { ok: true; kind: "referral"; code: ReferralCode; referrerId: string; percentOff: number }
+  | Extract<ReferralResolution, { ok: true }>
   | { ok: false; reason: DiscountProblem };
+
+/** Set by the invitation link (`/{locale}/r/{code}`) so a friend needs no code field. */
+export const REFERRAL_COOKIE = "dh_ref";
+export const REFERRAL_COOKIE_DAYS = 30;
 
 /** "DHR" plus 8 hex characters: unguessable enough for a public code, and valid for the coupon code rule. */
 export function newReferralCode(): string {
@@ -43,29 +50,18 @@ export async function familyOf(userId: string, beneficiaryId?: string | null): P
 }
 
 /**
- * One code field, two kinds of code. An ordinary coupon keeps its existing behaviour. A referral code
- * gives the referred family a welcome discount, once, and only before their first paid order.
+ * Whether this code may be credited with a friend: it exists, the program is on (the reward is above zero), the
+ * friend is not the sender's own family, and it is the friend's first paid order and first referral.
  */
-export async function resolveDiscount(
-  codeInput: string,
-  userId: string,
-  beneficiaryId: string | null = null,
-  now = new Date(),
-): Promise<DiscountResolution> {
+export async function resolveReferral(codeInput: string, userId: string, beneficiaryId: string | null = null): Promise<ReferralResolution> {
   const code = normalizeCode(codeInput);
   if (!CODE_RE.test(code)) return { ok: false, reason: "invalid" };
-
-  const coupon = await resolveCoupon(code, userId, now);
-  if (coupon.ok) return { ok: true, kind: "coupon", coupon: coupon.coupon, funding: coupon.coupon.funding };
-  // A code that matched a coupon but failed its window or limit must not fall through to a referral.
-  if (coupon.reason !== "invalid") return { ok: false, reason: coupon.reason };
 
   const referral = await db.referralCode.findUnique({ where: { code } });
   if (!referral || !referral.active) return { ok: false, reason: "invalid" };
 
-  const setting = await db.platformSetting.findUnique({ where: { id: "singleton" }, select: { referralWelcomePercentOff: true } });
-  const percentOff = setting?.referralWelcomePercentOff ?? 0;
-  if (percentOff <= 0) return { ok: false, reason: "referral_unavailable" };
+  const setting = await db.platformSetting.findUnique({ where: { id: "singleton" }, select: { referralRewardPercentOff: true } });
+  if ((setting?.referralRewardPercentOff ?? 0) <= 0) return { ok: false, reason: "referral_unavailable" };
 
   const family = await familyOf(userId, beneficiaryId);
   if (family.includes(referral.userId)) return { ok: false, reason: "referral_self" };
@@ -83,5 +79,30 @@ export async function resolveDiscount(
   if (used) return { ok: false, reason: "referral_used" };
   if (paid) return { ok: false, reason: "referral_not_first" };
 
-  return { ok: true, kind: "referral", code: referral, referrerId: referral.userId, percentOff };
+  return { ok: true, kind: "referral", code: referral, referrerId: referral.userId };
+}
+
+/**
+ * One code field, two kinds of code. An ordinary coupon keeps its existing behaviour. A referral code gives the
+ * friend nothing off; it credits the sender (see `resolveReferral`). A reward coupon is never typed: it applies by itself.
+ */
+export async function resolveDiscount(
+  codeInput: string,
+  userId: string,
+  beneficiaryId: string | null = null,
+  now = new Date(),
+): Promise<DiscountResolution> {
+  const code = normalizeCode(codeInput);
+  if (!CODE_RE.test(code)) return { ok: false, reason: "invalid" };
+
+  const coupon = await resolveCoupon(code, userId, now);
+  if (coupon.ok) {
+    // Only the reward coupon has an owner. It applies to one course, and only on a cart with no other discount.
+    if (coupon.coupon.ownerId) return { ok: false, reason: "invalid" };
+    return { ok: true, kind: "coupon", coupon: coupon.coupon, funding: coupon.coupon.funding };
+  }
+  // A code that matched a coupon but failed its window or limit must not fall through to a referral.
+  if (coupon.reason !== "invalid") return { ok: false, reason: coupon.reason };
+
+  return resolveReferral(code, userId, beneficiaryId);
 }

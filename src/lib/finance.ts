@@ -13,9 +13,9 @@ export type FinanceConfig = {
   vatTrn: string | null;
   /** Basis points: 3000 = 30.00%. */
   platformShareBp: number;
-  /** Welcome discount for a referred family, in percent. Zero disables referrals. */
+  /** Retired: a referred friend gets no discount any more. Always 0. */
   referralWelcomePercentOff: number;
-  /** One-time reward for the referrer, in percent. */
+  /** One-time reward for the referrer, in percent, on one course and never on top of another discount. Zero turns referrals off. */
   referralRewardPercentOff: number;
   /** A contractual contribution from the teacher's share toward corporate tax. Not a VAT line. */
   corporateTaxEnabled: boolean;
@@ -33,7 +33,7 @@ export const DEFAULT_FINANCE: FinanceConfig = {
   vatTrn: null,
   platformShareBp: 3000,
   referralWelcomePercentOff: 0,
-  referralRewardPercentOff: 0,
+  referralRewardPercentOff: 5,
   corporateTaxEnabled: false,
   corporateTaxBp: 900,
   sellerLegalName: null,

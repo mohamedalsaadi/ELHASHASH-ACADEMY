@@ -124,6 +124,8 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
           });
 
           // The referrer's one-time reward is minted exactly once, only after the referred family pays.
+          // It has no expiry: it waits until the referrer's next checkout with no other discount (see referral-reward.ts).
+          let minted = 0;
           if (order.referral?.status === "PENDING") {
             const rewardPercent = setting?.referralRewardPercentOff ?? 0;
             const { count: rewarded } = await trx.referral.updateMany({
@@ -141,10 +143,10 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
                   perUser: 1,
                   maxRedemptions: 1,
                   active: true,
-                  endsAt: new Date(paidAt.getTime() + 90 * 86_400_000),
                 },
               });
               await trx.referral.update({ where: { id: order.referral.id }, data: { rewardCouponId: coupon.id } });
+              minted = rewardPercent;
             }
           }
           return {
@@ -154,6 +156,7 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
             gateway: order.gateway,
             referralId: order.referral?.id ?? null,
             referrerId: order.referral?.referrerId ?? null,
+            rewardPercent: minted,
           };
         }
         return null;
@@ -181,15 +184,15 @@ export async function applyPaymentOutcome(orderId: string, eventId: string, outc
       console.error("[notify] order paid failed", orderId, e);
       await logError("payment.receipt", e, { message: "payment settled but the receipt notification failed", meta: { orderId } });
     }
-    if (paid.referrerId && paid.referralId) {
+    if (paid.referrerId && paid.referralId && paid.rewardPercent > 0) {
       try {
         await createNotification({
           userId: paid.referrerId,
           kind: "SYSTEM",
           titleAr: "مكافأة الإحالة جاهزة",
           titleEn: "Your referral reward is ready",
-          bodyAr: "أصبح لديك كود خصم لاشتراكك القادم. تجده في حسابك.",
-          bodyEn: "You have a discount code for your next subscription. It is in your account.",
+          bodyAr: `اشترك صديقك، ولك خصم ${paid.rewardPercent}% على دورة واحدة. يُطبَّق تلقائيًا عند الدفع إذا لم يكن هناك خصم آخر.`,
+          bodyEn: `Your friend enrolled, so you get ${paid.rewardPercent}% off one course. It applies automatically at checkout when no other discount is on the order.`,
           href: "/account",
           dedupeKey: `referral-reward:${paid.referralId}`,
         });

@@ -81,20 +81,6 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
           <p className="max-w-[65ch] text-small text-ink-muted">{t("referralsHint")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className={label}>
-              {t("referralWelcome")}
-              <input
-                name="referralWelcome"
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                defaultValue={cfg.referralWelcomePercentOff}
-                required
-                dir="ltr"
-                className={`${field} num w-32`}
-              />
-            </label>
-            <label className={label}>
               {t("referralReward")}
               <input
                 name="referralReward"

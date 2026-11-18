@@ -234,12 +234,17 @@ export function applyCoupon(cart: PricedCart, coupon: CouponLike, courseOf?: (sk
  * platform's own share absorbs it. Each line is capped at the platform's share, so `platformFee`
  * can never go negative. Returns the cart unchanged when the cap leaves nothing to apply.
  */
-export function applyPlatformDiscount(cart: PricedCart, percentOff: number, platformShareBp: number): PricedCart {
+export function applyPlatformDiscount(cart: PricedCart, percentOff: number, platformShareBp: number, onlySkuIds?: ReadonlySet<string>): PricedCart {
   if (cart.total <= 0 || percentOff <= 0) return cart;
   const step = minorPerUnit(cart.currency) / 100;
   const round = (n: number) => Math.round(n / step) * step;
-  const requested = Math.min(round((cart.total * Math.min(100, percentOff)) / 100), cart.total);
-  const caps = cart.lines.map((l) => round(((l.price - l.discount - l.couponDiscount) * platformShareBp) / 10_000));
+  // `onlySkuIds` limits the discount to those lines (a referral reward is for one course); without it, the whole cart.
+  const inScope = (skuId: string) => !onlySkuIds || onlySkuIds.has(skuId);
+  const base = onlySkuIds
+    ? cart.lines.reduce((sum, l) => (inScope(l.skuId) ? sum + l.price - l.discount - l.couponDiscount - l.platformDiscount : sum), 0)
+    : cart.total;
+  const requested = Math.min(round((base * Math.min(100, percentOff)) / 100), base);
+  const caps = cart.lines.map((l) => (inScope(l.skuId) ? round(((l.price - l.discount - l.couponDiscount) * platformShareBp) / 10_000) : 0));
   const amount = Math.min(requested, caps.reduce((sum, n) => sum + n, 0));
   if (amount <= 0) return cart;
 

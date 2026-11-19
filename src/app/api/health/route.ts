@@ -23,6 +23,7 @@ const REQUIRED_COLUMNS: [string, string][] = [
   ["OrderItem", "teacherDiscount"],
   ["LedgerEntry", "platformDiscount"],
   ["PlatformSetting", "referralWelcomePercentOff"],
+  ["PlatformSetting", "referralPopupEnabled"],
   ["Order", "taxCountryCode"],
   ["Country", "vatEnabled"],
   ["LedgerEntry", "instructorPayout"],

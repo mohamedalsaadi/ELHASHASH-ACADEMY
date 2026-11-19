@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/brand/Mark";
 import { Intro } from "@/components/brand/Intro";
 import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
+import { ReferralPopup } from "@/components/home/ReferralPopup";
 import { JsonLd } from "@/components/JsonLd";
 import { Motion } from "@/components/motion/Motion";
 import { PromoBand } from "@/components/PromoBand";
@@ -96,6 +97,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     <main className="overflow-x-clip">
       <JsonLd data={jsonLd} />
       <Intro skipLabel={t("skipIntro")} rtl={ar} />
+      <ReferralPopup />
       <Motion />
 
       <section className="mx-auto grid max-w-(--container-page) justify-items-center px-4 pt-20 pb-16 text-center md:pt-32">

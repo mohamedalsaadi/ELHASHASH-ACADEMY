@@ -4,11 +4,13 @@ import { db } from "@/lib/db";
 import { FX_CURRENCIES } from "@/lib/fx";
 import { getFinanceConfig } from "@/lib/platform-settings";
 import { requireAdmin } from "@/lib/staff";
-import { saveFinanceSettings, saveFxRates } from "../actions";
+import { renderReferralAdEmail } from "@/lib/referral-ad-email";
+import { saveFinanceSettings, saveFxRates, saveReferralPopup } from "../actions";
 import { AdminNav, panel } from "../AdminNav";
 import { field, label } from "../styles";
 import { SaveButton } from "../ui";
 import { MailTest } from "./MailTest";
+import { ReferralAdTools } from "./ReferralAdTools";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,8 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
   const cfg = await getFinanceConfig();
   const rates = await db.fxRate.findMany({ select: { currency: true, aedPerUnit: true } });
   const rateMap = new Map(rates.map((r) => [r.currency, Number(r.aedPerUnit)]));
+  const popupOn = (await db.platformSetting.findUnique({ where: { id: "singleton" }, select: { referralPopupEnabled: true } }))?.referralPopupEnabled ?? false;
+  const adPercent = cfg.referralRewardPercentOff;
 
   return (
     <main className="mx-auto grid max-w-3xl gap-6 px-4 py-12">
@@ -143,6 +147,25 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
           <SaveButton />
         </div>
       </form>
+
+      <form action={saveReferralPopup} className={panel}>
+        <label className="flex min-h-11 items-center gap-2 text-small font-semibold">
+          <input type="checkbox" name="referralPopup" defaultChecked={popupOn} className="size-4" />
+          {t("referralPopup")}
+        </label>
+        <p className="max-w-[65ch] text-small text-ink-muted">{t("referralPopupHint")}</p>
+        <div>
+          <SaveButton />
+        </div>
+      </form>
+
+      {adPercent > 0 && (
+        <div className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("referralAdTitle")}</h2>
+          <p className="max-w-[65ch] text-small text-ink-muted">{t("referralAdHint")}</p>
+          <ReferralAdTools htmlAr={renderReferralAdEmail("ar", { percent: adPercent })} htmlEn={renderReferralAdEmail("en", { percent: adPercent })} />
+        </div>
+      )}
 
       <div className={panel}>
         <MailTest title={t("mailTest")} hint={t("mailTestHint")} button={t("mailTestButton")} />

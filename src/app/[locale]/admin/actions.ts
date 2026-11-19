@@ -13,7 +13,7 @@ import { logEvent } from "@/lib/analytics";
 import { cairoDay, youtubeId } from "@/lib/admin-input";
 import { blobInfo, coverPrefix, lessonPagesPrefix, ownPaths } from "@/lib/blob";
 import type { FinanceConfig } from "@/lib/finance";
-import { saveFinanceConfig } from "@/lib/platform-settings";
+import { saveFinanceConfig, saveReferralPopup as saveReferralPopupSetting } from "@/lib/platform-settings";
 import { refundIntent } from "@/lib/ziina";
 import { CODE_RE } from "@/lib/coupons";
 import { db } from "@/lib/db";
@@ -575,7 +575,15 @@ export async function saveFinanceSettings(form: FormData) {  const me = await re
   revalidatePath("/[locale]/admin", "layout");
 }
 
-/** Saves the owner's suggestion rates. They only pre-fill the AED price form; checkout never uses them. */
+/** Switches the home-page invite-a-friend popup on or off. It only shows while the referral reward above is more than zero. */
+export async function saveReferralPopup(form: FormData) {
+  const me = await requireAdmin();
+  const d = z.object({ referralPopup: checkbox }).parse(Object.fromEntries(form));
+  await saveReferralPopupSetting(d.referralPopup, me.id);
+  revalidatePath("/[locale]/admin", "layout");
+}
+
+/** Saves the owner's suggestion rates.They only pre-fill the AED price form; checkout never uses them. */
 export async function saveFxRates(form: FormData) {
   await requireAdmin();
   for (const currency of FX_CURRENCIES) {

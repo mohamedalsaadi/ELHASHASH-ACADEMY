@@ -22,6 +22,15 @@ export async function getFinanceConfig(): Promise<FinanceConfig> {
   };
 }
 
+/** The home-page invite-a-friend popup switch. A field of its own, so saving it never touches the finance rates. */
+export async function saveReferralPopup(enabled: boolean, updatedById: string) {
+  await db.platformSetting.upsert({
+    where: { id: SINGLETON },
+    create: { id: SINGLETON, referralPopupEnabled: enabled, updatedById },
+    update: { referralPopupEnabled: enabled, updatedById },
+  });
+}
+
 export async function saveFinanceConfig(input: FinanceConfig, updatedById: string) {
   await db.platformSetting.upsert({
     where: { id: SINGLETON },

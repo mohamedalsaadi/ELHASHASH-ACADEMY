@@ -1561,6 +1561,8 @@ model PlatformSetting {
   /// One-time reward for the referrer, in percent, after the referred friend pays: one course, never on top of another
   /// discount. Zero turns referrals off.
   referralRewardPercentOff  Int @default(5)
+  /// Shows the invite-a-friend popup on the home page after the intro. Off until an admin switches it on.
+  referralPopupEnabled      Boolean @default(false)
   /// Corporate-tax contribution deducted from teacher pay. A contractual split, not a VAT line.
   corporateTaxEnabled       Boolean @default(false)
   corporateTaxBp            Int     @default(900)

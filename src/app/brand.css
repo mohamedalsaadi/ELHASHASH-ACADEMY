@@ -25,6 +25,12 @@ html[data-intro="skip"] .as-hero-copy > * { animation: as-rise var(--dur-base) v
 
 @keyframes as-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
+/* The invite-a-friend popup (components/home/ReferralPopup.tsx): a short fade and rise. Durations are 0 for reduced motion. */
+.as-pop[open] { animation: as-pop var(--dur-base) var(--ease-out); }
+.as-pop[open]::backdrop { animation: as-pop-fade var(--dur-base) var(--ease-out); }
+@keyframes as-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes as-pop-fade { from { opacity: 0; } to { opacity: 1; } }
+
 /* Route loader: a hairline draws across the top while a page really loads. */
 .as-loader { position: fixed; inset-inline: 0; top: 0; z-index: 40; height: 2px; overflow: hidden; }
 .as-loader::after {

@@ -24,6 +24,28 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-19: invite-a-friend ad (home popup, email, picture) with an admin switch
+
+Why: the referral link only lived on the account page, so few people saw it. Not committed, not pushed.
+- **Popup:** `src/components/home/ReferralPopup.tsx`, mounted on the home page. A native `<dialog>` (small centred card,
+  `backdrop:bg-black/15`, so the page stays visible). Opens once per visit (`sessionStorage["dh-referral-ad"]`) after the intro:
+  there is no end event, so it watches `data-intro` on `<html>` (`public/intro-guard.js`). `?referral=1` forces it for previews.
+  It asks `GET /api/referral-ad` (no-store), so the home page stays cached. Signed-in student or parent: their own link, copy,
+  share (`navigator.share`, else WhatsApp). Visitor: a sign-up button. Teacher and admin: nothing.
+- **Switch:** `PlatformSetting.referralPopupEnabled` (migration `20261130130000_referral_popup_switch`, default OFF, so deploying
+  changes nothing until the owner ticks it on Admin > Settings). It also needs the referral reward above 0. Action
+  `saveReferralPopup`, kept apart from `FinanceConfig`.
+- **Email:** `src/lib/referral-ad-email.ts` (direction on body and wrapper div, inline styles, one sign-up button, no personal
+  link). Admin > Settings has "Email me a test copy" (Arabic and English, to the admin only) and "Copy HTML" buttons.
+- **Picture:** `marketing/referral/render.mjs` (untracked, run from the worktree) writes feed 1080x1350 and story 1080x1920 PNGs
+  in Arabic and English. `next/og` was not used: the site's OG route has no Arabic font.
+- **One source of words:** `messages/*.json` `referralAd` (also listed in `src/i18n/client-messages.ts`). The ad promises only
+  what exists: the sender gets the reward, once, on one course, not combined, after the friend's first payment; the friend gets nothing.
+- **Checked:** tsc, eslint, 684 tests, `next build`; popup in a browser in `ar` and `en` (opens after a simulated intro, once per
+  visit, scrim and close work, no sideways scroll). Not checked: the API against a database (the live DB has no new column
+  until the build applies the migration, so the browser run stubbed the API answer), Gmail and Outlook rendering, the real test email.
+- **Open:** owner turns the switch on after the deploy and presses the test-copy button.
+
 ## 2026-11-19: who bears a discount code (platform, shared, or teacher)
 
 - **Rule (owner):** every discount that existed before this is shared by teacher and platform, and stays so. A code now says who bears it: `PLATFORM` (platform only), `STANDARD` (teacher and platform, shared at the platform-share rate, the old default) or `TEACHER` (teacher only). A code a teacher generates is `TEACHER`; older teacher codes stay shared, and editing a teacher code never changes its funding.

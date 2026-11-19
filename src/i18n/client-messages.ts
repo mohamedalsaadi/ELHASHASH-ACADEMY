@@ -10,6 +10,7 @@ export const PUBLIC_CLIENT_NAMESPACES = [
   "errors",
   "teach",
   "signup",
+  "referralAd",
   "verify",
   "reset",
   "questions",

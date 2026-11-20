@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { errorText, reportClient } from "@/lib/client-log";
+import { errorText, reloadOnStaleChunk, reportClient } from "@/lib/client-log";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -10,6 +10,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
  */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
+    if (reloadOnStaleChunk(error)) return;
     reportClient("client.error", errorText(error), { digest: error.digest });
   }, [error]);
   return (

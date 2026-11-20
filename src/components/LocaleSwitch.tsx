@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useTransitionRouter } from "next-view-transitions";
+import { useRouter } from "next/navigation";
 import { getPathname, Link, usePathname } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
@@ -10,7 +10,7 @@ export function LocaleSwitch() {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const t = useTranslations("nav");
-  const router = useTransitionRouter();
+  const router = useRouter();
   const other: Locale = locale === "ar" ? "en" : "ar";
 
   return (

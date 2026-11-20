@@ -24,6 +24,23 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-20: site errors cleared (view transitions removed, WebGL guard, stale-chunk reload, log noise)
+
+I read the site log (`SiteLog`) for the last 7 days: 93 errors.
+- **Page-transition errors were most of them.** These were "Transition was aborted …", "View transition update callback timed out" and "Document hidden".
+  - `next-view-transitions` froze the old page until the new route mounted. On slow lesson pages that hit the browser's 4 s cap, and every aborted transition was an unhandled rejection.
+  - Fix: the package is removed. `src/i18n/link.tsx` is a plain `next/link`, `LocaleSwitch` uses `next/navigation`'s router, and the `<ViewTransitions>` wrapper and the `::view-transition` CSS are gone.
+- **"Error creating WebGL context".** The student-home trail (`Ride.tsx`) now catches a WebGL failure and hides the empty canvas. The subject buttons still work.
+- **ChunkLoadError after a deploy.** `reloadOnStaleChunk` (`src/lib/client-log.ts`) reloads the tab once, guarded by sessionStorage, from both error boundaries.
+- **Errors that were not ours.** These came from wallet extensions (`window.ethereum`), Firefox iOS (`__firefox__`), Android in-app browsers ("Java object is gone") and scripts from other origins. `isForeignError` now keeps them out of the log; there is a test.
+- **Not code, still open:**
+  - VdoCipher trial limit (4 videos): an owner plan decision.
+  - `CRON_SECRET` for the coworker cron (owner env; last seen 2026-11-16).
+  - One Gemini 503 (transient).
+  - auth "pkce cookie missing" / AccessDenied: user-side sign-in aborts.
+- **Local dev writes to the production log.** The 2026-11-18 23:18 to 23:20 `server.error` rows (Blob credentials, `referralPopupEnabled` missing) came from a local dev server on the live DB, not from production. Both routes answer 200 live.
+- **Unexplained.** "Cannot read properties of null (reading 'parentNode')" on the course page (5 times, no filename) is not in our code; most likely an in-app browser or translator script. It is left as is.
+
 ## 2026-11-19: invite-a-friend ad (home popup, email, picture) with an admin switch
 
 Why: the referral link only lived on the account page, so few people saw it. Not committed, not pushed.

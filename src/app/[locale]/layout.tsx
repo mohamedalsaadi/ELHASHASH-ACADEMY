@@ -4,7 +4,6 @@ import { IBM_Plex_Sans_Arabic, Readex_Pro, Reem_Kufi } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
-import { ViewTransitions } from "next-view-transitions";
 import { PUBLIC_CLIENT_NAMESPACES, pickMessages } from "@/i18n/client-messages";
 import { routing } from "@/i18n/routing";
 import { RouteAnnouncer } from "@/components/RouteAnnouncer";
@@ -89,19 +88,17 @@ export default async function LocaleLayout({
         </a>
         <PwaRegister />
         <ErrorReporter />
-        <ViewTransitions>
-          <NextIntlClientProvider messages={pickMessages(messages, PUBLIC_CLIENT_NAMESPACES)}>
-            <MarketingOnly>
-              <NewsBanner />
-            </MarketingOnly>
-            <MarketingBackdrop />
-            <SiteHeader />
-            <div id="main-content" tabIndex={-1} className="outline-none">
-              {children}
-            </div>
-            <SiteFooter />
-          </NextIntlClientProvider>
-        </ViewTransitions>
+        <NextIntlClientProvider messages={pickMessages(messages, PUBLIC_CLIENT_NAMESPACES)}>
+          <MarketingOnly>
+            <NewsBanner />
+          </MarketingOnly>
+          <MarketingBackdrop />
+          <SiteHeader />
+          <div id="main-content" tabIndex={-1} className="outline-none">
+            {children}
+          </div>
+          <SiteFooter />
+        </NextIntlClientProvider>
         <RouteAnnouncer />
       </body>
     </html>

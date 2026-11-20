@@ -3,12 +3,13 @@
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { Link } from "@/i18n/navigation";
-import { errorText, reportClient } from "@/lib/client-log";
+import { errorText, reloadOnStaleChunk, reportClient } from "@/lib/client-log";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const t = useTranslations("errors");
 
   useEffect(() => {
+    if (reloadOnStaleChunk(error)) return;
     console.error(error);
     reportClient("client.error", errorText(error), { digest: error.digest });
   }, [error]);

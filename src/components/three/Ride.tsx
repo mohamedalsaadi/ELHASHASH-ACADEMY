@@ -47,7 +47,9 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
       probe.remove();
 
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const s = createRide(THREE, canvas, {
+      let s: Scene;
+      try {
+        s = createRide(THREE, canvas, {
         cars: subjects,
         rtl,
         small,
@@ -62,6 +64,12 @@ export function Ride({ subjects, rtl, countryCode, label }: { subjects: RideSubj
           glow: token("contour-3"),
         },
       });
+      } catch {
+        // No WebGL on this device (blocked, or out of contexts): the trail is decoration and the buttons below
+        // still choose the subject, so hide the empty canvas instead of throwing.
+        canvas.hidden = true;
+        return;
+      }
 
       // Draw on demand: a frame loop runs only while a car is still easing in, and never off-screen.
       let raf = 0, last = 0, visible = true;

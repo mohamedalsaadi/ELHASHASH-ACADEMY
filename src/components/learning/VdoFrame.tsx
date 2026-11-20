@@ -32,6 +32,9 @@ export function VdoFrame({
   next: { href: string; label: string; doneLabel: string } | null;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
+  // The first token is kept for the life of this player: a page re-render (any server action on the lesson page) issues a
+  // new token, and changing the iframe src would restart the video the student is watching.
+  const [url] = useState(src);
   const watched = useRef(onWatched);
   const [done, setDone] = useState(false);
   useEffect(() => {
@@ -77,11 +80,11 @@ export function VdoFrame({
       video?.removeEventListener?.("ended", finish);
       video?.removeEventListener?.("timeupdate", tick);
     };
-  }, [enabled, src]);
+  }, [enabled]);
 
   return (
     <div className="relative size-full">
-      <iframe ref={frame} src={src} title={title} allow="encrypted-media; fullscreen" allowFullScreen className="size-full" />
+      <iframe ref={frame} src={url}title={title} allow="encrypted-media; fullscreen" allowFullScreen className="size-full" />
       {done && (
         <div className="absolute end-3 top-3 flex items-center gap-2 rounded-full bg-surface px-3 py-1.5 text-small font-semibold shadow-paper" role="status">
           <span>{next?.doneLabel}</span>

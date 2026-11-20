@@ -24,6 +24,19 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-21: lesson videos froze or restarted near minute 58 (cause and fix)
+
+- **Cause:** at 90% watched the player calls `completeFromPlayer`, which ran `revalidatePath` on the lesson page. Any
+  revalidation in a server action re-renders the open page, so a new VdoCipher token was issued, the play limits were
+  judged again (a second `PlayEvent`, since it is past the 5-minute replay window) and the iframe `src` changed, which
+  reloaded the video. Evidence: many second plays of the same learner and lesson 50 to 66 minutes after the first,
+  mostly "Video 1, Questions 1–8". The video has no stored duration, so the ~64-minute length is inferred.
+- **Fix:** `markDone(..., refresh = false)` for the player (no revalidation; the dashboard is `force-dynamic`), and
+  `VdoFrame` keeps its first `src` for its whole life, so no other action on the page can reload the video.
+- **Open:** no course has `maxPlays` today. With a cap, the old behaviour would also have replaced the player with the
+  "plays used" notice at 90%. Other actions on the lesson page (confidence, questions) still re-render the server side and
+  can log an extra play; the player itself no longer reloads. Ask one student to watch past minute 58 to confirm.
+
 ## 2026-11-20: Google sign-ups with no country or grade (cause and fix)
 
 **What was seen.** 5 of the 33 Google sign-ups since 15 Nov have no grade (a student's country comes from the grade), phone or birth date. They are the 5 newest students (19 and 20 Nov).

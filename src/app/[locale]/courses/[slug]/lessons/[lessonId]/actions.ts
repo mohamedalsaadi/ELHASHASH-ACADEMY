@@ -66,12 +66,18 @@ async function lessonProgress(lessonId: string) {
   return { viewerId: session.user.id, learnerId, staff, lesson };
 }
 
-async function markDone(learnerId: string, lessonId: string) {
+/**
+ * `refresh: false` is for the player: any revalidatePath in a server action re-renders the open lesson page, which issues a
+ * new playback token, re-judges the play limits and reloads the video the student is still watching (at 90% that was
+ * minute ~58 of a long lesson). The dashboard is force-dynamic, so it needs no revalidation.
+ */
+async function markDone(learnerId: string, lessonId: string, refresh = true) {
   await db.lessonView.upsert({
     where: { userId_lessonId: { userId: learnerId, lessonId } },
     create: { userId: learnerId, lessonId, completedAt: new Date() },
     update: { completedAt: new Date(), lastSeenAt: new Date() },
   });
+  if (!refresh) return;
   revalidatePath("/[locale]/courses/[slug]/lessons/[lessonId]", "page");
   revalidatePath("/[locale]/dashboard", "page");
 }
@@ -91,7 +97,7 @@ export async function completeFromPlayer(lessonId: string) {
   const { viewerId, learnerId, staff, lesson } = await lessonProgress(lessonId);
   if (lesson.video?.provider !== "VDOCIPHER") notFound();
   if (!staff && !(await db.playEvent.count({ where: { userId: viewerId, learnerId, lessonId } }))) return;
-  await markDone(learnerId, lessonId);
+  await markDone(learnerId, lessonId, false);
 }
 
 /**

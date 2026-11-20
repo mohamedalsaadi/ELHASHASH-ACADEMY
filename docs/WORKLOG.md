@@ -24,6 +24,24 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-20: Google sign-ups with no country or grade (cause and fix)
+
+**What was seen.** 5 of the 33 Google sign-ups since 15 Nov have no grade (a student's country comes from the grade), phone or birth date. They are the 5 newest students (19 and 20 Nov).
+
+**Cause.** A first Google sign-in creates the STUDENT row at once (`src/auth.ts`); grade, phone, birth date and guardian come afterwards from `/complete-profile`. Only `/dashboard` sent an unfinished student there.
+- Google was sent to the `next` page (a course, the cart) instead, so the profile step was skipped.
+- One of the 5 then enrolled in a free course through checkout and opened a lesson without ever finishing the profile.
+- A missing birth date reads as an adult (`isMinor`), so that account also skipped the guardian check.
+
+**Fix.**
+- `src/lib/profile.ts`: `profileIncomplete` and `completeProfileUrl`.
+- `SocialButtons`: with a `next` page, Google goes to `/complete-profile?next=…`; `complete-profile` keeps `next` through errors and goes on there afterwards.
+- Checkout page and `/api/checkout` refuse an unfinished student (`profile_incomplete`; texts in `checkout.errors`).
+
+**Open.**
+- The 5 existing accounts stay as they are until they next open the dashboard or checkout, which now sends them to finish. They were not edited.
+- A student who browses without buying still has no grade; this is not forced anywhere except the dashboard.
+
 ## 2026-11-20: site errors cleared (view transitions removed, WebGL guard, stale-chunk reload, log noise)
 
 I read the site log (`SiteLog`) for the last 7 days: 93 errors.

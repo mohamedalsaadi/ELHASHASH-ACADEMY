@@ -9,12 +9,17 @@ import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { gradeInCountry } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
+import { profileIncomplete } from "@/lib/profile";
+import { safeNext } from "@/lib/safe-redirect";
 import { completeProfileSchema } from "@/lib/schemas/auth";
 import { hashToken, newToken } from "@/lib/token-utils";
 
 /** Fills the fields a first Google sign-in could not collect: phone, grade, birth date and guardian. */
 export async function completeProfile(form: FormData) {
   const locale = form.get("locale") === "en" ? "en" : "ar";
+  const next = safeNext(form.get("next"), "");
+  // Every way back to the form keeps the page the student was heading to.
+  const back = (error: string) => redirect(`/${locale}/complete-profile?error=${error}${next ? `&next=${encodeURIComponent(next)}` : ""}`);
   const session = await auth();
   if (!session?.user) return redirect(`/${locale}/signin`);
   const user = await db.user.findUnique({
@@ -26,7 +31,7 @@ export async function completeProfile(form: FormData) {
     const home = user.role === "PARENT" ? "parent" : user.role === "ADMIN" ? "admin" : "teacher";
     return redirect(`/${locale}/${home}`);
   }
-  if (user.phone && user.gradeId) return redirect(`/${locale}/dashboard`);
+  if (!profileIncomplete(user)) return redirect(next || `/${locale}/dashboard`);
 
   const parsed = completeProfileSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) {
@@ -37,17 +42,17 @@ export async function completeProfile(form: FormData) {
         : issue.path[0] === "phone"
           ? "invalid_phone"
           : "invalid_grade";
-    return redirect(`/${locale}/complete-profile?error=${code}`);
+    return back(code);
   }
   const d = parsed.data;
   const dob = parseBirthDate(d.dateOfBirth)!;
   if (!(await gradeInCountry(d.gradeId, d.countryId))) {
-    return redirect(`/${locale}/complete-profile?error=invalid_grade`);
+    return back("invalid_grade");
   }
 
   const minor = ageOn(dob) < MINOR_AGE;
   if (minor && (d.guardianPhone === d.phone || (!guardianViaWhatsApp() && !d.guardianEmail))) {
-    return redirect(`/${locale}/complete-profile?error=guardian_required`);
+    return back("guardian_required");
   }
   const token = minor ? newToken() : null;
   const tokenHash = token ? hashToken(token) : null;
@@ -76,7 +81,7 @@ export async function completeProfile(form: FormData) {
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return redirect(`/${locale}/complete-profile?error=phone_taken`);
+      return back("phone_taken");
     }
     throw e;
   }
@@ -86,6 +91,6 @@ export async function completeProfile(form: FormData) {
   }
 
   revalidatePath("/[locale]/dashboard", "page");
-  // The home page shows the student's country, grade and courses.
-  redirect(`/${locale}`);
+  // On to the page they were heading to; otherwise the home page, which shows the student's country, grade and courses.
+  redirect(next || `/${locale}`);
 }

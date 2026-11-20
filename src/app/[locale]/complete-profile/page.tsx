@@ -10,6 +10,8 @@ import { Req } from "@/components/ui/Req";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { gradeGroups } from "@/lib/catalog";
+import { completeProfileUrl, profileIncomplete } from "@/lib/profile";
+import { safeNext } from "@/lib/safe-redirect";
 import { completeProfile } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -23,14 +25,16 @@ export default async function CompleteProfilePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { locale } = await params;
-  const { error } = await searchParams;
+  const { error, next: rawNext } = await searchParams;
   setRequestLocale(locale);
+  // The page the student was heading to (a course, the cart); only a same-site path is kept.
+  const next = safeNext(rawNext, "");
 
   const session = await auth();
-  if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/complete-profile`)}`);
+  if (!session?.user) redirect(`/${locale}/signin?next=${encodeURIComponent(completeProfileUrl(locale, next))}`);
   const user = await db.user.findUnique({
     where: { id: session.user.id },
     select: { role: true, phone: true, gradeId: true },
@@ -40,7 +44,7 @@ export default async function CompleteProfilePage({
     const home = user.role === "PARENT" ? "parent" : user.role === "ADMIN" ? "admin" : "teacher";
     redirect(`/${locale}/${home}`);
   }
-  if (user.phone && user.gradeId) redirect(`/${locale}/dashboard`);
+  if (!profileIncomplete(user)) redirect(next || `/${locale}/dashboard`);
 
   const t = await getTranslations("signup");
   const tc = await getTranslations("common");
@@ -52,6 +56,7 @@ export default async function CompleteProfilePage({
       <p className="text-small text-ink-muted">{t("completeHint")}</p>
       <form action={completeProfile} className="grid gap-4">
         <input type="hidden" name="locale" value={locale} />
+        <input type="hidden" name="next" value={next} />
         <p className="text-label text-ink-muted">{tc("requiredNote")}</p>
         <div className="grid gap-2 text-label text-ink-muted">
           <Req>{t("phone")}</Req>

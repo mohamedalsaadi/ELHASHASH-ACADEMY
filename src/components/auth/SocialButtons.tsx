@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { signIn } from "@/auth";
+import { completeProfileUrl } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-redirect";
 
 /** A provider shows only when its keys are set, so a button never leads to an error page. */
@@ -17,8 +18,11 @@ export async function SocialButtons({ locale, next }: { locale: string; next?: s
   async function go(form: FormData) {
     "use server";
     const provider = PROVIDERS.find((p) => p.id === form.get("provider"));
-    // The dashboard sends a new account to finish its profile before anything else.
-    if (provider?.on()) await signIn(provider.id, { redirectTo: safeNext(String(form.get("next") ?? ""), `/${locale}/dashboard`) });
+    if (!provider?.on()) return;
+    // A new account must finish its profile (phone, grade, birth date, guardian) before anything else. With no page
+    // to return to the dashboard does that; with one (a course, the cart) the profile page does, then goes on there.
+    const next = safeNext(String(form.get("next") ?? ""), "");
+    await signIn(provider.id, { redirectTo: next ? completeProfileUrl(locale, next) : `/${locale}/dashboard` });
   }
 
   return (

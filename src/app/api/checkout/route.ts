@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { logEvent } from "@/lib/analytics";
 import { priceSkus } from "@/lib/checkout";
 import { isMinor } from "@/lib/age";
+import { profileIncomplete } from "@/lib/profile";
 import { resolveBeneficiary } from "@/lib/checkout-beneficiary";
 import { CONSENT_VERSION } from "@/lib/live-rules";
 import { cookies } from "next/headers";
@@ -82,8 +83,10 @@ export async function POST(req: Request) {
   if (session.user.role === "STUDENT") {
     const student = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { dateOfBirth: true, guardianConsent: { select: { verifiedAt: true } } },
+      select: { role: true, phone: true, gradeId: true, dateOfBirth: true, guardianConsent: { select: { verifiedAt: true } } },
     });
+    // No birth date yet reads as an adult, so an unfinished profile must not reach the guardian check below.
+    if (student && profileIncomplete(student)) return NextResponse.json({ error: "profile_incomplete" }, { status: 403 });
     if (isMinor(student?.dateOfBirth) && !student?.guardianConsent?.verifiedAt) {
       return NextResponse.json({ error: "guardian_required" }, { status: 400 });
     }

@@ -245,6 +245,7 @@
       }
     },
     "errors": {
+      "profile_incomplete": "Finish your profile (grade, country and phone) before you buy.",
       "unauthenticated": "Sign in first.",
       "sku_unavailable": "One of the packages is no longer available. Refresh the page.",
       "sku_not_on_sale": "The revision package isn't on sale right now.",

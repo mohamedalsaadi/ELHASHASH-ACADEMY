@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { Link } from "@/i18n/navigation";
 import { priceSkus } from "@/lib/checkout";
 import { pick } from "@/lib/content";
+import { completeProfileUrl, profileIncomplete } from "@/lib/profile";
 import { resolveDiscount } from "@/lib/referral";
 import { autoReward } from "@/lib/referral-reward";
 import { activeGateway } from "@/lib/gateway";
@@ -57,6 +58,16 @@ export default async function CheckoutPage({
     for (const id of skuIds) query.append("sku", id);
     if (coupon) query.set("coupon", coupon);
     redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/checkout?${query.toString()}`)}`);
+  }
+  // A first Google sign-in has no grade, phone or birth date yet; finish that, then come back to this cart.
+  if (user.role === "STUDENT") {
+    const me = await db.user.findUnique({ where: { id: user.id }, select: { role: true, phone: true, gradeId: true } });
+    if (me && profileIncomplete(me)) {
+      const query = new URLSearchParams();
+      for (const id of skuIds) query.append("sku", id);
+      if (coupon) query.set("coupon", coupon);
+      redirect(completeProfileUrl(locale, `/${locale}/checkout?${query.toString()}`));
+    }
   }
 
   let result;

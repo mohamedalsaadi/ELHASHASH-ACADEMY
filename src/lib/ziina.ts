@@ -31,6 +31,9 @@ export type Intent = {
   amount: number;
   currency_code: string;
   redirect_url?: string;
+  /** Why Ziina refused the last attempt, when it did. */
+  latest_error?: { message: string; code: string };
+  card_details?: { card_brand?: string; card_funding_type?: string; card_country_code?: string; card_issuer?: string };
 };
 
 export async function createIntent(input: {

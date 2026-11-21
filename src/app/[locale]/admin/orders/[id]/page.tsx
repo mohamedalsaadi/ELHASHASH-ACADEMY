@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { requireAdmin } from "@/lib/staff";
+import { fetchIntent } from "@/lib/ziina";
 import { markOrderPaid, refundOrder } from "../../actions";
 import { AdminNav, panel, table } from "../../AdminNav";
 
@@ -36,6 +37,8 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
     },
   });
   if (!o) notFound();
+  // What Ziina itself says about an unpaid order: its status and, when it refused the card, the reason.
+  const ziina = o.gateway === "ZIINA" && o.gatewayOrderId && o.status !== "PAID" ? await fetchIntent(o.gatewayOrderId).catch(() => null) : null;
   const date = new Intl.DateTimeFormat(ar ? "ar-EG-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Dubai" });
   const name = (x: { titleAr: string; titleEn: string }) => (pick(ar, x.titleAr, x.titleEn));
   const money = (n: number) => formatMoney(n, o.currency, locale);
@@ -90,6 +93,40 @@ export default async function OrderPage({ params }: { params: Promise<{ locale: 
           )}
         </dl>
       </section>
+
+      {o.gateway === "ZIINA" && o.gatewayOrderId && o.status !== "PAID" && (
+        <section className={panel}>
+          <h2 className="font-display text-h3 font-semibold">{t("ziinaLive")}</h2>
+          {ziina ? (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-small [&_dt]:text-label [&_dt]:text-ink-muted">
+              <dt>{t("ziinaStatus")}</dt>
+              <dd className="num" dir="ltr">
+                {ziina.status}
+              </dd>
+              {ziina.latest_error && (
+                <>
+                  <dt>{t("ziinaError")}</dt>
+                  <dd className="text-down" dir="ltr">
+                    {ziina.latest_error.message} ({ziina.latest_error.code})
+                  </dd>
+                </>
+              )}
+              {ziina.redirect_url && (
+                <>
+                  <dt>{t("ziinaPage")}</dt>
+                  <dd className="break-all" dir="ltr">
+                    <a href={ziina.redirect_url} target="_blank" rel="noreferrer" className="text-pen underline-offset-4 hover:underline">
+                      {ziina.redirect_url}
+                    </a>
+                  </dd>
+                </>
+              )}
+            </dl>
+          ) : (
+            <p className="text-small text-ink-muted">{t("ziinaUnreachable")}</p>
+          )}
+        </section>
+      )}
 
       <section className={`${panel} overflow-x-auto`}>
         <h2 className="font-display text-h3 font-semibold">{t("items")}</h2>

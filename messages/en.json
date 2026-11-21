@@ -1399,6 +1399,11 @@
     "confirmMarkPaid": "Mark this order as paid and grant access?",
     "refundHint": "Refunds the amount through Stripe and ends the access it granted.",
     "refundZiinaHint": "Refunds the amount through Ziina and ends the access it granted.",
+    "ziinaLive": "Ziina says",
+    "ziinaStatus": "Status",
+    "ziinaError": "Last error",
+    "ziinaPage": "Payment page",
+    "ziinaUnreachable": "Ziina did not answer for this payment.",
     "refundPaymobHint": "For Paymob, refund in the Paymob dashboard first, then press the button to end access and record it.",
     "orderStatus": {
       "PENDING": "Waiting for payment",

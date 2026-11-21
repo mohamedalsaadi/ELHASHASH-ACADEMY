@@ -1399,6 +1399,11 @@
     "confirmMarkPaid": "تأكيد دفع هذا الطلب ومنح الوصول؟",
     "refundHint": "يسترد المبلغ من Stripe ويلغي الوصول الذي مُنح.",
     "refundZiinaHint": "يسترد المبلغ من Ziina ويلغي الوصول الذي مُنح.",
+    "ziinaLive": "ما تقوله Ziina",
+    "ziinaStatus": "الحالة",
+    "ziinaError": "آخر خطأ",
+    "ziinaPage": "صفحة الدفع",
+    "ziinaUnreachable": "لم ترد Ziina بخصوص هذه العملية.",
     "refundPaymobHint": "لدفع Paymob: نفّذ الاسترداد من لوحة Paymob أولًا، ثم اضغط الزر لإلغاء الوصول وتسجيل العملية.",
     "orderStatus": {
       "PENDING": "في انتظار الدفع",

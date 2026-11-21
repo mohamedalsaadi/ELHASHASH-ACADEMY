@@ -79,7 +79,7 @@ export default async function SubjectPage({ params }: { params: Promise<Params> 
     <main className="mx-auto grid max-w-5xl gap-8 px-4 py-10">
       <header className="grid gap-1 border-b-(length:--line) pb-6" style={{ borderColor: line }}>
         <p className="flex flex-wrap items-center gap-x-2 text-small text-ink-muted">
-          <Link href="/courses" className={crumb}>
+          <Link href="/courses?all=1" className={crumb}>
             {t("title")}
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>

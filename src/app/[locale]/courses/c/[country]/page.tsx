@@ -86,7 +86,7 @@ export default async function CountryPage({
       <Motion />
       <header className="grid gap-3">
         <p className="flex flex-wrap items-center gap-2 text-small text-ink-muted">
-          <Link href="/courses" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+          <Link href="/courses?all=1" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("title")}
           </Link>
           <span aria-hidden="true" className="rtl:-scale-x-100">‹</span>

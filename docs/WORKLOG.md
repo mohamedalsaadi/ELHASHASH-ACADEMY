@@ -37,7 +37,8 @@ Git history has the rest (`git log --oneline`).
 - **Existing students:** 25 had a grade and no birth date (legacy and manual grade fixes); they are not forced through
   the form at sign-in. The dashboard birth-date prompt and the checkout gate catch them.
 - **Landing:** after the form the student goes to `next`, else to their own country and level (`gradeCoursesUrl`, e.g.
-  `/courses/c/ae/12`), not the `/courses` country picker. The bottom-bar Courses tab still opens the picker.
+  `/courses/c/ae/12`), not the `/courses` country picker. `/courses` now sends a signed-in student with a grade to that page too; `/courses?all=1` (linked from the
+  country, level and subject pages and the search clear link) is the way to every country.
 - **Open:** terms acceptance is stamped at form completion, not at the sign-in click. The Arabic copy for the new line and
   hints was written by the agent; the owner should read it. Not tried with a real Google sign-up.
 

@@ -1,11 +1,13 @@
 import { Motion } from "@/components/motion/Motion";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CountryTile } from "@/components/CountryTile";
 import { CourseCard } from "@/components/CourseCard";
 import { EmptyState } from "@/components/brand/Mark";
 import { Link } from "@/i18n/navigation";
-import { cardInclude } from "@/lib/catalog";
+import { cardInclude, gradeCoursesUrl } from "@/lib/catalog";
 import { matchesQuery } from "@/lib/arabic-search";
 import { db } from "@/lib/db";
 import { alternates } from "@/lib/seo";
@@ -23,11 +25,20 @@ export default async function CoursesPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; all?: string }>;
 }) {
   const { locale } = await params;
-  const q = (await searchParams).q?.trim() ?? "";
+  const sp = await searchParams;
+  const q = sp.q?.trim() ?? "";
   setRequestLocale(locale);
+  // A student who has chosen a grade goes straight to their own country and level; `?all=1` is the way to every country.
+  if (!q && sp.all !== "1") {
+    const session = await auth();
+    if (session?.user?.role === "STUDENT") {
+      const me = await db.user.findUnique({ where: { id: session.user.id }, select: { gradeId: true } });
+      if (me?.gradeId) redirect(await gradeCoursesUrl(locale, me.gradeId));
+    }
+  }
   const t = await getTranslations("catalog");
   const now = new Date();
 
@@ -101,7 +112,7 @@ export default async function CoursesPage({
           <div className="mx-auto grid max-w-(--container-page) gap-6 px-4 pb-16">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 className="font-display text-h2 font-bold">{t("searchResults", { count: results.length })}</h2>
-              <Link href="/courses" className="text-small text-pen underline-offset-4 hover:underline">
+              <Link href="/courses?all=1" className="text-small text-pen underline-offset-4 hover:underline">
                 {t("searchClear")}
               </Link>
             </div>

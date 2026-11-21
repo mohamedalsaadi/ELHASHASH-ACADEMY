@@ -11,6 +11,7 @@ import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { profileIncomplete } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-redirect";
+import { logEvent } from "@/lib/site-log";
 import { completeProfileSchema } from "@/lib/schemas/auth";
 import { hashToken, newToken } from "@/lib/token-utils";
 
@@ -36,12 +37,17 @@ export async function completeProfile(form: FormData) {
   const parsed = completeProfileSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
+    const field = String(issue.path[0] ?? "");
     const code =
       issue.message === "too_young" || issue.message === "guardian_required" || issue.message === "invalid_birthdate" || issue.message === "terms_required"
         ? issue.message
-        : issue.path[0] === "phone"
+        : field === "phone"
           ? "invalid_phone"
-          : "invalid_grade";
+          : field.startsWith("guardian")
+            ? "guardian_required"
+            : "invalid_grade";
+    // A refused form leaves no other trace; without this a student who cannot finish is invisible.
+    await logEvent({ level: "WARN", source: "profile.complete", message: "Profile form refused", userId: user.id, meta: { code, field } });
     return back(code);
   }
   const d = parsed.data;

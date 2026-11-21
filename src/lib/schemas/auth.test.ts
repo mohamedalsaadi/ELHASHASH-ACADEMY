@@ -76,6 +76,14 @@ describe("finishing a Google account", () => {
     expect(completeProfileSchema.safeParse({ ...base, dateOfBirth: yearsAgo(10) }).success).toBe(true);
   });
 
+  it("lets a student finish when the browser sends the empty guardian boxes as blank text", () => {
+    // The form always posts the guardian inputs, empty when left alone; "" must read as absent, not as a too-short name.
+    const blank = { phone: "0501234567", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(17), acceptTerms: true, guardianName: "", guardianPhone: "", guardianEmail: "" };
+    expect(completeProfileSchema.safeParse(blank).success).toBe(true);
+    expect(signUpSchema.safeParse({ ...blank, email: "a@example.com", password: "12345678", name: "Mona Ali" }).success).toBe(true);
+    expect(otpFinishSchema.safeParse({ type: "STUDENT", name: "Mona Ali", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(17), acceptTerms: true, guardianName: "" }).success).toBe(true);
+  });
+
   it("lets a student of 13 finish with no guardian", () => {
     expect(completeProfileSchema.safeParse({ phone: "0501234567", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(14), acceptTerms: true }).success).toBe(true);
   });

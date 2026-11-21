@@ -24,6 +24,21 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-21: Google sign-ups could not finish the profile form (cause and fix)
+
+- **Cause:** the finish-profile form always posted the optional guardian boxes, empty when left alone. `guardianName`
+  was `z.string().min(2).optional()`, which accepts "absent" but not `""`, so every student over 13 who skipped it was
+  refused, and the action reported that as the grade error ("Choose your country, then your grade"). Nothing was logged.
+  Evidence: of Google sign-ups since 2026-11-19 19:18 (Gulf time) 0 of 6 finished; 11-16 only 3 of 11 did.
+- **Fix:** a blank guardian name reads as absent in all three schemas (`blankToUndefined`); guardian errors map to the
+  guardian message; a refused form now logs a WARN `profile.complete` with the reason; the guardian boxes show only when
+  the birth date says under 13 (`BirthAndGuardian.tsx`, same rule as the sign-up form). Test sends the blank boxes.
+- **Law (secondary sources, a lawyer should confirm):** UAE Decree-Law 26/2025 requires documented parental consent
+  under 13; for 13 to 17 it asks for reasonable age checks. `docs/compliance/ropa.md` still says "under 18" for guardian
+  consent; align it with 13.
+- **Open:** Saudi Arabia, Egypt, Kuwait, Qatar and Bahrain are inactive, so the forms offer only the UAE and Oman.
+  The 7 stuck Google accounts (phone, grade or birth date missing) finish at their next dashboard or checkout visit.
+
 ## 2026-11-21: lesson videos froze or restarted near minute 58 (cause and fix)
 
 - **Cause:** at 90% watched the player calls `completeFromPlayer`, which ran `revalidatePath` on the lesson page. Any

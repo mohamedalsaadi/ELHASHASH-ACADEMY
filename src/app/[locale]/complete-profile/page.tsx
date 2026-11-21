@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AuthShell } from "@/app/[locale]/signin/AuthShell";
 import { CountryGrade } from "@/components/CountryGrade";
-import { field } from "@/components/ui/form";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
 import { Link } from "@/i18n/navigation";
@@ -13,6 +12,7 @@ import { gradeGroups } from "@/lib/catalog";
 import { completeProfileUrl, profileIncomplete } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-redirect";
 import { completeProfile } from "./actions";
+import { BirthAndGuardian } from "./BirthAndGuardian";
 
 export const dynamic = "force-dynamic";
 
@@ -64,30 +64,7 @@ export default async function CompleteProfilePage({
           <span className="text-label">{t("phoneHint")}</span>
         </div>
         <CountryGrade groups={groups} invalid={error === "invalid_grade"} />
-        <label className="grid gap-2 text-label text-ink-muted">
-          <Req>{t("dateOfBirth")}</Req>
-          <input type="date" name="dateOfBirth" required max={new Date().toISOString().slice(0, 10)} dir="ltr" className={field} />
-          <span className="text-label">{t("dateOfBirthHint")}</span>
-        </label>
-        <label className="grid gap-2 text-label text-ink-muted">
-          {t("guardianName")}
-          <input name="guardianName" autoComplete="name" minLength={2} maxLength={80} dir="auto" className={field} />
-          <span className="text-label">{t("guardianHint")}</span>
-        </label>
-        <div className="grid gap-2 text-label text-ink-muted">
-          {t("guardianPhone")}
-          <PhoneField name="guardianPhone" required={false} />
-          <span className="text-label">{t("guardianPhoneHint")}</span>
-        </div>
-        <label className="grid gap-2 text-label text-ink-muted">
-          {t("guardianEmail")}
-          <input type="email" name="guardianEmail" autoComplete="email" dir="ltr" className={field} />
-          <span className="text-label">{t("guardianEmailHint")}</span>
-        </label>
-        <label className="flex min-h-11 items-center gap-3 text-small">
-          <input type="checkbox" name="guardianConsent" className="size-5 shrink-0" />
-          <span>{t("guardianConsent")}</span>
-        </label>
+        <BirthAndGuardian />
         <label className="flex min-h-11 items-center gap-3 text-small">
           <input type="checkbox" name="acceptTerms" required className="size-5 shrink-0" />
           <span>

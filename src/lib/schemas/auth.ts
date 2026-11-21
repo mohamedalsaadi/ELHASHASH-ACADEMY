@@ -58,7 +58,7 @@ export const signUpSchema = z
     /// Only used when WhatsApp is off, so the link still reaches someone.
     guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
     /// A student joins with a guardian's consent; the model has no birth date, so every STUDENT is a minor.
-    guardianName: z.string().trim().min(2).max(80).optional(),
+    guardianName: blankToUndefined(z.string().trim().min(2).max(80).optional()),
     guardianConsent: z.coerce.boolean().default(false),
     /// The terms and privacy policy, ticked by the person creating the account. Kept as a timestamp on the user.
     acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
@@ -79,7 +79,7 @@ export const completeProfileSchema = z
     gradeId: z.string().min(1),
     countryId: z.string().min(1),
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate"),
-    guardianName: z.string().trim().min(2).max(80).optional(),
+    guardianName: blankToUndefined(z.string().trim().min(2).max(80).optional()),
     guardianPhone: blankToUndefined(phoneSchema.optional()),
     guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
     guardianConsent: z.coerce.boolean().default(false),
@@ -99,7 +99,7 @@ export const otpFinishSchema = z
     dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate").optional(),
     guardianPhone: blankToUndefined(phoneSchema.optional()),
     guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
-    guardianName: z.string().trim().min(2).max(80).optional(),
+    guardianName: blankToUndefined(z.string().trim().min(2).max(80).optional()),
     guardianConsent: z.coerce.boolean().default(false),
     acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
   })

@@ -36,6 +36,8 @@ Git history has the rest (`git log --oneline`).
   `termsAcceptedAt` is set when the form is finished if it is still empty.
 - **Existing students:** 25 had a grade and no birth date (legacy and manual grade fixes); they are not forced through
   the form at sign-in. The dashboard birth-date prompt and the checkout gate catch them.
+- **Landing:** after the form the student goes to `next`, else to their own country and level (`gradeCoursesUrl`, e.g.
+  `/courses/c/ae/12`), not the `/courses` country picker. The bottom-bar Courses tab still opens the picker.
 - **Open:** terms acceptance is stamped at form completion, not at the sign-in click. The Arabic copy for the new line and
   hints was written by the agent; the owner should read it. Not tried with a real Google sign-up.
 

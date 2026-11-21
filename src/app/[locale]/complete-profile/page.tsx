@@ -7,7 +7,7 @@ import { CountryGrade } from "@/components/CountryGrade";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Req } from "@/components/ui/Req";
 import { db } from "@/lib/db";
-import { gradeGroups } from "@/lib/catalog";
+import { gradeCoursesUrl, gradeGroups } from "@/lib/catalog";
 import { completeProfileUrl, missingProfile } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-redirect";
 import { completeProfile } from "./actions";
@@ -47,7 +47,7 @@ export default async function CompleteProfilePage({
   }
   const missing = missingProfile(user);
   const ask = { grade: missing.grade, dob: missing.dob, phone: missing.phone && askPhone };
-  if (!ask.grade && !ask.dob && !ask.phone) redirect(next || `/${locale}/courses`);
+  if (!ask.grade && !ask.dob && !ask.phone) redirect(next || (await gradeCoursesUrl(locale, user.gradeId)));
 
   const t = await getTranslations("signup");
   const tc = await getTranslations("common");

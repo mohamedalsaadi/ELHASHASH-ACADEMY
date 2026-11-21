@@ -106,6 +106,12 @@ export async function gradeInCountry(gradeId: string, countryId: string) {
   return Boolean(await db.grade.findFirst({ where: { id: gradeId, countryId }, select: { id: true } }));
 }
 
+/** The course list for a student's own country and level (`/courses/c/ae/12`); the country picker when the grade is unknown. */
+export async function gradeCoursesUrl(locale: string, gradeId: string | null | undefined): Promise<string> {
+  const grade = gradeId ? await db.grade.findUnique({ where: { id: gradeId }, select: { level: true, country: { select: { code: true } } } }) : null;
+  return grade ? `/${locale}/courses/c/${grade.country.code.toLowerCase()}/${grade.level}` : `/${locale}/courses`;
+}
+
 export async function gradeGroups(locale: string) {
   const ar = locale === "ar";
   const countries = await db.country.findMany({

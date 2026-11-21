@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
-import { gradeInCountry } from "@/lib/catalog";
+import { gradeCoursesUrl, gradeInCountry } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { missingProfile } from "@/lib/profile";
@@ -39,7 +39,7 @@ export async function completeProfile(form: FormData) {
   }
   const missing = missingProfile(user);
   const need = { grade: missing.grade, dob: missing.dob, phone: missing.phone && askPhone };
-  if (!need.grade && !need.dob && !need.phone) return redirect(next || `/${locale}/courses`);
+  if (!need.grade && !need.dob && !need.phone) return redirect(next || (await gradeCoursesUrl(locale, user.gradeId)));
 
   const parsed = completeProfileSchema(need).safeParse(Object.fromEntries(form));
   if (!parsed.success) {
@@ -112,6 +112,6 @@ export async function completeProfile(form: FormData) {
   }
 
   revalidatePath("/[locale]/dashboard", "page");
-  // On to the page they were heading to; otherwise the course list.
-  redirect(next || `/${locale}/courses`);
+  // On to the page they were heading to; otherwise the course list for their own country and level.
+  redirect(next || (await gradeCoursesUrl(locale, d.gradeId ?? user.gradeId)));
 }

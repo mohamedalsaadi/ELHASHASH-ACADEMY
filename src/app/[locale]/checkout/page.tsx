@@ -59,14 +59,14 @@ export default async function CheckoutPage({
     if (coupon) query.set("coupon", coupon);
     redirect(`/${locale}/signin?next=${encodeURIComponent(`/${locale}/checkout?${query.toString()}`)}`);
   }
-  // A first Google sign-in has no grade, phone or birth date yet; finish that, then come back to this cart.
+  // A first Google sign-in has no grade, birth date or phone yet; the phone is asked now, then back to this cart.
   if (user.role === "STUDENT") {
-    const me = await db.user.findUnique({ where: { id: user.id }, select: { role: true, phone: true, gradeId: true } });
+    const me = await db.user.findUnique({ where: { id: user.id }, select: { role: true, phone: true, gradeId: true, dateOfBirth: true } });
     if (me && profileIncomplete(me)) {
       const query = new URLSearchParams();
       for (const id of skuIds) query.append("sku", id);
       if (coupon) query.set("coupon", coupon);
-      redirect(completeProfileUrl(locale, `/${locale}/checkout?${query.toString()}`));
+      redirect(completeProfileUrl(locale, `/${locale}/checkout?${query.toString()}`, true));
     }
   }
 

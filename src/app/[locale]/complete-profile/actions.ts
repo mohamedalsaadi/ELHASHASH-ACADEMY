@@ -9,37 +9,44 @@ import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { gradeInCountry } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { PRIVACY_VERSION } from "@/lib/legal";
-import { profileIncomplete } from "@/lib/profile";
+import { missingProfile } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-redirect";
-import { logEvent } from "@/lib/site-log";
 import { completeProfileSchema } from "@/lib/schemas/auth";
+import { logEvent } from "@/lib/site-log";
 import { hashToken, newToken } from "@/lib/token-utils";
 
-/** Fills the fields a first Google sign-in could not collect: phone, grade, birth date and guardian. */
+/**
+ * Fills what a first Google sign-in could not collect: grade (and country) and birth date right after sign-in, the phone
+ * only when the student arrives from checkout (`askPhone`). Under 13 also needs a guardian. The terms were accepted on
+ * the sign-in button, and the time is recorded here.
+ */
 export async function completeProfile(form: FormData) {
   const locale = form.get("locale") === "en" ? "en" : "ar";
   const next = safeNext(form.get("next"), "");
-  // Every way back to the form keeps the page the student was heading to.
-  const back = (error: string) => redirect(`/${locale}/complete-profile?error=${error}${next ? `&next=${encodeURIComponent(next)}` : ""}`);
+  const askPhone = form.get("askPhone") === "1";
+  // Every way back to the form keeps the page the student was heading to, and whether the phone is asked.
+  const back = (error: string) => redirect(`/${locale}/complete-profile?error=${error}${next ? `&next=${encodeURIComponent(next)}` : ""}${askPhone ? "&phone=1" : ""}`);
   const session = await auth();
   if (!session?.user) return redirect(`/${locale}/signin`);
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, role: true, phone: true, gradeId: true, name: true },
+    select: { id: true, role: true, phone: true, gradeId: true, dateOfBirth: true, termsAcceptedAt: true, name: true },
   });
   if (!user) return redirect(`/${locale}/signin`);
   if (user.role !== "STUDENT") {
     const home = user.role === "PARENT" ? "parent" : user.role === "ADMIN" ? "admin" : "teacher";
     return redirect(`/${locale}/${home}`);
   }
-  if (!profileIncomplete(user)) return redirect(next || `/${locale}/dashboard`);
+  const missing = missingProfile(user);
+  const need = { grade: missing.grade, dob: missing.dob, phone: missing.phone && askPhone };
+  if (!need.grade && !need.dob && !need.phone) return redirect(next || `/${locale}/courses`);
 
-  const parsed = completeProfileSchema.safeParse(Object.fromEntries(form));
+  const parsed = completeProfileSchema(need).safeParse(Object.fromEntries(form));
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const field = String(issue.path[0] ?? "");
     const code =
-      issue.message === "too_young" || issue.message === "guardian_required" || issue.message === "invalid_birthdate" || issue.message === "terms_required"
+      issue.message === "too_young" || issue.message === "guardian_required" || issue.message === "invalid_birthdate"
         ? issue.message
         : field === "phone"
           ? "invalid_phone"
@@ -51,20 +58,28 @@ export async function completeProfile(form: FormData) {
     return back(code);
   }
   const d = parsed.data;
-  const dob = parseBirthDate(d.dateOfBirth)!;
-  if (!(await gradeInCountry(d.gradeId, d.countryId))) {
+  if (need.grade && !(await gradeInCountry(d.gradeId!, d.countryId!))) {
     return back("invalid_grade");
   }
 
-  const minor = ageOn(dob) < MINOR_AGE;
-  if (minor && (d.guardianPhone === d.phone || (!guardianViaWhatsApp() && !d.guardianEmail))) {
+  const dob = need.dob ? parseBirthDate(d.dateOfBirth)! : null;
+  const minor = dob !== null && ageOn(dob) < MINOR_AGE;
+  if (minor && (d.guardianPhone === (d.phone ?? user.phone) || (!guardianViaWhatsApp() && !d.guardianEmail))) {
     return back("guardian_required");
   }
   const token = minor ? newToken() : null;
   const tokenHash = token ? hashToken(token) : null;
   try {
     await db.$transaction(async (trx) => {
-      await trx.user.update({ where: { id: user.id }, data: { phone: d.phone, phoneVerifiedAt: null, gradeId: d.gradeId, dateOfBirth: dob, termsAcceptedAt: new Date() } });
+      await trx.user.update({
+        where: { id: user.id },
+        data: {
+          ...(need.phone ? { phone: d.phone, phoneVerifiedAt: null } : {}),
+          ...(need.grade ? { gradeId: d.gradeId } : {}),
+          ...(dob ? { dateOfBirth: dob } : {}),
+          ...(user.termsAcceptedAt ? {} : { termsAcceptedAt: new Date() }),
+        },
+      });
       if (minor) {
         await trx.guardianConsent.upsert({
           where: { studentId: user.id },
@@ -97,6 +112,6 @@ export async function completeProfile(form: FormData) {
   }
 
   revalidatePath("/[locale]/dashboard", "page");
-  // On to the page they were heading to; otherwise the home page, which shows the student's country, grade and courses.
-  redirect(next || `/${locale}`);
+  // On to the page they were heading to; otherwise the course list.
+  redirect(next || `/${locale}/courses`);
 }

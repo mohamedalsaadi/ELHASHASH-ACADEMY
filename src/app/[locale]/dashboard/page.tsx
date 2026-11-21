@@ -18,6 +18,7 @@ import { ProgressBar } from "@/components/ui/progress";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { completeProfileUrl, needsGrade } from "@/lib/profile";
 import { saveDateOfBirth } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -51,8 +52,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const now = new Date();
   const userId = session.user.id;
   const profile = await db.user.findUnique({ where: { id: userId }, select: { dateOfBirth: true, phone: true, gradeId: true } });
-  // A first Google sign-in has an account but no phone or grade yet.
-  if (session.user.role === "STUDENT" && (!profile?.phone || !profile.gradeId)) redirect(`/${locale}/complete-profile`);
+  // A first Google sign-in has an account but no grade or birth date yet. The phone waits until checkout.
+  if (profile && needsGrade({ role: session.user.role, ...profile })) redirect(completeProfileUrl(locale));
 
   const [entitlements, completedViews, lastView, orders, answers] = await Promise.all([
     db.entitlement.findMany({

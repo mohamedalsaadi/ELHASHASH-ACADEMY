@@ -72,20 +72,41 @@ export const signUpSchema = z
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
-/** A Google sign-in creates the row; this fills the phone, grade and guardian fields. */
-export const completeProfileSchema = z
-  .object({
-    phone: phoneSchema,
-    gradeId: z.string().min(1),
-    countryId: z.string().min(1),
-    dateOfBirth: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate"),
-    guardianName: blankToUndefined(z.string().trim().min(2).max(80).optional()),
-    guardianPhone: blankToUndefined(phoneSchema.optional()),
-    guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
-    guardianConsent: z.coerce.boolean().default(false),
-    acceptTerms: z.coerce.boolean().refine((v) => v, "terms_required"),
-  })
-  .superRefine(studentRules);
+export type ProfileNeed = { grade: boolean; dob: boolean; phone: boolean };
+export type CompleteProfileInput = {
+  phone?: string;
+  gradeId?: string;
+  countryId?: string;
+  dateOfBirth?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  guardianEmail?: string;
+  guardianConsent: boolean;
+};
+
+const ignored = z.unknown().transform(() => undefined).optional();
+
+/**
+ * A Google sign-in creates the row; this fills what is still missing: grade (with its country) and birth date (with a
+ * guardian under 13) right after sign-in, the phone at checkout. A field the student is not being asked for is ignored.
+ * The terms are accepted on the sign-in button, not on this form.
+ */
+export function completeProfileSchema(need: ProfileNeed) {
+  return z
+    .object({
+      phone: need.phone ? phoneSchema : ignored,
+      gradeId: need.grade ? z.string().min(1) : ignored,
+      countryId: need.grade ? z.string().min(1) : ignored,
+      dateOfBirth: need.dob ? z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid_birthdate") : ignored,
+      guardianName: blankToUndefined(z.string().trim().min(2).max(80).optional()),
+      guardianPhone: blankToUndefined(phoneSchema.optional()),
+      guardianEmail: blankToUndefined(z.email().trim().toLowerCase().optional()),
+      guardianConsent: z.coerce.boolean().default(false),
+    })
+    .superRefine((d, ctx) => {
+      if (need.dob) studentRules(d as StudentFields, ctx);
+    }) as unknown as z.ZodType<CompleteProfileInput>;
+}
 
 /** The last step of a phone sign-up: what a new account needs once WhatsApp has proved the number. */
 export const otpFinishSchema = z

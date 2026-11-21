@@ -195,6 +195,7 @@
     "google": "Continue with Google",
     "microsoft": "Continue with Microsoft",
     "or": "or",
+    "socialTerms": "By continuing with Google or Microsoft you accept the <terms>terms of use</terms> and the <privacy>privacy policy</privacy>.",
     "googleFailed": "That sign-in did not complete. If this email already has a Dhirwa account, sign in with its password. Otherwise try again."
   },
   "checkout": {
@@ -806,7 +807,9 @@
   "signup": {
     "title": "Create an account",
     "completeTitle": "Finish your account",
-    "completeHint": "Add a phone number, your grade and your date of birth. If you are under 13, add a parent's WhatsApp number.",
+    "completeHint": "Choose your country and grade and add your date of birth, and we show you your courses. If you are under 13, add a parent's details.",
+    "completePhoneHint": "Add your mobile number to finish and pay. You will sign in with it too.",
+    "completeSubmit": "Continue",
     "name": "Full name",
     "email": "Email",
     "emailHint": "Receipts and lesson updates go here.",

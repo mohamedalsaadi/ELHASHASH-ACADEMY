@@ -59,37 +59,42 @@ describe("finishing a Google account", () => {
     d.setUTCMonth(d.getUTCMonth() - 6);
     return d.toISOString().slice(0, 10);
   };
-  const base = { phone: "0501234567", gradeId: "g1", countryId: "c1", guardianName: "Guardian", guardianPhone: "+971509999999", guardianConsent: true, acceptTerms: true };
+  const first = completeProfileSchema({ grade: true, dob: true, phone: false });
+  const pay = completeProfileSchema({ grade: false, dob: false, phone: true });
+  const guardian = { guardianName: "Guardian", guardianPhone: "+971509999999", guardianConsent: true };
 
-  it("refuses to finish without the terms tick", () => {
-    expect(completeProfileSchema.safeParse({ ...base, dateOfBirth: yearsAgo(20) }).success).toBe(true);
-    expect(completeProfileSchema.safeParse({ ...base, dateOfBirth: yearsAgo(20), acceptTerms: undefined }).success).toBe(false);
+  it("asks a first sign-in only for grade (with its country) and birth date, not the phone", () => {
+    expect(first.safeParse({ gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(16) }).success).toBe(true);
+    expect(first.safeParse({ countryId: "c1", dateOfBirth: yearsAgo(16) }).success).toBe(false);
+    expect(first.safeParse({ gradeId: "g1", dateOfBirth: yearsAgo(16) }).success).toBe(false);
+    expect(first.safeParse({ gradeId: "g1", countryId: "c1" }).success).toBe(false);
   });
 
-  it("lets an adult finish with no guardian details", () => {
-    expect(completeProfileSchema.safeParse({ phone: "0501234567", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(20), acceptTerms: true }).success).toBe(true);
+  it("asks at checkout only for the phone, and refuses one the app would not accept", () => {
+    expect(pay.safeParse({ phone: "0501234567" }).success).toBe(true);
+    expect(pay.safeParse({ phone: "1234" }).success).toBe(false);
+    expect(pay.safeParse({}).success).toBe(false);
   });
 
-  it("refuses a minor with no guardian consent and accepts one with it", () => {
-    expect(completeProfileSchema.safeParse({ phone: "0501234567", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(10), acceptTerms: true }).success).toBe(false);
-    expect(completeProfileSchema.safeParse({ phone: "0501234567", gradeId: "g1", dateOfBirth: yearsAgo(20), acceptTerms: true }).success).toBe(false);
-    expect(completeProfileSchema.safeParse({ ...base, dateOfBirth: yearsAgo(10) }).success).toBe(true);
+  it("ignores a field the student is not being asked for", () => {
+    const r = pay.safeParse({ phone: "0501234567", gradeId: "", dateOfBirth: "not a date" });
+    expect(r.success).toBe(true);
+    expect(r.success && r.data.gradeId).toBeUndefined();
+    expect(r.success && r.data.dateOfBirth).toBeUndefined();
   });
 
-  it("lets a student finish when the browser sends the empty guardian boxes as blank text", () => {
-    // The form always posts the guardian inputs, empty when left alone; "" must read as absent, not as a too-short name.
-    const blank = { phone: "0501234567", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(17), acceptTerms: true, guardianName: "", guardianPhone: "", guardianEmail: "" };
-    expect(completeProfileSchema.safeParse(blank).success).toBe(true);
-    expect(signUpSchema.safeParse({ ...blank, email: "a@example.com", password: "12345678", name: "Mona Ali" }).success).toBe(true);
+  it("refuses a minor under 13 with no guardian consent and accepts one with it", () => {
+    expect(first.safeParse({ gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(10) }).success).toBe(false);
+    expect(first.safeParse({ gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(10), ...guardian }).success).toBe(true);
+  });
+
+  it("lets a student of 13 or more finish with no guardian, even when the browser sends the empty boxes", () => {
+    expect(first.safeParse({ gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(14) }).success).toBe(true);
+    // The form posts the guardian inputs, empty when left alone; "" must read as absent, not as a too-short name.
+    const blank = { gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(17), guardianName: "", guardianPhone: "", guardianEmail: "" };
+    expect(first.safeParse(blank).success).toBe(true);
+    expect(signUpSchema.safeParse({ ...blank, phone: "0501234567", acceptTerms: true, email: "a@example.com", password: "12345678", name: "Mona Ali" }).success).toBe(true);
     expect(otpFinishSchema.safeParse({ type: "STUDENT", name: "Mona Ali", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(17), acceptTerms: true, guardianName: "" }).success).toBe(true);
-  });
-
-  it("lets a student of 13 finish with no guardian", () => {
-    expect(completeProfileSchema.safeParse({ phone: "0501234567", gradeId: "g1", countryId: "c1", dateOfBirth: yearsAgo(14), acceptTerms: true }).success).toBe(true);
-  });
-
-  it("refuses a phone the rest of the app would not accept", () => {
-    expect(completeProfileSchema.safeParse({ ...base, phone: "1234", dateOfBirth: yearsAgo(16) }).success).toBe(false);
   });
 });
 

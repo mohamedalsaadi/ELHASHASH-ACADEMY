@@ -24,6 +24,21 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-21: minimal sign-up after Google (grade and birth date first, phone at checkout)
+
+- **Owner ask:** sign-up should be minimalist: after Google, pick the grade and go to the courses.
+- **Flow now:** terms line under the Google and Microsoft buttons (no tick box). After sign-in the profile page asks only
+  for country and grade plus birth date (guardian boxes only under 13), then goes to `next` or `/courses`. The phone is
+  asked only when checkout sends the student to `complete-profile?phone=1`; `/api/checkout` still refuses an unfinished
+  student with `profile_incomplete`.
+- **Rules (`src/lib/profile.ts`):** `missingProfile` (grade, dob, phone), `needsGrade` (dashboard guard: grade only),
+  `profileIncomplete` (cannot buy: grade, dob and phone). `completeProfileSchema(need)` requires only what is missing;
+  `termsAcceptedAt` is set when the form is finished if it is still empty.
+- **Existing students:** 25 had a grade and no birth date (legacy and manual grade fixes); they are not forced through
+  the form at sign-in. The dashboard birth-date prompt and the checkout gate catch them.
+- **Open:** terms acceptance is stamped at form completion, not at the sign-in click. The Arabic copy for the new line and
+  hints was written by the agent; the owner should read it. Not tried with a real Google sign-up.
+
 ## 2026-11-21: Google sign-ups could not finish the profile form (cause and fix)
 
 - **Cause:** the finish-profile form always posted the optional guardian boxes, empty when left alone. `guardianName`

@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { signIn } from "@/auth";
+import { Link } from "@/i18n/navigation";
 import { completeProfileUrl } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-redirect";
 
@@ -19,8 +20,8 @@ export async function SocialButtons({ locale, next }: { locale: string; next?: s
     "use server";
     const provider = PROVIDERS.find((p) => p.id === form.get("provider"));
     if (!provider?.on()) return;
-    // A new account must finish its profile (phone, grade, birth date, guardian) before anything else. With no page
-    // to return to the dashboard does that; with one (a course, the cart) the profile page does, then goes on there.
+    // A new account picks its grade and gives a birth date (a guardian under 13) before anything else; the phone waits
+    // for checkout. With no page to return to the dashboard asks; with one (a course, the cart) the profile page does.
     const next = safeNext(String(form.get("next") ?? ""), "");
     await signIn(provider.id, { redirectTo: next ? completeProfileUrl(locale, next) : `/${locale}/dashboard` });
   }
@@ -34,6 +35,20 @@ export async function SocialButtons({ locale, next }: { locale: string; next?: s
           <button className="btn btn-outline w-full">{t(p.label)}</button>
         </form>
       ))}
+      <p className="text-center text-label text-ink-muted">
+        {t.rich("socialTerms", {
+          terms: (chunks) => (
+            <Link href="/terms" className="text-ink underline underline-offset-4">
+              {chunks}
+            </Link>
+          ),
+          privacy: (chunks) => (
+            <Link href="/privacy" className="text-ink underline underline-offset-4">
+              {chunks}
+            </Link>
+          ),
+        })}
+      </p>
       <p className="text-center text-small text-ink-muted">{t("or")}</p>
     </div>
   );

@@ -1379,6 +1379,18 @@ model TeacherInvite {
   @@index([phone])
 }
 
+/// A teacher the owner emailed an invitation to from the admin. One row per address, so nobody is mailed twice;
+/// `stoppedAt` is set when the person asked to stop, and the address is never mailed again.
+model TeacherOutreach {
+  id        String    @id @default(cuid())
+  /// Stored lowercase.
+  email     String    @unique
+  locale    String
+  sentById  String
+  sentAt    DateTime  @default(now())
+  stoppedAt DateTime?
+}
+
 /// One (grade, subject) pair an invitation authorises. Grade already implies the country.
 model TeacherInviteSlot {
   id        String @id @default(cuid())

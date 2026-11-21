@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/staff";
 import { teacherStats } from "@/lib/teachers";
 import { cancelInvite } from "../actions";
 import { AdminNav, panel, table } from "../AdminNav";
+import { Outreach } from "./Outreach";
 import { Reviews } from "./Reviews";
 import { DeleteButton, InviteTeacherForm, type SlotOption, TeacherForm } from "../ui";
 
@@ -18,8 +19,9 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/admin/teachers", "office", { key: "nav.teachers", noindex: true });
 }
 
-export default async function TeachersPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function TeachersPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { locale } = await params;
+  const flags = await searchParams;
   setRequestLocale(locale);
   await requireAdmin();
   const t = await getTranslations("office");
@@ -131,6 +133,8 @@ export default async function TeachersPage({ params }: { params: Promise<{ local
           </ul>
         </section>
       )}
+
+      <Outreach locale={locale} flags={flags} />
 
       <section className="grid gap-3">
         <h2 className="font-display text-h2 font-semibold">{ta("addTeacher")}</h2>

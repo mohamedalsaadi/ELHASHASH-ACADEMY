@@ -1714,6 +1714,9 @@
     "currentPassword": "Current password",
     "newPassword": "New password (at least 8 characters)",
     "changePassword": "Change password",
+    "setPasswordHint": "Signed up with Google, or never chose a password? We email you a link to set one. No current password needed.",
+    "setPasswordSend": "Email me a link to set a password",
+    "setPasswordSent": "Link sent. Check your inbox (and spam); it is valid for 30 minutes.",
     "password": {
       "ok": "Password changed.",
       "wrong": "The current password is wrong.",

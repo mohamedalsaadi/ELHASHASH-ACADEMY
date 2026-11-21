@@ -9,6 +9,7 @@ import { getLocale } from "next-intl/server";
 import { z } from "zod";
 import { auth, signOut } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
+import { requestReset } from "@/app/[locale]/forgot/actions";
 import { maskContacts } from "@/lib/contact-guard";
 import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
@@ -93,6 +94,19 @@ export async function updateProfile(_: unknown, form: FormData): Promise<"ok" | 
   if (changed) await sendVerify(user.id, d.data.email, current.locale);
   revalidatePath("/[locale]/account", "page");
   return "ok";
+}
+
+/**
+ * For an account that never chose a password (Google, Microsoft, phone): mails a link to its own address to set one, with
+ * the same limits and mail as "forgot password". The inbox is the proof, so no current password is asked.
+ */
+export async function sendPasswordLink(): Promise<"ok"> {
+  const user = await me();
+  const row = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { email: true } });
+  if (!row.email) return "ok";
+  const form = new FormData();
+  form.set("email", row.email);
+  return requestReset(null, form);
 }
 
 export async function changeOwnPassword(_: unknown, form: FormData): Promise<"ok" | "wrong" | "short"> {

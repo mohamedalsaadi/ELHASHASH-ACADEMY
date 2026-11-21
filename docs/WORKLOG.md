@@ -24,6 +24,19 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-21: pay button stuck after a refusal; Google accounts can set a password
+
+- **Pay button:** `PayForm` set `busy` before the request and cleared it only on a network error. A refused request
+  (guardian_required, coupon, profile_incomplete, gateway) showed the error but left the button on "redirecting" for
+  ever. Now `setBusy(false)` on a refusal; on success it still stays locked while the page leaves for Ziina. Seen in
+  the log as `client.checkout refused: HTTP 400 guardian_required` (two hits, one student). A student named Saleh
+  reported "keeps loading"; no order or log exists for his account, so his exact refusal is unknown.
+- **Set a password without an old one:** Google, Microsoft and phone accounts have a random password hash and the
+  change form asked for the current one (the WhatsApp-code alternative needs WhatsApp keys and a phone). The account
+  page now has "Email me a link to set a password" for students and parents (`sendPasswordLink`, which reuses
+  `requestReset`: same mail, limits and 30-minute single-use link). The reset page signs the student out; they sign in
+  with email and the new password. Arabic copy by the agent, to be read by the owner.
+
 ## 2026-11-21: minimal sign-up after Google (grade and birth date first, phone at checkout)
 
 - **Owner ask:** sign-up should be minimalist: after Google, pick the grade and go to the courses.

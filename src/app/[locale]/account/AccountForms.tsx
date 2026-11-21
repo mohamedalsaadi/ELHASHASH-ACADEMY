@@ -5,7 +5,7 @@ import { field, label } from "@/components/ui/form";
 import { useActionState, useState, useTransition } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { PasswordField } from "@/components/ui/PasswordField";
-import { changeOwnPassword, deleteAccount, generateParentCode, sendAccountCode, updateProfile } from "./actions";
+import { changeOwnPassword, deleteAccount, generateParentCode, sendAccountCode, sendPasswordLink, updateProfile } from "./actions";
 
 const button =
   "btn btn-primary w-fit text-small";
@@ -82,10 +82,30 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
   );
 }
 
-export function PasswordForm({ canCode = false }: { canCode?: boolean }) {
+/** For an account that signed up with Google (or a phone) and has no current password: a link by email to set one. */
+function PasswordLink() {
+  const t = useTranslations("account");
+  const [sent, action, pending] = useActionState(async () => sendPasswordLink(), null);
+  return (
+    <form action={action} className="grid gap-2 border-t border-hairline pt-4">
+      <p className="text-small text-ink-muted">{t("setPasswordHint")}</p>
+      <button disabled={pending || sent === "ok"} className={button}>
+        {t("setPasswordSend")}
+      </button>
+      {sent === "ok" && (
+        <p role="status" className="text-small text-up">
+          {t("setPasswordSent")}
+        </p>
+      )}
+    </form>
+  );
+}
+
+export function PasswordForm({ canCode = false, canEmail = false }: { canCode?: boolean; canEmail?: boolean }) {
   const t = useTranslations("account");
   const [state, action, pending] = useActionState(changeOwnPassword, null);
   return (
+    <div className="grid gap-4">
     <form action={action} className="grid gap-3">
       <label className={label}>
         {t("currentPassword")}
@@ -120,6 +140,8 @@ export function PasswordForm({ canCode = false }: { canCode?: boolean }) {
         {t("changePassword")}
       </button>
     </form>
+    {canEmail && <PasswordLink />}
+    </div>
   );
 }
 

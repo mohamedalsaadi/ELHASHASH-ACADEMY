@@ -115,7 +115,7 @@ export default async function AccountPage({
 
       <section className={panel}>
         <h2 className="font-display text-h3 font-semibold">{t("passwordTitle")}</h2>
-        <PasswordForm canCode={canCode} />
+        <PasswordForm canCode={canCode} canEmail={(u.role === "STUDENT" || u.role === "PARENT") && Boolean(u.email)} />
       </section>
 
       {u.email && (

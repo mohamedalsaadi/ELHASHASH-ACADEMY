@@ -70,6 +70,9 @@ export function PayForm({ skuIds, locale, methods, gateway, coupon, learners, ne
       }
       reportClient("client.checkout", `checkout refused: HTTP ${res.status} ${String(data.error ?? "no error code").slice(0, 60)}`);
       setError(data.error && t.has(`errors.${data.error}`) ? t(`errors.${data.error}`) : t("errors.generic"));
+      // A refusal returned no payment link, so the student is not on their way to the gateway and the button must work
+      // again. Without this it stayed on "redirecting" for ever after any refusal (guardian, coupon, profile, gateway).
+      setBusy(false);
     } catch (e) {
       reportClient("client.checkout", `checkout request failed in the browser: ${errorText(e)}`);
       setError(t("errors.network"));

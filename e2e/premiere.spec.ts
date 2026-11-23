@@ -103,3 +103,53 @@ test("a teacher creates a live stream for their own course and never sees anothe
   await expect(page).toHaveURL(new RegExp(`/${loc}/teacher/premieres$`));
   await expect(page.locator(`a[href*="/premiere/${slug}"]`)).toHaveCount(1);
 });
+
+test("after the stream ends, the page points to the course's next stream", async ({ page, loc }) => {
+  const past = await premiere("ended", -120);
+  await premiere("next", 2);
+  await page.goto(`/${loc}/premiere/${past.slug}`);
+  await expect(page.locator('main a[href*="/premiere/e2e-next-"]')).toHaveCount(1);
+});
+
+test("share links carry their own source tag", async ({ page, loc }) => {
+  const p = await premiere("share", 60);
+  await page.goto(`/${loc}/premiere/${p.slug}`);
+  const wa = page.locator('main a[href^="https://wa.me/"]');
+  await expect(wa).toHaveCount(1);
+  expect(decodeURIComponent((await wa.getAttribute("href")) ?? "")).toContain(`/premiere/${p.slug}?src=share-wa`);
+});
+
+test("the invite button tells past viewers once", async ({ page, loc }) => {
+  const student = await freshStudent(`prem-inv-${loc}-${test.info().project.name}`);
+  const past = await premiere("inv-past", -120);
+  await sql(`INSERT INTO "PremiereRsvp" ("userId", "premiereId") VALUES ($1, $2)`, [student.id, past.id]);
+  const next = await premiere("inv-next", 600);
+  const told = async () => (await sql(`SELECT 1 FROM "Notification" WHERE "dedupeKey" = $1`, [`premiere-invite:${next.id}:${student.id}`])).length;
+
+  await signInAs(page, loc, PERSONAS.teacherAe.phone);
+  await page.goto(`/${loc}/teacher/premieres`);
+  const press = () => page.locator(`section:has(a[href*="/premiere/${next.slug}"]) form:has(input[name="locale"]) button`).click();
+  await press();
+  await expect(page).toHaveURL(/invited=\d+/);
+  expect(await told()).toBe(1);
+
+  // Other tests running in parallel add past viewers to the same course, so the second count is not 0; what must
+  // hold is that this student is not told twice.
+  await page.goto(`/${loc}/teacher/premieres`);
+  await press();
+  await expect(page).toHaveURL(/invited=\d+/);
+  expect(await told()).toBe(1);
+});
+
+test("the watching-now ping is refused when signed out or before the start", async ({ page, loc }) => {
+  const soon = await premiere("seen-soon", 60);
+  const now = await premiere("seen-live", -5);
+  expect((await page.request.post(`/api/premiere/${now.id}/seen`)).status()).toBe(401);
+
+  const student = await freshStudent(`prem-seen-${loc}-${test.info().project.name}`);
+  await signInAs(page, loc, student.phone);
+  expect((await page.request.post(`/api/premiere/${soon.id}/seen`)).status()).toBe(403);
+  const live = await page.request.post(`/api/premiere/${now.id}/seen`);
+  expect(live.status()).toBe(200);
+  expect((await live.json()).watching).toBeGreaterThanOrEqual(1);
+});

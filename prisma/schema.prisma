@@ -734,8 +734,21 @@ model Premiere {
   course Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   video  VideoAsset     @relation(fields: [videoId], references: [id], onDelete: Restrict)
   rsvps  PremiereRsvp[]
+  seen   PremiereSeen[]
 
   @@index([courseId, startsAt])
+}
+
+/// "Watching now": one row per signed-in viewer per premiere, refreshed every 30 s while the player is open.
+model PremiereSeen {
+  premiereId String
+  userId     String
+  seenAt     DateTime @default(now())
+
+  premiere Premiere @relation(fields: [premiereId], references: [id], onDelete: Cascade)
+
+  @@id([premiereId, userId])
+  @@index([premiereId, seenAt])
 }
 
 /// "Remind me": one row per signed-in user per premiere; the daily cron emails these users on the day.

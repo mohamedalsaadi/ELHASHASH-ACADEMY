@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { liveAtSec, liveOffsetSec, premiereStage } from "./premiere";
+import { PROOF_MIN, inLiveWindow, liveAtSec, liveOffsetSec, premiereStage, shownCount } from "./premiere";
 
 const startsAt = new Date("2026-12-10T16:00:00Z");
 const endsAt = new Date("2026-12-10T17:00:00Z");
@@ -61,5 +61,22 @@ describe("liveAtSec", () => {
     expect(liveAtSec(s + 600_000, s, 3600)).toBe(600);
     expect(liveAtSec(s + 9_999_000, s, 3600)).toBe(3599);
     expect(liveAtSec(s + 5000, s, 0)).toBe(0);
+  });
+});
+
+describe("inLiveWindow", () => {
+  it("is open from the start until the video ends, and forever with an unknown length", () => {
+    expect(inLiveWindow(at("2026-12-10T15:59:59Z"), startsAt, 3600)).toBe(false);
+    expect(inLiveWindow(startsAt, startsAt, 3600)).toBe(true);
+    expect(inLiveWindow(at("2026-12-10T16:59:59Z"), startsAt, 3600)).toBe(true);
+    expect(inLiveWindow(endsAt, startsAt, 3600)).toBe(false);
+    expect(inLiveWindow(at("2026-12-11T16:00:00Z"), startsAt, null)).toBe(true);
+  });
+});
+
+describe("shownCount", () => {
+  it("hides numbers below the threshold", () => {
+    expect(shownCount(PROOF_MIN - 1, PROOF_MIN)).toBeNull();
+    expect(shownCount(57, PROOF_MIN)).toBe(57);
   });
 });

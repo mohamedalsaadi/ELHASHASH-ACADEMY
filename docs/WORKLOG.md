@@ -24,6 +24,23 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-24: free live stream marketing (share, next stream, real numbers)
+
+Part 1 (`math-12-free`, 23 Nov) had 57 students join and 256 page visits, but every visit came without `?src=`,
+so no one could tell which ad worked. Part 2 is Tuesday 24 Nov 21:00 Dubai (planned slug `math-12-free-2`).
+- **Share + ad tracking:** the stream page has a WhatsApp link (`?src=share-wa`) and the phone share sheet (`?src=share`).
+  The admin and teacher lists show visits and joins per source (`sourceCounts` in `src/lib/premiere-stats.ts`).
+  Ads must link with their own tag: `?src=ig-story`, `?src=ig-reel`, `?src=wa`.
+- **Next stream:** after a stream's live window, its page shows the course's next stream. Per upcoming stream, the
+  button «أبلغ من حضر البثوث السابقة» notifies (in-app + email, unsubscribe honoured) everyone who reminded, opened or
+  joined the course's earlier streams; `dedupeKey premiere-invite:<id>:<user>`, so a second press sends nothing.
+  It is a button, not automatic, so test streams email nobody.
+- **Real numbers:** an upcoming stream shows how many joined the course's earlier streams (from 20 up). During the
+  live window the player pings `POST /api/premiere/<id>/seen` every 30 s (new table `PremiereSeen`, migration
+  `20261204100000_premiere_seen`); "watching now" shows on the page from 10 up and always in the admin list.
+- Ads for Part 2 (not in git, `marketing/`): `marketing/premiere/render.mjs --kicker --part --tag p2` and reel PL2
+  (`marketing/reels/pl2/`, voice `pl2`, `score.py pl2`, `marketing/reels/new/dhirwa-reel-pl2.mp4`, -15.2 LUFS).
+
 ## 2026-11-23: the free live stream plays like a stream (locked player)
 
 During its live window (and the video length is known) a premiere hides the VdoCipher timeline and pause button

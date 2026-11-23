@@ -4,13 +4,15 @@ import { VdoUpload } from "@/components/admin/VdoUpload";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { courseZone, formatWhen } from "@/lib/format";
+import { inLiveWindow } from "@/lib/premiere";
+import { sourceCounts, watchingNow } from "@/lib/premiere-stats";
 import { panel } from "../AdminNav";
 import { field, label } from "../styles";
 import { DeleteButton, SaveButton } from "../ui";
-import { cancelPremiere, createPremiere, setPremiereReplay } from "./actions";
+import { cancelPremiere, createPremiere, invitePastViewers, setPremiereReplay } from "./actions";
 
 /** The free live streams form and list: the admin sees every course, a teacher only the courses they teach. */
-export async function PremiereManager({ locale, me, error }: { locale: string; me: { id: string; role: string }; error?: string }) {
+export async function PremiereManager({ locale, me, error, invited }: { locale: string; me: { id: string; role: string }; error?: string; invited?: string }) {
   const t = await getTranslations("premiere.admin");
   const ar = locale === "ar";
   const mine = me.role === "ADMIN" ? {} : { instructorId: me.id };
@@ -20,7 +22,7 @@ export async function PremiereManager({ locale, me, error }: { locale: string; m
       where: { course: mine },
       orderBy: { startsAt: "desc" },
       take: 50,
-      include: { course: { select: { titleAr: true, titleEn: true, grade: { select: { country: { select: { timeZone: true } } } } } }, _count: { select: { rsvps: true } } },
+      include: { course: { select: { titleAr: true, titleEn: true, grade: { select: { country: { select: { timeZone: true } } } } } }, video: { select: { durationSec: true } }, _count: { select: { rsvps: true } } },
     }),
     db.course.findMany({
       where: { published: true, ...mine },
@@ -28,6 +30,11 @@ export async function PremiereManager({ locale, me, error }: { locale: string; m
       select: { id: true, titleAr: true, titleEn: true, grade: { select: { country: { select: { timeZone: true } } } } },
     }),
   ]);
+  const now = new Date();
+  const sources = await sourceCounts(rows.map((p) => p.slug));
+  const live = new Map(
+    await Promise.all(rows.filter((p) => !p.cancelledAt && inLiveWindow(now, p.startsAt, p.video.durationSec)).map(async (p) => [p.id, await watchingNow(p.id, now)] as const)),
+  );
 
   return (
     <>
@@ -99,6 +106,11 @@ export async function PremiereManager({ locale, me, error }: { locale: string; m
         </section>
       )}
 
+      {invited != null && /^\d+$/.test(invited) && (
+        <p role="status" className="text-small font-medium">
+          {t("invited", { count: Number(invited) })}
+        </p>
+      )}
       {rows.length === 0 && <p className="text-small text-ink-muted">{t("empty")}</p>}
       {rows.map((p) => (
         <section key={p.id} className={panel}>
@@ -114,6 +126,28 @@ export async function PremiereManager({ locale, me, error }: { locale: string; m
               </span>
             </span>
           </div>
+          {(() => {
+            const src = sources.get(p.slug) ?? [];
+            const sum = (k: "visits" | "joined") => src.reduce((n, r) => n + r[k], 0);
+            return (
+              <div className="grid gap-1 text-label text-ink-muted">
+                <span className="num">
+                  {t("stats", { visits: sum("visits"), joined: sum("joined") })}
+                  {live.has(p.id) && <span className="font-semibold text-down"> · {t("watchingNow", { count: live.get(p.id)! })}</span>}
+                </span>
+                {src.length > 0 && (
+                  <span className="num">
+                    {t("bySource")}{" "}
+                    {src.map((r) => (
+                      <span key={r.src} className="me-3 inline-block">
+                        <bdi dir="ltr">{r.src}</bdi> {r.visits}/{r.joined}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
           <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-3 text-small">
             <Link href={`/premiere/${p.slug}`} className="text-pen underline underline-offset-4" dir="ltr">
               /premiere/{p.slug}
@@ -125,6 +159,13 @@ export async function PremiereManager({ locale, me, error }: { locale: string; m
                   <input type="hidden" name="replay" value={p.replay ? "off" : "on"} />
                   <SaveButton showSaved={false}>{p.replay ? t("replayOn") : t("replayOff")}</SaveButton>
                 </form>
+                {p.startsAt > now && (
+                  <form action={invitePastViewers}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <input type="hidden" name="locale" value={locale} />
+                    <SaveButton showSaved={false}>{t("invite")}</SaveButton>
+                  </form>
+                )}
                 <form>
                   <input type="hidden" name="id" value={p.id} />
                   <DeleteButton action={cancelPremiere} label={t("cancel")} />

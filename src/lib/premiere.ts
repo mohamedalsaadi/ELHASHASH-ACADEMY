@@ -23,6 +23,20 @@ export function premiereStage(p: {
   return "watch";
 }
 
+/** Real numbers are shown on the page only from these sizes: a small count reads as an empty room. */
+export const PROOF_MIN = 20;
+export const WATCHING_MIN = 10;
+/** A viewer counts as watching if their player pinged within this many seconds (it pings every 30 s). */
+export const SEEN_WINDOW_SEC = 75;
+
+/** Started and not yet over. With an unknown length the stream never ends. */
+export function inLiveWindow(now: Date, startsAt: Date, durationSec: number | null): boolean {
+  return now >= startsAt && (!durationSec || now.getTime() < startsAt.getTime() + durationSec * 1000);
+}
+
+/** The number, or null when it is below the size worth showing. */
+export const shownCount = (n: number, min: number) => (n >= min ? n : null);
+
 /** The live point in seconds, kept inside the video (and one second short of its end so the last frame is not seeked past). */
 export function liveAtSec(nowMs: number, startsAtMs: number, durationSec: number): number {
   return Math.min(Math.max((nowMs - startsAtMs) / 1000, 0), Math.max(durationSec - 1, 0));

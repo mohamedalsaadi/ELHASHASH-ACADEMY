@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { wallTime } from "@/lib/admin-input";
 import { db } from "@/lib/db";
-import { courseZone } from "@/lib/format";
+import { courseZone, formatWhen } from "@/lib/format";
+import { createNotification } from "@/lib/notify";
+import { inviteRecipients } from "@/lib/premiere-stats";
 import { assertCourse, requireStaff } from "@/lib/staff";
 
 const text = z.string().trim().min(1).max(200);
@@ -23,6 +25,7 @@ async function staffFor(premiereId: string) {
   const me = await requireStaff();
   const { courseId } = await db.premiere.findUniqueOrThrow({ where: { id: premiereId }, select: { courseId: true } });
   await assertCourse(me, courseId);
+  return me;
 }
 
 /** A free session: a VdoCipher video that starts for everyone at one moment (see lib/premiere.ts for who may watch). */
@@ -77,6 +80,35 @@ export async function setPremiereReplay(form: FormData) {
   await staffFor(id);
   await db.premiere.update({ where: { id }, data: { replay: replay === "on" } });
   done();
+}
+
+/**
+ * Tells everyone who reminded, opened or joined the course's earlier streams about this one (in-app and email,
+ * unsubscribe honoured). A button, not automatic, so a test stream emails nobody; a second press sends nothing new.
+ */
+export async function invitePastViewers(form: FormData) {
+  const id = z.string().parse(form.get("id"));
+  const locale = form.get("locale") === "en" ? "en" : "ar";
+  const me = await staffFor(id);
+  const p = await db.premiere.findUniqueOrThrow({ where: { id }, include: { course: { include: { grade: { include: { country: true } } } } } });
+  const back = `/${locale}/${me.role === "ADMIN" ? "admin" : "teacher"}/premieres`;
+  if (p.cancelledAt || p.startsAt <= new Date()) redirect(`${back}?invited=0`);
+  const zone = courseZone(p.course);
+  let sent = 0;
+  for (const userId of await inviteRecipients(p.courseId, p.startsAt)) {
+    const n = await createNotification({
+      userId,
+      kind: "LIVE_SOON",
+      titleAr: `بث مباشر مجاني جديد: ${p.titleAr}`,
+      titleEn: `New free live stream: ${p.titleEn}`,
+      bodyAr: formatWhen(p.startsAt, zone, "ar"),
+      bodyEn: formatWhen(p.startsAt, zone, "en"),
+      href: `/premiere/${p.slug}?src=invite`,
+      dedupeKey: `premiere-invite:${p.id}:${userId}`,
+    });
+    if (n) sent += 1;
+  }
+  redirect(`${back}?invited=${sent}`);
 }
 
 export async function cancelPremiere(form: FormData) {

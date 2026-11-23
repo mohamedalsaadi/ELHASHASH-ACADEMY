@@ -16,11 +16,15 @@ import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { courseZone, formatWhen } from "@/lib/format";
 import { logError } from "@/lib/log-error";
-import { liveOffsetSec, premiereStage } from "@/lib/premiere";
+import { appUrl } from "@/lib/mail";
+import { PROOF_MIN, WATCHING_MIN, inLiveWindow, liveOffsetSec, premiereStage, shownCount } from "@/lib/premiere";
+import { pastJoined } from "@/lib/premiere-stats";
 import { alternates } from "@/lib/seo";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
 import { Countdown } from "../../live/[id]/Countdown";
 import { remindMe } from "./actions";
+import { ShareRow } from "./ShareRow";
+import { WatchingNow } from "./WatchingNow";
 
 // Never cached: the playback token is created here, and only when the stage says so.
 export const dynamic = "force-dynamic";
@@ -92,7 +96,7 @@ export default async function PremierePage({
   const endsAt = p.video.durationSec ? new Date(p.startsAt.getTime() + p.video.durationSec * 1000) : null;
   const stage = premiereStage({ now, startsAt: p.startsAt, endsAt, replay: p.replay, cancelled: !!p.cancelledAt, signedIn: !!session?.user, staff });
   const started = now >= p.startsAt;
-  const liveWindow = started && (!endsAt || now < endsAt);
+  const liveWindow = inLiveWindow(now, p.startsAt, p.video.durationSec);
   const userId = session?.user?.id;
   // In its live window the recording is locked like a stream (no timeline, no pause). Staff see the normal player, or the locked one with ?live=1 to check it.
   const lock = !!p.video.durationSec && (staff ? previewLive === "1" : liveWindow);
@@ -103,6 +107,13 @@ export default async function PremierePage({
   const blurb = pick(ar, p.blurbAr, p.blurbEn) || pick(ar, course.headlineAr, course.headlineEn);
   const when = formatWhen(p.startsAt, courseZone(course), locale);
   const lessons = course.units.reduce((n, u) => n + u._count.lessons, 0);
+  // Before the start: how many joined the course's earlier streams. After the live window: the course's next stream, if set.
+  const [joinedBefore, next] = await Promise.all([
+    started ? 0 : pastJoined(course.id, p.startsAt).then((n) => shownCount(n, PROOF_MIN)),
+    started && !liveWindow
+      ? db.premiere.findFirst({ where: { courseId: course.id, cancelledAt: null, startsAt: { gt: now } }, orderBy: { startsAt: "asc" }, select: { slug: true, titleAr: true, titleEn: true, startsAt: true } })
+      : null,
+  ]);
   const reminded = userId && stage === "countdown" ? !!(await db.premiereRsvp.findUnique({ where: { userId_premiereId: { userId, premiereId: p.id } } })) : false;
 
   // One event per viewer per day; `src` says which ad or message sent them (ig-story, wa, ...).
@@ -121,6 +132,7 @@ export default async function PremierePage({
           <div className="flex flex-wrap items-center gap-2">
             {stage !== "cancelled" && (liveWindow ? <LiveBadge>{t("badge")}</LiveBadge> : started ? <StatusChip tone="neutral">{t("replay")}</StatusChip> : <LiveBadge soon>{t("soon")}</LiveBadge>)}
             <StatusChip tone="neutral">{t("free")}</StatusChip>
+            {stage === "watch" && liveWindow && userId && <WatchingNow premiereId={p.id} min={WATCHING_MIN} label={t("watching", { count: "__N__" })} />}
           </div>
           <h1 className="font-display text-display leading-[1.15] font-bold">{title}</h1>
           {blurb && <p className="max-w-[65ch] text-lede font-medium">{blurb}</p>}
@@ -133,6 +145,7 @@ export default async function PremierePage({
             <span aria-hidden="true">·</span>
             <span className="num">{when}</span>
           </div>
+          {joinedBefore && <p className="num text-small font-semibold">{t("joinedBefore", { count: joinedBefore })}</p>}
         </div>
       </header>
 
@@ -197,6 +210,27 @@ export default async function PremierePage({
         <section className="card p-6">
           <Notice>{t("over")}</Notice>
         </section>
+      )}
+
+      {next && (
+        <section className="grid gap-3 card border-down p-6">
+          <LiveBadge soon className="justify-self-start">{t("nextTitle")}</LiveBadge>
+          <h2 className="font-display text-h2 font-bold">{pick(ar, next.titleAr, next.titleEn)}</h2>
+          <p className="num text-small text-ink-muted">{formatWhen(next.startsAt, courseZone(course), locale)}</p>
+          <div>
+            <Link href={`/premiere/${next.slug}`} className="btn btn-primary">
+              {t("nextCta")}
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {stage !== "cancelled" && (
+        <ShareRow
+          url={`${appUrl()}${path}`}
+          text={`${title} · ${t("shareText", { when })}`}
+          labels={{ title: t("shareTitle"), whatsapp: t("shareWhatsapp"), more: t("shareMore") }}
+        />
       )}
 
       <section className="grid gap-3 card p-6">

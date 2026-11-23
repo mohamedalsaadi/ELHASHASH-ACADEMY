@@ -10,9 +10,9 @@ export function generateMetadata({ params }: { params: Promise<{ locale: string 
   return pageMetadata(params, "/admin/premieres", "office", { key: "nav.premieres", noindex: true });
 }
 
-export default async function AdminPremieresPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ error?: string }> }) {
+export default async function AdminPremieresPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ error?: string; invited?: string }> }) {
   const { locale } = await params;
-  const { error } = await searchParams;
+  const { error, invited } = await searchParams;
   setRequestLocale(locale);
   const me = await requireAdmin();
   const t = await getTranslations("premiere.admin");
@@ -20,7 +20,7 @@ export default async function AdminPremieresPage({ params, searchParams }: { par
   return (
     <main className="mx-auto grid max-w-5xl gap-6 px-4 py-12">
       <AdminNav current="premieres" title={t("title")} />
-      <PremiereManager locale={locale} me={me} error={error} />
+      <PremiereManager locale={locale} me={me} error={error} invited={invited} />
     </main>
   );
 }

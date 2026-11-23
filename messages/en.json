@@ -1132,6 +1132,14 @@
     "mute": "Mute",
     "unmute": "Unmute",
     "fullscreen": "Full screen",
+    "watching": "{count} watching now",
+    "joinedBefore": "{count, plural, one {# student joined the last stream} other {# students joined the last stream}}",
+    "nextTitle": "Next live stream",
+    "nextCta": "See the next stream",
+    "shareText": "Free live stream on Dhirwa, {when}",
+    "shareTitle": "Share the stream:",
+    "shareWhatsapp": "WhatsApp",
+    "shareMore": "Share",
     "admin": {
       "title": "Free live streams",
       "intro": "A recorded video streamed live-style: it starts for everyone at a set time. Anyone can open the page; only signed-in people get the video, and only after the start.",
@@ -1157,6 +1165,11 @@
       "uploading": "Uploading",
       "uploadDone": "Uploaded. If a field is still empty, fill it in and press Create live stream.",
       "uploadFailed": "The upload failed. Try again.",
+      "stats": "Visits {visits} · Joined {joined}",
+      "bySource": "By source:",
+      "watchingNow": "{count} watching now",
+      "invite": "Tell past viewers",
+      "invited": "People told just now: {count}",
       "slugTaken": "That link is already used. Pick another."
     }
   },

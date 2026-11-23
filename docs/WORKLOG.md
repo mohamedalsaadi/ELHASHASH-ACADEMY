@@ -24,6 +24,12 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-23: teachers manage free live streams for their own courses
+
+- New `/teacher/premieres` tab with the same form and list as `/admin/premieres` (shared `admin/premieres/PremiereManager.tsx`), video upload included.
+- The actions take admins or the course's own instructor (`requireStaff` + `assertCourse`, read from the database); a teacher only sees and edits their own courses' streams.
+- e2e: `premiere.spec.ts` "a teacher creates a live stream..." (own course only in the dropdown, another teacher's stream hidden).
+
 ## 2026-12-02: free premiere (pre-recorded session that starts for everyone at one time)
 
 - **What:** a marketing funnel. `/{locale}/premiere/<slug>` is public (cover, instructor, real unit and lesson counts, countdown,

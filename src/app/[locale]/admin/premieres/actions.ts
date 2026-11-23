@@ -6,21 +6,30 @@ import { z } from "zod";
 import { wallTime } from "@/lib/admin-input";
 import { db } from "@/lib/db";
 import { courseZone } from "@/lib/format";
-import { requireAdmin } from "@/lib/staff";
+import { assertCourse, requireStaff } from "@/lib/staff";
 
 const text = z.string().trim().min(1).max(200);
 const blurb = z.string().trim().max(300).transform((v) => v || null);
 
 function done() {
   revalidatePath("/[locale]/admin/premieres", "page");
+  revalidatePath("/[locale]/teacher/premieres", "page");
   revalidatePath("/[locale]/premiere/[slug]", "page");
   revalidatePath("/[locale]/courses/[slug]", "page");
 }
 
+/** The admin manages every live stream; a teacher only those of the courses they teach. */
+async function staffFor(premiereId: string) {
+  const me = await requireStaff();
+  const { courseId } = await db.premiere.findUniqueOrThrow({ where: { id: premiereId }, select: { courseId: true } });
+  await assertCourse(me, courseId);
+}
+
 /** A free session: a VdoCipher video that starts for everyone at one moment (see lib/premiere.ts for who may watch). */
 export async function createPremiere(form: FormData) {
-  await requireAdmin();
+  const me = await requireStaff();
   const locale = form.get("locale") === "en" ? "en" : "ar";
+  const back = `/${locale}/${me.role === "ADMIN" ? "admin" : "teacher"}/premieres`;
   const d = z
     .object({
       courseId: z.string().min(1),
@@ -35,10 +44,11 @@ export async function createPremiere(form: FormData) {
     })
     .parse(Object.fromEntries(form));
 
+  await assertCourse(me, d.courseId);
   const course = await db.course.findUniqueOrThrow({ where: { id: d.courseId }, include: { grade: { include: { country: true } } } });
   const startsAt = wallTime(d.startsAt, courseZone(course));
   if (!startsAt) throw new Error("Bad start time");
-  if (await db.premiere.findUnique({ where: { slug: d.slug }, select: { id: true } })) redirect(`/${locale}/admin/premieres?error=slug`);
+  if (await db.premiere.findUnique({ where: { slug: d.slug }, select: { id: true } })) redirect(`${back}?error=slug`);
 
   const video = await db.videoAsset.upsert({
     where: { provider_externalId: { provider: "VDOCIPHER", externalId: d.externalId } },
@@ -59,19 +69,19 @@ export async function createPremiere(form: FormData) {
     },
   });
   done();
-  redirect(`/${locale}/admin/premieres`);
+  redirect(back);
 }
 
 export async function setPremiereReplay(form: FormData) {
-  await requireAdmin();
   const { id, replay } = z.object({ id: z.string(), replay: z.enum(["on", "off"]) }).parse(Object.fromEntries(form));
+  await staffFor(id);
   await db.premiere.update({ where: { id }, data: { replay: replay === "on" } });
   done();
 }
 
 export async function cancelPremiere(form: FormData) {
-  await requireAdmin();
   const id = z.string().parse(form.get("id"));
+  await staffFor(id);
   await db.premiere.update({ where: { id }, data: { cancelledAt: new Date() } });
   done();
 }

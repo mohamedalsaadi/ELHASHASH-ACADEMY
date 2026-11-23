@@ -1058,6 +1058,7 @@
     "until": "Until {date}",
     "forever": "Lifetime access",
     "navLive": "Live sessions",
+    "navPremieres": "Free live streams",
     "navQuestions": "Questions",
     "navHomework": "Homework",
     "navRequests": "Requests",
@@ -1110,7 +1111,7 @@
     "title": "Free live stream",
     "badge": "LIVE",
     "soon": "LIVE SOON",
-    "free": "Free",
+    "free": "Free",
     "with": "with {name}",
     "startsIn": "Going live in",
     "joinFree": "Join free",
@@ -1152,7 +1153,8 @@
       "uploadPick": "Upload a video to Dhirwa (VdoCipher)",
       "uploading": "Uploading",
       "uploadDone": "Uploaded. Press Create live stream to attach the video.",
-      "uploadFailed": "The upload failed. Try again."
+      "uploadFailed": "The upload failed. Try again.",
+      "slugTaken": "That link is already used. Pick another."
     }
   },
   "live": {

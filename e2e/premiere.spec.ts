@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { test, expect, signInAs } from "./fixtures";
 import { courseIdOf, freshStudent, sql } from "./db";
+import { PERSONAS } from "./personas";
 
 const COURSE = "ae-12-math-e2e";
 const MINUTE = 60_000;
@@ -77,4 +78,28 @@ test("a cancelled premiere never offers the video or a countdown", async ({ page
   await expect(page.locator('[role="timer"]')).toHaveCount(0);
   await expect(page.locator('main a[href*="/signup"]')).toHaveCount(0);
   expect(await page.content()).not.toContain(p.externalId);
+});
+
+test("a teacher creates a live stream for their own course and never sees another teacher's", async ({ page, loc }) => {
+  const others = await sql<{ id: string }>(`SELECT id FROM "Course" WHERE slug = 'ae-12-math-second'`);
+  const theirs = await premiere("other", 60);
+  await sql(`UPDATE "Premiere" SET "courseId" = $1 WHERE id = $2`, [others[0].id, theirs.id]);
+
+  await signInAs(page, loc, PERSONAS.teacherAe.phone);
+  await page.goto(`/${loc}/teacher/premieres`);
+  await expect(page.locator(`a[href*="/premiere/${theirs.slug}"]`)).toHaveCount(0);
+  const options = page.locator('select[name="courseId"] option');
+  await expect(options).toHaveCount(1);
+  await expect(options.first()).toHaveAttribute("value", await courseIdOf(COURSE));
+
+  const slug = `e2e-teach-${test.info().project.name}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  await page.fill('input[name="titleAr"]', "بث المدرّس");
+  await page.fill('input[name="titleEn"]', "Teacher stream");
+  await page.fill('input[name="startsAt"]', "2030-01-01T20:00");
+  await page.fill('input[name="slug"]', slug);
+  await page.fill('input[name="externalId"]', `vdo-e2e-${randomUUID().slice(0, 8)}`);
+  await page.fill('input[name="lengthMin"]', "45");
+  await page.locator('form:has(input[name="slug"]) button').last().click();
+  await expect(page).toHaveURL(new RegExp(`/${loc}/teacher/premieres$`));
+  await expect(page.locator(`a[href*="/premiere/${slug}"]`)).toHaveCount(1);
 });

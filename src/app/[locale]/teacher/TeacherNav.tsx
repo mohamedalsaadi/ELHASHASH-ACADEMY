@@ -14,6 +14,7 @@ export async function TeacherNav({
     | "courses"
     | "subjects"
     | "live"
+    | "premieres"
     | "assignments"
     | "bank"
     | "exams"
@@ -42,6 +43,7 @@ export async function TeacherNav({
     { key: "earnings", href: "/teacher/earnings", label: t("navEarnings") },
     { key: "analytics", href: "/teacher/analytics", label: t("navAnalytics") },
     { key: "live", href: "/teacher/live", label: t("navLive") },
+    { key: "premieres", href: "/teacher/premieres", label: t("navPremieres") },
     { key: "questions", href: "/teacher/questions", label: t("navQuestions") },
     { key: "requests", href: "/teacher/requests", label: t("navRequests") },
     ...(canCoupons ? [{ key: "coupons" as const, href: "/teacher/coupons", label: t("navCoupons") }] : []),

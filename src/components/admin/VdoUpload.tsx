@@ -16,8 +16,18 @@ function report(level: "INFO" | "ERROR", message: string, file: File) {
 }
 
 /**
- * Uploads a video file to the academy's VdoCipher account and fills the lesson form's provider and id fields.
- * The teacher still presses Save. The browser sends the file straight to VdoCipher's storage, so size is not limited by our server.
+ * The form to save into once the upload ends. Saving another form on the page re-renders every lesson form
+ * (they are keyed by render time), so the one the upload started in may be gone: find its replacement by the record id.
+ */
+function liveForm(form: HTMLFormElement, recordId: string | undefined) {
+  if (form.isConnected || !recordId) return form.isConnected ? form : null;
+  return (document.querySelector(`form input[name="id"][value="${CSS.escape(recordId)}"]`) as HTMLInputElement | null)?.form ?? null;
+}
+
+/**
+ * Uploads a video file to the academy's VdoCipher account, fills the form's provider and id fields and saves the form,
+ * so the video cannot be lost by forgetting Save (teachers did, 2026-11-23). If a required field is still empty the browser
+ * asks for it and the id stays filled in. The browser sends the file straight to VdoCipher's storage, so size is not limited by our server.
  */
 export function VdoUpload({ title, labels }: { title: string; labels: Labels }) {
   const [state, setState] = useState<"idle" | "sending" | "done" | "failed">("idle");
@@ -28,6 +38,7 @@ export function VdoUpload({ title, labels }: { title: string; labels: Labels }) 
     const file = input.files?.[0];
     const form = input.closest("form");
     if (!file || !form) return;
+    const recordId = (form.elements.namedItem("id") as HTMLInputElement | null)?.value;
     setState("sending");
     setPct(0);
     try {
@@ -47,10 +58,13 @@ export function VdoUpload({ title, labels }: { title: string; labels: Labels }) 
         x.onerror = () => bad(new Error("upload network (CORS or CSP)"));
         x.send(body);
       });
+      const target = liveForm(form, recordId);
       void report("INFO", "Upload finished", file);
-      (form.elements.namedItem("provider") as HTMLSelectElement).value = "VDOCIPHER";
-      (form.elements.namedItem("externalId") as HTMLInputElement).value = t.videoId;
+      if (!target) throw new Error(`form gone ${t.videoId}`);
+      (target.elements.namedItem("provider") as HTMLSelectElement).value = "VDOCIPHER";
+      (target.elements.namedItem("externalId") as HTMLInputElement).value = t.videoId;
       setState("done");
+      target.requestSubmit();
     } catch (e) {
       // Teachers see the short message; the step and status go to the console so the owner can say what broke.
       console.error("VdoCipher upload failed:", e);

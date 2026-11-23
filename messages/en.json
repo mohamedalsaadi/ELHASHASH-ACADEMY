@@ -573,7 +573,7 @@
     "pdfPages": "Pages",
     "uploadPick": "Upload a video to Dhirwa (VdoCipher)",
     "uploading": "Uploading",
-    "uploadDone": "Uploaded. Press Save to attach the video to this lesson.",
+    "uploadDone": "Uploaded. Saving the video to this lesson now.",
     "uploadFailed": "The upload failed. Try again or tell the admin.",
     "noVideo": "No video",
     "vdocipher": "VdoCipher (protected)",
@@ -1152,7 +1152,7 @@
       "link": "Public link",
       "uploadPick": "Upload a video to Dhirwa (VdoCipher)",
       "uploading": "Uploading",
-      "uploadDone": "Uploaded. Press Create live stream to attach the video.",
+      "uploadDone": "Uploaded. If a field is still empty, fill it in and press Create live stream.",
       "uploadFailed": "The upload failed. Try again.",
       "slugTaken": "That link is already used. Pick another."
     }

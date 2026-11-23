@@ -24,6 +24,13 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-23: a finished video upload saves its lesson by itself
+
+- Sayed lost two uploads of lesson 8 (VdoCipher ids 6226a836..., b035befe...): the first because Save was never pressed after "Uploaded", the second because he added lesson 9 mid-upload, which re-renders every lesson form (keyed by render time) and wiped the upload box.
+- `VdoUpload` now submits the form itself after filling the id, and if its form was replaced it finds the new one by the hidden record `id`. Copy changed from "press Save" to "saving now".
+- e2e: `vdo-upload.spec.ts` fakes VdoCipher, saves another lesson mid-upload, and checks the video lands on the right lesson (fails on the old code).
+- Open: lesson 8 still has no video in production; the uploaded file is in VdoCipher as `b035befefb364d75a90b62259d2314fb`.
+
 ## 2026-11-23: teachers manage free live streams for their own courses
 
 - New `/teacher/premieres` tab with the same form and list as `/admin/premieres` (shared `admin/premieres/PremiereManager.tsx`), video upload included.

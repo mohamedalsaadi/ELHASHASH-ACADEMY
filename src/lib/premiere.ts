@@ -23,6 +23,11 @@ export function premiereStage(p: {
   return "watch";
 }
 
+/** The live point in seconds, kept inside the video (and one second short of its end so the last frame is not seeked past). */
+export function liveAtSec(nowMs: number, startsAtMs: number, durationSec: number): number {
+  return Math.min(Math.max((nowMs - startsAtMs) / 1000, 0), Math.max(durationSec - 1, 0));
+}
+
 /** Seconds into the video a viewer who arrives late should start at; 0 before the start or past the end. */
 export function liveOffsetSec(now: Date, startsAt: Date, durationSec: number | null): number {
   const sec = Math.floor((now.getTime() - startsAt.getTime()) / 1000);

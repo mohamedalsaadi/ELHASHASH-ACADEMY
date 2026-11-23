@@ -18,6 +18,9 @@
   --color-focus: #1D1D1F;
   --color-up: #0F6B3B;
   --color-down: #C8343E;
+  /* The video stage: dark in both themes, because a player bar sits on footage, not on the page. */
+  --color-stage: #111113;
+  --color-stage-ink: #F5F5F7;
   /* Summit gold: the summit point, and what a student reached or earned. Never text on the page ground. */
   --color-summit: #E8B04B;
   --color-marker: #E8B04B;

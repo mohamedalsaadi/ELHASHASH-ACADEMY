@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { Notice } from "@/components/OneDevice";
-import { VdoFrame } from "@/components/learning/VdoFrame";
+import { VdoFrame, type LiveMode } from "@/components/learning/VdoFrame";
 import { LiveBadge } from "@/components/learning/LiveBadge";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { Link } from "@/i18n/navigation";
@@ -53,13 +53,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 /** The protected player. Only reached when `premiereStage` said "watch"; the token is created here and nowhere else. */
-async function Player({ videoId, title, path, userId, startAt }: { videoId: string; title: string; path: string; userId: string; startAt: number }) {
+async function Player({ videoId, title, path, userId, startAt, live }: { videoId: string; title: string; path: string; userId: string; startAt: number; live?: LiveMode }) {
   const t = await getTranslations("premiere");
   const ip = clientIp(await headers());
   const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, phone: true } });
   try {
     const src = playerUrl(await getPlayback(videoId, [user.name, user.phone, ip].filter(Boolean).join(" · ")));
-    return <VdoFrame key={path} src={src} title={title} next={null} startAt={startAt || undefined} />;
+    return <VdoFrame key={path} src={src} title={title} next={null} startAt={startAt || undefined} live={live} />;
   } catch (e) {
     console.error(e);
     await logError("video.playback", e, { message: "premiere playback token failed", path, userId });
@@ -72,10 +72,10 @@ export default async function PremierePage({
   searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
-  searchParams: Promise<{ src?: string }>;
+  searchParams: Promise<{ src?: string; live?: string }>;
 }) {
   const { locale, slug } = await params;
-  const { src } = await searchParams;
+  const { src, live: previewLive } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("premiere");
   const ar = locale === "ar";
@@ -94,6 +94,11 @@ export default async function PremierePage({
   const started = now >= p.startsAt;
   const liveWindow = started && (!endsAt || now < endsAt);
   const userId = session?.user?.id;
+  // In its live window the recording is locked like a stream (no timeline, no pause). Staff see the normal player, or the locked one with ?live=1 to check it.
+  const lock = !!p.video.durationSec && (staff ? previewLive === "1" : liveWindow);
+  const live: LiveMode | undefined = lock
+    ? { startsAtMs: p.startsAt.getTime(), nowMs: now.getTime(), durationSec: p.video.durationSec!, labels: { mute: t("mute"), unmute: t("unmute"), fullscreen: t("fullscreen") } }
+    : undefined;
   const title = pick(ar, p.titleAr, p.titleEn);
   const blurb = pick(ar, p.blurbAr, p.blurbEn) || pick(ar, course.headlineAr, course.headlineEn);
   const when = formatWhen(p.startsAt, courseZone(course), locale);
@@ -180,7 +185,7 @@ export default async function PremierePage({
           <div className={`relative aspect-video overflow-hidden card ${liveWindow ? "border-down" : ""}`}>
             {liveWindow && <LiveBadge className="pointer-events-none absolute start-3 top-3 z-10">{t("badge")}</LiveBadge>}
             {p.video.provider === "VDOCIPHER" ? (
-              <Player videoId={p.video.externalId} title={title} path={path} userId={userId} startAt={liveOffsetSec(now, p.startsAt, p.video.durationSec)} />
+              <Player videoId={p.video.externalId} title={title} path={path} userId={userId} startAt={liveOffsetSec(now, p.startsAt, p.video.durationSec)} live={live} />
             ) : (
               <Notice>{t("unavailable")}</Notice>
             )}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { liveOffsetSec, premiereStage } from "./premiere";
+import { liveAtSec, liveOffsetSec, premiereStage } from "./premiere";
 
 const startsAt = new Date("2026-12-10T16:00:00Z");
 const endsAt = new Date("2026-12-10T17:00:00Z");
@@ -51,5 +51,15 @@ describe("liveOffsetSec", () => {
 
   it("restarts from the beginning once the live window has passed", () => {
     expect(liveOffsetSec(at("2026-12-10T17:30:00Z"), startsAt, 3600)).toBe(0);
+  });
+});
+
+describe("liveAtSec", () => {
+  const s = startsAt.getTime();
+  it("follows the clock and stays inside the video", () => {
+    expect(liveAtSec(s - 5000, s, 3600)).toBe(0);
+    expect(liveAtSec(s + 600_000, s, 3600)).toBe(600);
+    expect(liveAtSec(s + 9_999_000, s, 3600)).toBe(3599);
+    expect(liveAtSec(s + 5000, s, 0)).toBe(0);
   });
 });

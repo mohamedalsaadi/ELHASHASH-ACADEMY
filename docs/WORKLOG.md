@@ -24,6 +24,18 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-23: the free live stream plays like a stream (locked player)
+
+During its live window (and the video length is known) a premiere hides the VdoCipher timeline and pause button
+behind our own bar (LIVE dot, elapsed time, mute, full screen). Taps on the picture do nothing once it plays; a pause
+resumes, a speed change resets, and anything that moves the viewer more than 4 s from the live point is snapped back
+(`VdoFrame` `live` prop, `liveAtSec` in `src/lib/premiere.ts`, clock from the server's `now`, not the viewer's).
+Staff see the normal player; staff add `?live=1` to check the locked one. After the window the replay is the normal player.
+**Open, unverified on a real video:** the VdoCipher v2 docs do not confirm that a parent page can set `currentTime`,
+`muted` or `playbackRate` on the iframe, nor how tall the player's own bar is (ours is `h-14`). Test with `?live=1` on a
+real upload before the ad goes out. It is a deterrent, not a lock: a viewer can still reload, use another browser
+tab or screen-record. The LIVE wording stays honest by promising no chat or questions.
+
 ## 2026-11-23: a finished video upload saves its lesson by itself
 
 - Sayed lost two uploads of lesson 8 (VdoCipher ids 6226a836..., b035befe...): the first because Save was never pressed after "Uploaded", the second because he added lesson 9 mid-upload, which re-renders every lesson form (keyed by render time) and wiped the upload box.

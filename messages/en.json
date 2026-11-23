@@ -1129,6 +1129,9 @@
     "cancelled": "This live stream was cancelled.",
     "unavailable": "The video could not load. Try again in a moment.",
     "over": "This live stream has ended.",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "fullscreen": "Full screen",
     "admin": {
       "title": "Free live streams",
       "intro": "A recorded video streamed live-style: it starts for everyone at a set time. Anyone can open the page; only signed-in people get the video, and only after the start.",

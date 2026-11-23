@@ -79,3 +79,40 @@ export async function remindLiveToday(now = new Date()) {
   }
   return { sessions: sessions.length, sent };
 }
+
+/**
+ * The same-day reminder for a free premiere: everyone who asked for one (the "Remind me" button) gets an in-app notice
+ * and an email when the session starts in the next 24 hours. The dedupe key makes a second run send nothing.
+ */
+export async function remindPremiereToday(now = new Date()) {
+  const rows = await db.premiere.findMany({
+    where: { cancelledAt: null, startsAt: { gte: now, lt: new Date(now.getTime() + 24 * 3600_000) }, course: { published: true } },
+    select: {
+      id: true,
+      slug: true,
+      titleAr: true,
+      titleEn: true,
+      startsAt: true,
+      course: { select: { grade: { select: { country: true } } } },
+      rsvps: { select: { userId: true } },
+    },
+  });
+  let sent = 0;
+  for (const p of rows) {
+    const zone = courseZone(p.course);
+    for (const { userId } of p.rsvps) {
+      const n = await createNotification({
+        userId,
+        kind: "LIVE_SOON",
+        titleAr: `بث مباشر مجاني اليوم: ${p.titleAr}`,
+        titleEn: `Free live stream today: ${p.titleEn}`,
+        bodyAr: formatWhen(p.startsAt, zone, "ar"),
+        bodyEn: formatWhen(p.startsAt, zone, "en"),
+        href: `/premiere/${p.slug}`,
+        dedupeKey: `premiere-day:${p.id}:${userId}`,
+      });
+      if (n) sent += 1;
+    }
+  }
+  return { premieres: rows.length, sent };
+}

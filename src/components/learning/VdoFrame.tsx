@@ -10,6 +10,7 @@ const WATCHED = 0.9;
 type Video = {
   currentTime: number;
   duration: number;
+  readyState?: number;
   addEventListener: (e: string, cb: () => void) => void;
   removeEventListener?: (e: string, cb: () => void) => void;
 };
@@ -25,11 +26,14 @@ export function VdoFrame({
   title,
   onWatched,
   next,
+  startAt,
 }: {
   src: string;
   title: string;
   onWatched?: () => Promise<void>;
   next: { href: string; label: string; doneLabel: string } | null;
+  /** Seconds to jump to once the video is ready: a premiere viewer arriving late joins at the live point. */
+  startAt?: number;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   // The first token is kept for the life of this player: a page re-render (any server action on the lesson page) issues a
@@ -40,7 +44,7 @@ export function VdoFrame({
   useEffect(() => {
     watched.current = onWatched;
   });
-  const enabled = !!onWatched;
+  const enabled = !!onWatched || !!startAt;
 
   useEffect(() => {
     if (!enabled) return;
@@ -63,9 +67,21 @@ export function VdoFrame({
       const api = (window as unknown as { VdoPlayer?: Api }).VdoPlayer;
       const el = frame.current;
       if (video || !api || !el) return;
-      video = api.getInstance(el).video;
-      video.addEventListener("ended", finish);
-      video.addEventListener("timeupdate", tick);
+      const v = (video = api.getInstance(el).video);
+      v.addEventListener("ended", finish);
+      v.addEventListener("timeupdate", tick);
+      if (startAt) {
+        const seek = () => {
+          try {
+            v.currentTime = startAt;
+          } catch {
+            // The player refused the seek: the viewer simply starts from the beginning.
+          }
+          v.removeEventListener?.("loadedmetadata", seek);
+        };
+        if ((v.readyState ?? 0) >= 1) seek();
+        else v.addEventListener("loadedmetadata", seek);
+      }
     };
     const load = () => {
       if ((window as unknown as { VdoPlayer?: Api }).VdoPlayer) return attach();
@@ -80,7 +96,7 @@ export function VdoFrame({
       video?.removeEventListener?.("ended", finish);
       video?.removeEventListener?.("timeupdate", tick);
     };
-  }, [enabled]);
+  }, [enabled, startAt]);
 
   return (
     <div className="relative size-full">

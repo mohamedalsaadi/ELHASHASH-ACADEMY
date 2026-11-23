@@ -16,6 +16,8 @@ export type EventName =
   | "checkout_started"
   | "order_paid"
   | "live_joined"
+  | "premiere_viewed"
+  | "premiere_joined"
   | "course_created"
   | "course_published"
   | "invite_accepted"

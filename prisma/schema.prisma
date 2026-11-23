@@ -163,6 +163,7 @@ model User {
   receiptAcks         ReceiptAck[]            @relation("ReceiptAcks")
   statements          TeacherStatement[]
   attendance          LiveAttendance[]
+  premiereRsvps       PremiereRsvp[]
   /// Guardian consent for live lectures. Every STUDENT account is treated as a minor.
   guardianConsent     GuardianConsent? @relation("ConsentStudent")
   /// Consents this account recorded for its linked children.
@@ -326,6 +327,7 @@ model Course {
   entitlements    Entitlement[]
   reviews         CourseReview[]
   liveSessions    LiveSession[]
+  premieres       Premiere[]
   assignments     Assignment[]
   specialRequests SpecialRequest[]
   examPapers      ExamPaper[]
@@ -396,6 +398,7 @@ model VideoAsset {
   watermark   Boolean       @default(true)
   durationSec Int?
   lessons     Lesson[]
+  premieres   Premiere[]
 
   @@unique([provider, externalId])
 }
@@ -708,6 +711,43 @@ model LiveAttendance {
   liveSession LiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
 
   @@id([userId, liveSessionId])
+}
+
+/// A free, pre-recorded session that starts for everyone at startsAt: the marketing funnel for a course.
+/// Anyone may open the page; the playback token is created server-side only for a signed-in viewer once
+/// startsAt has passed (see lib/premiere.ts). The video is its own VideoAsset, never a paid lesson.
+model Premiere {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  courseId    String
+  videoId     String
+  titleAr     String
+  titleEn     String
+  blurbAr     String?
+  blurbEn     String?
+  startsAt    DateTime
+  /// Whether the video stays watchable (signed in) after it has finished.
+  replay      Boolean   @default(true)
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  course Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  video  VideoAsset     @relation(fields: [videoId], references: [id], onDelete: Restrict)
+  rsvps  PremiereRsvp[]
+
+  @@index([courseId, startsAt])
+}
+
+/// "Remind me": one row per signed-in user per premiere; the daily cron emails these users on the day.
+model PremiereRsvp {
+  userId     String
+  premiereId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  premiere Premiere @relation(fields: [premiereId], references: [id], onDelete: Cascade)
+
+  @@id([userId, premiereId])
 }
 
 /// A guardian's consent for one student. A signup declaration is unverified until the guardian

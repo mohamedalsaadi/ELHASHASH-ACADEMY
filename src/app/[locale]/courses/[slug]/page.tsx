@@ -29,6 +29,7 @@ import { lecturesIn, opensLesson, opensLive, planValue } from "@/lib/plans";
 import { aedPriceOf, cheapestSku, discountPercent, effectivePrice } from "@/lib/pricing-engine";
 import { alternates, siteUrl } from "@/lib/seo";
 import { ProgressBar } from "@/components/ui/progress";
+import { LiveBadge } from "@/components/learning/LiveBadge";
 import { StatusChip } from "@/components/ui/StatusChip";
 
 export const dynamic = "force-dynamic";
@@ -138,6 +139,7 @@ export default async function CoursePage({
   const tcommon = await getTranslations("common");
   const tp = await getTranslations("catalog.plans");
   const tl = await getTranslations("live");
+  const tpr = await getTranslations("premiere");
   const th = await getTranslations("homework");
   const te = await getTranslations("exam");
   const tt = await getTranslations("teacher");
@@ -273,6 +275,14 @@ export default async function CoursePage({
   const live = liveApprovedOn(course)
     ? course.liveSessions.filter((l) => l.startsAt.getTime() + l.durationMin * 60_000 > now.getTime())
     : [];
+  // A free session for this course: the next one that has not started, else the latest one that keeps its replay.
+  const premieres = await db.premiere.findMany({
+    where: { courseId: course.id, cancelledAt: null, OR: [{ startsAt: { gt: now } }, { replay: true }] },
+    orderBy: { startsAt: "desc" },
+    take: 5,
+    select: { slug: true, titleAr: true, titleEn: true, startsAt: true },
+  });
+  const premiere = premieres.filter((p) => p.startsAt > now).at(-1) ?? premieres[0] ?? null;
   const courseTitle = pick(ar, course.titleAr, course.titleEn);
   const courseUrl = `${siteUrl}/${locale}/courses/${course.slug}`;
   const jsonLd = {
@@ -332,6 +342,15 @@ export default async function CoursePage({
             {headline && <p className="max-w-[65ch] text-lede font-medium">{headline}</p>}
             {desc && <p className="max-w-[65ch] text-ink-muted">{desc}</p>}
           </div>
+          {premiere && (
+            <Link href={`/premiere/${premiere.slug}`} className="grid gap-1 card p-4 transition-colors duration-(--dur-fast) hover:bg-raised">
+              <span className="flex flex-wrap items-center gap-2">
+                <LiveBadge soon={premiere.startsAt > now}>{premiere.startsAt > now ? tpr("soon") : tpr("badge")}</LiveBadge>
+                <span className="font-display font-semibold">{pick(ar, premiere.titleAr, premiere.titleEn)}</span>
+              </span>
+              <span className="num text-small text-ink-muted">{formatWhen(premiere.startsAt, zone, locale)}</span>
+            </Link>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             {staff ? (
               <StatusChip tone="neutral">{session?.user?.role === "ADMIN" ? t("adminView") : t("staffView")}</StatusChip>

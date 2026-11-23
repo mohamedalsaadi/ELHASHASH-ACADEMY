@@ -82,3 +82,8 @@ html[data-intro="skip"] .as-hero-copy > * { animation: as-rise var(--dur-base) v
   .roller-item { scroll-snap-align: start; }
   .roller-item[aria-hidden="true"] { display: none; }
 }
+
+/* The pulsing dot of a LIVE badge. */
+@keyframes as-live-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); } 70%, 100% { box-shadow: 0 0 0 0.5rem transparent; } }
+.live-dot { animation: as-live-pulse 1.6s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }

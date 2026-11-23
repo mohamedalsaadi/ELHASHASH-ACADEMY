@@ -11,6 +11,7 @@ const TABS = [
   ["orders", "/admin/orders"],
   ["payouts", "/admin/payouts"],
   ["live", "/admin/live"],
+  ["premieres", "/admin/premieres"],
   ["questions", "/admin/questions"],
   ["reviews", "/admin/reviews"],
   ["requests", "/admin/requests"],

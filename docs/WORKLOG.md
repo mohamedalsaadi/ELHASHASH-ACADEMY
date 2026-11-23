@@ -24,6 +24,29 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-12-02: free premiere (pre-recorded session that starts for everyone at one time)
+
+- **What:** a marketing funnel. `/{locale}/premiere/<slug>` is public (cover, instructor, real unit and lesson counts, countdown,
+  "Join free" to `/signup?next=...`). The video is for signed-in users only and only once `startsAt` has passed.
+  Built on branch `premiere-free-session` in worktree `dhirwa-premiere-wt`, from origin/main. Not pushed.
+- **Security rule:** the VdoCipher token is created in one place, the `Player` in the page, and only when
+  `premiereStage` (`src/lib/premiere.ts`, tested) says "watch". Signed-out, before the start and cancelled never reach it.
+  Staff (admin, course instructor) preview any time. No video id is in the HTML before the start (e2e checks the HTML).
+- **Why not `LiveSession`:** that feature is a Zoom link behind a paid seat, teacher approval and guardian consent.
+  Loosening those gates for a free video would touch paid-seat code, so the premiere is its own two tables
+  (`Premiere`, `PremiereRsvp`; migration `20261202100000_premiere`, additive).
+- **Admin:** `/admin/premieres` creates a session (course, titles, start time in the course's zone, VdoCipher id or upload,
+  length in minutes, replay switch), toggles replay, cancels. The course page shows a card for the next session.
+- **Reminders:** "Remind me" stores a `PremiereRsvp`; the daily cron `live-day` (08:30 Dubai) sends an in-app notice and an
+  email (kind `LIVE_SOON`, honours unsubscribe) to those users when the session is within 24 hours.
+- **Measuring:** `premiere_viewed` and `premiere_joined` events carry `props.src` from `?src=` (for example `?src=ig-story`).
+- **Look (owner request 2026-11-23):** branded as a live stream: red pulsing LIVE badge (`LiveBadge`), "LIVE SOON" before the start, "Going live in" countdown, LIVE tag on the player and the share image. The owner asked for the "pre-recorded" line under the player to be removed (2026-11-23).
+- **Late joiners:** `VdoFrame` takes `startAt` and tries to seek to the live point. VdoCipher's v2 docs do not confirm that
+  `video.currentTime` can be set, so test it on a real video; if the player refuses, the viewer starts from 0.
+- **Open:** upload the recording, check `VDOCIPHER_API_SECRET` and `VDOCIPHER_WHITELIST_HREF=dhirwa.ae` in production, check the
+  VdoCipher plan's bandwidth, then push (owner approval). Ad pictures for the session are not built yet (use `marketing/ads-live`).
+  There is no sitemap entry and no add-to-calendar file.
+
 ## 2026-11-21: pay button stuck after a refusal; Google accounts can set a password
 
 - **Pay button:** `PayForm` set `busy` before the request and cleared it only on a network error. A refused request

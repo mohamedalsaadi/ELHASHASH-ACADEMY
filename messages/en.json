@@ -211,8 +211,8 @@
     "apply": "Apply",
     "couponRow": "Code {code}",
     "couponApplied": "Code {code} applied.",
-    "rewardRow": "Referral reward {pct}% on {course}",
-    "rewardSaved": "Your {pct}% referral reward is saved. It cannot be combined with another discount, so it applies to your next order that has none.",
+    "rewardRow": "Your {pct}% discount on {course}",
+    "rewardSaved": "Your {pct}% discount is saved. It cannot be combined with another discount, so it applies to your next order that has none.",
     "referralNoted": "Thanks. Your friend gets their reward when this order is paid.",
     "method": "Payment method",
     "pay": "Pay now",
@@ -1136,6 +1136,7 @@
     "unmute": "Unmute",
     "fullscreen": "Full screen",
     "watching": "{count} watching now",
+    "attendReward": "Join the live stream and get {pct}% off your next course.",
     "joinedBefore": "{count, plural, one {# student joined the last stream} other {# students joined the last stream}}",
     "nextTitle": "Next live stream",
     "nextCta": "See the next stream",
@@ -1173,6 +1174,9 @@
       "watchingNow": "{count} watching now",
       "invite": "Tell past viewers",
       "invited": "People told just now: {count}",
+      "attendReward": "Everyone who watches live gets {pct}% off one course (platform pays)",
+      "rewardOn": "Attendee discount {pct}%: on",
+      "rewardOff": "Attendee discount {pct}%: off",
       "slugTaken": "That link is already used. Pick another."
     }
   },

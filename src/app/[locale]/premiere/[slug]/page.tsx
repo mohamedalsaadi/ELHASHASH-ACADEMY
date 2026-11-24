@@ -18,6 +18,7 @@ import { courseZone, formatWhen } from "@/lib/format";
 import { logError } from "@/lib/log-error";
 import { appUrl } from "@/lib/mail";
 import { PROOF_MIN, WATCHING_MIN, inLiveWindow, liveOffsetSec, premiereStage, shownCount } from "@/lib/premiere";
+import { ATTEND_REWARD_PERCENT } from "@/lib/premiere-reward";
 import { pastJoined } from "@/lib/premiere-stats";
 import { alternates } from "@/lib/seo";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
@@ -146,6 +147,9 @@ export default async function PremierePage({
             <span className="num">{when}</span>
           </div>
           {joinedBefore && <p className="num text-small font-semibold">{t("joinedBefore", { count: joinedBefore })}</p>}
+          {p.attendReward && !p.cancelledAt && (!started || liveWindow) && (
+            <p className="num text-small font-semibold text-up">{t("attendReward", { pct: ATTEND_REWARD_PERCENT })}</p>
+          )}
         </div>
       </header>
 

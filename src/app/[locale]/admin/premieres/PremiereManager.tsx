@@ -5,11 +5,12 @@ import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { courseZone, formatWhen } from "@/lib/format";
 import { inLiveWindow } from "@/lib/premiere";
+import { ATTEND_REWARD_PERCENT } from "@/lib/premiere-reward";
 import { sourceCounts, watchingNow } from "@/lib/premiere-stats";
 import { panel } from "../AdminNav";
 import { field, label } from "../styles";
 import { DeleteButton, SaveButton } from "../ui";
-import { cancelPremiere, createPremiere, invitePastViewers, setPremiereReplay } from "./actions";
+import { cancelPremiere, createPremiere, invitePastViewers, setPremiereReplay, setPremiereReward } from "./actions";
 
 /** The free live streams form and list: the admin sees every course, a teacher only the courses they teach. */
 export async function PremiereManager({ locale, me, error, invited }: { locale: string; me: { id: string; role: string }; error?: string; invited?: string }) {
@@ -99,6 +100,10 @@ export async function PremiereManager({ locale, me, error, invited }: { locale: 
               <input type="checkbox" name="replay" defaultChecked className="size-4" />
               {t("replay")}
             </label>
+            <label className="flex min-h-11 items-center gap-2 text-label text-ink-muted sm:col-span-2">
+              <input type="checkbox" name="attendReward" defaultChecked className="size-4" />
+              {t("attendReward", { pct: ATTEND_REWARD_PERCENT })}
+            </label>
             <div className="sm:col-span-2">
               <SaveButton>{t("create")}</SaveButton>
             </div>
@@ -158,6 +163,11 @@ export async function PremiereManager({ locale, me, error, invited }: { locale: 
                   <input type="hidden" name="id" value={p.id} />
                   <input type="hidden" name="replay" value={p.replay ? "off" : "on"} />
                   <SaveButton showSaved={false}>{p.replay ? t("replayOn") : t("replayOff")}</SaveButton>
+                </form>
+                <form action={setPremiereReward}>
+                  <input type="hidden" name="id" value={p.id} />
+                  <input type="hidden" name="reward" value={p.attendReward ? "off" : "on"} />
+                  <SaveButton showSaved={false}>{t(p.attendReward ? "rewardOn" : "rewardOff", { pct: ATTEND_REWARD_PERCENT })}</SaveButton>
                 </form>
                 {p.startsAt > now && (
                   <form action={invitePastViewers}>

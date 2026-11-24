@@ -38,6 +38,18 @@ Git history has the rest (`git log --oneline`).
 - Not changed: a draft's unpublished exam papers stay hidden on the exams list (teachers open them from `/teacher/exams`), and the assignments and leaderboard pages are student views.
 - Test: `e2e/draft-preview.spec.ts`.
 
+## 2026-11-24: 5% off one course for watching a free stream live
+
+Owner asked that everyone who attends Part 2 live gets 5% off an upcoming course, and that the ad says so.
+- `Premiere.attendReward` (migration `20261205100000_premiere_attend_reward`, default off). Ticked by default on the
+  create form; a per-stream on/off button in `/admin/premieres` and `/teacher/premieres`.
+- The watching-now ping (`/api/premiere/<id>/seen`) mints the reward while the stream is live, for anyone signed in who
+  is not course staff: an owned `RW-P-<premiere>-<user>` coupon, 5%, platform-funded, one use, no expiry, plus one
+  notice (`lib/premiere-reward.ts`). Checkout already applies `RW-` coupons by itself (`referral-reward.ts`): one
+  course, never on top of another discount. Checkout wording now says "your discount", not "referral".
+- The stream page says «احضر البث المباشر واحصل على خصم 5% على دورتك القادمة» before and during the live window.
+- Open: whether the platform or the shared split should pay for it (platform for now, like the referral reward).
+
 ## 2026-11-24: free live stream marketing (share, next stream, real numbers)
 
 Part 1 (`math-12-free`, 23 Nov) had 57 students join and 256 page visits, but every visit came without `?src=`,

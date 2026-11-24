@@ -728,6 +728,8 @@ model Premiere {
   startsAt    DateTime
   /// Whether the video stays watchable (signed in) after it has finished.
   replay      Boolean   @default(true)
+  /// Everyone signed in who watches during the live window gets a one-course platform-funded discount (lib/premiere-reward.ts).
+  attendReward Boolean  @default(false)
   cancelledAt DateTime?
   createdAt   DateTime  @default(now())
 

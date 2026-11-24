@@ -153,3 +153,13 @@ test("the watching-now ping is refused when signed out or before the start", asy
   expect(live.status()).toBe(200);
   expect((await live.json()).watching).toBeGreaterThanOrEqual(1);
 });
+
+test("watching live earns one 5% course discount, however often the player pings", async ({ page, loc }) => {
+  const now = await premiere("reward-live", -5);
+  await sql(`UPDATE "Premiere" SET "attendReward" = true WHERE id = $1`, [now.id]);
+  const student = await freshStudent(`prem-rw-${loc}-${test.info().project.name}`);
+  await signInAs(page, loc, student.phone);
+  for (let i = 0; i < 2; i++) expect((await page.request.post(`/api/premiere/${now.id}/seen`)).status()).toBe(200);
+  const coupons = await sql<{ percentOff: number; funding: string }>(`SELECT "percentOff", funding FROM "Coupon" WHERE "ownerId" = $1`, [student.id]);
+  expect(coupons).toEqual([{ percentOff: 5, funding: "PLATFORM" }]);
+});

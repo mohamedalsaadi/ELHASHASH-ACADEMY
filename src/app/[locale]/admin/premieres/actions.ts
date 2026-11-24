@@ -69,6 +69,7 @@ export async function createPremiere(form: FormData) {
       blurbEn: d.blurbEn,
       startsAt,
       replay: form.get("replay") === "on",
+      attendReward: form.get("attendReward") === "on",
     },
   });
   done();
@@ -79,6 +80,13 @@ export async function setPremiereReplay(form: FormData) {
   const { id, replay } = z.object({ id: z.string(), replay: z.enum(["on", "off"]) }).parse(Object.fromEntries(form));
   await staffFor(id);
   await db.premiere.update({ where: { id }, data: { replay: replay === "on" } });
+  done();
+}
+
+export async function setPremiereReward(form: FormData) {
+  const { id, reward } = z.object({ id: z.string(), reward: z.enum(["on", "off"]) }).parse(Object.fromEntries(form));
+  await staffFor(id);
+  await db.premiere.update({ where: { id }, data: { attendReward: reward === "on" } });
   done();
 }
 

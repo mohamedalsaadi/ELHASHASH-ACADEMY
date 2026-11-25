@@ -12,7 +12,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { LiveRow } from "@/components/learning/LiveRow";
 import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
-import { grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
+import { courseVisibleTo, grantsFor, isCourseStaff, onSale } from "@/lib/catalog";
 import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
 import { courseZone, formatDate, formatMoney, formatWhen, minorPerUnit } from "@/lib/format";
@@ -35,10 +35,11 @@ import { StatusChip } from "@/components/ui/StatusChip";
 export const dynamic = "force-dynamic";
 
 /** generateMetadata and the page share one query per request instead of hitting the database twice. */
-const getCourse = cache((slug: string) => {
+const getCourse = cache((slug: string, viewerId?: string, role?: string) => {
   const at = new Date();
-  return db.course.findUnique({
-    where: { slug, published: true },
+  // A draft opens for an admin and for its own teacher, so they can check it before it goes live.
+  return db.course.findFirst({
+    where: { slug, ...courseVisibleTo(viewerId && role ? { id: viewerId, role } : undefined) },
     include: {
       grade: { include: { country: true } },
       liveSessions: { where: { cancelledAt: null, startsAt: { gt: new Date(at.getTime() - 5 * 3_600_000) } }, orderBy: { startsAt: "asc" }, include: { sku: true } },
@@ -54,13 +55,15 @@ const getCourse = cache((slug: string) => {
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
-  const course = await getCourse(slug);
+  const viewer = (await auth())?.user;
+  const course = await getCourse(slug, viewer?.id, viewer?.role);
   if (!course) return {};
   const title = pick(locale === "ar", course.titleAr, course.titleEn);
   const description = pick(locale === "ar", course.descAr, course.descEn) || undefined;
   return {
     title,
     description,
+    ...(course.published ? {} : { robots: { index: false, follow: false } }),
     alternates: alternates(locale, `/courses/${slug}`),
     openGraph: { title, description, type: "article" },
   };
@@ -149,7 +152,8 @@ export default async function CoursePage({
   const Arrow = ar ? ArrowLeft : ArrowRight;
   const now = new Date();
 
-  const course = await getCourse(slug);
+  const session = await auth();
+  const course = await getCourse(slug, session?.user?.id, session?.user?.role);
   if (!course) notFound();
 
   // The market the course is sold in. Its local currency is the display; AED is the charge.
@@ -160,9 +164,9 @@ export default async function CoursePage({
       : null;
   const fxRate = fxRow ? Number(fxRow.aedPerUnit) : null;
 
-  const session = await auth();
-  void logEventLater({ name: "course_viewed", userId: session?.user?.id, courseId: course.id, dedupeScope: course.id });
   const staff = isCourseStaff(session?.user, course);
+  // A draft is checked by its staff, so it is not counted as a view in the funnel.
+  if (course.published) void logEventLater({ name: "course_viewed", userId: session?.user?.id, courseId: course.id, dedupeScope: course.id });
   const allGrants = await grantsFor(session?.user?.id, course.id, now, { includeEnded: true });
   const active = allGrants.filter((g) => !g.endsAt || g.endsAt > now);
 
@@ -321,6 +325,11 @@ export default async function CoursePage({
   return (
     <main className="mx-auto grid max-w-4xl gap-12 px-4 py-10 md:py-16">
       <JsonLd data={jsonLd} />
+      {!course.published && (
+        <p role="status" className="card border-pen p-4 text-small font-medium">
+          {t("draftPreview")}
+        </p>
+      )}
 
       <header className="grid gap-6">
         {course.coverKey && (

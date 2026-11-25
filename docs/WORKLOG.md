@@ -24,6 +24,12 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-25: admin and teachers can preview unpublished courses
+- The course page, the lessons and the exams list now use one rule, `courseVisibleTo` in `src/lib/catalog.ts`: published for everyone, drafts also for an admin and for the course's own teacher. Anyone else still gets not-found.
+- A draft shows a «معاينة مسودة» banner, is `noindex`, and is not counted as a `course_viewed` event. The admin course editor's link reads «Preview course page (draft)» while the course is unpublished.
+- Not changed: a draft's unpublished exam papers stay hidden on the exams list (teachers open them from `/teacher/exams`), and the assignments and leaderboard pages are student views.
+- Test: `e2e/draft-preview.spec.ts`.
+
 ## 2026-11-24: free live stream marketing (share, next stream, real numbers)
 
 Part 1 (`math-12-free`, 23 Nov) had 57 students join and 256 page visits, but every visit came without `?src=`,

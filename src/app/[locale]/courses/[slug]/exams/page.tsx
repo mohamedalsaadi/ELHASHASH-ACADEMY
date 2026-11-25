@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { courseVisibleTo } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { startExam } from "./actions";
 
@@ -24,8 +25,8 @@ export default async function CourseExamsPage({ params }: { params: Promise<{ lo
   const t = await getTranslations("exam");
   const ar = locale === "ar";
 
-  const course = await db.course.findUnique({
-    where: { slug, published: true },
+  const course = await db.course.findFirst({
+    where: { slug, ...courseVisibleTo(session.user) },
     select: {
       id: true,
       titleAr: true,

@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { MINOR_AGE } from "@/lib/age";
 import { pick } from "@/lib/content";
 import { db } from "@/lib/db";
@@ -56,6 +57,12 @@ export async function learnerFor(viewer: { id: string; role: string } | undefine
 /** Admins and the course's own teacher see a course the way its owner does. One rule for every screen. */
 export function isCourseStaff(user: { id: string; role: string } | undefined, course: { instructorId: string }): boolean {
   return !!user && (user.role === "ADMIN" || course.instructorId === user.id);
+}
+
+/** Which courses a viewer may open: published ones for everyone, and drafts too for an admin and for the course's own teacher. */
+export function courseVisibleTo(user: { id: string; role: string } | undefined): Prisma.CourseWhereInput {
+  if (user?.role === "ADMIN") return {};
+  return user ? { OR: [{ published: true }, { instructorId: user.id }] } : { published: true };
 }
 
 /** A lesson as the plan rules see it. */

@@ -91,7 +91,7 @@ export default async function AdminCoursePage({ params, searchParams }: { params
           {t("back")}
         </Link>
         <Link href={`/courses/${course.slug}`} className="link-tap text-small text-ink-muted hover:text-ink">
-          {t("viewPage")}
+          {t(course.published ? "viewPage" : "previewPage")}
         </Link>
       </div>
 

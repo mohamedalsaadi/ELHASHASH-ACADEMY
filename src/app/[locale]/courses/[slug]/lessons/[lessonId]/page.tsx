@@ -10,7 +10,7 @@ import { Notice, oneDevice, secondaryButton } from "@/components/OneDevice";
 import { LessonRow } from "@/components/learning/LessonRow";
 import { Link } from "@/i18n/navigation";
 import { logEventLater } from "@/lib/analytics";
-import { canAsk, grantsFor, isCourseStaff, learnerFor, lessonScope } from "@/lib/catalog";
+import { canAsk, courseVisibleTo, grantsFor, isCourseStaff, learnerFor, lessonScope } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { DEVICE_COOKIE } from "@/lib/device";
 import { courseZone, formatDate } from "@/lib/format";
@@ -111,7 +111,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
   const now = new Date();
   const early = await auth();
   // The owner and the course's teacher can open a draft course's lessons; everyone else only published ones.
-  const visible = early?.user?.role === "ADMIN" ? {} : early?.user ? { OR: [{ published: true }, { instructorId: early.user.id }] } : { published: true };
+  const visible = courseVisibleTo(early?.user);
 
   const [lesson, outline] = await Promise.all([
     db.lesson.findFirst({

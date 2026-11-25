@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { discardPages } from "@/app/[locale]/admin/actions";
 import { eachPdfPage } from "@/components/pdf-pages";
 import { refusalReason } from "@/components/upload-reason";
+import { liveForm, reportUpload } from "./live-form";
 
 type Labels = { pick: string; sending: string; done: string; failed: string; pages: string };
 
@@ -31,6 +32,8 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
   }, []);
 
   async function convert(file: File) {
+    const form = box.current?.closest("form") ?? null;
+    const recordId = (form?.elements.namedItem("id") as HTMLInputElement | null)?.value;
     setState("sending");
     setDetail("");
     let stage = "load";
@@ -49,13 +52,25 @@ export function PdfUpload({ courseId, defaultPages, savedKind, labels }: { cours
         },
         (s) => (stage = s),
       );
+      // The pages belong to no lesson until it is saved, and teachers opened the lesson without pressing Save and saw
+      // "file not available" (2026-11-24). So the lesson saves itself, as the video upload does. The form may have been
+      // replaced while the pages uploaded, so the field is set on the live form, not through state.
+      stage = "save";
+      const target = form ? liveForm(form, recordId) : null;
+      const field = target?.elements.namedItem("pdfPages");
+      if (!target || !(field instanceof HTMLInputElement)) throw new Error("form gone");
+      field.value = JSON.stringify(uploaded);
       setPages(uploaded);
       setState("done");
+      void reportUpload("client.pdf_upload", "INFO", `Uploaded ${uploaded.length} pages`, file);
+      target.requestSubmit();
     } catch (e) {
       // The stage and reason are shown as they are: a teacher can read them out, and the generic message hid the cause.
       // The Blob library reports every refusal as "Failed to retrieve the client token", so the server is asked for the real one.
       const why = await refusalReason("lessonpage", courseId);
-      setDetail(`${stage}: ${why ?? (e instanceof Error ? e.message : String(e))}`);
+      const reason = `${stage}: ${why ?? (e instanceof Error ? e.message : String(e))}`;
+      void reportUpload("client.pdf_upload", "ERROR", reason, file);
+      setDetail(reason);
       setState("failed");
       // Pages already stored for this attempt are not on any lesson yet: remove them.
       if (uploaded.length) void discardPages(courseId, uploaded).catch(() => {});

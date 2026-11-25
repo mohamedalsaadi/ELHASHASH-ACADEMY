@@ -7,8 +7,8 @@ import { logEvent } from "@/lib/site-log";
 
 export const dynamic = "force-dynamic";
 
-/** Written by signed-in staff only (the admin video uploader). */
-const STAFF_SOURCES = new Set(["client.vdo_upload"]);
+/** Written by signed-in staff only (the admin video and PDF uploaders). */
+const STAFF_SOURCES = new Set(["client.vdo_upload", "client.pdf_upload"]);
 /** Anyone's browser may report these: crashes and failed fetches on the public pages. */
 const PUBLIC_SOURCES = new Set(["client.error", "client.unhandled", "client.checkout", "client.upload"]);
 

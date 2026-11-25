@@ -1,28 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { liveForm, reportUpload } from "./live-form";
 
 type Ticket = { videoId: string; uploadLink: string; fields: Record<string, string> };
 type Labels = { pick: string; sending: string; done: string; failed: string };
 
-/** Tells the site log what happened in the browser; the log never blocks the upload. */
-function report(level: "INFO" | "ERROR", message: string, file: File) {
-  return fetch("/api/log", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ source: "client.vdo_upload", level, message, path: location.pathname, meta: { size: file.size, type: file.type } }),
-    keepalive: true,
-  }).catch(() => {});
-}
-
-/**
- * The form to save into once the upload ends. Saving another form on the page re-renders every lesson form
- * (they are keyed by render time), so the one the upload started in may be gone: find its replacement by the record id.
- */
-function liveForm(form: HTMLFormElement, recordId: string | undefined) {
-  if (form.isConnected || !recordId) return form.isConnected ? form : null;
-  return (document.querySelector(`form input[name="id"][value="${CSS.escape(recordId)}"]`) as HTMLInputElement | null)?.form ?? null;
-}
+const report = (level: "INFO" | "ERROR", message: string, file: File) => reportUpload("client.vdo_upload", level, message, file);
 
 /**
  * Uploads a video file to the academy's VdoCipher account, fills the form's provider and id fields and saves the form,

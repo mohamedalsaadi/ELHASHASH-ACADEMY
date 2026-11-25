@@ -24,6 +24,14 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-25: lesson PDFs save themselves after upload (teacher Helmy Yasser, ae-12-biology)
+- What the log showed: his three video uploads all finished and saved (lessons 1 to 3, no error in `SiteLog`). The PDF lesson "ملف الشرح" has 0 pages saved: the pages were never attached, so the lesson page said "ملف هذا الدرس غير متاح للعرض بعد. تواصل مع الدعم". The old PDF flow only attached the pages when the teacher pressed Save afterwards (the video upload was fixed the same way on 2026-11-23).
+- Fix: `PdfUpload` now sets the page list on the live lesson form and submits it when the upload ends, like `VdoUpload`. Both share `src/components/admin/live-form.ts`. PDF upload results (and failures with the stage) are now written to `SiteLog` as `client.pdf_upload`.
+- A staff member who opens a PDF lesson with no pages now gets a message saying nothing is saved yet, not the "contact support" one.
+- The upload message for videos says processing can take a few minutes. The third video's "error" is not in the log; the likeliest cause is the player opened while VdoCipher was still processing the file.
+- Test: `e2e/pdf-autosave.spec.ts` (the Blob endpoints are answered by the test).
+- Open: the 20:17 UTC error on his edit page was "Discount is above your 20% limit" shown as a generic server error. The price form should say so in words.
+
 ## 2026-11-25: admin and teachers can preview unpublished courses
 - The course page, the lessons and the exams list now use one rule, `courseVisibleTo` in `src/lib/catalog.ts`: published for everyone, drafts also for an admin and for the course's own teacher. Anyone else still gets not-found.
 - A draft shows a «معاينة مسودة» banner, is `noindex`, and is not counted as a `course_viewed` event. The admin course editor's link reads «Preview course page (draft)» while the course is unpublished.

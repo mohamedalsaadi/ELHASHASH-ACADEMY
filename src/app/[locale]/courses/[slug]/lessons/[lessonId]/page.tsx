@@ -265,7 +265,7 @@ export default async function LessonPage({ params }: { params: Promise<{ locale:
             ) : lesson.pdfPages.length > 0 ? (
               <PdfPages lessonId={lesson.id} count={lesson.pdfPages.length} mark={pdfMark} title={title} />
             ) : (
-              <Notice>{tp("pdfUnavailable")}</Notice>
+              <Notice>{tp(staff ? "pdfNotSaved" : "pdfUnavailable")}</Notice>
             )
           ) : video?.provider === "YOUTUBE" ? (
             <iframe

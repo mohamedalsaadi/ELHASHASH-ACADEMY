@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { cookies } from "next/headers";
-import { logEvent } from "@/lib/analytics";
+import { currentSrc, logEvent } from "@/lib/analytics";
 import { logEvent as siteLog } from "@/lib/site-log";
 import { logWarn } from "@/lib/log-error";
 import bcrypt from "bcryptjs";
@@ -186,7 +186,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
         update: {},
       });
-      await logEvent({ name: "signup_completed", userId: created.id, props: { role: "STUDENT", method: google ? "google" : "microsoft" } });
+      await logEvent({ name: "signup_completed", userId: created.id, props: { role: "STUDENT", method: google ? "google" : "microsoft", src: await currentSrc() } });
       user.id = created.id;
       user.role = created.role;
       user.pwdAt = created.passwordChangedAt?.getTime() ?? 0;

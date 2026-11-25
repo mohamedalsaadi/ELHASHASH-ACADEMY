@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { logEvent } from "@/lib/analytics";
+import { currentSrc, logEvent } from "@/lib/analytics";
 import { priceSkus } from "@/lib/checkout";
 import { isMinor } from "@/lib/age";
 import { profileIncomplete } from "@/lib/profile";
@@ -259,7 +259,7 @@ export async function POST(req: Request) {
     name: "checkout_started",
     userId: user.id,
     courseId: skus.get(priced.lines[0]?.skuId ?? "")?.courseId ?? null,
-    props: { gateway, currency: priced.currency, lines: priced.lines.length, amount: payable },
+    props: { gateway, currency: priced.currency, lines: priced.lines.length, amount: payable, src: await currentSrc() },
   });
 
   const origin = process.env.APP_URL || new URL(req.url).origin;

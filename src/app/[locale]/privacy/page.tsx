@@ -58,7 +58,9 @@ const ar: Section[] = [
     h: "ملفات الكوكيز",
     body: (
       <p>
-        نستخدم كوكيز ضرورية فقط: جلسة تسجيل الدخول، وكوكي الجهاز لتطبيق قاعدة الجهاز الواحد، وكوكي اختيار الدولة، وكوكي اللغة الذي يحفظ لغة الواجهة.
+        نستخدم كوكيز ضرورية: جلسة تسجيل الدخول، وكوكي الجهاز لتطبيق قاعدة الجهاز الواحد، وكوكي اختيار الدولة، وكوكي اللغة الذي يحفظ لغة الواجهة.
+        ونستخدم كوكي واحدًا من موقعنا يحفظ علامة الرابط الذي وصلت منه (مثل منشور إنستغرام أو مشاركة واتساب) لمدة 30 يومًا،
+        لنعرف أي منشوراتنا يأتي بالطلاب. يحمل هذه العلامة القصيرة فقط، ولا يُرسَل إلى أي شركة أخرى.
         ونسجّل أحداث استخدام داخلية في قاعدتنا (مثل فتح درس أو إتمام شراء) لقياس ما يعمل وما لا يعمل، مربوطة بحسابك
         أو بمعرّف جهازك. لا نستخدم أي متتبع إعلاني أو خدمة تحليلات من طرف ثالث، ولا نبيع هذه البيانات. وإذا أضفنا
         متتبعًا خارجيًا لاحقًا سنضيف بانر موافقة ونحدّث هذه السياسة.
@@ -171,8 +173,10 @@ const en: Section[] = [
     h: "Cookies",
     body: (
       <p>
-        We use strictly necessary cookies only: the sign-in session, the device cookie for the one-device rule, the
-        country you picked, and the language cookie that remembers the language of the pages. We also record first-party usage events in our own database (for example a lesson opened or a
+        We use strictly necessary cookies: the sign-in session, the device cookie for the one-device rule, the
+        country you picked, and the language cookie that remembers the language of the pages. One more first-party cookie
+        keeps the tag of the link you arrived from (for example an Instagram post or a WhatsApp share) for 30 days, so we
+        can tell which of our posts brings students. It holds only that short tag and is never sent to another company. We also record first-party usage events in our own database (for example a lesson opened or a
         purchase completed) to see what works, tied to your account or your device id. There is no advertising tracker and
         no third-party analytics service, and we do not sell this data. If an external tracker is added later, we will add
         a consent banner and update this policy.

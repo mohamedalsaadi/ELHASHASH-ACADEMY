@@ -7,6 +7,7 @@ import { after } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { DEVICE_COOKIE } from "@/lib/device";
+import { SRC_COOKIE, withSrc } from "@/lib/src-tag";
 
 export type EventName =
   | "signup_viewed"
@@ -70,12 +71,54 @@ export async function logEvent(input: EventInput) {
  */
 export async function logEventLater(input: EventInput) {
   let sessionId: string | null = null;
+  let src: string | null = null;
   try {
-    sessionId = (await cookies()).get(DEVICE_COOKIE)?.value ?? null;
+    const jar = await cookies();
+    sessionId = jar.get(DEVICE_COOKIE)?.value ?? null;
+    src = jar.get(SRC_COOKIE)?.value ?? null;
   } catch {
     // Outside a request scope; the event still records userId and course.
   }
-  after(() => logEvent({ ...input, sessionId }));
+  after(() => logEvent({ ...input, sessionId, props: withSrc(input.props, src) }));
+}
+
+/**
+ * The visitor's latest ad tag (lib/src-tag.ts). Call it only where the visitor's own browser made the request
+ * (sign-up, checkout), never in a webhook or an admin action, where the cookie belongs to someone else.
+ */
+export async function currentSrc(): Promise<string | null> {
+  try {
+    return (await cookies()).get(SRC_COOKIE)?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export type SourceFunnelRow = { src: string; opened: number; signedUp: number; paid: number };
+
+/**
+ * Per ad tag: people who opened the sign-up page, accounts made, and of those accounts how many have a paid order
+ * with money in it (free-code orders do not count). A person counts under the tag they signed up with.
+ */
+export async function sourceFunnel(): Promise<SourceFunnelRow[]> {
+  const [opened, accounts] = await Promise.all([
+    db.$queryRaw<{ src: string; n: bigint }[]>`
+      SELECT COALESCE(NULLIF(props->>'src', ''), 'untagged') AS src, count(DISTINCT COALESCE("userId", "sessionId")) AS n
+        FROM "AnalyticsEvent" WHERE name = 'signup_viewed' GROUP BY 1`,
+    db.$queryRaw<{ src: string; n: bigint; paid: bigint }[]>`
+      WITH s AS (
+        SELECT DISTINCT ON ("userId") "userId", COALESCE(NULLIF(props->>'src', ''), 'untagged') AS src
+          FROM "AnalyticsEvent" WHERE name = 'signup_completed' AND "userId" IS NOT NULL
+         ORDER BY "userId", "createdAt")
+      SELECT src, count(*) AS n,
+             count(*) FILTER (WHERE EXISTS (SELECT 1 FROM "Order" o WHERE o."userId" = s."userId" AND o.status = 'PAID' AND o.total > 0)) AS paid
+        FROM s GROUP BY 1`,
+  ]);
+  const rows = new Map<string, SourceFunnelRow>();
+  const row = (src: string) => rows.get(src) ?? rows.set(src, { src, opened: 0, signedUp: 0, paid: 0 }).get(src)!;
+  for (const r of opened) row(r.src).opened = Number(r.n);
+  for (const r of accounts) Object.assign(row(r.src), { signedUp: Number(r.n), paid: Number(r.paid) });
+  return [...rows.values()].sort((a, b) => b.signedUp - a.signedUp || b.opened - a.opened);
 }
 
 export function dedupeKey(name: EventName, actor: string | null, scope: string) {

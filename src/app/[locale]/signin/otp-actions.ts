@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { signIn } from "@/auth";
 import { Prisma } from "@/generated/prisma/client";
-import { logEvent } from "@/lib/analytics";
+import { currentSrc, logEvent } from "@/lib/analytics";
 import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { clientIp } from "@/lib/client-ip";
@@ -184,7 +184,7 @@ export async function otpStep(_: OtpState, form: FormData): Promise<OtpState> {
           },
         });
       }
-      await logEvent({ name: "signup_completed", userId: created.id, props: { role: parent ? "PARENT" : "STUDENT", method: "whatsapp" } });
+      await logEvent({ name: "signup_completed", userId: created.id, props: { role: parent ? "PARENT" : "STUDENT", method: "whatsapp", src: await currentSrc() } });
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return { ...here, error: "taken" };

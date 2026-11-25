@@ -24,6 +24,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (!staff && !live) return NextResponse.json({ error: "not live" }, { status: 403 });
   const userId = session.user.id;
   await db.premiereSeen.upsert({ where: { premiereId_userId: { premiereId: id, userId } }, create: { premiereId: id, userId, seenAt: now }, update: { seenAt: now } });
-  if (p.attendReward && live && !staff) await grantAttendReward(id, userId);
+  if (p.attendReward && live && !staff) {
+    const streamEnd = p.video.durationSec ? new Date(p.startsAt.getTime() + p.video.durationSec * 1000) : now;
+    await grantAttendReward(id, userId, streamEnd);
+  }
   return NextResponse.json({ watching: await watchingNow(id, now) });
 }

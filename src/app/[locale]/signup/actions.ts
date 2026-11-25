@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import { headers } from "next/headers";
 import { signIn } from "@/auth";
-import { logEvent } from "@/lib/analytics";
+import { currentSrc, logEvent } from "@/lib/analytics";
 import { ageOn, MINOR_AGE, parseBirthDate } from "@/lib/age";
 import { guardianViaWhatsApp, sendGuardianRequest } from "@/lib/guardian";
 import { maskContacts } from "@/lib/contact-guard";
@@ -172,7 +172,7 @@ export async function signUp(_: SignUpState, form: FormData): Promise<SignUpStat
     throw e;
   }
   await recordAttempt(key);
-  await logEvent({ name: "signup_completed", userId, props: { role: isParent ? "PARENT" : "STUDENT", method: "password" } });
+  await logEvent({ name: "signup_completed", userId, props: { role: isParent ? "PARENT" : "STUDENT", method: "password", src: await currentSrc() } });
 
   const token = await issueToken(userId, "VERIFY", VERIFY_TTL);
   const ar = locale === "ar";

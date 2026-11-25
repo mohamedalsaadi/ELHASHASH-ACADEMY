@@ -18,7 +18,7 @@ import { courseZone, formatWhen } from "@/lib/format";
 import { logError } from "@/lib/log-error";
 import { appUrl } from "@/lib/mail";
 import { PROOF_MIN, WATCHING_MIN, inLiveWindow, liveOffsetSec, premiereStage, shownCount } from "@/lib/premiere";
-import { ATTEND_REWARD_PERCENT } from "@/lib/premiere-reward";
+import { ATTEND_REWARD_HOURS, ATTEND_REWARD_PERCENT, attendOfferEnds } from "@/lib/premiere-reward";
 import { pastJoined } from "@/lib/premiere-stats";
 import { alternates } from "@/lib/seo";
 import { getPlayback, playerUrl } from "@/lib/vdocipher";
@@ -116,6 +116,8 @@ export default async function PremierePage({
       : null,
   ]);
   const reminded = userId && stage === "countdown" ? !!(await db.premiereRsvp.findUnique({ where: { userId_premiereId: { userId, premiereId: p.id } } })) : false;
+  // The attendee's discount from this stream, shown with its clock while it can still be used.
+  const offerEnds = userId && started && !staff ? await attendOfferEnds(p.id, userId, now) : null;
 
   // One event per viewer per day; `src` says which ad or message sent them (ig-story, wa, ...).
   void logEventLater({ name: "premiere_viewed", userId, courseId: course.id, props: { slug: p.slug, stage, src: (src ?? "").slice(0, 40) }, dedupeScope: p.id });
@@ -133,7 +135,7 @@ export default async function PremierePage({
           <div className="flex flex-wrap items-center gap-2">
             {stage !== "cancelled" && (liveWindow ? <LiveBadge>{t("badge")}</LiveBadge> : started ? <StatusChip tone="neutral">{t("replay")}</StatusChip> : <LiveBadge soon>{t("soon")}</LiveBadge>)}
             <StatusChip tone="neutral">{t("free")}</StatusChip>
-            {stage === "watch" && liveWindow && userId && <WatchingNow premiereId={p.id} min={WATCHING_MIN} label={t("watching", { count: "__N__" })} />}
+            {stage === "watch" && liveWindow && userId && <WatchingNow premiereId={p.id} min={WATCHING_MIN} label={t("watching", { count: "__N__" })} endsAt={endsAt?.toISOString()} />}
           </div>
           <h1 className="font-display text-display leading-[1.15] font-bold">{title}</h1>
           {blurb && <p className="max-w-[65ch] text-lede font-medium">{blurb}</p>}
@@ -148,7 +150,7 @@ export default async function PremierePage({
           </div>
           {joinedBefore && <p className="num text-small font-semibold">{t("joinedBefore", { count: joinedBefore })}</p>}
           {p.attendReward && !p.cancelledAt && (!started || liveWindow) && (
-            <p className="num text-small font-semibold text-up">{t("attendReward", { pct: ATTEND_REWARD_PERCENT })}</p>
+            <p className="num text-small font-semibold text-up">{t("attendReward", { pct: ATTEND_REWARD_PERCENT, hours: ATTEND_REWARD_HOURS })}</p>
           )}
         </div>
       </header>
@@ -235,6 +237,18 @@ export default async function PremierePage({
           text={`${title} · ${t("shareText", { when })}`}
           labels={{ title: t("shareTitle"), whatsapp: t("shareWhatsapp"), more: t("shareMore") }}
         />
+      )}
+
+      {offerEnds && (
+        <section className="grid justify-items-center gap-3 card border-up p-6 text-center">
+          <h2 className="font-display text-h2 font-bold">{t("offerTitle", { pct: ATTEND_REWARD_PERCENT })}</h2>
+          <p className="text-small text-ink-muted">{t("offerEndsIn")}</p>
+          <Countdown at={offerEnds.toISOString()} locale={locale} />
+          <p className="max-w-[50ch] text-small text-ink-muted">{t("offerHow")}</p>
+          <Link href={`/courses/${course.slug}`} className="btn btn-primary">
+            {t("offerCta")}
+          </Link>
+        </section>
       )}
 
       <section className="grid gap-3 card p-6">

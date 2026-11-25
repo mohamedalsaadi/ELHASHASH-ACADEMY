@@ -2,6 +2,7 @@ import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
 import { DEVICE_COOKIE } from "./lib/device";
+import { SRC_COOKIE, SRC_COOKIE_DAYS, srcTag } from "./lib/src-tag";
 
 const intl = createMiddleware(routing);
 
@@ -89,6 +90,17 @@ export default function middleware(req: NextRequest) {
       : intl(withCsp);
   // The policy goes on the document; /api and static files are outside the matcher.
   res.headers.set("Content-Security-Policy", csp);
+  // The latest ad or share tag, so sign-up and checkout events can say which link brought the person (lib/src-tag.ts).
+  const tag = srcTag(req.nextUrl.searchParams);
+  if (tag) {
+    res.cookies.set(SRC_COOKIE, tag, {
+      httpOnly: true,
+      secure: req.nextUrl.protocol === "https:",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * SRC_COOKIE_DAYS,
+    });
+  }
   if (!req.cookies.has(DEVICE_COOKIE)) {
     res.cookies.set(DEVICE_COOKIE, crypto.randomUUID(), {
       httpOnly: true,

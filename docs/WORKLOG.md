@@ -24,6 +24,28 @@ Git history has the rest (`git log --oneline`).
   - The old plan ideas (monthly plan, "ways to learn") are hidden, not deleted.
   - Migrations stay additive. Keep the `2027-full-release` tag (`f0bf453`).
 
+## 2026-11-25: end-of-stream offer and link-source tracking
+
+From the 25 Nov business review: stream 1 brought 48 new accounts in one night and no paid order since, and the
+$45 Instagram ad cannot be tied to sign-ups because only the stream page read `?src=`. Built on the unshipped
+attendee discount (entry below, cherry-picked into branch `stream-offer-src`).
+- **Offer with a deadline:** the attendee's `RW-P-` coupon now gets `endsAt` = stream end + 48 h
+  (`ATTEND_REWARD_HOURS`, `lib/premiere-reward.ts`); checkout already refuses an expired coupon (`couponState`).
+  The stream page shows a card «خصمك 5% لحضور البث» with a live countdown and a button to the course while the
+  discount is usable (`attendOfferEnds`). The page refreshes itself once when the live window closes (`WatchingNow`
+  `endsAt`), never mid-stream, because a refresh would reload the player. Notice, page and admin wording say 48 hours.
+- **Source tag from any page:** the middleware stores `?src=` or `utm_source` in cookie `dh_src` (30 days, latest tag
+  wins, `lib/src-tag.ts`). Visitor events logged with `logEventLater` get it in `props.src` when they have none;
+  `signup_completed` (password, WhatsApp, Google) and `checkout_started` read it with `currentSrc()`. Not on
+  `order_paid` (webhook: the cookie there is not the buyer's).
+- `/admin/funnel` has a "Where students came from" table per tag: opened sign-up, made an account, paid (an account
+  with a PAID order with money in it; free-code orders do not count). Accounts made before this have no tag.
+- Privacy policy names the new cookie; `PRIVACY_VERSION` 2026-11-25.
+- Ad links must now carry a tag, e.g. `https://dhirwa.ae/ar?src=ig-story-1` or Meta's `utm_source`.
+- Tests: `src/lib/src-tag.test.ts`; `e2e/premiere.spec.ts` checks the 48 h end and the countdown card.
+- Open: the 5% never stacks with another code, so a student holding NEW20 gets nothing extra from attending; whether
+  a reminder email near the deadline is worth adding.
+
 ## 2026-11-25: lesson PDFs save themselves after upload (teacher Helmy Yasser, ae-12-biology)
 - What the log showed: his three video uploads all finished and saved (lessons 1 to 3, no error in `SiteLog`). The PDF lesson "ملف الشرح" has 0 pages saved: the pages were never attached, so the lesson page said "ملف هذا الدرس غير متاح للعرض بعد. تواصل مع الدعم". The old PDF flow only attached the pages when the teacher pressed Save afterwards (the video upload was fixed the same way on 2026-11-23).
 - Fix: `PdfUpload` now sets the page list on the live lesson form and submits it when the upload ends, like `VdoUpload`. Both share `src/components/admin/live-form.ts`. PDF upload results (and failures with the stage) are now written to `SiteLog` as `client.pdf_upload`.

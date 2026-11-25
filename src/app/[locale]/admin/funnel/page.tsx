@@ -1,5 +1,6 @@
 import { pageMetadata } from "@/lib/seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { sourceFunnel } from "@/lib/analytics";
 import { db } from "@/lib/db";
 import { formatMoney } from "@/lib/format";
 import type { Currency } from "@/lib/pricing-engine";
@@ -23,7 +24,7 @@ export default async function FunnelPage({ params }: { params: Promise<{ locale:
   const ar = locale === "ar";
   const since = new Date(Date.now() - 30 * 86_400_000);
 
-  const [events, paidByCurrency] = await Promise.all([
+  const [events, paidByCurrency, sources] = await Promise.all([
     db.analyticsEvent.groupBy({ by: ["name"], where: { createdAt: { gte: since } }, _count: { _all: true } }),
     db.order.groupBy({
       by: ["currency"],
@@ -31,6 +32,7 @@ export default async function FunnelPage({ params }: { params: Promise<{ locale:
       _count: { _all: true },
       _sum: { total: true, vat: true },
     }),
+    sourceFunnel(),
   ]);
 
   const count = (name: string) => events.find((e) => e.name === name)?._count._all ?? 0;
@@ -85,6 +87,37 @@ export default async function FunnelPage({ params }: { params: Promise<{ locale:
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className={`${panel}`}>
+        <h2 className="font-display text-h2 font-semibold">{t("srcTitle")}</h2>
+        <p className="text-small text-ink-muted">{t("srcHint")}</p>
+        {sources.length === 0 ? (
+          <p className="text-small text-ink-muted">{t("srcNone")}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className={table}>
+              <thead>
+                <tr>
+                  <th scope="col">{t("srcTag")}</th>
+                  <th scope="col">{t("srcOpened")}</th>
+                  <th scope="col">{t("srcSignedUp")}</th>
+                  <th scope="col">{t("srcPaid")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sources.map((r) => (
+                  <tr key={r.src}>
+                    <td dir="ltr" className="text-start">{r.src === "untagged" ? t("srcUntagged") : r.src}</td>
+                    <td className="num">{r.opened}</td>
+                    <td className="num">{r.signedUp}</td>
+                    <td className="num">{r.paid}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </main>

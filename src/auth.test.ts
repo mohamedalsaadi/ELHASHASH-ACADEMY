@@ -30,7 +30,7 @@ vi.mock("next-auth/providers/credentials", () => ({ default: (c: unknown) => c }
 vi.mock("next-auth/providers/google", () => ({ default: { id: "google" } }));
 vi.mock("next-auth/providers/microsoft-entra-id", () => ({ default: { id: "microsoft-entra-id" } }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
-vi.mock("@/lib/analytics", () => ({ logEvent: vi.fn(async () => {}) }));
+vi.mock("@/lib/analytics", () => ({ logEvent: vi.fn(async () => {}), currentSrc: vi.fn(async () => null) }));
 vi.mock("@/lib/db", () => ({ db: h.db }));
 vi.mock("@/lib/client-ip", () => ({ clientIp: () => "1.2.3.4" }));
 vi.mock("@/lib/rate-limit", () => ({ isLimited: h.limited, recordAttempt: h.record }));

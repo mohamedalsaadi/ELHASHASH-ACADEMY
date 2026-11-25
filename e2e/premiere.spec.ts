@@ -154,12 +154,20 @@ test("the watching-now ping is refused when signed out or before the start", asy
   expect((await live.json()).watching).toBeGreaterThanOrEqual(1);
 });
 
-test("watching live earns one 5% course discount, however often the player pings", async ({ page, loc }) => {
+test("watching live earns one 5% course discount that ends 48 hours after the stream, shown with its clock", async ({ page, loc }) => {
   const now = await premiere("reward-live", -5);
   await sql(`UPDATE "Premiere" SET "attendReward" = true WHERE id = $1`, [now.id]);
   const student = await freshStudent(`prem-rw-${loc}-${test.info().project.name}`);
   await signInAs(page, loc, student.phone);
   for (let i = 0; i < 2; i++) expect((await page.request.post(`/api/premiere/${now.id}/seen`)).status()).toBe(200);
-  const coupons = await sql<{ percentOff: number; funding: string }>(`SELECT "percentOff", funding FROM "Coupon" WHERE "ownerId" = $1`, [student.id]);
-  expect(coupons).toEqual([{ percentOff: 5, funding: "PLATFORM" }]);
+  // endsAt read as text: the column has no time zone (see the note above `premiere`).
+  const coupons = await sql<{ percentOff: number; funding: string; ends: string }>(`SELECT "percentOff", funding, "endsAt"::text AS ends FROM "Coupon" WHERE "ownerId" = $1`, [student.id]);
+  expect(coupons.map(({ percentOff, funding }) => ({ percentOff, funding }))).toEqual([{ percentOff: 5, funding: "PLATFORM" }]);
+  // The 60-minute stream started 5 minutes ago, so it ends in 55 minutes and the discount 48 hours after that.
+  const hoursLeft = (new Date(coupons[0].ends.replace(" ", "T") + "Z").getTime() - Date.now()) / 3_600_000;
+  expect(hoursLeft).toBeGreaterThan(48.8);
+  expect(hoursLeft).toBeLessThan(49);
+
+  await page.goto(`/${loc}/premiere/${now.slug}`);
+  await expect(page.locator("main section.border-up [role='timer']")).toHaveCount(1);
 });
